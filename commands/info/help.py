@@ -1,9 +1,9 @@
 from discord import Embed
 from discord.ext import commands
-import errors
+from src import errors
 import os
 import importlib
-from config import prefix, bot_admins
+from src.config import prefix, bot_admins
 from database.bot_users import get_user
 
 info = {

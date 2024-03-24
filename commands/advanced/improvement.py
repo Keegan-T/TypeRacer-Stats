@@ -1,14 +1,12 @@
 from discord import Embed, File
 from discord.ext import commands
-import errors
 import os
-import utils
 from datetime import datetime, timezone
 from database.bot_users import get_user
 import database.users as users
 import database.races as races
 from commands.advanced.races import get_params
-import graphs
+from src import graphs, errors, utils
 
 info = {
     "name": "improvement",

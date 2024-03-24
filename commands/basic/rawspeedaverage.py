@@ -1,5 +1,5 @@
 from discord.ext import commands
-from config import prefix
+from src.config import prefix
 from database.bot_users import get_user
 from commands.basic.realspeedaverage import get_params, run, command_in_use
 from commands.locks import average_lock

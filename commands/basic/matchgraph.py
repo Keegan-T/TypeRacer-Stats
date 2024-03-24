@@ -1,11 +1,8 @@
 from discord import Embed, File
 from discord.ext import commands
-import errors
 import os
-import urls
-import utils
-import graphs
-from config import prefix
+from src import graphs, urls, errors, utils
+from src.config import prefix
 from database.bot_users import get_user
 from api.users import get_stats
 from api.races import get_match

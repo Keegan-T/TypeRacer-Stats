@@ -4,9 +4,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from discord import Embed
 from discord.ext import commands
-import errors
-import urls
-import utils
+from src import urls, errors, utils
 import database.users as users
 import database.races as races
 import database.texts as texts

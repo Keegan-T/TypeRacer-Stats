@@ -1,8 +1,6 @@
 from discord import Embed
 from discord.ext import commands
-import colors
-import errors
-import utils
+from src import colors, errors, utils
 from database.bot_users import get_user
 import database.users as users
 import database.races as races

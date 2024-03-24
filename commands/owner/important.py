@@ -1,6 +1,6 @@
 from discord import Embed
 from discord.ext import commands
-import errors
+from src import errors
 from database.bot_users import get_user
 from api.users import get_stats
 import database.important_users as important_users

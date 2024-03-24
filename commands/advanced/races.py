@@ -1,8 +1,6 @@
 from discord import Embed
 from discord.ext import commands
-import colors
-import errors
-import utils
+from src import colors, errors, utils
 from dateutil import parser
 from datetime import datetime, timezone
 from database.bot_users import get_user

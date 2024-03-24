@@ -12,6 +12,7 @@ from database.banned import get_banned
 from database import records
 from database.bot_users import update_commands
 from tasks import import_competitions, update_important_users, update_top_tens
+from welcome import welcomed
 
 bot = commands.Bot(command_prefix=prefix, case_insensitive=True, intents=discord.Intents.all())
 bot.remove_command("help")
@@ -92,16 +93,35 @@ async def on_command_error(ctx, error):
 
 @bot.event
 async def on_message(message):
-    # if dev_mode and message.channel.id != 1197837519090352168: return
-    if message.reference:
+    if message.channel.id != 1197837519090352168: return
+    user_id = message.author.id
+
+    if user_id in welcomed and message.reference and message.content.startswith(prefix):
         replied_message_id = message.reference.message_id
         replied_message = await message.channel.fetch_message(replied_message_id)
 
         if replied_message.author == bot.user:
-            await message.channel.send(content=f"No need to reply to me anymore! <@{message.author.id}>")
+            await message.reply(content=f"No need to reply to me anymore!")
 
     await bot.process_commands(message)
 
+@bot.event
+async def on_command(ctx):
+    user_id = ctx.author.id
+
+    welcome_message = (
+        f"### Welcome to the new and improved TypeRacer Stats!\n"
+        f"Upon release there will be various bugs and issues, if you find any please contact `@keegant`\n"
+        f"`-help` to view a full list of available commands.\n"
+        f"`-about` to view information about the bot.\n"
+        f"You no longer need to reply to the bot!\n"
+        f"For a comprehensive list of changes, [click here](https://youtube.com/).\n"
+        f"Happy typing! :slight_smile:"
+    )
+
+    if user_id not in welcomed:
+        await ctx.reply(content=welcome_message)
+        welcomed.append(user_id)
 
 @bot.event
 async def on_command_completion(ctx):

@@ -1,8 +1,7 @@
 from discord import Embed
 from discord.ext import commands
 from datetime import datetime, timezone
-import errors
-import utils
+from src import errors, utils
 from database.bot_users import get_user
 from api.users import get_stats, get_joined
 import database.users as users

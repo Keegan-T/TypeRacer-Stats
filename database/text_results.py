@@ -3,7 +3,7 @@ from collections import defaultdict
 import api.texts as texts_api
 import database.modified_races as modified_races
 import database.texts as texts
-import utils
+from src import utils
 
 
 def get_count():

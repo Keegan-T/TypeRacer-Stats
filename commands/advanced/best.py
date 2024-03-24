@@ -1,8 +1,6 @@
 from discord import Embed
 from discord.ext import commands
-import errors
-import urls
-import utils
+from src import urls, errors, utils
 from database.bot_users import get_user
 import commands.recent as recent
 import database.users as users

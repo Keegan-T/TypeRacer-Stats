@@ -1,11 +1,10 @@
 from discord import Embed
 from discord.ext import commands
-import errors
-import utils
+from src import errors, utils
 from commands.basic.stats import get_params
 from api.users import get_latest_race
 from database.bot_users import get_user
-from utils import format_duration_short
+from src.utils import format_duration_short
 from datetime import datetime
 from api.users import get_stats
 

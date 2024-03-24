@@ -1,5 +1,5 @@
 from discord.ext import commands
-from config import prefix
+from src.config import prefix
 from database.bot_users import get_user
 from commands.advanced.day import get_params, run
 

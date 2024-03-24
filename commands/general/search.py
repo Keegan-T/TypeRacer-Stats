@@ -1,10 +1,8 @@
 from discord import Embed
 from discord.ext import commands
-import colors
-import errors
-import utils
+from src import colors, errors, utils
 import commands.recent as recents
-from config import prefix
+from src.config import prefix
 from database.bot_users import get_user
 from database.texts import get_texts
 import Levenshtein

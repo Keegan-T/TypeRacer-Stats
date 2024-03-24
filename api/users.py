@@ -2,11 +2,10 @@ import aiohttp
 import requests
 import json
 from bs4 import BeautifulSoup
-from datetime import datetime, timezone
 from dateutil import parser
 import urllib.parse
 
-import utils
+from src import utils
 
 
 # Retrieves all stats for a user that do not require races to be imported

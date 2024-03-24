@@ -1,8 +1,6 @@
 from discord import Embed
 from discord.ext import commands
-import errors
-import urls
-import utils
+from src import urls, errors, utils
 import commands.recent as recents
 import database.races as races
 import database.texts as texts

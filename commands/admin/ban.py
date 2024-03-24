@@ -1,9 +1,9 @@
 from discord import Embed
 from discord.ext import commands
-import colors
+from src import colors
 from database.bot_users import get_user
 from database.banned import get_banned, ban, unban
-from config import bot_admins
+from src.config import bot_admins
 
 info = {
     "name": "ban",

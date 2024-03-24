@@ -1,13 +1,10 @@
 from discord import Embed, File
 from discord.ext import commands
-import errors
 import os
 
-import urls
-import utils
-import colors
+from src import colors, graphs, urls, errors, utils
 from urllib.parse import urlparse
-from config import prefix
+from src.config import prefix
 from database.bot_users import get_user
 from api.users import get_stats
 from api.races import get_race_info
@@ -16,7 +13,6 @@ import database.races as races
 import database.races_300 as races_300
 import database.modified_races as modified_races
 from commands.basic.download import download, update_text_stats
-import graphs
 
 graph_commands = ["realspeedgraph", "rsg", "rg", "adjustedgraph", "ag", "ag*"]
 info = {

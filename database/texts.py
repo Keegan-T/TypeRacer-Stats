@@ -1,5 +1,5 @@
 from database import db
-import urls
+from src import urls
 from database.text_results import update_results, delete_results
 from commands.basic.download import update_text_stats
 
@@ -104,7 +104,7 @@ def update_slow_ghosts():
     texts = get_texts(include_disabled=False)
     ghosts = {}
 
-    with open("slow_ghosts.txt", "r") as slow_ghosts:
+    with open("./data/slow_ghosts.txt", "r") as slow_ghosts:
         lines = slow_ghosts.readlines()
 
     for ghost in lines:
