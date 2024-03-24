@@ -4,4 +4,3 @@ __pycache__/
 data/data.db
 data/typeracerstats.db
 sandbox.py
-.env
