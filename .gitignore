@@ -1,6 +1,6 @@
 .idea/
 __pycache__/
 **/__pycache__/
-data/data.db
+data/users.db
 data/typeracerstats.db
 sandbox.py
