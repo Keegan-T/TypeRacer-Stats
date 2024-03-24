@@ -1,0 +1,168 @@
+{
+  "speed": [
+    {
+      "record": "Fastest Race (Unlagged Speed)",
+      "username": "taran127",
+      "lagged": 379.03,
+      "unlagged": 410.78,
+      "date": "10/14/2020",
+      "race": 325
+    },
+    {
+      "record": "Fastest Race (Adjusted Speed)",
+      "username": "taran127",
+      "adjusted": 419.453,
+      "date": "10/14/2020",
+      "race": 325
+    },
+    {
+      "record": "Fastest Race (Maintrack) (Unlagged Speed)",
+      "username": "mythicalrocket",
+      "lagged": 281.69,
+      "unlagged": 299.57,
+      "date": "7/16/2023",
+      "race": 10415
+    },
+    {
+      "record": "Fastest Race (Maintrack) (Adjusted Speed)",
+      "username": "joshua728",
+      "adjusted": 317.443,
+      "date": "7/3/2023",
+      "race": 26277
+    },
+    {
+      "record": "Best Last 10 (Unlagged)",
+      "username": "taran127",
+      "lagged": 378.98,
+      "unlagged": 394.16,
+      "date": "6/7/2020",
+      "link": "https://data.typeracer.com/pit/race_history?user=taran127&startDate=2020-06-08&n=10"
+    },
+    {
+      "record": "Best Last 10 (Nonquit Maintrack) (Unlagged)",
+      "username": "joshua728",
+      "lagged": 227.02,
+      "unlagged": 230.00,
+      "date": "8/8/2023",
+      "link": "https://data.typeracer.com/pit/race_history?user=joshua728&universe=play&n=10&cursor=ClgKFgoJdGltZXN0YW1wEgkI6PW55I3MgAMSOmoTc350eXBlcmFjZXJkYXRhLWhyZHIjCxIKR2FtZVJlc3VsdCITX3RyOmpvc2h1YTcyOF8yNjU2MQwYACAB&prevCursor=ClgKFgoJdGltZXN0YW1wEgkI4IXKm4_MgAMSOmoTc350eXBlcmFjZXJkYXRhLWhyZHIjCxIKR2FtZVJlc3VsdCITX3RyOmpvc2h1YTcyOF8yNjU3MQwYACAB&startDate=2023-08-09"
+    }
+  ],
+  "races": [
+    {
+      "record": "Most Races in 1 Hour",
+      "username": "keegant",
+      "races": 796,
+      "date": "3/11/2023",
+      "link": "https://discord.com/channels/175964903033667585/746460695670816798/1083968305397768232"
+    },
+    {
+      "record": "Most Daily Races",
+      "username": "xanderec",
+      "races": 7200,
+      "date": "3/22/2024",
+      "link": "https://data.typeracer.com/pit/competitions?date=2024-03-22&sort=gamesFinished"
+    },
+    {
+      "record": "Most Daily Races (Maintrack)",
+      "username": "iamslow103",
+      "races": 2222,
+      "date": "9/4/2023",
+      "link": "https://data.typeracer.com/pit/competitions?date=2023-09-04&sort=gamesFinished"
+    },
+    {
+      "record": "Most Weekly Races",
+      "username": "keegant",
+      "races": 21012,
+      "date": "Week of 1/4/2021",
+      "link": "https://data.typeracer.com/pit/competitions?date=2021-01-04&kind=week&sort=gamesFinished"
+    },
+    {
+      "record": "Most Monthly Races",
+      "username": "keegant",
+      "races": 69420,
+      "date": "January 2021",
+      "link": "https://data.typeracer.com/pit/competitions?date=2021-01-01&kind=month&sort=gamesFinished"
+    },
+    {
+      "record": "Most Yearly Races",
+      "username": "keegant",
+      "races": 325000,
+      "date": "2023",
+      "link": "https://data.typeracer.com/pit/competitions?date=2023-01-01&kind=year&sort=gamesFinished"
+    }
+  ],
+  "points": [
+    {
+      "record": "Most Points in 1 Hour",
+      "username": "joshua728",
+      "points": 32846,
+      "date": "3/13/2021",
+      "link": "https://discord.com/channels/175964903033667585/746460695670816798/820413121780121610"
+    },
+    {
+      "record": "Most Daily Points",
+      "username": "deroche1",
+      "points": 301215,
+      "date": "3/4/2019",
+      "link": "https://data.typeracer.com/pit/competitions?date=2019-03-04"
+    },
+    {
+      "record": "Most Daily Points (Maintrack)",
+      "username": "iamslow103",
+      "points": 286812,
+      "date": "9/4/2023",
+      "link": "https://data.typeracer.com/pit/competitions?date=2023-09-04"
+    },
+    {
+      "record": "Most Weekly Points",
+      "username": "iamslow103",
+      "points": 1000191,
+      "date": "Week of 10/14/2022",
+      "link": "https://data.typeracer.com/pit/competitions?date=2022-10-24&kind=week"
+    },
+    {
+      "record": "Most Monthly Points",
+      "username": "vixt",
+      "points": 2151523,
+      "date": "June 2022",
+      "link": "https://data.typeracer.com/pit/competitions?date=2022-06-01&kind=month"
+    },
+    {
+      "record": "Most Yearly Points",
+      "username": "keegant",
+      "points": 15308118,
+      "date": "2019",
+      "link": "https://data.typeracer.com/pit/competitions?date=2019-01-01&kind=year"
+    }
+  ],
+  "speedrun": [
+    {
+      "record": "Fastest 100 Races",
+      "username": "keegant",
+      "time": "5:45.152",
+      "date": "1/10/2021",
+      "link": "https://discord.com/channels/175964903033667585/746460695670816798/797717562740965386"
+    },
+    {
+      "record": "Fastest 1,000 races",
+      "username": "keegant",
+      "time": "1:17:35.611",
+      "date": "3/11/2023",
+      "link": "https://discord.com/channels/175964903033667585/746460695670816798/1083967594714890361"
+    },
+    {
+      "record": "Fastest 10,000 Points",
+      "username": "joshua728",
+      "time": "16:22.489",
+      "date": "3/14/2021",
+      "link": "https://discord.com/channels/175964903033667585/746460695670816798/820413361975066674"
+    },
+    {
+      "record": "Fastest 100,000 Points",
+      "username": "flaneur",
+      "time": "3:56:20.548",
+      "date": "12/18/2022",
+      "link": "https://discord.com/channels/175964903033667585/746460695670816798/1102398089395982356"
+    }
+  ]
+}

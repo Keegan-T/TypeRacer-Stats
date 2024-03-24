@@ -1,0 +1,7 @@
+.idea/
+__pycache__/
+**/__pycache__/
+data/data.db
+data/typeracerstats.db
+sandbox.py
+.env
