@@ -16,6 +16,8 @@ from tasks import import_competitions, update_important_users, update_top_tens
 bot = commands.Bot(command_prefix=prefix, case_insensitive=True, intents=discord.Intents.all())
 bot.remove_command("help")
 
+# Hello world!
+
 ##### FOR DEVELOPMENT #####
 staging = False
 ###########################
