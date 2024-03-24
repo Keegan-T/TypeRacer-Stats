@@ -11,7 +11,8 @@ import database.races as races
 import database.texts as texts
 import numpy as np
 from datetime import datetime, timezone
-from scipy.stats import mode
+from statistics import mode
+from collections import Counter
 
 categories = ["wpm", "accuracy", "textbests"]
 info = {
@@ -146,9 +147,8 @@ async def run(ctx, user, username, category):
     value_array = np.array(values)
     mean = np.mean(values)
     median = np.median(values)
-    mode_result = mode(values, keepdims=True)
-    value_mode = mode_result[0][0]
-    mode_frequency = mode_result[1][0]
+    mode_value = mode(values)
+    mode_frequency = Counter(values)[mode_value]
     std = np.std(value_array)
     # wpm_skew = skew(value_array)
     # skew_string = ("Right" if wpm_skew < 0 else "Left") + f" by {abs(wpm_skew):,.2f} WPM"
@@ -156,7 +156,7 @@ async def run(ctx, user, username, category):
     distribution_stats = (
         f"**Average:** {mean:,.2f}{suffix}\n"
         f"**Median:** {median:,.2f}{suffix}\n"
-        f"**Mode:** {value_mode:,.2f}{suffix} ({mode_frequency:,} times)\n"
+        f"**Mode:** {mode_value:,.2f}{suffix} ({mode_frequency:,} times)\n"
         f"**Range:** {max(values) - min(values):,.2f} ({min(values):,.2f}{suffix} - {max(values):,.2f}{suffix})\n"
         f"**Standard Deviation:** {std:,.2f}{suffix}\n"
         # f"**Skewness:** {skew_string}\n"
