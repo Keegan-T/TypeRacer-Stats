@@ -185,6 +185,7 @@ async def run(ctx, user, username, category):
 
     os.remove(file_name)
 
+
 def missing_info():
     return Embed(
         title="Missing Information",
