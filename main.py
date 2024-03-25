@@ -12,7 +12,7 @@ from database.banned import get_banned
 from database import records
 from database.bot_users import update_commands
 from tasks import import_competitions, update_important_users, update_top_tens
-import welcome
+from database.welcomed import get_welcomed, add_welcomed
 
 bot = commands.Bot(command_prefix=prefix, case_insensitive=True, intents=discord.Intents.all())
 bot.remove_command("help")
@@ -87,8 +87,9 @@ async def on_command_error(ctx, error):
 async def on_message(message):
     # if message.channel.id != 1197837519090352168: return
     user_id = message.author.id
+    welcomed = get_welcomed()
 
-    if user_id in welcome.welcomed and message.reference and message.content.startswith(prefix):
+    if user_id in welcomed and message.reference and message.content.startswith(prefix):
         replied_message_id = message.reference.message_id
         replied_message = await message.channel.fetch_message(replied_message_id)
 
@@ -110,9 +111,11 @@ async def on_command(ctx):
         f"Happy typing! :slight_smile:"
     )
 
-    if user_id not in welcome.welcomed:
+    welcomed = get_welcomed()
+
+    if user_id not in welcomed:
         await ctx.reply(content=welcome_message)
-        welcome.welcomed.append(user_id)
+        add_welcomed(user_id)
 
 @bot.event
 async def on_command_completion(ctx):

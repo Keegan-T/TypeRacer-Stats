@@ -4,4 +4,3 @@ __pycache__/
 data/users.db
 data/typeracerstats.db
 sandbox.py
-welcome.py
