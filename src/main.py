@@ -20,12 +20,6 @@ bot.remove_command("help")
 ##### FOR DEVELOPMENT #####
 staging = False
 ###########################
-"""
-Development would work like this:
-Switch staging = True:
-- Stop counting commands
-- bot.run(staging_token)
-"""
 
 
 async def log_command(ctx):
