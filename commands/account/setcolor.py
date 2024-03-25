@@ -1,8 +1,11 @@
 from discord import Embed, File
 from discord.ext import commands
-from src import colors, graphs, errors, utils
+import graphs
+import utils
+import errors
+import colors
 import os
-from src.config import prefix
+from config import prefix
 from database.bot_users import get_user, update_colors
 import matplotlib.pyplot as plt
 

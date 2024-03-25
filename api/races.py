@@ -3,7 +3,7 @@ import requests
 import json
 import re
 from bs4 import BeautifulSoup
-from src import utils
+import utils
 from dateutil import parser
 
 async def get_races(username, start_date, end_date, races_per_page):

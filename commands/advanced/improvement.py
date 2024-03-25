@@ -6,7 +6,9 @@ from database.bot_users import get_user
 import database.users as users
 import database.races as races
 from commands.advanced.races import get_params
-from src import graphs, errors, utils
+import graphs
+import utils
+import errors
 
 info = {
     "name": "improvement",

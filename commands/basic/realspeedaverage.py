@@ -2,8 +2,11 @@ import asyncio
 
 from discord import Embed
 from discord.ext import commands
-from src import colors, urls, errors, utils
-from src.config import prefix
+import utils
+import errors
+import urls
+import colors
+from config import prefix
 from database.bot_users import get_user
 from api.users import get_stats
 from api.races import get_race_info

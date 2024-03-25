@@ -1,10 +1,11 @@
 from discord import Embed
 from datetime import datetime
 import json
-from src import colors, utils
+import utils
+import colors
 import database.races_300 as races_300
 import database.users as users
-from src.config import records_channel
+from config import records_channel
 
 medals = [":first_place:", ":second_place:", ":third_place:"]
 countries = {}

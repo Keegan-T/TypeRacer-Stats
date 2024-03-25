@@ -1,6 +1,7 @@
 from discord import Embed
 from discord.ext import commands
-from src import errors, utils
+import utils
+import errors
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from database.bot_users import get_user

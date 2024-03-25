@@ -1,7 +1,9 @@
 from discord import Embed
 from discord.ext import commands
-from src import urls, errors, utils
-from src.config import prefix
+import utils
+import errors
+import urls
+from config import prefix
 from database.bot_users import get_user
 import database.users as users
 import database.texts as texts

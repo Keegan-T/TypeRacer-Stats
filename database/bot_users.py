@@ -1,7 +1,7 @@
 import database.user_db as db
 import json
 
-from src.colors import default_colors
+from colors import default_colors
 from discord.ext import commands
 
 

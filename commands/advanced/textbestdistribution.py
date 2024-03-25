@@ -1,7 +1,8 @@
 from discord import Embed
 from discord.ext import commands
 import math
-from src import errors, utils
+import utils
+import errors
 from database.bot_users import get_user
 from commands.basic.stats import get_params
 import database.users as users

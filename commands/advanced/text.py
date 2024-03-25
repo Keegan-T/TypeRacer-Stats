@@ -2,8 +2,12 @@ from discord import Embed, File
 from discord.ext import commands
 import os
 import commands.recent as recents
-from src import colors, graphs, urls, errors, utils
-from src.config import prefix
+import graphs
+import utils
+import errors
+import urls
+import colors
+from config import prefix
 from database.bot_users import get_user
 from api.users import get_stats
 import database.texts as texts

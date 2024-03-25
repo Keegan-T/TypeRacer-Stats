@@ -4,7 +4,9 @@ import os
 from database.bot_users import get_user
 from database.users import get_text_bests
 from commands.advanced.compare import get_params, no_common_texts
-from src import graphs, urls, errors
+import graphs
+import errors
+import urls
 
 info = {
     "name": "comparegraph",

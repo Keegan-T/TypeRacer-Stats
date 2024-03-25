@@ -1,6 +1,6 @@
 import aiohttp
 import requests
-from src import urls
+import urls
 from bs4 import BeautifulSoup
 
 def get_quote(text_id):

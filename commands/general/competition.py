@@ -1,11 +1,12 @@
 from discord import Embed
 from discord.ext import commands
-from src import errors, utils
+import utils
+import errors
 from database.bot_users import get_user
 from datetime import datetime, timezone
 from dateutil.relativedelta import relativedelta
 from dateutil import parser
-from src.config import prefix
+from config import prefix
 import api.competitions as competitions_api
 
 types = ["day", "week", "month", "year"]

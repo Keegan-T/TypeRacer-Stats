@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from dateutil import parser
 import urllib.parse
 
-from src import utils
+import utils
 
 
 # Retrieves all stats for a user that do not require races to be imported

@@ -1,5 +1,5 @@
 from database import db
-from src import urls
+import urls
 from database.text_results import update_results, delete_results
 from commands.basic.download import update_text_stats
 

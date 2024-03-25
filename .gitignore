@@ -3,5 +3,5 @@ __pycache__/
 **/__pycache__/
 data/users.db
 data/typeracerstats.db
-src/sandbox.py
-src/welcome.py
+sandbox.py
+welcome.py

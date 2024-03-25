@@ -1,8 +1,9 @@
 from dateutil.relativedelta import relativedelta
 from discord import Embed
 from discord.ext import commands
-from src import errors, utils
-from src.config import prefix
+import utils
+import errors
+from config import prefix
 import database.races as races
 import database.users as users
 from dateutil import parser

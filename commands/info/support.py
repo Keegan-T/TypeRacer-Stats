@@ -1,7 +1,7 @@
 from discord import Embed
 from discord.ext import commands
 from database.bot_users import get_user
-from src.config import donate_link
+from config import donate_link
 
 info = {
     "name": "support",

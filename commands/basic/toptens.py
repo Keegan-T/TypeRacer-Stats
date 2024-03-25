@@ -1,11 +1,13 @@
 from discord import Embed
 from discord.ext import commands
-from src import urls, errors, utils
+import utils
+import errors
+import urls
 from database.bot_users import get_user
 from api.users import get_stats
 import database.users as users
 import database.text_results as top_tens
-from src.config import prefix
+from config import prefix
 
 info = {
     "name": "toptens",

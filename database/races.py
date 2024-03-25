@@ -1,5 +1,5 @@
 from database import db
-from src import utils
+import utils
 from database.users import correct_best_wpm
 import database.modified_races as modified_races
 

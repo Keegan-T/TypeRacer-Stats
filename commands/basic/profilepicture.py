@@ -1,5 +1,5 @@
 from discord.ext import commands
-from src import errors
+import errors
 from database.bot_users import get_user
 from commands.basic.stats import get_params
 from api.users import get_stats

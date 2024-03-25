@@ -1,6 +1,8 @@
 from discord import Embed
 from discord.ext import commands
-from src import urls, errors, utils
+import utils
+import errors
+import urls
 from database.bot_users import get_user
 from api.races import get_race_info
 from commands.basic.race import add_stats

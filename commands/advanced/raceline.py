@@ -2,7 +2,10 @@ from discord import Embed, File
 from discord.ext import commands
 from datetime import datetime, timezone
 from dateutil import parser
-from src import colors, graphs, errors, utils
+import graphs
+import utils
+import errors
+import colors
 from database.bot_users import get_user
 import database.races as races
 import database.users as users

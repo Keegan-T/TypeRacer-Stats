@@ -1,8 +1,8 @@
 from discord import Embed
 from discord.ext import commands
 import asyncio
-from src import colors
-from src.config import bot_owner
+import colors
+from config import bot_owner
 from database.bot_users import get_user
 from database.races import delete_race
 

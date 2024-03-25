@@ -1,7 +1,10 @@
 from discord import Embed, File
 from discord.ext import commands
 import os
-from src import graphs, urls, errors, utils
+import graphs
+import utils
+import errors
+import urls
 from database.bot_users import get_user
 import database.users as users
 import database.races as races

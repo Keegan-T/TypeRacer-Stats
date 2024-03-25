@@ -1,7 +1,7 @@
 from discord import Embed
 from discord.ext import commands
 
-from src import colors
+import colors
 from database.bot_users import get_user, update_universe
 from api.universes import get_universe_list
 

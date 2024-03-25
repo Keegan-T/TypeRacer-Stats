@@ -4,8 +4,10 @@ import os
 from discord import Embed
 from discord.ext import commands
 
-from src import colors, errors, utils
-from src.config import prefix
+import utils
+import errors
+import colors
+from config import prefix
 from database.bot_users import get_user, get_commands, get_all_commands, get_total_commands
 
 info = {

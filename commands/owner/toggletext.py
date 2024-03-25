@@ -1,6 +1,6 @@
 from discord import Embed
 from discord.ext import commands
-from src import errors
+import errors
 from database.bot_users import get_user
 import database.texts as texts
 from commands.owner.deleterace import owner_check

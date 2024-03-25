@@ -1,6 +1,8 @@
 from discord import Embed
 from discord.ext import commands
-from src import colors, urls, errors
+import errors
+import urls
+import colors
 from database.bot_users import get_user
 from database.users import get_text_bests
 

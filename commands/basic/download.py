@@ -2,7 +2,10 @@ from datetime import datetime, timezone
 
 from discord import Embed
 from discord.ext import commands
-from src import colors, urls, errors, utils
+import utils
+import errors
+import urls
+import colors
 import time
 import database.users as users
 import database.races as races
@@ -15,7 +18,7 @@ from api.users import get_stats, get_joined
 from api.texts import get_quote
 from api.races import get_races
 from commands.basic.stats import get_params
-from src.config import bot_admins
+from config import bot_admins
 import database.text_results as top_tens
 
 info = {

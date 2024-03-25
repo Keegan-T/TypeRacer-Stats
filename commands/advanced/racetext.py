@@ -1,5 +1,5 @@
 from discord.ext import commands
-from src.config import prefix
+from config import prefix
 from database.bot_users import get_user
 from commands.basic.realspeed import get_params
 from commands.advanced.text import run
