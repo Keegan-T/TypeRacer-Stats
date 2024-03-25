@@ -45,7 +45,7 @@ async def run(ctx, user, username):
     wins = 0
     most_racers = (0, 0, 0)
     biggest_win = (0, 0, 0)
-    biggest_loss = (0, 0, 1)
+    biggest_loss = (0, 1, 0)
     win_streak = (0, 0, 0)
     current_win_streak = 0
 
@@ -71,7 +71,7 @@ async def run(ctx, user, username):
                 win_streak = (current_win_streak, number - current_win_streak, number - 1)
             current_win_streak = 0
 
-        if rank > biggest_loss[2]:
+        if rank > biggest_loss[1]:
             biggest_loss = (number, rank, racers)
 
     if wins > 0 and win_streak[0] == 0:

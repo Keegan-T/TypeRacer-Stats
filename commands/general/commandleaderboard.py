@@ -57,21 +57,15 @@ class CommandLeaderboard(commands.Cog):
 async def command_leaderboard(ctx, user, command):
     alias_dict = {}
 
-    for file in os.listdir("./commands/user"):
-        if file.endswith(".py") and not file.startswith("_"):
-            module = importlib.import_module(f"commands.user.{file[:-3]}")
-            command_name = module.info["name"]
-            aliases = [command_name] + module.info["aliases"]
-            for alias in aliases:
-                alias_dict[alias] = command_name
-
-    for file in os.listdir("./commands/unlisted"):
-        if file.endswith(".py") and not file.startswith("_"):
-            module = importlib.import_module(f"commands.unlisted.{file[:-3]}")
-            command_name = module.info["name"]
-            aliases = [command_name] + module.info["aliases"]
-            for alias in aliases:
-                alias_dict[alias] = command_name
+    groups = ["account", "admin", "advanced", "basic", "general", "info", "owner", "unlisted"]
+    for group in groups:
+        for file in os.listdir(f"./commands/{group}"):
+            if file.endswith(".py") and not file.startswith("_"):
+                module = importlib.import_module(f"commands.{group}.{file[:-3]}")
+                command_name = module.info["name"]
+                aliases = [command_name] + module.info["aliases"]
+                for alias in aliases:
+                    alias_dict[alias] = command_name
 
     if command not in alias_dict:
         return await ctx.send(embed=errors.invalid_command())

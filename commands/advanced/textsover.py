@@ -41,7 +41,9 @@ class TextsOver(commands.Cog):
 
 
 async def get_params(ctx, user, params, command=info):
-    if len(params) < 3:
+    category = "wpm"
+
+    if len(params) < 2:
         await ctx.send(embed=errors.missing_param(command))
         raise ValueError
 
@@ -60,11 +62,12 @@ async def get_params(ctx, user, params, command=info):
     if threshold <= 0:
         await ctx.send(embed=errors.greater_than(0))
         raise ValueError
-
-    category = utils.get_category(categories, params[2])
-    if not category:
-        await ctx.send(embed=errors.invalid_option("category", categories))
-        raise ValueError
+    
+    if len(params) > 2:
+        category = utils.get_category(categories, params[2])
+        if not category:
+            await ctx.send(embed=errors.invalid_option("category", categories))
+            raise ValueError
 
     if not username:
         await ctx.send(embed=errors.missing_param(command))

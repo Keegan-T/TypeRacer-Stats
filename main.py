@@ -18,7 +18,7 @@ bot = commands.Bot(command_prefix=prefix, case_insensitive=True, intents=discord
 bot.remove_command("help")
 
 ##### FOR DEVELOPMENT #####
-staging = False
+staging = True
 ###########################
 
 
@@ -111,6 +111,7 @@ async def on_command(ctx):
         f"`-help` to view a full list of available commands.\n"
         f"`-about` to view information about the bot.\n"
         f"[Click here](https://keegan-t.github.io/TypeRacer-Stats-Changes/) to view a comprehensive list of changes.\n"
+        f"**You must link your account again!**"
         f"Happy typing! :slight_smile:"
     )
 

@@ -30,7 +30,7 @@ Indeed.
 I personally guarantee it.
 Affirmative, captain.
 According to ChatGPT, yes.
-I wouldn't get_count on it.
+I wouldn't count on it.
 My reply is no.
 My sources say no.
 Outlook not so good.
