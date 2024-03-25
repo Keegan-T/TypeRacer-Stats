@@ -20,7 +20,7 @@ class Keegan(commands.Cog):
 async def run(ctx):
     embed = Embed(
         title="hi",
-        description="sup",
+        description="yo who made this bot it's pretty cool",
         color=0,
     )
 

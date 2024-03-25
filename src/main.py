@@ -111,11 +111,10 @@ async def on_command(ctx):
 
     welcome_message = (
         f"### Welcome to the new and improved TypeRacer Stats!\n"
-        f"Upon release there will be various bugs and issues, if you find any please contact `@keegant`\n"
+        f"On release there will be various bugs and issues, if you find any please contact `@keegant`\n"
         f"`-help` to view a full list of available commands.\n"
         f"`-about` to view information about the bot.\n"
-        f"You no longer need to reply to the bot!\n"
-        f"For a comprehensive list of changes, [click here](https://youtube.com/).\n"
+        f"[Click here](https://keegan-t.github.io/TypeRacer-Stats-Changes/) to view a comprehensive list of changes.\n"
         f"Happy typing! :slight_smile:"
     )
 
