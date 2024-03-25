@@ -96,6 +96,9 @@ async def on_message(message):
         if replied_message.author == bot.user:
             await message.reply(content=f"No need to reply to me anymore!")
 
+        elif replied_message.author.id == 742267194443956334: # Prevent the bot from overlapping with the other
+            return
+
     await bot.process_commands(message)
 
 @bot.event
