@@ -13,7 +13,13 @@ from database import records
 from database.bot_users import update_commands
 from tasks import import_competitions, update_important_users, update_top_tens
 from database.welcomed import get_welcomed, add_welcomed
-from database.bot_users import get_user
+import database.db as db
+
+db.run("""
+    UPDATE texts
+    SET ghost = REPLACE(REPLACE(ghost, '|', '%7C'), 'tr:', 'tr%3A');
+""")
+
 
 bot = commands.Bot(command_prefix=prefix, case_insensitive=True, intents=discord.Intents.all())
 bot.remove_command("help")

@@ -5,7 +5,7 @@ def replay(username, race_number, universe="play"):
 
 
 def ghost(username, race_number):
-    return f"https://play.typeracer.com/?ghost=|tr:{username}|{race_number}"
+    return f"https://play.typeracer.com/?ghost=%7Ctr%3A{username}%7C{race_number}"
 
 
 def profile(username):
