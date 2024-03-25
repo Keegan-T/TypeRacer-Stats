@@ -89,7 +89,7 @@ async def run(ctx, user, username, category, sort):
 
     if category == "races":
         columns = ["number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
-        race_list = races.get_races(username, columns=columns, order_by="timestamp", limit=20, reverse=True)
+        race_list = await races.get_races(username, columns=columns, order_by="timestamp", limit=20, reverse=True)
 
         title = "Race History"
         description = ""
@@ -103,7 +103,7 @@ async def run(ctx, user, username, category, sort):
     else:
         title = f"Race History - {category.title()}s (By {utils.get_sort_title(sort)})"
         description = ""
-        history = get_history(username, category, sort)
+        history = await get_history(username, category, sort)
         for period in history[:10]:
             description += (
                 f"**{period[1]}**\n{period[3]:,.0f} pts / {period[2]:,} races - "
@@ -122,10 +122,10 @@ async def run(ctx, user, username, category, sort):
     if new_races:
         update_text_stats(username)
 
-def get_history(username, category, sort):
+async def get_history(username, category, sort):
     sort_key = {"points": 3, "races": 2, "time": 5, "wpm": 4}.get(sort, 0)
     columns = ["text_id", "wpm", "points", "timestamp"]
-    race_list = sorted(races.get_races(username, columns=columns), key=lambda x: x[3])
+    race_list = sorted(await races.get_races(username, columns=columns), key=lambda x: x[3])
     text_list = texts.get_texts(as_dictionary=True, include_disabled=True)
 
     history = []

@@ -10,6 +10,8 @@ from database.bot_users import get_user
 import database.races as races
 import database.users as users
 import os
+import commands.locks as locks
+from commands.basic.realspeedaverage import command_in_use
 
 info = {
     "name": "raceline",
@@ -32,13 +34,17 @@ class RaceLine(commands.Cog):
 
     @commands.command(aliases=info['aliases'])
     async def raceline(self, ctx, *params):
-        user = get_user(ctx)
-        try:
-            usernames, start_date, end_date = await get_params(ctx, user, params)
-        except ValueError:
-            return
+        if locks.line_lock.locked():
+            return await ctx.send(embed=command_in_use())
 
-        await run(ctx, user, usernames, start_date, end_date)
+        async with locks.line_lock:
+            user = get_user(ctx)
+            try:
+                usernames, start_date, end_date = await get_params(ctx, user, params)
+            except ValueError:
+                return
+
+            await run(ctx, user, usernames, start_date, end_date)
 
 
 async def get_params(ctx, user, params, command=info):
@@ -93,7 +99,7 @@ async def get_lines(usernames, start_date, end_date, points=False):
     columns = ["points" if points else "number", "timestamp"]
     for username in usernames:
         utils.time_start()
-        race_list = sorted(races.get_races(
+        race_list = sorted(await races.get_races(
             username,
             start_time=start_date.timestamp(),
             end_time=end_date.timestamp(),

@@ -64,7 +64,7 @@ async def run(ctx, user, username, kind, seconds):
     if not stats:
         return await ctx.send(embed=errors.import_required(username))
     columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
-    race_list = sorted(get_races(username, columns=columns), key=lambda x: x[7])
+    race_list = sorted(await get_races(username, columns=columns), key=lambda x: x[7])
     race_range = [0, 0]
     start_race = 0
 

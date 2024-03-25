@@ -2,7 +2,7 @@ from discord.ext import commands
 from config import prefix
 from database.bot_users import get_user
 from commands.basic.realspeedaverage import get_params, run, command_in_use
-from commands.locks import average_lock
+import commands.locks as locks
 
 info = {
     "name": "rawspeedaverage",
@@ -27,11 +27,11 @@ class RawSpeedAverage(commands.Cog):
     @commands.command(aliases=info['aliases'])
     @commands.cooldown(1, 20, commands.BucketType.user)
     async def rawspeedaverage(self, ctx, *params):
-        if average_lock.locked():
+        if locks.average_lock.locked():
             self.rawspeedaverage.reset_cooldown(ctx)
             return await ctx.send(embed=command_in_use())
 
-        async with average_lock:
+        async with locks.average_lock:
             user = get_user(ctx)
 
             try:

@@ -112,7 +112,7 @@ async def run(ctx, user, username, category, text_id, reverse=True):
         )
 
     else:
-        race_list = races.get_races(username, with_texts=True, order_by=category, reverse=reverse, limit=limit)
+        race_list = await races.get_races(username, with_texts=True, order_by=category, reverse=reverse, limit=limit)
 
         limit = len(race_list)
 

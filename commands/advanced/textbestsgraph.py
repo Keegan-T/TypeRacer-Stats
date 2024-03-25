@@ -65,7 +65,7 @@ async def run(ctx, user, username, category):
     wpm_total = 0
     wpm_count = 0
 
-    race_list = races.get_races(username, columns=["number", "wpm", "text_id", "timestamp"], order_by="number")
+    race_list = await races.get_races(username, columns=["number", "wpm", "text_id", "timestamp"], order_by="number")
 
     for race in race_list:
         if race[2] in disabled_text_ids:

@@ -11,7 +11,7 @@ from database.bot_users import get_user
 from api.users import get_stats
 from api.races import get_race_info
 from commands.basic.realspeed import run as run_realspeed
-from commands.locks import average_lock
+import commands.locks as locks
 
 info = {
     "name": "realspeedaverage",
@@ -37,11 +37,11 @@ class RealSpeedAverage(commands.Cog):
     @commands.command(aliases=info['aliases'])
     @commands.cooldown(1, 20, commands.BucketType.user)
     async def realspeedaverage(self, ctx, *params):
-        if average_lock.locked():
+        if locks.average_lock.locked():
             self.realspeedaverage.reset_cooldown(ctx)
             return await ctx.send(embed=command_in_use())
 
-        async with average_lock:
+        async with locks.average_lock:
             user = get_user(ctx)
 
             try:

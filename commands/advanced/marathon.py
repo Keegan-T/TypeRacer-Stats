@@ -83,7 +83,7 @@ async def run(ctx, user, username, kind, seconds):
         return await ctx.send(embed=errors.import_required(username))
 
     columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
-    race_list = sorted(races.get_races(username, columns=columns), key=lambda x: x[7])
+    race_list = sorted(await races.get_races(username, columns=columns), key=lambda x: x[7])
     marathon = 0
     race_range = []
     start_index = 0

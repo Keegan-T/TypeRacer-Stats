@@ -1,6 +1,9 @@
 from discord.ext import commands
 from database.bot_users import get_user
 from commands.advanced.raceline import get_params, run
+import commands.locks as locks
+from commands.locks import line_lock
+from commands.basic.realspeedaverage import command_in_use
 
 info = {
     "name": "pointline",
@@ -23,14 +26,18 @@ class PointLine(commands.Cog):
 
     @commands.command(aliases=info['aliases'])
     async def pointline(self, ctx, *params):
-        user = get_user(ctx)
+        if locks.line_lock.locked():
+            return await ctx.send(embed=command_in_use())
 
-        try:
-            usernames, start_date, end_date = await get_params(ctx, user, params, info)
-        except ValueError:
-            return
+        async with line_lock:
+            user = get_user(ctx)
 
-        await run(ctx, user, usernames, start_date, end_date, True)
+            try:
+                usernames, start_date, end_date = await get_params(ctx, user, params, info)
+            except ValueError:
+                return
+
+            await run(ctx, user, usernames, start_date, end_date, True)
 
 
 async def setup(bot):

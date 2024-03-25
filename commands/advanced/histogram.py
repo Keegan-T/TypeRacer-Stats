@@ -73,7 +73,7 @@ async def run_time(ctx, user, username):
     if not stats:
         return await ctx.send(embed=errors.import_required(username))
 
-    race_list = races.get_races(username, columns=["text_id", "wpm", "timestamp"], order_by="timestamp")
+    race_list = await races.get_races(username, columns=["text_id", "wpm", "timestamp"], order_by="timestamp")
     text_list = texts.get_texts(as_dictionary=True)
     total_seconds = 0
 
@@ -127,7 +127,7 @@ async def run(ctx, user, username, category):
     suffix = " WPM"
 
     if category == "wpm":
-        race_list = races.get_races(username, columns=["wpm"])
+        race_list = await races.get_races(username, columns=["wpm"])
         values = [race[0] for race in race_list]
 
     elif category == "textbests":
@@ -136,7 +136,7 @@ async def run(ctx, user, username, category):
         category_title = "Text Bests"
 
     else:
-        race_list = races.get_races(username, columns=["accuracy"])
+        race_list = await races.get_races(username, columns=["accuracy"])
         values = [int(race[0] * 100) for race in race_list if race[0] > 0]
         category_title = "Accuracy"
         suffix = "%"

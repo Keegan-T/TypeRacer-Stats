@@ -13,6 +13,7 @@ from database import records
 from database.bot_users import update_commands
 from tasks import import_competitions, update_important_users, update_top_tens
 from database.welcomed import get_welcomed, add_welcomed
+from database.bot_users import get_user
 
 bot = commands.Bot(command_prefix=prefix, case_insensitive=True, intents=discord.Intents.all())
 bot.remove_command("help")
@@ -22,8 +23,8 @@ staging = True
 ###########################
 
 
-async def log_command(ctx):
-    log = utils.command_log(ctx)
+async def log_command(message):
+    log = utils.command_log(message)
 
     logs = bot.get_channel(log_channel)
     await logs.send(log)
@@ -99,6 +100,9 @@ async def on_message(message):
         elif replied_message.author.id == 742267194443956334: # Prevent the bot from overlapping with the other
             return
 
+    if message.content.startswith(prefix):
+        await log_command(message)
+
     await bot.process_commands(message)
 
 @bot.event
@@ -123,8 +127,6 @@ async def on_command(ctx):
 
 @bot.event
 async def on_command_completion(ctx):
-    await log_command(ctx)
-
     if not staging:
         update_commands(ctx.author.id, ctx.command.name)
 

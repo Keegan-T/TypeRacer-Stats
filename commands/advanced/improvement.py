@@ -63,18 +63,18 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
     if start_date is None and start_number is None:
         timeframe = f" (All-Time)"
         title += " - All-Time"
-        race_list = sorted(races.get_races(username, columns=columns), key=lambda x: x[1])
+        race_list = sorted(await races.get_races(username, columns=columns), key=lambda x: x[1])
 
     elif start_date is None:
         end_number = min(end_number, stats["races"])
         timeframe = f" {start_number:,} - {end_number:,}"
         title += f" - Races{timeframe}"
-        race_list = sorted(races.get_races(username, start_number=start_number, end_number=end_number, columns=columns), key=lambda x: x[1])
+        race_list = sorted(await races.get_races(username, start_number=start_number, end_number=end_number, columns=columns), key=lambda x: x[1])
 
     else:
         timeframe = f" ({utils.get_display_date_range(start_date, end_date)})"
         title += f" - {utils.get_display_date_range(start_date, end_date)}"
-        race_list = sorted(races.get_races(username, start_date.timestamp(), end_date.timestamp(), columns=columns), key=lambda x: x[1])
+        race_list = sorted(await races.get_races(username, start_date.timestamp(), end_date.timestamp(), columns=columns), key=lambda x: x[1])
 
     wpm = []
     best = 0

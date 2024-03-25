@@ -21,13 +21,13 @@ def add_races(username, races):
         db.run(query, params)
 
 
-def get_races(username, start_time=None, end_time=None, start_number=None, end_number=None,
+async def get_races(username, start_time=None, end_time=None, start_number=None, end_number=None,
               with_texts=False, order_by=None, reverse=False, limit=None, columns="*"):
     if columns != "*":
         columns = ",".join([c for c in columns])
     order = 'DESC' if reverse else 'ASC'
 
-    races = db.fetch(
+    races = await db.fetch_async(
         f"""
             SELECT {columns} FROM races
             {'JOIN texts ON texts.id = races.text_id' * with_texts}

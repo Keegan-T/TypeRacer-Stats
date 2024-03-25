@@ -130,7 +130,7 @@ async def run(ctx, user, username, date):
 
     columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
     utils.time_start()
-    race_list = sorted(races.get_races(username, start_time, end_time, columns=columns), key=lambda x: x[7])
+    race_list = sorted(await races.get_races(username, start_time, end_time, columns=columns), key=lambda x: x[7])
     utils.time_end()
 
     embed = Embed(title=title, color=user["colors"]["embed"])

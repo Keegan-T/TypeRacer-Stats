@@ -54,7 +54,7 @@ async def run(ctx, user, username, kind):
         return await ctx.send(embed=errors.import_required(username))
 
     column = 2 if kind == "time" else 1
-    race_list = sorted(races.get_races(username, columns=["wpm", "number", "timestamp"]), key=lambda r: r[1])
+    race_list = sorted(await races.get_races(username, columns=["wpm", "number", "timestamp"]), key=lambda r: r[1])
 
     pbs = [race_list[0]]
     y = [race_list[0][0]]

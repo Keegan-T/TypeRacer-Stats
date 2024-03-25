@@ -77,7 +77,7 @@ async def run(ctx, user, username, kind, n):
     if not stats:
         return await ctx.send(embed=errors.import_required(username))
 
-    all_history = get_history(username, kind)
+    all_history = await get_history(username, kind)
     history = [period for period in all_history if period[2] >= n]
     over = len(history)
 
@@ -137,8 +137,8 @@ async def run(ctx, user, username, kind, n):
 
     await ctx.send(embed=embed)
 
-def get_history(username, kind):
-    race_list = races.get_races(username, columns=["timestamp"], order_by="timestamp")
+async def get_history(username, kind):
+    race_list = await races.get_races(username, columns=["timestamp"], order_by="timestamp")
 
     history = []
     for race in race_list:

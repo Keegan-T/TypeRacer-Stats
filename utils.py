@@ -506,10 +506,10 @@ def rank(number):
 
     return str(number)
 
-def command_log(ctx):
-    user = get_user(ctx)
+def command_log(message):
+    user = get_user(message.author.id)
     linked = user["username"]
-    author = ctx.author
-    server = ctx.guild.name if ctx.guild else "DM"
+    author = message.author
+    server = message.guild.name if message.guild else "DM"
 
-    return f"`{server} | [{author.id}] {author.name} {('(' + linked + ')') if linked else ''}: {ctx.message.content}`"
+    return f"`{server} | [{author.id}] {author.name} {('(' + linked + ')') if linked else ''}: {message.content}`"

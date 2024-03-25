@@ -38,7 +38,7 @@ async def run(ctx, user, username):
         return await ctx.send(embed=errors.import_required(username))
 
     columns = ["number", "rank", "racers"]
-    race_list = races.get_races(username, columns=columns, order_by="number")
+    race_list = await races.get_races(username, columns=columns, order_by="number")
 
     result_dict = {}
     race_count = len(race_list)
