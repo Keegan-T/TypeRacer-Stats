@@ -114,7 +114,7 @@ async def on_command(ctx):
         f"`-help` to view a full list of available commands.\n"
         f"`-about` to view information about the bot.\n"
         f"[Click here](https://keegan-t.github.io/TypeRacer-Stats-Changes/) to view a comprehensive list of changes.\n"
-        f"**You must link your account again!**"
+        f"**You must link your account again!**\n"
         f"Happy typing! :slight_smile:"
     )
 

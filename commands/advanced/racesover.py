@@ -10,7 +10,10 @@ info = {
     "name": "racesover",
     "aliases": ["ro"],
     "description": "Displays the number of races a user has greater than or equal to a category threshold",
-    "parameters": "[username] [threshold] [category]",
+    "parameters": "[username] [threshold] <category>",
+    "defaults": {
+        "category": "wpm",
+    },
     "usages": [
         "racesover keegant 300 wpm",
         "racesover joshua728 1000 points",
@@ -36,7 +39,9 @@ class RacesOver(commands.Cog):
 
 
 async def get_params(ctx, user, params, command=info):
-    if len(params) < 3:
+    category = "wpm"
+
+    if len(params) < 2:
         await ctx.send(embed=errors.missing_param(command))
         raise ValueError
 
@@ -56,10 +61,11 @@ async def get_params(ctx, user, params, command=info):
         await ctx.send(embed=errors.greater_than(0))
         raise ValueError
 
-    category = utils.get_category(categories, params[2])
-    if not category:
-        await ctx.send(embed=errors.invalid_option("category", categories))
-        raise ValueError
+    if len(params) > 2:
+        category = utils.get_category(categories, params[2])
+        if not category:
+            await ctx.send(embed=errors.invalid_option("category", categories))
+            raise ValueError
 
     if not username:
         await ctx.send(embed=errors.missing_param(info))

@@ -6,7 +6,10 @@ info = {
     "name": "racesunder",
     "aliases": ["ru"],
     "description": "Displays the number of races a user has less than a category threshold",
-    "parameters": "[username] [threshold] [category]",
+    "parameters": "[username] [threshold] <category>",
+    "defaults": {
+        "category": "wpm",
+    },
     "usages": [
         "racesunder keegant 100 wpm",
         "racesunder keegant 50 points",

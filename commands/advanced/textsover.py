@@ -14,7 +14,10 @@ info = {
     "aliases": ["to"],
     "description": "Displays the number of texts a user has greater than or equal to a category threshold\n"
                    "Add `random` as a parameter to randomize the order in which texts are displayed",
-    "parameters": "[username] [threshold] [category]",
+    "parameters": "[username] [threshold] <category>",
+    "defaults": {
+        "category": "wpm",
+    },
     "usages": [
         "textsover joshua728 1000 points",
         "textsover charlieog 5000 times",
@@ -62,7 +65,7 @@ async def get_params(ctx, user, params, command=info):
     if threshold <= 0:
         await ctx.send(embed=errors.greater_than(0))
         raise ValueError
-    
+
     if len(params) > 2:
         category = utils.get_category(categories, params[2])
         if not category:

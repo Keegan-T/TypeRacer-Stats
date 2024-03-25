@@ -7,7 +7,10 @@ info = {
     "aliases": ["tu"],
     "description": "Displays the number of texts a user has less than a category threshold\n"
                    "Add `random` as a parameter to randomize the order in which races are displayed",
-    "parameters": "[username] [threshold] [category]",
+    "parameters": "[username] [threshold] <category>",
+    "defaults": {
+        "category": "wpm",
+    },
     "usages": [
         "textsunder joshua728 1000 points",
         "textsunder charlieog 5000 times",
