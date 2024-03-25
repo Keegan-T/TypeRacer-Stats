@@ -5,6 +5,7 @@ load_dotenv()
 
 prefix = "-"
 bot_token = os.getenv("bot_token")
+staging_token = os.getenv("staging_token")
 records_channel = 1199677882730029086
 bot_owner = 155481579005804544
 bot_admins = [

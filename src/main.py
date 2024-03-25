@@ -7,20 +7,18 @@ import asyncio
 import traceback
 import utils
 import errors
-from config import prefix, bot_token, bot_owner, log_channel
+from config import prefix, bot_token, staging_token, bot_owner, log_channel
 from database.banned import get_banned
 from database import records
 from database.bot_users import update_commands
 from tasks import import_competitions, update_important_users, update_top_tens
-from welcome import welcomed
+import welcome
 
 bot = commands.Bot(command_prefix=prefix, case_insensitive=True, intents=discord.Intents.all())
 bot.remove_command("help")
 
-# Hello world!
-
 ##### FOR DEVELOPMENT #####
-staging = False
+staging = True
 ###########################
 """
 Development would work like this:
@@ -93,10 +91,10 @@ async def on_command_error(ctx, error):
 
 @bot.event
 async def on_message(message):
-    if message.channel.id != 1197837519090352168: return
+    # if message.channel.id != 1197837519090352168: return
     user_id = message.author.id
 
-    if user_id in welcomed and message.reference and message.content.startswith(prefix):
+    if user_id in welcome.welcomed and message.reference and message.content.startswith(prefix):
         replied_message_id = message.reference.message_id
         replied_message = await message.channel.fetch_message(replied_message_id)
 
@@ -118,17 +116,16 @@ async def on_command(ctx):
         f"Happy typing! :slight_smile:"
     )
 
-    if user_id not in welcomed:
+    if user_id not in welcome.welcomed:
         await ctx.reply(content=welcome_message)
-        welcomed.append(user_id)
+        welcome.welcomed.append(user_id)
 
 @bot.event
 async def on_command_completion(ctx):
     await log_command(ctx)
 
-    if ctx.author.id == 155481579005804544: return
-
-    update_commands(ctx.author.id, ctx.command.name)
+    if not staging:
+        update_commands(ctx.author.id, ctx.command.name)
 
 
 ##### BOT TASKS #####
@@ -157,7 +154,10 @@ async def load_commands():
 
 async def start():
     await load_commands()
-    await bot.start(bot_token)
+    if staging:
+        await bot.start(staging_token)
+    else:
+        await bot.start(bot_token)
 
 
 asyncio.run(start())
