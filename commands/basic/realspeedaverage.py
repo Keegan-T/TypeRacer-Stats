@@ -1,3 +1,5 @@
+import asyncio
+
 from discord import Embed
 from discord.ext import commands
 from src import colors, urls, errors, utils
@@ -126,6 +128,8 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
     rate_limit = False
 
     for i in range(start_number, end_number + 1, 1):
+        if i != start_number:
+            await asyncio.sleep(1)
         race = await get_race_info(username, i, universe=universe, get_lagged=True, get_raw=raw)
         if isinstance(race, int):
             if race == 429:
