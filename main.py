@@ -18,7 +18,7 @@ bot = commands.Bot(command_prefix=prefix, case_insensitive=True, intents=discord
 bot.remove_command("help")
 
 ##### FOR DEVELOPMENT #####
-staging = False
+staging = True
 ###########################
 
 

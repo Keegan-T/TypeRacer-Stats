@@ -33,16 +33,12 @@ class FastestCompletion(commands.Cog):
     @commands.command(aliases=info["aliases"])
     async def fastestcompletion(self, ctx, *params):
         user = get_user(ctx)
-        print(user)
 
         try:
             username, number, kind = await get_params(ctx, user, params)
         except ValueError:
             return
 
-        print(username)
-        print(number)
-        print(kind)
         await run(ctx, user, username, number, kind)
 
 
@@ -94,8 +90,6 @@ async def run(ctx, user, username, number, kind):
     start_index = 0
     difference = float("inf")
 
-    print("Here we go")
-
     if kind == "races":
         end_index = number
         while end_index < len(race_list):
@@ -129,8 +123,6 @@ async def run(ctx, user, username, number, kind):
             if single:
                 race_range = [end_index, end_index + 1]
                 break
-
-    print("We gon'tedn't")
 
     completion_races = race_list[race_range[0]:race_range[1]]
     start_time = completion_races[0][7]
