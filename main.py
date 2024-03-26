@@ -102,8 +102,8 @@ async def on_message(message):
     if message.content.startswith(prefix):
         await log_command(message)
 
-    if "keegant" in message.content:
-        return await message.reply(content="He is too powerful for now...")
+        if "keegant" in message.content:
+            return await message.reply(content="He is too powerful for now...")
 
     await bot.process_commands(message)
 
