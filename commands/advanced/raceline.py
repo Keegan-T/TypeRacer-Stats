@@ -68,18 +68,20 @@ async def get_params(ctx, user, params, command=info):
 
         try:
             start_date = utils.floor_day(parser.parse(params[0]))
-            usernames.pop(0)
+            usernames = usernames[1:]
         except ValueError:
             pass
 
         try:
             end_date = utils.floor_day(parser.parse(params[-1]))
-            usernames.pop()
+            usernames = usernames[:-1]
         except ValueError:
             pass
 
     if user["username"]:
-        usernames = [username.replace("me", user["username"]) for username in usernames]
+        for i in range(len(usernames)):
+            if usernames[i] == "me":
+                usernames[i] = user["username"]
 
     unique_usernames = []
     for username in usernames:
@@ -98,14 +100,9 @@ async def get_lines(usernames, start_date, end_date, points=False):
     min_timestamp = float("inf")
     columns = ["points" if points else "number", "timestamp"]
     for username in usernames:
-        utils.time_start()
-        race_list = sorted(await races.get_races(
-            username,
-            start_time=start_date.timestamp(),
-            end_time=end_date.timestamp(),
-            columns=columns,
-        ), key=lambda r: r[1])
-        utils.time_end()
+        race_list = [race for race in await races.get_races(username, columns=columns)
+                     if start_date.timestamp() <= race[1] < end_date.timestamp()]
+        race_list.sort(key=lambda r: r[1])
         if len(race_list) < 2:
             continue
         x, y = [race_list[0][1]], [0]
@@ -178,9 +175,7 @@ async def run(ctx, user, usernames, start_date, end_date, points=False):
         title += f"\n{utils.get_display_date_range(datetime.fromtimestamp(lines[0][5], tz=timezone.utc), end_date)}"
 
     file_name = f"{kind.lower()}_over_time_{usernames[0]}.png"
-    utils.time_start()
     graphs.line(user, sorted_lines, title, "Date", kind, file_name)
-    utils.time_end()
 
     file = File(file_name, filename=file_name)
     await ctx.send(file=file)
