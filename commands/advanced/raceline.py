@@ -100,31 +100,18 @@ async def get_lines(usernames, start_date, end_date, points=False):
     min_timestamp = float("inf")
     columns = ["points" if points else "number", "timestamp"]
     for username in usernames:
-        race_list = [race for race in await races.get_races(username, columns=columns)
-                     if start_date.timestamp() <= race[1] < end_date.timestamp()]
+        race_list = await races.get_races(
+            username, columns=columns, start_time=start_date.timestamp(), end_time=end_date.timestamp())
         race_list.sort(key=lambda r: r[1])
         if len(race_list) < 2:
             continue
         x, y = [race_list[0][1]], [0]
         race_count = race_list[-1][0]
         point_count = 0
-        time_range = end_date.timestamp() - race_list[0][1]
-        grace_period = time_range / 8640
         for i, race in enumerate(race_list):
-            previous_timestamp = race_list[i - 1][1]
             timestamp = race[1]
             if timestamp < min_timestamp:
                 min_timestamp = timestamp
-
-            # Adding intermittent points for smooth colormaps
-            if timestamp - previous_timestamp > grace_period * 24:
-                while previous_timestamp < timestamp:
-                    previous_timestamp += grace_period
-                    x.append(previous_timestamp)
-                    if points:
-                        y.append(point_count)
-                    else:
-                        y.append(i)
 
             x.append(timestamp)
             if points:
@@ -133,7 +120,7 @@ async def get_lines(usernames, start_date, end_date, points=False):
             else:
                 y.append(race[0] - race_list[0][0] + 1)
 
-        lines.append((username, x, y, point_count if points else race_count, grace_period, min_timestamp))
+        lines.append((username, x, y, point_count if points else race_count, min_timestamp))
 
     if len(lines) == 0:
         return lines
@@ -144,13 +131,8 @@ async def get_lines(usernames, start_date, end_date, points=False):
         end_timestamp = line[1][-1]
         end_number = line[2][-1]
         if end_timestamp < max_timestamp:
-            while end_timestamp + lines[0][4] < max_timestamp:
-                end_timestamp += lines[0][4]
-                line[1].append(end_timestamp)
-                line[2].append(end_number)
-
-        line[1].append(max_timestamp)
-        line[2].append(end_number)
+            line[1].append(max_timestamp)
+            line[2].append(end_number)
 
     return lines
 
@@ -158,10 +140,8 @@ async def get_lines(usernames, start_date, end_date, points=False):
 async def run(ctx, user, usernames, start_date, end_date, points=False):
     lines = await get_lines(usernames, start_date, end_date, points)
 
-    if len(lines) == 0:
+    if not lines:
         return await ctx.send(embed=no_data())
-
-    sorted_lines = sorted(lines, key=lambda l: l[3], reverse=True)
 
     kind = "Points" if points else "Races"
     title = f"{kind} Over Time"
@@ -174,8 +154,10 @@ async def run(ctx, user, usernames, start_date, end_date, points=False):
     elif datetime.now(timezone.utc).date() != end_date.date():
         title += f"\n{utils.get_display_date_range(datetime.fromtimestamp(lines[0][5], tz=timezone.utc), end_date)}"
 
+    lines.sort(key=lambda x: x[3], reverse=True)
+
     file_name = f"{kind.lower()}_over_time_{usernames[0]}.png"
-    graphs.line(user, sorted_lines, title, "Date", kind, file_name)
+    graphs.line(user, lines, title, "Date", kind, file_name)
 
     file = File(file_name, filename=file_name)
     await ctx.send(file=file)
@@ -189,6 +171,7 @@ def too_many_usernames():
         description="Can only plot up to 10 usernames at once",
         color=colors.error,
     )
+
 
 def no_data():
     return Embed(

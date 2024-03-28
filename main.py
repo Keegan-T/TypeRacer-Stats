@@ -21,6 +21,10 @@ bot.remove_command("help")
 staging = False
 ###########################
 
+from database import db
+db.run("""
+    CREATE INDEX idx_races_username ON races(username)
+""")
 
 async def log_command(message):
     log = utils.command_log(message)
@@ -139,10 +143,14 @@ async def on_command_completion(ctx):
 async def loops():
     if datetime.utcnow().hour == 4 and datetime.utcnow().minute == 0:
         try:
+            await log_command(f"Importing competitions")
             import_competitions()
+            await log_command(f"Updating important users")
             await update_important_users()
+            await log_command(f"Updating records")
             await records.update(bot)
             if datetime.utcnow().day == 1:
+                await log_command(f"Updating top tens")
                 await update_top_tens()
         except Exception as error:
             await error_notify("Task Failure", error)

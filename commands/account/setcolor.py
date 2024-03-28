@@ -114,7 +114,7 @@ async def run(ctx, user, element, color):
 
     update_colors(ctx.author.id, user["colors"])
 
-    graphs.sample(user["colors"])
+    graphs.sample(user)
 
     file_name = "sample.png"
     file = File("sample.png", filename=f"sample.png")

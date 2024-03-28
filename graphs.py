@@ -8,11 +8,12 @@ from matplotlib.ticker import FuncFormatter, MaxNLocator, FixedLocator
 from matplotlib import rcParams
 import numpy as np
 from utils import format_big_number
+from config import bot_owner
 
 rcParams["font.family"] = "sans-serif"
 rcParams["font.sans-serif"] = ["Exo 2"]
 rcParams["font.size"] = 11
-
+cmap_keegant = LinearSegmentedColormap.from_list('keegant', ["#0094FF", "#FF00DC"])
 
 class LineHandler(HandlerLine2D):
     def create_artists(self, legend, orig_handle, xdescent, ydescent, width, height, fontsize, trans):
@@ -30,6 +31,12 @@ class CollectionHandler(HandlerLineCollection):
         lc.set_array(x)
         return [lc]
 
+def get_cmap(user):
+    cmap = plt.get_cmap(user["colors"]["line"])
+    if int(user["id"]) == bot_owner and cmap.name == "cool":
+        cmap = cmap_keegant
+
+    return cmap
 
 def date_x_ticks(ax, min_timestamp, max_timestamp):
     date_range = max_timestamp - min_timestamp
@@ -53,6 +60,8 @@ def get_interpolated_segments(x, y):
     for i in range(len(y) - 1):
         x_range = x[-1] - x[0]
         x_difference = x[i + 1] - x[i]
+        if x_difference == 0:
+            continue
         x_size = x_range / x_difference
         segment_count = max(int(50 / x_size), 2)
         if segment_count == 2 and i < len(y) - 2:
@@ -74,23 +83,27 @@ def get_interpolated_segments(x, y):
     return x_segments, y_segments
 
 
-def cmap_line(ax, color, line_index):
+def cmap_line(ax, line_index, user):
+    line_width = 1
+    cmap = get_cmap(user)
+    if int(user["id"]) == bot_owner:
+        line_width = 2
+
     line = ax.get_lines()[line_index]
-    cmap = plt.get_cmap(color)
-    # cmap = LinearSegmentedColormap.from_list('my_colormap', ["#879AF2", "#D3208B", "#FDA000"])
     x, y = line.get_data()
     ax.lines.pop(line_index)
 
     points = np.array([x, y]).T.reshape(-1, 1, 2)
     segments = np.concatenate([points[:-1], points[1:]], axis=1)
-    lc = LineCollection(segments, cmap=cmap, zorder=50)
+    lc = LineCollection(segments, cmap=cmap, zorder=50, linewidth=line_width)
     lc.set_array(x)
     ax.add_collection(lc)
 
     return lc
 
 
-def color_graph(ax, colors, recolored_line=0, force_legend=False, match=False):
+def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
+    colors = user["colors"]
     ax.set_facecolor(colors["graphbackground"])
 
     ax.figure.set_facecolor(colors["background"])
@@ -117,10 +130,12 @@ def color_graph(ax, colors, recolored_line=0, force_legend=False, match=False):
         line_handler = LineHandler()
         if i == recolored_line:
             if line_color in plt.colormaps():
-                line = cmap_line(ax, line_color, recolored_line)
+                line = cmap_line(ax, recolored_line, user)
                 line_handler = CollectionHandler(numpoints=50)
             else:
                 line.set_color(line_color)
+                if int(user["id"]) == bot_owner:
+                    line.set_linewidth(3)
         legend_lines.append(line)
         legend_labels.append(label)
         handler_map[line] = line_handler
@@ -139,7 +154,7 @@ def color_graph(ax, colors, recolored_line=0, force_legend=False, match=False):
             text.set_color(colors["text"])
 
 
-def sample(colors):
+def sample(user):
     x = [i for i in range(1000)]
     y = x
 
@@ -151,7 +166,7 @@ def sample(colors):
     ax.set_xlabel("X-Axis")
     ax.set_ylabel("Y-Axis")
 
-    color_graph(ax, colors, 0, True)
+    color_graph(ax, user, 0, True)
 
     plt.savefig("sample.png")
 
@@ -174,9 +189,13 @@ def line(user, lines, title, x_label, y_label, file_name):
         x.append(last_x)
         y.insert(0, first_y)
         y.append(last_y)
-        ax.plot(x, y, label=username)
+
         if username == caller:
             caller_index = i
+            if user["colors"]["line"] in plt.colormaps:
+                x, y = get_interpolated_segments(x, y)
+
+        ax.plot(x, y, label=username)
 
     plt.grid()
     ax.set_title(title)
@@ -189,7 +208,7 @@ def line(user, lines, title, x_label, y_label, file_name):
 
     ax.yaxis.set_major_formatter(FuncFormatter(format_big_number))
 
-    color_graph(ax, user["colors"], caller_index)
+    color_graph(ax, user, caller_index)
 
     plt.savefig(file_name)
     plt.close()
@@ -202,7 +221,7 @@ def compare(user, user1, user2, file_name):
 
     color = user["colors"]["line"]
     if color in plt.colormaps():
-        cmap = plt.get_cmap(color)
+        cmap = get_cmap(user)
         patches1 = ax1.hist(data1, bins="auto", orientation="horizontal")[2]
         patches2 = ax2.hist(data2, bins="auto", orientation="horizontal")[2]
         for i, patch in enumerate(patches1):
@@ -231,8 +250,8 @@ def compare(user, user1, user2, file_name):
     ax2.grid()
     ax2.set_title(username2)
 
-    color_graph(ax1, user["colors"])
-    color_graph(ax2, user["colors"])
+    color_graph(ax1, user)
+    color_graph(ax2, user)
 
     plt.subplots_adjust(wspace=0, hspace=0)
 
@@ -304,7 +323,7 @@ def improvement(user, wpm, title, file_name, timeframe=""):
     ax.set_title(title)
     ax.grid()
 
-    color_graph(ax, user["colors"])
+    color_graph(ax, user)
 
     plt.savefig(file_name)
     plt.close()
@@ -351,7 +370,7 @@ def match(user, rankings, title, y_label, file_name, limit_y=True):
     ax.set_title(title)
     ax.grid()
 
-    color_graph(ax, user["colors"], caller_index, match=True)
+    color_graph(ax, user, caller_index, match=True)
 
     plt.savefig(file_name)
     plt.close()
@@ -371,7 +390,7 @@ def histogram(user, username, values, category, file_name):
 
     color = user["colors"]["line"]
     if color in plt.colormaps():
-        cmap = plt.get_cmap(color)
+        cmap = get_cmap(user)
         patches = ax.hist(values, bins=bins)[2]
         for i, patch in enumerate(patches):
             patch.set_facecolor(cmap(i / len(patches)))
@@ -389,7 +408,7 @@ def histogram(user, username, values, category, file_name):
     ax.set_title(f"{category_title} Histogram - {username}")
     ax.grid()
 
-    color_graph(ax, user["colors"])
+    color_graph(ax, user)
 
     plt.savefig(file_name)
     plt.close()
@@ -452,7 +471,7 @@ def personal_bests(user, username, x, y, category, file_name):
     plt.grid()
     ax.set_title(f"Personal Best Over {category.title()} - {username}")
 
-    color_graph(ax, user["colors"])
+    color_graph(ax, user)
 
     plt.savefig(file_name)
     plt.close()
@@ -479,7 +498,7 @@ def text_bests(user, username, x, y, category, file_name):
     plt.grid()
     ax.set_title(f"Text Bests Over {title} - {username}")
 
-    color_graph(ax, user["colors"])
+    color_graph(ax, user)
 
     plt.savefig(file_name)
     plt.close()

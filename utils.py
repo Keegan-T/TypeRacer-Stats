@@ -381,6 +381,10 @@ def time_start():
     global start
     start = time.time()
 
+def time_split():
+    time_end()
+    time_start()
+
 
 def time_end():
     end = time.time() - start
@@ -513,3 +517,6 @@ def command_log(message):
     server = message.guild.name if message.guild else "DM"
 
     return f"`{server} | [{author.id}] {author.name} {('(' + linked + ')') if linked else ''}: {message.content}`"
+
+def race_id(username, number):
+    return f"{username}|{number}"
