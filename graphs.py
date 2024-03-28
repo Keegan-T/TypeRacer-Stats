@@ -7,6 +7,8 @@ from matplotlib.legend_handler import HandlerLine2D
 from matplotlib.ticker import FuncFormatter, MaxNLocator, FixedLocator
 from matplotlib import rcParams
 import numpy as np
+
+import utils
 from utils import format_big_number
 from config import bot_owner
 
@@ -190,12 +192,11 @@ def line(user, lines, title, x_label, y_label, file_name):
         y.insert(0, first_y)
         y.append(last_y)
 
+        x, y = get_interpolated_segments(x, y)
+        ax.plot(x, y, label=username)
+
         if username == caller:
             caller_index = i
-            if user["colors"]["line"] in plt.colormaps:
-                x, y = get_interpolated_segments(x, y)
-
-        ax.plot(x, y, label=username)
 
     plt.grid()
     ax.set_title(title)

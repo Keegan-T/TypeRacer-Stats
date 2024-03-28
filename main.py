@@ -18,7 +18,7 @@ bot = commands.Bot(command_prefix=prefix, case_insensitive=True, intents=discord
 bot.remove_command("help")
 
 ##### FOR DEVELOPMENT #####
-staging = True
+staging = False
 ###########################
 
 async def log_command(message):
@@ -161,13 +161,6 @@ async def load_commands():
 
 
 async def start():
-    try:
-        from database import db
-        db.run("""
-            CREATE INDEX idx_races_username ON races(username)
-        """)
-    except Exception as e:
-        await error_notify("Indexing Error", e)
     await load_commands()
     if staging:
         await bot.start(staging_token)
