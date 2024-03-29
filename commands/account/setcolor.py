@@ -148,7 +148,7 @@ async def view(ctx, user):
 async def reset(ctx, user):
     user["colors"] = colors.default_colors
     update_colors(ctx.author.id, user["colors"])
-    graphs.sample(user["colors"])
+    graphs.sample(user)
 
     embed = Embed(
         title=f"Colors Reset To Default",

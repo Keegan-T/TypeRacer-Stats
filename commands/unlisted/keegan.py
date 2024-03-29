@@ -19,8 +19,7 @@ class Keegan(commands.Cog):
 
 async def run(ctx):
     embed = Embed(
-        title="hi",
-        description="yo who made this bot it's pretty cool",
+        description="[Teminite - Yours](https://www.youtube.com/watch?v=Id78y7mpU2c) :saxophone:",
         color=0,
     )
 
