@@ -44,7 +44,6 @@ def run(query, params=[]):
 def run_many(query, data):
     cursor = db.cursor()
     try:
-        cursor.execute("BEGIN")
         cursor.executemany(query, data)
         db.commit()
 
