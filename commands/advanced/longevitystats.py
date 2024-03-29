@@ -138,7 +138,8 @@ async def run(ctx, user, username, kind, n):
     await ctx.send(embed=embed)
 
 async def get_history(username, kind):
-    race_list = await races.get_races(username, columns=["timestamp"], order_by="timestamp")
+    race_list = await races.get_races(username, columns=["timestamp"])
+    race_list.sort(key=lambda x: x[0])
 
     history = []
     for race in race_list:

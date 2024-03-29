@@ -4,6 +4,8 @@ import utils
 import errors
 from database.bot_users import get_user
 import database.users as users
+import database.texts as texts
+import database.races as races
 
 info = {
     "name": "textbests",
@@ -61,7 +63,9 @@ async def run(ctx, user, username, n):
     if not stats:
         return await ctx.send(embed=errors.import_required(username))
 
-    text_bests = users.get_text_bests(username, race_stats=True)[:n]
+    text_list = texts.get_texts(as_dictionary=True)
+    text_bests = users.get_text_bests(username, race_stats=True)
+    text_bests = text_bests[:n]
     texts_typed = len(text_bests)
     average = sum(text["wpm"] for text in text_bests) / texts_typed
 
@@ -69,7 +73,7 @@ async def run(ctx, user, username, n):
 
     best = ""
     for text in text_bests[:limit]:
-        quote = utils.truncate_clean(text["quote"], 60)
+        quote = utils.truncate_clean(text_list[text["text_id"]]["quote"], 60)
         best += (
             f"[{text['wpm']:,.2f} WPM]"
             f"(https://data.typeracer.com/pit/result?id=|tr:{username}|{text['number']})"
@@ -79,7 +83,7 @@ async def run(ctx, user, username, n):
 
     worst = ""
     for text in text_bests[::-1][:limit]:
-        quote = utils.truncate_clean(text["quote"], 60)
+        quote = utils.truncate_clean(text_list[text["text_id"]]["quote"], 60)
         worst += (
             f"[{text['wpm']:,.2f} WPM]"
             f"(https://data.typeracer.com/pit/result?id=|tr:{username}|{text['number']})"

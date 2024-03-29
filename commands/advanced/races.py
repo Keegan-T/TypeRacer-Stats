@@ -113,14 +113,14 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         title += "All-Time"
         start = stats["joined"]
         end = datetime.now(timezone.utc).timestamp()
-        race_list = sorted(await races.get_races(username, start, end, columns=columns), key=lambda x: x[7])
+        race_list = await races.get_races(username, columns, start, end)
         if not race_list:
             return await ctx.send(embed=no_data())
 
     elif start_date is None:
         end_number = min(end_number, stats["races"])
         title += f"Races {start_number:,} - {end_number:,}"
-        race_list = sorted(await races.get_races(username, start_number=start_number, end_number=end_number, columns=columns), key=lambda x: x[7])
+        race_list = await races.get_races(username, columns, start_number=start_number, end_number=end_number)
         if not race_list:
             return await ctx.send(embed=no_data())
         start = race_list[0][7]
@@ -133,9 +133,11 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
             start_date = datetime.utcfromtimestamp(stats["joined"])
         end = end_date.timestamp()
         title += utils.get_display_date_range(start_date, end_date)
-        race_list = sorted(await races.get_races(username, start_date.timestamp(), end_date.timestamp(), columns=columns), key=lambda x: x[7])
+        race_list = await races.get_races(username, columns, start_date.timestamp(), end_date.timestamp())
         if not race_list:
             return await ctx.send(embed=no_data())
+
+    race_list.sort(key=lambda x: x[7])
 
     embed = Embed(title=title, color=user["colors"]["embed"])
     if len(race_list) == 0:

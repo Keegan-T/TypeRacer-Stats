@@ -1,3 +1,4 @@
+import utils
 from database import db
 import time
 
@@ -10,22 +11,11 @@ def get_disabled_texts():
     return texts
 
 
-def add_user(user):
-    db.run(
-        """
-            INSERT INTO users VALUES(
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-            )
-        """,
-        (
-            user['username'], user['display_name'], user['premium'], user['has_pic'], user['country'],
-            user['joined'], user['wpm_average'], user['wpm_last_10'], user['wpm_best'], user['wpm_verified'],
-            user['races'], user['wins'], user['points'], user['points_retroactive'], user['seconds'],
-            user['characters'], 0, 0, 0, 0, 0, 0, 0, 1, user['avatar'],
-            user['disqualified'], time.time()
-        )
-    )
+def add_user(username):
+    db.run("""
+        INSERT INTO users (username)
+        VALUES (?)
+    """, [username])
 
 
 def get_users():
@@ -165,7 +155,7 @@ def update_stats(user):
         (
             user['username'], user['display_name'], user['premium'], user['has_pic'], user['country'],
             user['joined'], user['wpm_average'], user['wpm_last_10'], user['wpm_best'], user['wpm_verified'],
-            user['races'], user['wins'], user['points'], user['points_retroactive'], user['seconds'],
+            user['races'], user['wins'], user['points'], user['retroactive_points'], user['seconds'],
             user['characters'], user['avatar'], user['disqualified'], time.time(),
             user['username']
         )
@@ -234,30 +224,29 @@ def get_last_updated(username):
 def get_text_bests(username, race_stats=False):
     if race_stats:
         text_bests = db.fetch("""
-            WITH TextBests AS (
-                SELECT text_id, quote, wpm, number, timestamp,
-                ROW_NUMBER() OVER (PARTITION BY text_id ORDER BY wpm DESC) AS rank
-                FROM races
-                JOIN texts ON texts.id = races.text_id
-                WHERE username = ?
-            )
-            SELECT text_id, quote, wpm, number, timestamp
-            FROM TextBests
-            WHERE rank = 1
-            ORDER BY wpm DESC
-        """, [username])
-
-    else:
-        text_bests = db.fetch(
-            """
-                SELECT text_id, MAX(wpm) AS wpm
+            SELECT r.text_id, r.wpm, r.number, r.timestamp
+            FROM races r
+            INDEXED BY idx_races_username
+            INNER JOIN (
+                SELECT text_id, MAX(wpm) AS max_wpm
                 FROM races
                 WHERE username = ?
                 GROUP BY text_id
-                ORDER BY wpm DESC
-            """,
-            [username],
-        )
+            ) text_bests
+            ON r.text_id = text_bests.text_id AND r.wpm = text_bests.max_wpm
+            WHERE r.username = ?
+            ORDER BY r.wpm DESC
+        """, [username, username])
+
+    else:
+        text_bests = db.fetch("""
+            SELECT text_id, MAX(wpm) AS wpm
+            FROM races
+            INDEXED BY idx_races_username_text_id_wpm
+            WHERE username = ?
+            GROUP BY text_id
+            ORDER BY wpm DESC
+        """, [username])
 
     disabled_text_ids = [text[0] for text in get_disabled_texts()]
     filtered_tb = [text for text in text_bests if text[0] not in disabled_text_ids]
@@ -287,6 +276,7 @@ def get_max_quote(username):
         """
             SELECT text_id, COUNT(text_id) AS occurrences
             FROM races
+            INDEXED BY idx_races_username_text_id
             WHERE username = ?
             GROUP BY text_id
             ORDER BY occurrences DESC
@@ -334,6 +324,7 @@ def get_words(username):
 def get_unraced_text_ids(username):
     user_texts = db.fetch("""
         SELECT text_id FROM races
+        INDEXED BY idx_races_username_text_id
         WHERE username = ?
         GROUP BY text_id
     """, [username])
@@ -343,12 +334,8 @@ def get_unraced_text_ids(username):
         WHERE disabled = 0
     """)
 
-    user_texts = [text[0] for text in user_texts]
-    unraced = []
-
-    for text in texts:
-        if text[0] not in user_texts:
-            unraced.append(text)
+    user_text_set = set(user_texts)
+    unraced = [text for text in texts if text[0] not in user_text_set]
 
     return unraced
 
@@ -356,6 +343,7 @@ def get_unraced_text_ids(username):
 def count_races_over(username, category, threshold, over=True):
     times = db.fetch(f"""
         SELECT COUNT(*) FROM races
+        INDEXED BY idx_races_username
         WHERE username = ?
         AND {category} {'>=' if over else '<'} {threshold}
     """, [username])[0][0]
@@ -369,6 +357,7 @@ def get_texts_over(username, threshold, category):
     texts = db.fetch(f"""
         SELECT text_id, COUNT(text_id) AS times
         FROM races
+        INDEXED BY idx_races_username_text_id_wpm
         WHERE username = ?
         {category_string if category != 'times' else ''} 
         GROUP BY text_id
@@ -386,7 +375,9 @@ def get_texts_under(username, threshold, category=None):
     if category == "times":
         texts = db.fetch(f"""
             SELECT text_id, COUNT(text_id) AS times
-            FROM races WHERE username = ?
+            FROM races
+            INDEXED BY idx_races_username_text_id
+            WHERE username = ?
             GROUP BY text_id
             HAVING times < {threshold}
             ORDER BY times DESC
@@ -396,10 +387,12 @@ def get_texts_under(username, threshold, category=None):
         texts = db.fetch(f"""
             SELECT text_id, COUNT(text_id) AS times
             FROM races
+            INDEXED BY idx_races_username_text_id
             WHERE username = ?
             AND text_id IN (
                 SELECT text_id
                 FROM races
+                INDEXED BY idx_races_username_text_id{'_wpm' * (category == 'wpm')}
                 WHERE username = ?
                 GROUP BY text_id
                 HAVING MAX({category}) < {threshold}
@@ -417,9 +410,8 @@ def get_milestone_number(username, milestone, category):
     if category == "races":
         race = db.fetch("""
             SELECT number FROM races
-            WHERE username = ?
-            AND number = ?
-        """, [username, milestone])
+            WHERE id = ?
+        """, [utils.race_id(username, milestone)])
         if not race:
             return None
         return race[0][0]
@@ -427,6 +419,7 @@ def get_milestone_number(username, milestone, category):
     elif category == "wpm":
         race = db.fetch("""
             SELECT number FROM races
+            INDEXED BY idx_races_username
             WHERE username = ?
             AND wpm >= ?
             ORDER BY timestamp ASC
@@ -440,6 +433,7 @@ def get_milestone_number(username, milestone, category):
         races = db.fetch("""
             SELECT number, points
             FROM races
+            INDEXED BY idx_races_username
             WHERE username = ?
             ORDER BY timestamp ASC
         """, [username])
@@ -457,6 +451,7 @@ def get_milestone_number(username, milestone, category):
         races = db.fetch("""
             SELECT number, text_id
             FROM races
+            INDEXED BY idx_races_username
             WHERE username = ?
             ORDER BY timestamp ASC
         """, [username])

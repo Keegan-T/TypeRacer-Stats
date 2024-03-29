@@ -19,7 +19,7 @@ from api.texts import get_quote
 from api.races import get_races
 from commands.basic.stats import get_params
 from config import bot_admins
-import database.text_results as top_tens
+import database.text_results as text_results
 
 info = {
     "name": "download",
@@ -51,10 +51,9 @@ class Download(commands.Cog):
         except ValueError:
             return
 
-        await download(username, ctx=ctx, bot_user=user)
-        # await run(username=username, ctx=ctx, bot_user=user)
+        await run(username, ctx=ctx, bot_user=user)
 
-async def download(username=None, stats=None, ctx=None, bot_user=None, override=False):
+async def run(username=None, stats=None, ctx=None, bot_user=None, override=False):
     invoked = True if ctx else False
 
     if not stats:
@@ -71,48 +70,43 @@ async def download(username=None, stats=None, ctx=None, bot_user=None, override=
             await ctx.send(embed=errors.no_races())
         return False
 
-    # Check if the user already imported
     user = users.get_user(username)
-    new_user = False if user else True
-
     races_left = stats["races"]
     start_time = 0
-    retroactive_points = 0
-    seconds = 0
-    characters = 0
-    earliest_new_timestamp = datetime.now(timezone.utc).timestamp()
 
-    # Importing new user
-    if new_user:
+    if user:
+        print(f"Updating data for {username}")
+        new_user = False
+        stats["joined"] = user["joined"]
+        stats["wpm_best"] = user["wpm_best"]
+        stats["retroactive_points"] = user["points_retroactive"]
+        stats["seconds"] = user["seconds"]
+        stats["characters"] = user["characters"]
+        stats["last_updated"] = user["last_updated"]
+        start_time = user["last_updated"] - 60 * 15
+        races_left -= user["races"]
+        if stats["disqualified"]:
+            text_results.delete_user_results(username)
+
+    else:
         print(f"Importing new data for {username}")
+        new_user = True
         joined = await get_joined(username)
         if not joined:
             if invoked:
                 await ctx.send(embed=errors.invalid_username())
             return
         stats["joined"] = joined
-        print(f"Joined found from profile: {stats['joined']}")
+        stats["retroactive_points"] = 0
+        stats["seconds"] = 0
+        stats["characters"] = 0
 
-    # Updating existing user
-    else:
-        print(f"Updating data for {username}")
-        stats["joined"] = user["joined"]
-        stats["wpm_best"] = user["wpm_best"]
-        races_left -= user["races"]
-        start_time = user["last_updated"] - 60 * 15
-        retroactive_points = user["points_retroactive"]
-        seconds = user["seconds"]
-        characters = user["characters"]
-
-    print(races_left)
-    if races_left > 10_000 and ctx.author.id not in bot_admins and not override:
+    if races_left > 10_000 and (invoked and ctx.author.id in bot_admins) and not override:
         if invoked:
             await too_many_races(ctx, bot_user, username, races_left)
         return False
 
     new_races = races_left > 0
-
-    # Downloading all races
     if new_races:
         if invoked:
             await ctx.send(embed=Embed(
@@ -120,18 +114,18 @@ async def download(username=None, stats=None, ctx=None, bot_user=None, override=
                 description=f"Downloading {races_left:,} new races for {username}",
                 color=bot_user["colors"]["embed"],
             ))
-
         print(f"Downloading {races_left:,} new races for {username}")
 
     text_list = texts.get_texts(as_dictionary=True)
     end_time = time.time()
-    start = time.time() # For duration logging
+    race_list = []
 
     try:
         while True:
-            if not new_races:
+            if races_left == 0:
                 break
 
+            print(f"Fetching races")
             race_data = await get_races(username, start_time, end_time, 1000)
 
             if race_data == -1:  # Request failed
@@ -139,8 +133,6 @@ async def download(username=None, stats=None, ctx=None, bot_user=None, override=
 
             elif not race_data:  # No more races to download
                 break
-
-            race_list = []
 
             for race in race_data:
                 # Excluding 0 WPM (modified cheated) races
@@ -163,8 +155,8 @@ async def download(username=None, stats=None, ctx=None, bot_user=None, override=
                     texts.add_text(text)
                     text_list[text_id] = text
 
-                    await top_tens.update_results(text_id)
-                    time.sleep(2)
+                    await text_results.update_results(text_id)
+                    await asyncio.sleep(2)
 
                 quote = text_list[text_id]["quote"]
 
@@ -176,54 +168,42 @@ async def download(username=None, stats=None, ctx=None, bot_user=None, override=
                 if race["pts"] == 0:
                     points = utils.calculate_points(quote, race["wpm"])
                     race["pts"] = points
-                    retroactive_points += points
+                    stats["retroactive_points"] += points
 
                 # Manually checking for new best WPM
                 if wpm > stats["wpm_best"]:
                     stats["wpm_best"] = wpm
 
                 # Only updating seconds / characters for new races
-                if not new_user and race["t"] > user["last_updated"]:
-                    seconds += utils.calculate_seconds(quote, wpm)
-                    characters += len(quote)
+                if not new_user and race["t"] > stats["last_updated"]:
+                    stats["seconds"] += utils.calculate_seconds(quote, wpm)
+                    stats["characters"] += len(quote)
 
-                if race["t"] < earliest_new_timestamp:
-                    earliest_new_timestamp = race["t"]
+                race_list.append((
+                    utils.race_id(username, race["gn"]), username, race["tid"], race["gn"],
+                    race["wpm"], race["ac"], race["pts"], race["r"], race["np"], race["t"],
+                ))
 
-                race_list.append(race)
-            races.add_races(username, race_list)
-
-            # races_left -= len(race_list)
-            end_time = min(race_list, key=lambda r: r["t"])["t"] - 0.01
+            end_time = min(race_list, key=lambda r: r[9])[9] - 0.01
 
     except Exception as e:
-        races.delete_races_after_timestamp(username, earliest_new_timestamp)
-        if invoked:
-            await ctx.send(embed=unexpected_error())
         raise e
 
-    print(f"Took {time.time() - start:,.2f}s")
+    if new_user:
+        users.add_user(username)
+        await update_award_count(username)
 
-    if not new_races:
+    if new_races:
+        races.add_races(race_list)
         if invoked:
-            await no_new_races(ctx, bot_user, username)
-        print(f"No new races to import for {username}")
-
-    else:
-        if invoked:
-            await import_complete(ctx, bot_user, username)
+            await import_complete(ctx, bot_user, username, notify=races_left > 1000)
             update_text_stats(username)
 
-    stats["points_retroactive"] = retroactive_points
-    stats["seconds"] = seconds
-    stats["characters"] = characters
-
-    if new_user:
-        users.add_user(stats)
-        update_award_count(username)
-
     else:
-        users.update_stats(stats)
+        if invoked:
+            await no_new_races(ctx, bot_user, username)
+
+    users.update_stats(stats)
 
     print(f"Finished importing {username}")
 
@@ -242,10 +222,10 @@ def update_text_stats(username):
     users.update_text_stats(username, text_stats)
 
 
-def update_award_count(username):
-    print("Updating award get_count")
+async def update_award_count(username):
+    print("Updating award count")
 
-    awards = competition_results.get_awards(username)
+    awards = await competition_results.get_awards(username)
     first = awards['day']['first'] + awards['week']['first'] + awards['month']['first'] + awards['year']['first']
     second = awards['day']['second'] + awards['week']['second'] + awards['month']['second'] + awards['year']['second']
     third = awards['day']['third'] + awards['week']['third'] + awards['month']['third'] + awards['year']['third']
@@ -254,7 +234,6 @@ def update_award_count(username):
 
 async def no_new_races(ctx, user, username):
     await ctx.send(
-        content=f"<@{ctx.author.id}>",
         embed=Embed(
             title=f"Import Request",
             description=f"No new races to import for {username}",
@@ -265,7 +244,6 @@ async def no_new_races(ctx, user, username):
 
 async def too_many_races(ctx, user, username, races_left):
     await ctx.send(
-        content=f"<@{ctx.author.id}>",
         embed=Embed(
             title=f"Import Request Rejected",
             description=f"{races_left:,} new races to import for {username}\n"
@@ -276,9 +254,10 @@ async def too_many_races(ctx, user, username, races_left):
     )
 
 
-async def import_complete(ctx, user, username):
+async def import_complete(ctx, user, username, notify):
+    ping = f"<@{ctx.author.id}>"
     await ctx.send(
-        content=f"<@{ctx.author.id}>",
+        content=ping if notify else "",
         embed=Embed(
             title=f"Import Complete",
             description=f"Finished importing new races for {username}",
@@ -298,7 +277,7 @@ def import_in_progress():
 def unexpected_error():
     return Embed(
         title=f"Unexpected Error",
-        description=f"Something went wrong, stats have not been imported",
+        description=f"Something went wrong, races have not been imported",
         color=colors.error,
     )
 

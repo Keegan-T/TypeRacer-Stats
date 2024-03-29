@@ -75,6 +75,7 @@ def split_log(log):
 
     return quote, delays
 
+
 def get_log_details(log):
     quote, delays = split_log(log)
 
@@ -93,6 +94,7 @@ def get_log_details(log):
     }
 
     return details
+
 
 def get_raw_speeds(typing_log):
     escapes = ''.join([chr(char) for char in range(1, 32)])
@@ -189,6 +191,7 @@ def format_big_number(number, _):
         return f"{round(number / 1_000, 1)}K".replace(".0", "")
 
     return int(number)
+
 
 def parse_duration_string(duration):
     try:
@@ -288,6 +291,7 @@ def add_profile(embed, stats, pfp=True):
 
     return embed
 
+
 def add_universe(embed, universe):
     if universe != "play":
         embed.set_footer(text=f"Universe: {universe}")
@@ -309,7 +313,6 @@ def truncate_clean(text, max_chars):
 
 
 def escape_discord_format(string):
-
     return (string
             .replace("*", "\\*")
             .replace("_", "\\_")
@@ -381,6 +384,7 @@ def time_start():
     global start
     start = time.time()
 
+
 def time_split():
     time_end()
     time_start()
@@ -443,6 +447,7 @@ def get_category(options, param):
 
     return None
 
+
 def get_type_title(kind):
     titles = {
         "races": "Races",
@@ -455,8 +460,10 @@ def get_type_title(kind):
 
     return None
 
+
 def reset_cooldown(function, ctx):
     function.reset_cooldown(ctx)
+
 
 def get_discord_id(string):
     if "&" in string:
@@ -468,28 +475,36 @@ def get_discord_id(string):
 
     return None
 
+
 def floor_day(date):
     return date.replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
+
 
 def floor_week(date):
     return ((date - relativedelta(days=date.weekday()))
             .replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc))
 
+
 def floor_month(date):
     return date.replace(day=1, hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
+
 
 def floor_year(date):
     return date.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
 
+
 def now():
     return datetime.now(timezone.utc)
+
 
 def discord_timestamp(timestamp, style="R"):
     return f"<t:{int(timestamp)}:{style}>"
 
+
 def get_sort_title(sort):
     if sort == "wpm": return "WPM"
     return sort.title()
+
 
 def rank(number):
     emojis = [
@@ -510,13 +525,21 @@ def rank(number):
 
     return str(number)
 
-def command_log(message):
-    user = get_user(message.author.id)
-    linked = user["username"]
-    author = message.author
-    server = message.guild.name if message.guild else "DM"
 
-    return f"`{server} | [{author.id}] {author.name} {('(' + linked + ')') if linked else ''}: {message.content}`"
+def command_log(ctx):
+    user = get_user(ctx.author.id)
+    linked = user["username"]
+    author = ctx.author
+    server = ctx.guild.name if ctx.guild else "DM"
+    if hasattr(ctx, "message"):
+        message = ctx.message.content
+    else:
+        message = ctx.content
+
+    return (
+        f"`{server} | [{author.id}] {author.name} "
+        f"{('(' + linked + ')') if linked else ''}: {message}`"
+    )
 
 def race_id(username, number):
     return f"{username}|{number}"

@@ -73,9 +73,7 @@ def get_top_n_counts(n=10):
 
 async def update_results(text_id):
     modified_ids = modified_races.get_ids()
-    utils.time_start()
     api_top_10 = await texts_api.get_top_10(text_id)
-    utils.time_end()
 
     scores = []
 
@@ -134,3 +132,9 @@ def delete_results(text_id):
         DELETE FROM text_results
         WHERE text_id = ?
     """, [text_id])
+
+def delete_user_results(username):
+    db.run("""
+        DELETE FROM text_results
+        WHERE username = ?
+    """, [username])

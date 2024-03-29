@@ -68,54 +68,54 @@ async def get_params(ctx, user, params):
     return username.lower(), category
 
 
-async def run_time(ctx, user, username):
-    stats = users.get_user(username)
-    if not stats:
-        return await ctx.send(embed=errors.import_required(username))
-
-    race_list = await races.get_races(username, columns=["text_id", "wpm", "timestamp"], order_by="timestamp")
-    text_list = texts.get_texts(as_dictionary=True)
-    total_seconds = 0
-
-    activity = [[stats["joined"], 0]]
-    for race in race_list:
-        text_id, wpm, timestamp = race
-
-        while timestamp >= activity[-1][0] + 86400:
-            activity.append([activity[-1][0] + 86400, 0])
-
-        seconds = utils.calculate_seconds(text_list[text_id]["quote"], wpm)
-        activity[-1][1] += seconds
-        total_seconds += seconds
-
-    average = total_seconds / len(activity)
-    most_seconds = (0, 0)
-    for day, seconds in activity:
-        if seconds > most_seconds[1]:
-            most_seconds = (day, seconds)
-
-    description = (
-        f"**Average Daily:** {utils.format_duration_short(average)}\n"
-        f"**Most Active Day:** {datetime.fromtimestamp(most_seconds[0], tz=timezone.utc).strftime('%#m/%#d/%Y')} - "
-        f"{utils.format_duration_short(most_seconds[1])}"
-    )
-
-    embed = Embed(
-        title=f"Daily Activity Histogram",
-        description=description,
-        color=user["colors"]["embed"],
-    )
-    utils.add_profile(embed, stats)
-
-    file_name = f"{username}_histogram.png"
-    graphs.histogram_time(user, username, activity, file_name)
-
-    embed.set_image(url=f"attachment://{file_name}")
-    file = File(file_name, filename=file_name)
-
-    await ctx.send(embed=embed, file=file)
-
-    os.remove(file_name)
+# async def run_time(ctx, user, username):
+#     stats = users.get_user(username)
+#     if not stats:
+#         return await ctx.send(embed=errors.import_required(username))
+#
+#     race_list = await races.get_races(username, columns=["text_id", "wpm", "timestamp"])
+#     text_list = texts.get_texts(as_dictionary=True)
+#     total_seconds = 0
+#
+#     activity = [[stats["joined"], 0]]
+#     for race in race_list:
+#         text_id, wpm, timestamp = race
+#
+#         while timestamp >= activity[-1][0] + 86400:
+#             activity.append([activity[-1][0] + 86400, 0])
+#
+#         seconds = utils.calculate_seconds(text_list[text_id]["quote"], wpm)
+#         activity[-1][1] += seconds
+#         total_seconds += seconds
+#
+#     average = total_seconds / len(activity)
+#     most_seconds = (0, 0)
+#     for day, seconds in activity:
+#         if seconds > most_seconds[1]:
+#             most_seconds = (day, seconds)
+#
+#     description = (
+#         f"**Average Daily:** {utils.format_duration_short(average)}\n"
+#         f"**Most Active Day:** {datetime.fromtimestamp(most_seconds[0], tz=timezone.utc).strftime('%#m/%#d/%Y')} - "
+#         f"{utils.format_duration_short(most_seconds[1])}"
+#     )
+#
+#     embed = Embed(
+#         title=f"Daily Activity Histogram",
+#         description=description,
+#         color=user["colors"]["embed"],
+#     )
+#     utils.add_profile(embed, stats)
+#
+#     file_name = f"{username}_histogram.png"
+#     graphs.histogram_time(user, username, activity, file_name)
+#
+#     embed.set_image(url=f"attachment://{file_name}")
+#     file = File(file_name, filename=file_name)
+#
+#     await ctx.send(embed=embed, file=file)
+#
+#     os.remove(file_name)
 
 
 async def run(ctx, user, username, category):

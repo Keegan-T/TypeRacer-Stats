@@ -4,7 +4,7 @@ from matplotlib.collections import LineCollection
 from matplotlib.colors import LinearSegmentedColormap, hex2color
 from matplotlib.legend_handler import HandlerLineCollection
 from matplotlib.legend_handler import HandlerLine2D
-from matplotlib.ticker import FuncFormatter, MaxNLocator, FixedLocator
+from matplotlib.ticker import FuncFormatter
 from matplotlib import rcParams
 import numpy as np
 
@@ -314,8 +314,6 @@ def improvement(user, wpm, title, file_name, timeframe=""):
         ax.plot(race_count, moving_wpm)
 
     ax.xaxis.set_major_formatter(FuncFormatter(format_big_number))
-    # if not text_graph:
-    #     ax.set_ylim(0, plt.ylim()[1])
 
     ax.set_xlabel(f"Races{timeframe}")
     ax.set_ylabel("WPM")
@@ -381,8 +379,10 @@ def histogram(user, username, values, category, file_name):
     category_title = "WPM"
     y_label = "WPM"
     bins = "auto"
+
     if category == "accuracy":
-        values = [value for value in values if value >= 90]
+        values = np.array(values)
+        values = values[values >= 90]
         bins = np.arange(min(values), 102, 1)
         category_title = "Accuracy"
         y_label = "Accuracy %"
@@ -392,16 +392,18 @@ def histogram(user, username, values, category, file_name):
     color = user["colors"]["line"]
     if color in plt.colormaps():
         cmap = get_cmap(user)
-        patches = ax.hist(values, bins=bins)[2]
+        counts, groups = np.histogram(values, bins=bins)
+        patches = ax.bar(groups[:-1], counts, width=np.diff(groups), align="edge")
         for i, patch in enumerate(patches):
             patch.set_facecolor(cmap(i / len(patches)))
     else:
-        ax.hist(values, bins=bins, color=color)
+        counts, groups = np.histogram(values, bins=bins)
+        ax.bar(groups[:-1], counts, width=np.diff(groups), align="edge", color=color)
 
     if category == "accuracy":
         x_ticks = ax.get_xticks()
         ax.set_xticks(x_ticks + 0.5, [int(value) for value in x_ticks])
-        ax.set_xlim(max(ax.set_xlim()[0], 90), 101)
+        ax.set_xlim(max(ax.get_xlim()[0], 90), 101)
 
     ax.yaxis.set_major_formatter(FuncFormatter(format_big_number))
     ax.set_xlabel(y_label)

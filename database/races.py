@@ -4,56 +4,40 @@ from database.users import correct_best_wpm
 import database.modified_races as modified_races
 
 
-def add_races(username, races):
-    batch_size = 50
-    for i in range(0, len(races), batch_size):
-        batch = races[i:i + batch_size]
-        query = "INSERT OR IGNORE INTO races VALUES"
-        params = []
-        for race in batch:
-            query += "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?),"
-            race_id = f"{username}|{race['gn']}"
-            params += [
-                race_id, username, race['tid'], race['gn'], race['wpm'],
-                race['ac'], race['pts'], race['r'], race['np'], race['t']
-            ]
-        query = query[:-1]
-        db.run(query, params)
+def add_races(races):
+    db.run_many("""
+        INSERT OR IGNORE INTO races
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, races)
 
 
-async def get_races(username, start_time=None, end_time=None, start_number=None, end_number=None,
-              with_texts=False, order_by=None, reverse=False, limit=None, columns="*"):
+async def get_races(username, columns="*", start_time=None, end_time=None, start_number=None, end_number=None,
+              with_texts=False, order_by=None, reverse=False, limit=None):
     if columns != "*":
         columns = ",".join([c for c in columns])
     order = 'DESC' if reverse else 'ASC'
 
-    races = await db.fetch_async(
-        f"""
-            SELECT {columns} FROM races
-            {'JOIN texts ON texts.id = races.text_id' * with_texts}
-            WHERE username = ?
-            {f'AND number >= {start_number}' if start_number else ''}
-            {f'AND number <= {end_number}' if end_number else ''}
-            {f'AND timestamp >= {start_time}' if start_time else ''}
-            {f'AND timestamp < {end_time}' if end_time else ''}
-            {f'ORDER BY {order_by} {order}' if order_by else ''}
-            {f'LIMIT {limit}' if limit else ''}
-        """,
-        [username],
-    )
+    races = await db.fetch_async(f"""
+        SELECT {columns} FROM races
+        INDEXED BY idx_races_username
+        {'JOIN texts ON texts.id = races.text_id' * with_texts}
+        WHERE username = ?
+        {f'AND number >= {start_number}' if start_number else ''}
+        {f'AND number <= {end_number}' if end_number else ''}
+        {f'AND timestamp >= {start_time}' if start_time else ''}
+        {f'AND timestamp < {end_time}' if end_time else ''}
+        {f'ORDER BY {order_by} {order}' if order_by else ''}
+        {f'LIMIT {limit}' if limit else ''}
+    """, [username])
 
     return races
 
 
 def get_race(username, number):
-    race = db.fetch(
-        """
-            SELECT * FROM races
-            WHERE username = ?
-            AND number = ?
-        """,
-        [username, number]
-    )
+    race = db.fetch("""
+        SELECT * FROM races
+        WHERE id = ?
+    """, [utils.race_id(username, number)])
 
     if not race:
         return None
@@ -65,6 +49,7 @@ def get_text_races(username, text_id):
     races = db.fetch(
         """
             SELECT * FROM races
+            INDEXED BY idx_races_username_text_id
             WHERE username = ?
             AND text_id = ?
             ORDER BY timestamp ASC

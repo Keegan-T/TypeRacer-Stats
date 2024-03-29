@@ -7,7 +7,7 @@ import database.important_users as important_users
 import database.texts as texts
 
 
-def import_competitions():
+async def import_competitions():
     grace_period = 21600  # Seconds to wait before caching a competition
     comps = competition_results.get_latest()
     utc = timezone.utc
@@ -54,7 +54,7 @@ def import_competitions():
         year_check += relativedelta(years=1)
 
     print("Updating award counts")
-    awards_list = competition_results.get_awards()
+    awards_list = await competition_results.get_awards()
     user_list = users.get_users()
 
     for user in user_list:
@@ -72,7 +72,7 @@ def import_competitions():
     print("Imported all new competitions")
 
 async def update_important_users():
-    from commands.basic.download import download, update_text_stats
+    from commands.basic.download import run as download, update_text_stats
 
     user_list = important_users.get_users()
     print(f"Updating {len(user_list)} important users...")

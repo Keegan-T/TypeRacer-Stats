@@ -71,7 +71,8 @@ async def run(ctx, user, username, n):
     if n > stats["races"]:
         return await ctx.send(embed=not_enough_races())
 
-    race_list = await races.get_races(username, columns=["wpm", "number"], order_by="timestamp")
+    race_list = await races.get_races(username, columns=["wpm", "number", "timestamp"])
+    race_list.sort(key=lambda x: x[2])
     description = ""
 
     count = 10

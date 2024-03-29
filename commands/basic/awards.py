@@ -39,7 +39,7 @@ async def run(ctx, user, username):
     if not stats:
         return await ctx.send(embed=errors.invalid_username())
 
-    awards = competition_results.get_awards(username)
+    awards = await competition_results.get_awards(username)
     total = awards["total"]
 
     embed = Embed(title=f"Awards ({total:,})", color=user["colors"]["embed"])

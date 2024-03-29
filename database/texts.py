@@ -1,6 +1,5 @@
 from database import db
 import urls
-from database.text_results import update_results, delete_results
 from commands.basic.download import update_text_stats
 
 def get_texts(as_dictionary=False, include_disabled=True):
@@ -78,25 +77,22 @@ def update_text(text_id, quote):
 
 
 def get_top_10(text_id):
-    top_10 = db.fetch(
-        """
-            SELECT * FROM (
-                SELECT races.id, races.username, text_id, wpm, timestamp, number, disqualified,
-                ROW_NUMBER() OVER (
-                    PARTITION BY races.username
-                    ORDER BY wpm DESC
-                ) AS ranking
-                FROM races
-                JOIN users ON users.username = races.username
-                WHERE text_id = ?
-                AND disqualified = 0
-            )
-            WHERE ranking = 1
-            ORDER BY wpm DESC
-            LIMIT 10
-        """,
-        [text_id]
-    )
+    top_10 = db.fetch("""
+        SELECT * FROM (
+            SELECT races.id, races.username, text_id, wpm, timestamp, number, disqualified,
+            ROW_NUMBER() OVER (
+                PARTITION BY races.username
+                ORDER BY wpm DESC
+            ) AS ranking
+            FROM races
+            JOIN users ON users.username = races.username
+            WHERE text_id = ?
+            AND disqualified = 0
+        )
+        WHERE ranking = 1
+        ORDER BY wpm DESC
+        LIMIT 10
+    """, [text_id])
 
     return top_10
 
@@ -137,6 +133,8 @@ def update_slow_ghosts():
                 db.run("UPDATE texts SET ghost = ? WHERE id = ?", [link, text_id])
 
 async def enable_text(text_id):
+    from database.text_results import update_results
+
     db.run("""
         UPDATE texts
         SET disabled = 0
@@ -157,6 +155,8 @@ async def enable_text(text_id):
 
 
 def disable_text(text_id):
+    from database.text_results import delete_results
+
     db.run("""
         UPDATE texts
         SET disabled = 1

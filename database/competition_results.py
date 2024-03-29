@@ -1,8 +1,10 @@
 from database import db
 
 
-def get_competitions():
-    results = db.fetch("SELECT * FROM competition_results")
+async def get_competitions():
+    results = await db.fetch_async("""
+        SELECT * FROM competition_results
+    """)
 
     competitions = {}
 
@@ -65,11 +67,11 @@ def add_results(competition):
         ])
 
 
-def get_awards(username=None):
+async def get_awards(username=None):
     awards = {}
     ranks = ["first", "second", "third"]
 
-    competitions = get_competitions()
+    competitions = await get_competitions()
     for competition in competitions:
         kind = competition["type"]
         competitors = competition["competitors"]

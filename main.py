@@ -39,7 +39,6 @@ async def error_notify(log_message, error):
     )
 
     await logs.send(log_message)
-    traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
 
 def ban_check(ctx):
@@ -79,7 +78,9 @@ async def on_command_error(ctx, error):
         return
 
     log = utils.command_log(ctx)
-    await error_notify(log, error)
+    if not staging:
+        await error_notify(log, error)
+    traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
 
 @bot.event
@@ -100,9 +101,6 @@ async def on_message(message):
 
     if message.content.startswith(prefix):
         await log_command(message)
-
-        if "keegant" in message.content:
-            return await message.reply(content="He is too powerful for now...")
 
     await bot.process_commands(message)
 
@@ -139,7 +137,7 @@ async def loops():
     if datetime.utcnow().hour == 4 and datetime.utcnow().minute == 0:
         try:
             await log_command(f"Importing competitions")
-            import_competitions()
+            await import_competitions()
             await log_command(f"Updating important users")
             await update_important_users()
             await log_command(f"Updating records")

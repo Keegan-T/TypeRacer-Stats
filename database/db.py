@@ -40,3 +40,17 @@ def run(query, params=[]):
 
     finally:
         cursor.close()
+
+def run_many(query, data):
+    cursor = db.cursor()
+    try:
+        cursor.execute("BEGIN")
+        cursor.executemany(query, data)
+        db.commit()
+
+    except Exception as e:
+        print(f"Error executing query: {e}")
+        raise
+
+    finally:
+        cursor.close()

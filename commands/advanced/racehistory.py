@@ -12,7 +12,7 @@ import database.races as races
 import database.texts as texts
 from database.bot_users import get_user
 from api.users import get_stats
-from commands.basic.download import download, update_text_stats
+from commands.basic.download import run as download, update_text_stats
 
 categories = ["races", "day", "week", "month", "year"]
 sorts = ["points", "races", "time", "wpm", "date"]
@@ -125,7 +125,8 @@ async def run(ctx, user, username, category, sort):
 async def get_history(username, category, sort):
     sort_key = {"points": 3, "races": 2, "time": 5, "wpm": 4}.get(sort, 0)
     columns = ["text_id", "wpm", "points", "timestamp"]
-    race_list = sorted(await races.get_races(username, columns=columns), key=lambda x: x[3])
+    race_list = await races.get_races(username, columns=columns)
+    race_list.sort(key=lambda x: x[3])
     text_list = texts.get_texts(as_dictionary=True, include_disabled=True)
 
     history = []

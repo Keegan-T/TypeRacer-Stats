@@ -10,7 +10,7 @@ import commands.recent as recent
 from database.bot_users import get_user
 from api.users import get_stats
 from datetime import datetime
-from commands.basic.download import download, update_text_stats
+from commands.basic.download import run as download, update_text_stats
 
 info = {
     "name": "checksaves",

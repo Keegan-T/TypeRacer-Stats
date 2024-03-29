@@ -13,7 +13,7 @@ from api.users import get_stats
 import database.texts as texts
 import database.races as races
 import database.users as users
-from commands.basic.download import download, update_text_stats
+from commands.basic.download import run as download, update_text_stats
 import database.text_results as top_tens
 
 info = {

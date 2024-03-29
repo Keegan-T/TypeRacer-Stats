@@ -12,7 +12,7 @@ from api.users import get_stats
 from api.competitions import get_competition_info
 from database.bot_users import get_user
 from commands.advanced.races import add_stats
-from commands.basic.download import download, update_text_stats
+from commands.basic.download import run as download, update_text_stats
 
 info = {
     "name": "day",
@@ -129,9 +129,8 @@ async def run(ctx, user, username, date):
         title = f"Daily Stats - {utils.get_display_date(date)}"
 
     columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
-    utils.time_start()
-    race_list = sorted(await races.get_races(username, start_time, end_time, columns=columns), key=lambda x: x[7])
-    utils.time_end()
+    race_list = await races.get_races(username, columns, start_time, end_time)
+    race_list.sort(key=lambda x: x[7])
 
     embed = Embed(title=title, color=user["colors"]["embed"])
     utils.add_profile(embed, api_stats)
