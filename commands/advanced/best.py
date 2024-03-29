@@ -35,7 +35,6 @@ class Best(commands.Cog):
     @commands.command(aliases=info["aliases"])
     async def best(self, ctx, *params):
         user = get_user(ctx)
-        nice = 1 / 0
 
         try:
             username, category, text_id = await get_params(ctx, user, params)
