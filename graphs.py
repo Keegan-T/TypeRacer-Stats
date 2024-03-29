@@ -237,8 +237,8 @@ def compare(user, user1, user2, file_name):
     ax2.yaxis.tick_right()
 
     max_xlim = max(ax1.get_xlim()[1], ax2.get_xlim()[1])
-    ax1.set_xlim(ax1.get_xlim()[::-1])
     ax2.set_xlim(0, max_xlim)
+    ax1.set_xlim(ax2.get_xlim()[::-1])
 
     min_ylim = min(ax1.get_ylim()[0], ax2.get_ylim()[0])
     max_ylim = max(ax1.get_ylim()[1], ax2.get_ylim()[1])
