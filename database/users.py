@@ -254,10 +254,7 @@ def get_text_bests(username, race_stats=False):
         """, [username])
 
     disabled_text_ids = [text[0] for text in get_disabled_texts()]
-    print(disabled_text_ids)
     filtered_tb = [text for text in text_bests if text[0] not in disabled_text_ids]
-    print(len(text_bests))
-    print(len(filtered_tb))
 
     return filtered_tb
 
