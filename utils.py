@@ -98,7 +98,8 @@ def get_log_details(log):
 
 def get_raw_speeds(typing_log):
     escapes = ''.join([chr(char) for char in range(1, 32)])
-    typing_log = typing_log.encode().decode('unicode-escape').translate(escapes).split('|', 1)
+    typing_log = typing_log.encode().decode('unicode-escape').translate(escapes)
+    typing_log = re.sub('\\t\d', 'a', typing_log).split('|', 1)
     times = [int(c) for c in re.findall(r"\d+", typing_log[0])][2:]
 
     actions = []
