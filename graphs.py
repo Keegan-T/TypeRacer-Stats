@@ -117,14 +117,16 @@ def cmap_histogram(ax, user, counts, groups):
     mask[:-1, 1] = counts
 
     ax.bar(groups[:-1], counts, width=np.diff(groups), align="edge", alpha=0)
+    original_ylim = ax.get_ylim()
 
-    extent = [ax.get_xlim()[0], ax.get_xlim()[1], 0, ax.get_ylim()[1]]
+    extent = [ax.get_xlim()[0], ax.get_xlim()[1], 0, max(counts)]
 
     x = np.linspace(0, 10, 100)
     y = np.linspace(0, 10, 100)
     X, Y = np.meshgrid(x, y)
 
     ax.imshow(Y, cmap=cmap, extent=extent, origin="lower", aspect="auto")
+    ax.set_ylim(original_ylim)
 
     graph_background = user["colors"]["graphbackground"]
     plt.fill_between(mask[:, 0], mask[:, 1], extent[3], color=graph_background, step='post')
@@ -139,12 +141,14 @@ def cmap_compare(ax, user, counts, groups, extent):
     mask[:-1, 1] = counts
 
     ax.barh(groups[:-1], counts, height=np.diff(groups), align="edge", alpha=0)
+    original_xlim = ax.get_xlim()
 
     x = np.linspace(0, 10, 100)
     y = np.linspace(0, 10, 100)
     X, Y = np.meshgrid(x, y)
 
     ax.imshow(X, cmap=cmap, extent=extent, origin="lower", aspect="auto")
+    ax.set_xlim(original_xlim)
 
     graph_background = user["colors"]["graphbackground"]
     ax.fill_betweenx(mask[:, 0], mask[:, 1], extent[1], color=graph_background, step='post')
@@ -292,8 +296,8 @@ def compare(user, user1, user2, file_name):
     ax2.set_ylim(min_ylim, max_ylim)
 
     if color in plt.colormaps():
-        cmap_compare(ax1, user, counts1, groups1, [0, max_xlim, min_ylim, max_ylim])
-        cmap_compare(ax2, user, counts2, groups2, [0, max_xlim, min_ylim, max_ylim])
+        cmap_compare(ax1, user, counts1, groups1, [0, max(counts1), min_ylim, max_ylim])
+        cmap_compare(ax2, user, counts2, groups2, [0, max(counts2), min_ylim, max_ylim])
 
     ax1.grid()
     ax1.set_title(username1)
