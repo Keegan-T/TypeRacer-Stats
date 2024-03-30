@@ -20,6 +20,7 @@ from api.races import get_races
 from commands.basic.stats import get_params
 from config import bot_admins
 import database.text_results as text_results
+import database.races_300 as races_300
 
 info = {
     "name": "download",
@@ -88,6 +89,7 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, override=False
         races_left -= user["races"]
         if stats["disqualified"]:
             text_results.delete_user_results(username)
+            races_300.delete_user_scores(username)
 
     else:
         print(f"Importing new data for {username}")

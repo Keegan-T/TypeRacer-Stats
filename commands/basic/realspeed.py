@@ -74,18 +74,12 @@ async def get_params(ctx, user, params, command=info):
             url = params[0]
             result = urlparse(url)
             if result.scheme and result.netloc:
-                try:
-                    splat = url.replace("%7C", "|").split("|")
-                    universe = splat[-3].split("?id=")[1]
-                    if not universe:
-                        universe = "play"
-                    username = splat[-2][3:]
-                    race_number = int(splat[-1].split("&")[0])
-                except Exception:
-                    await ctx.send(embed=errors.invalid_param(info))
-                    raise
+                race_info = utils.get_race_link_info(url)
+                if not race_info:
+                    raise ValueError
+                username, race_number, universe = race_info
         except ValueError:
-            await ctx.send(embed=errors.invalid_param(info))
+            await ctx.send(embed=errors.invalid_param(command))
             raise
 
     elif len(params) > 1:
@@ -158,7 +152,7 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
 
         speeds_string += f"Completed <t:{int(race_info['timestamp'])}:R>"
 
-        if 300 <= adjusted <= 450 and not stats["disqualified"]: # when you start doing multiverse, only get_count play here
+        if universe == "play" and 300 <= adjusted <= 450 and not stats["disqualified"]:
             races_300_list = races_300.get_races()
             in_list = False
             for race in races_300_list:

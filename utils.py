@@ -543,3 +543,16 @@ def command_log(ctx):
 
 def race_id(username, number):
     return f"{username}|{number}"
+
+def get_race_link_info(link):
+    try:
+        splat = link.replace("%7C", "|").split("|")
+        universe = splat[-3].split("?id=")[1]
+        if not universe:
+            universe = "play"
+        username = splat[-2][3:]
+        race_number = int(splat[-1].split("&")[0])
+
+        return [username, race_number, universe]
+    except Exception:
+        return None

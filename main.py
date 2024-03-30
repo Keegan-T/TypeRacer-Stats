@@ -21,10 +21,10 @@ bot.remove_command("help")
 staging = False
 ###########################
 
-async def log_command(message):
-    log = utils.command_log(message)
-
+async def log_command(ctx):
+    log = utils.command_log(ctx)
     logs = bot.get_channel(log_channel)
+
     await logs.send(log)
 
 
@@ -54,7 +54,8 @@ bot.add_check(ban_check)
 @bot.event
 async def on_ready():
     print("Bot ready.")
-    loops.start()
+    if not staging:
+        loops.start()
 
 
 @bot.event
@@ -135,15 +136,16 @@ async def on_command_completion(ctx):
 @tasks.loop(minutes=1)
 async def loops():
     if datetime.utcnow().hour == 4 and datetime.utcnow().minute == 0:
+        logs = bot.get_channel(log_channel)
         try:
-            await log_command(f"Importing competitions")
+            await logs.send("Importing competitions")
             await import_competitions()
-            await log_command(f"Updating important users")
+            await logs.send("Updating important users")
             await update_important_users()
-            await log_command(f"Updating records")
+            await logs.send(f"Updating records")
             await records.update(bot)
             if datetime.utcnow().day == 1:
-                await log_command(f"Updating top tens")
+                await logs.send(f"Updating top tens")
                 await update_top_tens()
         except Exception as error:
             await error_notify("Task Failure", error)
