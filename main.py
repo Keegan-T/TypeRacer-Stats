@@ -161,6 +161,12 @@ async def load_commands():
 
 
 async def start():
+    from database import races_300
+    races_300.delete_user_scores("arabianghosthaunting")
+    races_300.delete_user_scores("shinrinyokuu")
+    races_300.delete_user_scores("alan_david")
+    races_300.delete_user_scores("zombieswap2")
+    races_300.delete_user_scores("godson24")
     await load_commands()
     if staging:
         await bot.start(staging_token)
