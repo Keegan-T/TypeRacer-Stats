@@ -61,7 +61,7 @@ async def run(ctx, user, username, category):
     x = []
     y = []
     text_ids = {}
-    disabled_text_ids = [text[0] for text in texts.get_disabled_texts()]
+    disabled_text_ids = texts.get_disabled_text_ids()
     wpm_total = 0
     wpm_count = 0
 

@@ -62,7 +62,7 @@ async def run(ctx, user, text_id):
     )
 
     text_id = int(text_id)
-    disabled_text_ids = [text["id"] for text in texts.get_disabled_texts()]
+    disabled_text_ids = texts.get_disabled_text_ids()
 
     if text_id in disabled_text_ids:
         top_10 = await texts_api.get_top_10(text_id)

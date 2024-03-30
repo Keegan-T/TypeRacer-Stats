@@ -46,13 +46,13 @@ def get_text_count():
     return text_count
 
 
-def get_disabled_texts():
+def get_disabled_text_ids():
     texts = db.fetch("""
-        SELECT * FROM texts
+        SELECT text_id FROM texts
         WHERE disabled = 1
     """)
 
-    return texts
+    return [text[0] for text in texts]
 
 
 def add_text(text):
