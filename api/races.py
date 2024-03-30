@@ -76,13 +76,14 @@ async def get_race_info(username, race_number, get_lagged=True, get_raw=False, g
     except IndexError:
         return details
 
+    universe_multiplier = utils.get_universe_multiplier(universe)
     delay_data = ",".join(typing_log.split("|")[0].split(",")[3:])
-    log_details = utils.get_log_details(delay_data)
+    log_details = utils.get_log_details(delay_data, universe_multiplier)
     for key, value in log_details.items():
         details[key] = value
 
     lagged = details["lagged"]
-    lagged_ms = (len(details['quote']) * 12 / lagged) * 1000 if lagged > 0 else 0
+    lagged_ms = universe_multiplier * len(details["quote"]) / lagged if lagged > 0 else 0
     ping = round(lagged_ms) - details['ms']
     lag = details['unlagged'] - lagged
 
@@ -104,8 +105,8 @@ async def get_race_info(username, race_number, get_lagged=True, get_raw=False, g
         duration = raw_speeds["duration"]
         raw_duration = raw_speeds["raw_duration"]
         correction = duration - raw_duration
-        raw_unlagged = 12000 * len(delays) / raw_duration
-        raw_adjusted = 12000 * (len(delays) - 1) / (raw_duration - raw_speeds["raw_start"])
+        raw_unlagged = universe_multiplier * len(delays) / raw_duration
+        raw_adjusted = universe_multiplier * (len(delays) - 1) / (raw_duration - raw_speeds["raw_start"])
         details["correction"] = correction
         details["raw_unlagged"] = raw_unlagged
         details["raw_adjusted"] = raw_adjusted

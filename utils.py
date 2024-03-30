@@ -76,13 +76,13 @@ def split_log(log):
     return quote, delays
 
 
-def get_log_details(log):
+def get_log_details(log, multiplier=12):
     quote, delays = split_log(log)
 
     total_ms = sum(delays)
-    unlagged = len(quote) / ((total_ms / 1000) / 12)
-    adjusted = (len(quote) - 1) / (((total_ms - delays[0]) / 1000) / 12)
     start = delays[0]
+    unlagged = multiplier * len(quote) / total_ms
+    adjusted = multiplier * (len(quote) - 1) / (total_ms - start)
 
     details = {
         "quote": quote,
@@ -557,3 +557,10 @@ def get_race_link_info(link):
         return [username, race_number, universe]
     except Exception:
         return None
+
+def get_universe_multiplier(universe):
+    if universe == "lang_ko":
+        return 24000
+    elif universe in ["lang_zh", "lang_zh-tw", "new_lang_zh-tw", "lang_ja"]:
+        return 60000
+    return 12000
