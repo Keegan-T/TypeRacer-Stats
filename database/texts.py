@@ -48,7 +48,7 @@ def get_text_count():
 
 def get_disabled_text_ids():
     texts = db.fetch("""
-        SELECT text_id FROM texts
+        SELECT id FROM texts
         WHERE disabled = 1
     """)
 
