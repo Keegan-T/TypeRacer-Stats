@@ -75,10 +75,14 @@ def import_required(username):
         color=error,
     )
 
-def race_not_found():
+def race_not_found(username, race_number, universe="play"):
+    race_id = f"{username}|{race_number}"
+    if universe != "play":
+        race_id = f"{universe}|" + race_id
+
     return Embed(
         title="Race Not Found",
-        description="Details for this race are unavailable",
+        description=f"Details for race `{race_id}` are unavailable",
         color=error,
     )
 

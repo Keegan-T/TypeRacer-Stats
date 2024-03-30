@@ -66,7 +66,7 @@ async def run(ctx, user, username, race_number, universe):
 
     match = await get_match(username, race_number, universe)
     if not match:
-        return await ctx.send(embed=errors.race_not_found())
+        return await ctx.send(embed=errors.race_not_found(username, race_number, universe))
 
     description = utils.text_description(match) + "\n\n**Rankings**\n"
 
@@ -79,6 +79,8 @@ async def run(ctx, user, username, race_number, universe):
             f"({race['accuracy'] * 100:,.1f}% Acc, "
             f"{race['start']:,}ms start)\n"
         )
+
+    description += f"\nCompleted {utils.discord_timestamp(match['timestamp'])}"
 
     embed = Embed(
         title=f"Match Graph - Race #{race_number:,}",
