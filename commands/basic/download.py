@@ -1,5 +1,3 @@
-from datetime import datetime, timezone
-
 from discord import Embed
 from discord.ext import commands
 import utils
@@ -21,6 +19,7 @@ from commands.basic.stats import get_params
 from config import bot_admins
 import database.text_results as text_results
 import database.races_300 as races_300
+from commands.locks import import_lock
 
 info = {
     "name": "download",
@@ -33,7 +32,6 @@ info = {
     "import": False,
 }
 
-import_lock = asyncio.Lock()
 
 
 class Download(commands.Cog):
