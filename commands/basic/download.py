@@ -51,7 +51,8 @@ class Download(commands.Cog):
         except ValueError:
             return
 
-        await run(username, ctx=ctx, bot_user=user)
+        async with import_lock:
+            await run(username, ctx=ctx, bot_user=user)
 
 async def run(username=None, stats=None, ctx=None, bot_user=None, override=False):
     invoked = True if ctx else False
