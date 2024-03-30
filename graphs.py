@@ -109,6 +109,49 @@ def cmap_line(ax, line_index, user):
     return lc
 
 
+def cmap_histogram(ax, user, counts, groups):
+    cmap = get_cmap(user)
+
+    mask = np.zeros((len(groups), 2))
+    mask[:, 0] = np.concatenate([groups[:-1], [groups[-1]]])
+    mask[:-1, 1] = counts
+
+    ax.bar(groups[:-1], counts, width=np.diff(groups), align="edge", alpha=0)
+
+    extent = [ax.get_xlim()[0], ax.get_xlim()[1], 0, ax.get_ylim()[1]]
+
+    x = np.linspace(0, 10, 100)
+    y = np.linspace(0, 10, 100)
+    X, Y = np.meshgrid(x, y)
+
+    ax.imshow(Y, cmap=cmap, extent=extent, origin="lower", aspect="auto")
+
+    graph_background = user["colors"]["graphbackground"]
+    plt.fill_between(mask[:, 0], mask[:, 1], extent[3], color=graph_background, step='post')
+    plt.fill_between([extent[0], groups[0]], [0, 0], [extent[3], extent[3]], color=graph_background)
+    plt.fill_between([groups[-1], extent[1]], [0, 0], [extent[3], extent[3]], color=graph_background)
+
+def cmap_compare(ax, user, counts, groups, extent):
+    cmap = get_cmap(user)
+
+    mask = np.zeros((len(groups), 2))
+    mask[:, 0] = np.concatenate([groups[:-1], [groups[-1]]])
+    mask[:-1, 1] = counts
+
+    ax.barh(groups[:-1], counts, height=np.diff(groups), align="edge", alpha=0)
+
+    x = np.linspace(0, 10, 100)
+    y = np.linspace(0, 10, 100)
+    X, Y = np.meshgrid(x, y)
+
+    ax.imshow(X, cmap=cmap, extent=extent, origin="lower", aspect="auto")
+
+    graph_background = user["colors"]["graphbackground"]
+    ax.fill_betweenx(mask[:, 0], mask[:, 1], extent[1], color=graph_background, step='post')
+    ax.fill_betweenx([extent[2], groups[0]], [0, 0], [extent[1], extent[1]], color=graph_background)
+    ax.fill_betweenx([groups[-1], extent[3]], [0, 0], [extent[1], extent[1]], color=graph_background)
+
+
 def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
     colors = user["colors"]
     ax.set_facecolor(colors["graphbackground"])
@@ -226,14 +269,12 @@ def compare(user, user1, user2, file_name):
     fig, (ax1, ax2) = plt.subplots(1, 2)
 
     color = user["colors"]["line"]
+    counts1, groups1 = np.histogram(data1, bins="auto")
+    counts2, groups2 = np.histogram(data2, bins="auto")
+
     if color in plt.colormaps():
-        cmap = get_cmap(user)
-        patches1 = ax1.hist(data1, bins="auto", orientation="horizontal")[2]
-        patches2 = ax2.hist(data2, bins="auto", orientation="horizontal")[2]
-        for i, patch in enumerate(patches1):
-            patch.set_facecolor(cmap(i / len(patches1)))
-        for i, patch in enumerate(patches2):
-            patch.set_facecolor(cmap(i / len(patches2)))
+        ax1.hist(data1, bins="auto", orientation="horizontal", alpha=0)
+        ax2.hist(data2, bins="auto", orientation="horizontal", alpha=0)
     else:
         ax1.hist(data1, bins="auto", orientation="horizontal", color=color)
         ax2.hist(data2, bins="auto", orientation="horizontal", color=color)
@@ -249,6 +290,10 @@ def compare(user, user1, user2, file_name):
     max_ylim = max(ax1.get_ylim()[1], ax2.get_ylim()[1])
     ax1.set_ylim(min_ylim, max_ylim)
     ax2.set_ylim(min_ylim, max_ylim)
+
+    if color in plt.colormaps():
+        cmap_compare(ax1, user, counts1, groups1, [0, max_xlim, min_ylim, max_ylim])
+        cmap_compare(ax2, user, counts2, groups2, [0, max_xlim, min_ylim, max_ylim])
 
     ax1.grid()
     ax1.set_title(username1)
@@ -352,7 +397,6 @@ def match(user, rankings, title, y_label, file_name, limit_y=True):
         caller = user["username"]
         for i, racer in enumerate(rankings):
             zorder = len(rankings) + 5 - i
-            print(zorder)
             racer_username = racer["username"]
             if racer_username == caller:
                 caller_index = i
@@ -393,16 +437,20 @@ def histogram(user, username, values, category, file_name):
         y_label = "Accuracy %"
 
     ax = plt.subplots()[1]
+    counts, groups = np.histogram(values, bins=bins)
 
     color = user["colors"]["line"]
+
     if color in plt.colormaps():
-        cmap = get_cmap(user)
-        counts, groups = np.histogram(values, bins=bins)
-        patches = ax.bar(groups[:-1], counts, width=np.diff(groups), align="edge")
-        for i, patch in enumerate(patches):
-            patch.set_facecolor(cmap(i / len(patches)))
+        cmap_histogram(ax, user, counts, groups)
+
+    # if color in plt.colormaps():
+    #     cmap = get_cmap(user)
+    #     counts, groups = np.histogram(values, bins=bins)
+    #     patches = ax.bar(groups[:-1], counts, width=np.diff(groups), align="edge")
+    #     for i, patch in enumerate(patches):
+    #         patch.set_facecolor(cmap(i / len(patches)))
     else:
-        counts, groups = np.histogram(values, bins=bins)
         ax.bar(groups[:-1], counts, width=np.diff(groups), align="edge", color=color)
 
     if category == "accuracy":
