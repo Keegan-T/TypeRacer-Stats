@@ -12,6 +12,11 @@ import utils
 from utils import format_big_number
 from config import bot_owner
 
+default_palette = [
+    "#00E1FF", "#E41A1C", "#4DAF4A", "#FF7F00", "#7C3AFF",
+    "#FFFF33", "#00C299", "#F781BF", "#999999", "#A65628",
+]
+rcParams["axes.prop_cycle"] = plt.cycler(color=default_palette)
 rcParams["font.family"] = "sans-serif"
 rcParams["font.sans-serif"] = ["Exo 2"]
 rcParams["font.size"] = 11
