@@ -83,7 +83,7 @@ async def run(ctx, user, username, race_number, universe):
     embed = Embed(
         title=f"Match Graph - Race #{race_number:,}",
         description=description,
-        url=urls.replay(username, race_number),
+        url=urls.replay(username, race_number, universe),
         color=user["colors"]["embed"],
     )
     utils.add_profile(embed, stats, pfp=False)
