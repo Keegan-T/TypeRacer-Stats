@@ -1,5 +1,5 @@
 from discord.ext import commands
-from commands.admin.ban import admin_check
+from config import bot_admins, supporters
 
 info = {
     "name": "echo",
@@ -7,12 +7,15 @@ info = {
     "description": "Echo",
 }
 
+def echo_check(ctx):
+    return ctx.author.id in bot_admins + supporters
+
 class Echo(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command(aliases=info["aliases"])
-    @commands.check(admin_check)
+    @commands.check(echo_check)
     async def echo(self, ctx, *params):
         if not params:
             return
