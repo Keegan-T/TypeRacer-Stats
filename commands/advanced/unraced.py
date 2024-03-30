@@ -49,8 +49,10 @@ async def run(ctx, user, username):
     unraced_string = ""
 
     for text in unraced[:5]:
-        unraced_string += (f"**Text #{text['id']}** - [Ghost]({text['ghost']})\n"
-                           f'"{utils.truncate_clean(text["quote"], 500)}"\n\n')
+        unraced_string += (
+            f"**Text #{text['id']}** - [Ghost]({text['ghost']})\n"
+            f'"{utils.truncate_clean(text["quote"], 500)}"\n\n'
+        )
 
     color = user["colors"]["embed"]
     if unraced_count == 0:

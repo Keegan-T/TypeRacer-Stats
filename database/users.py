@@ -224,18 +224,23 @@ def get_last_updated(username):
 def get_text_bests(username, race_stats=False):
     if race_stats:
         text_bests = db.fetch("""
-            SELECT r.text_id, r.wpm, r.number, r.timestamp
-            FROM races r
-            INDEXED BY idx_races_username
-            INNER JOIN (
-                SELECT text_id, MAX(wpm) AS max_wpm
-                FROM races
-                WHERE username = ?
-                GROUP BY text_id
-            ) text_bests
-            ON r.text_id = text_bests.text_id AND r.wpm = text_bests.max_wpm
-            WHERE r.username = ?
-            ORDER BY r.wpm DESC
+            SELECT text_id, wpm, number, timestamp
+            FROM (
+                SELECT r.text_id, r.wpm, r.number, r.timestamp,
+                       ROW_NUMBER() OVER (PARTITION BY r.text_id ORDER BY r.wpm DESC) AS rn
+                FROM races r
+                INDEXED BY idx_races_username
+                INNER JOIN (
+                    SELECT text_id, MAX(wpm) AS max_wpm
+                    FROM races
+                    WHERE username = ?
+                    GROUP BY text_id
+                ) text_bests
+                ON r.text_id = text_bests.text_id AND r.wpm = text_bests.max_wpm
+                WHERE r.username = ?
+            )
+            WHERE rn = 1
+            ORDER BY wpm DESC;
         """, [username, username])
 
     else:
@@ -249,7 +254,10 @@ def get_text_bests(username, race_stats=False):
         """, [username])
 
     disabled_text_ids = [text[0] for text in get_disabled_texts()]
+    print(disabled_text_ids)
     filtered_tb = [text for text in text_bests if text[0] not in disabled_text_ids]
+    print(len(text_bests))
+    print(len(filtered_tb))
 
     return filtered_tb
 
@@ -334,7 +342,7 @@ def get_unraced_text_ids(username):
         WHERE disabled = 0
     """)
 
-    user_text_set = set(user_texts)
+    user_text_set = set([text[0] for text in user_texts])
     unraced = [text for text in texts if text[0] not in user_text_set]
 
     return unraced
