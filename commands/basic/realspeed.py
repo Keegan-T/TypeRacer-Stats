@@ -109,7 +109,7 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
 
     race_info = await get_race_info(username, race_number, get_lagged=True, get_raw=raw, universe=universe)
     if not race_info:
-        return await ctx.send(embed=errors.race_not_found())
+        return await ctx.send(embed=errors.race_not_found(username, race_number, universe))
 
     title = f"{'Raw' if raw else 'Real'} speeds"
     color = user["colors"]["embed"]
@@ -121,7 +121,7 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
         speeds_string = (
             f"**Lagged:** {lagged:,.2f} WPM\n\n"
             f"{title} not available for this race\n\n"
-            f"Completed <t:{int(race_info['timestamp'])}:R>"
+            f"Completed {utils.discord_timestamp(race_info['timestamp'])}"
         )
 
     else:

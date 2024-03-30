@@ -86,7 +86,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
         race = races.get_race(username, race_number)
 
         if not race:
-            return await ctx.send(embed=errors.race_not_found())
+            return await ctx.send(embed=errors.race_not_found(username, race_number))
 
         text_id = race["text_id"]
 

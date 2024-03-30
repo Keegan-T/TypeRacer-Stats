@@ -88,7 +88,7 @@ async def run(ctx, user, username, race_number, universe):
         if universe == "play":
             race_info = races.get_race(username, race_number)
         if not race_info:
-            return await ctx.send(embed=errors.race_not_found())
+            return await ctx.send(embed=errors.race_not_found(username, race_number, universe))
         race_info = dict(race_info)
         quote = texts.get_text(race_info["text_id"])["quote"]
         race_info["quote"] = quote
