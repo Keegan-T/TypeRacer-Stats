@@ -112,7 +112,7 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, override=False
         if invoked:
             await ctx.send(embed=Embed(
                 title=f"Import Request",
-                description=f"Downloading {races_left:,} new races for {username}",
+                description=f"Downloading {races_left:,} new races for {utils.escape_discord_format(username)}",
                 color=bot_user["colors"]["embed"],
             ))
         print(f"Downloading {races_left:,} new races for {username}")
@@ -234,6 +234,7 @@ async def update_award_count(username):
     users.update_awards(username, first, second, third)
 
 async def no_new_races(ctx, user, username):
+    username = utils.escape_discord_format(username)
     await ctx.send(
         embed=Embed(
             title=f"Import Request",
@@ -244,6 +245,7 @@ async def no_new_races(ctx, user, username):
 
 
 async def too_many_races(ctx, user, username, races_left):
+    username = utils.escape_discord_format(username)
     await ctx.send(
         embed=Embed(
             title=f"Import Request Rejected",
@@ -257,6 +259,7 @@ async def too_many_races(ctx, user, username, races_left):
 
 async def import_complete(ctx, user, username, notify):
     ping = f"<@{ctx.author.id}>"
+    username = utils.escape_discord_format(username)
     await ctx.send(
         content=ping if notify else "",
         embed=Embed(
