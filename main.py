@@ -161,7 +161,6 @@ async def load_commands():
 
 
 async def start():
-    from database import races_300
     await load_commands()
     if staging:
         await bot.start(staging_token)

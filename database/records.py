@@ -18,7 +18,7 @@ def get_countries():
     countries["taran127"] = "us"
     countries["tedioustuna47"] = "us"
     countries["mispelled"] = "us"
-    countries["izanagiii"] = "ph"
+    countries["arabianghosthaunting"] = "ph"
     countries["wordracer888"] = "au"
     countries["deroche1"] = "us"
     countries["jestercaporado"] = "ph"
@@ -51,6 +51,38 @@ async def update(bot):
 
     print("Finished Updating Records")
 
+async def update_300_club(bot):
+    get_countries()
+    print("Updating 300 Club...")
+    channel = bot.get_channel(records_channel)
+    message_history = channel.history(limit=None)
+    messages = []
+    async for message in message_history:
+        if message.author == bot.user:
+            messages.append(message.id)
+
+    messages.reverse()
+
+    club_300_1, club_300_2 = club_300()
+
+    records = [
+        club_400(),
+        club_300_1,
+        club_300_2,
+    ]
+
+    # Records are not mounted
+    if not messages:
+        return
+
+    # Updating existing messages
+    else:
+        record_list = iter(records)
+        for message_id in messages[1:4]:
+            message = await channel.fetch_message(message_id)
+            await message.edit(embed=next(record_list))
+
+    print("Updated 300 Club")
 
 def get_records():
     date = datetime.now()

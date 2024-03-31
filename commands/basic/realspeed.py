@@ -17,6 +17,7 @@ import database.races as races
 import database.races_300 as races_300
 import database.modified_races as modified_races
 from commands.basic.download import run as download, update_text_stats
+from database.records import update_300_club
 
 graph_commands = ["realspeedgraph", "rsg", "rg", "adjustedgraph", "ag", "ag*"]
 info = {
@@ -153,22 +154,7 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
         speeds_string += f"Completed <t:{int(race_info['timestamp'])}:R>"
 
         if universe == "play" and 300 <= adjusted <= 450 and not stats["disqualified"]:
-            races_300_list = races_300.get_races()
-            in_list = False
-            for race in races_300_list:
-                if race["username"] == username and race["number"] == race_number:
-                    in_list = True
-                    break
-
-            if not in_list:
-                print(f"New 300 WPM! {username}|{race_number}")
-                races_300.add_race({
-                    "username": username,
-                    "number": race_number,
-                    "timestamp": race_info["timestamp"],
-                    "wpm": race_info["lagged"],
-                    "wpm_adjusted": race_info["adjusted"],
-                })
+            races_300.add_new_race(username, race_number, race_info)
 
     embed = Embed(
         title=f"{title.title()} - Race #{race_number:,}",
