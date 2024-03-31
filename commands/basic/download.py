@@ -102,7 +102,7 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, override=False
         stats["seconds"] = 0
         stats["characters"] = 0
 
-    if races_left > 10_000 and (invoked and ctx.author.id in bot_admins) and not override:
+    if races_left > 10_000 and (invoked and ctx.author.id not in bot_admins) and not override:
         if invoked:
             await too_many_races(ctx, bot_user, username, races_left)
         return False
