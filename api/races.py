@@ -153,7 +153,7 @@ def get_race(username, race_number, timestamp, universe="play"):
 async def get_match(username, race_number, universe="play"):
     match = await get_race_info(username, race_number, get_opponents=True, universe=universe)
 
-    if not match:
+    if not match or "unlagged" not in match:
         return None
 
     rankings = [{

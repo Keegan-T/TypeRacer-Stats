@@ -66,7 +66,7 @@ async def run(ctx, user, username, race_number, universe):
 
     match = await get_match(username, race_number, universe)
     if not match:
-        return await ctx.send(embed=errors.race_not_found(username, race_number, universe))
+        return await ctx.send(embed=errors.logs_not_found(username, race_number, universe))
 
     description = utils.text_description(match) + "\n\n**Rankings**\n"
 
