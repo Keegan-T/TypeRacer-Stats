@@ -24,6 +24,8 @@ class ClubRemove(commands.Cog):
     async def clubremove(self, ctx, *params):
         user = get_user(ctx)
 
+        if not params:
+            return
         username = params[0]
 
         await run(ctx, user, username)

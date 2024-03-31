@@ -129,9 +129,9 @@ def cmap_histogram(ax, user, counts, groups):
     ax.set_ylim(original_ylim)
 
     graph_background = user["colors"]["graphbackground"]
-    plt.fill_between(mask[:, 0], mask[:, 1], extent[3], color=graph_background, step='post')
-    plt.fill_between([extent[0], groups[0]], [0, 0], [extent[3], extent[3]], color=graph_background)
-    plt.fill_between([groups[-1], extent[1]], [0, 0], [extent[3], extent[3]], color=graph_background)
+    ax.fill_between(mask[:, 0], mask[:, 1], extent[3], color=graph_background, step="post")
+    ax.fill_between([extent[0], groups[0]], [0, 0], [extent[3], extent[3]], color=graph_background)
+    ax.fill_between([groups[-1], extent[1]], [0, 0], [extent[3], extent[3]], color=graph_background)
 
 def cmap_compare(ax, user, counts, groups, extent):
     cmap = get_cmap(user)

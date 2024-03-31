@@ -22,6 +22,7 @@ def get_countries():
     countries["wordracer888"] = "au"
     countries["deroche1"] = "us"
     countries["jestercaporado"] = "ph"
+    countries["yukomiya"] = "au"
 
 
 async def update(bot):
