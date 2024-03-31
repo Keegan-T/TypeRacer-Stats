@@ -191,8 +191,6 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
                 line_handler = CollectionHandler(numpoints=50)
             else:
                 line.set_color(line_color)
-                if int(user["id"]) == bot_owner:
-                    line.set_linewidth(3)
         legend_lines.append(line)
         legend_labels.append(label)
         handler_map[line] = line_handler
@@ -320,7 +318,7 @@ def compare(user, user1, user2, file_name):
     plt.close()
 
 
-def improvement(user, wpm, title, file_name, timeframe=""):
+def improvement(user, wpm, title, file_name, timeframe="", timestamps=None):
     text_graph = "Text #" in title
     wpm = np.array(wpm)
     best_index, best = max(enumerate(wpm), key=lambda x: x[1])
@@ -335,16 +333,28 @@ def improvement(user, wpm, title, file_name, timeframe=""):
     downsample_factor = max(len(wpm) // 100000, 1)
     downsampled_indices = np.arange(0, len(wpm), downsample_factor)
     downsampled_data = wpm[downsampled_indices]
-    downsampled_indices = [d + 1 for d in downsampled_indices]
 
-    race_count = np.arange(window_size - 1, len(wpm))
-    race_count = [r + 1 for r in race_count]
+    x_points = np.arange(window_size - 1, len(wpm))
+
+    if timestamps:
+        timestamps = np.array(timestamps)
+        downsampled_indices = [timestamps[d] for d in downsampled_indices]
+        x_points = [timestamps[r] for r in x_points]
+        ax.scatter(timestamps[worst_index], worst, color="#FA3244", marker=".", zorder=10)
+        ax.scatter(timestamps[best_index], best, color="#53D76A", marker=".", zorder=10)
+        date_x_ticks(ax, min(timestamps), max(timestamps))
+
+    else:
+        downsampled_indices = [d + 1 for d in downsampled_indices]
+        x_points = [r + 1 for r in x_points]
+        ax.scatter(worst_index + 1, worst, color="#FA3244", marker=".", zorder=10)
+        ax.scatter(best_index + 1, best, color="#53D76A", marker=".", zorder=10)
+        ax.xaxis.set_major_formatter(FuncFormatter(format_big_number))
+
 
     bg_color = hex2color(user["colors"]["graphbackground"])
     point_color = "white" if np.mean(bg_color) < 0.5 else "black"
 
-    ax.scatter(worst_index + 1, worst, color="#FA3244", marker=".", zorder=10)
-    ax.scatter(best_index + 1, best, color="#53D76A", marker=".", zorder=10)
     ax.scatter(downsampled_indices, downsampled_data, alpha=0.1, s=25, color=point_color, edgecolors="none")
 
     # Interpolating for smooth colormaps
@@ -363,14 +373,12 @@ def improvement(user, wpm, title, file_name, timeframe=""):
                 x_segments.append(v)
 
         y_segments.append(moving_wpm[-1])
-        x_segments.append(race_count[-1])
+        x_segments.append(x_points[-1])
 
         ax.plot(x_segments, y_segments)
 
     else:
-        ax.plot(race_count, moving_wpm)
-
-    ax.xaxis.set_major_formatter(FuncFormatter(format_big_number))
+        ax.plot(x_points, moving_wpm)
 
     ax.set_xlabel(f"Races{timeframe}")
     ax.set_ylabel("WPM")

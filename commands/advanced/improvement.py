@@ -12,7 +12,7 @@ import errors
 
 info = {
     "name": "improvement",
-    "aliases": ["imp"],
+    "aliases": ["imp", "timeimprovement", "timp"],
     "description": "Displays a graph of a user's WPM over time",
     "parameters": "[username] <start_date/start_number> <end_date/end_number>",
     "defaults": {
@@ -43,10 +43,11 @@ class Improvement(commands.Cog):
             self.improvement.reset_cooldown(ctx)
             return
 
-        await run(ctx, user, username, start_date, end_date, start_number, end_number)
+        time = ctx.invoked_with in ["timeimprovement", "timp"]
+        await run(ctx, user, username, start_date, end_date, start_number, end_number, time)
 
 
-async def run(ctx, user, username, start_date, end_date, start_number, end_number):
+async def run(ctx, user, username, start_date, end_date, start_number, end_number, time):
     stats = users.get_user(username)
     if not stats:
         utils.reset_cooldown(ctx.command, ctx)
@@ -80,6 +81,7 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
 
     race_list.sort(key=lambda x: x[1])
     wpm = []
+    timestamps = []
     best = 0
     average = 0
     recent_average = 0
@@ -90,6 +92,7 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
     for race in race_list:
         race_wpm = race[0]
         wpm.append(race_wpm)
+        timestamps.append(race[1])
         if race_wpm > best:
             best = race_wpm
         if race_wpm < worst:
@@ -119,7 +122,7 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
 
     title = f"WPM Improvement - {username}"
     file_name = f"improvement_{username}.png"
-    graphs.improvement(user, wpm, title, file_name, timeframe)
+    graphs.improvement(user, wpm, title, file_name, timeframe, timestamps if time else None)
 
     embed.set_image(url=f"attachment://{file_name}")
     file = File(file_name, filename=file_name)
