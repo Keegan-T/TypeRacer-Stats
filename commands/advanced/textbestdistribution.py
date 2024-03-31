@@ -87,10 +87,10 @@ async def run(ctx, user, username):
 
     for bracket in brackets:
         bracket_str = (
-            f"\u001B[2;34m{bracket[0]:<{spacing[0]}} WPM+\u001B[0m | "
-            f"\u001B[2;34m{bracket[1]:>{spacing[1]}}\u001B[0m | "
-            f"\u001B[2;34m{bracket[2]:>{spacing[2]}}%\u001B[0m | "
-            f"\u001B[2;34m{bracket[3]:>{spacing[3]}}\u001B[0m"
+            f"{bracket[0]:<{spacing[0]}} WPM+ | "
+            f"{bracket[1]:>{spacing[1]}} | "
+            f"{bracket[2]:>{spacing[2]}}% | "
+            f"{bracket[3]:>{spacing[3]}}"
         )
         breakdown += f"{bracket_str}\n"
 
