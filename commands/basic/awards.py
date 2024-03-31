@@ -22,7 +22,6 @@ class Awards(commands.Cog):
         self.bot = bot
 
     @commands.command(aliases=info["aliases"])
-    # @commands.before_invoke(lock_command)
     async def awards(self, ctx, *params):
         user = get_user(ctx)
 

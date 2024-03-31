@@ -190,6 +190,10 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, override=False
     except Exception as e:
         raise e
 
+    if new_user:
+        users.add_user(username)
+        users.update_stats(stats)
+
     if new_races:
         races.add_races(race_list)
         if invoked:
@@ -201,10 +205,10 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, override=False
             await no_new_races(ctx, bot_user, username)
 
     if new_user:
-        users.add_user(username)
         await update_award_count(username)
 
-    users.update_stats(stats)
+    else:
+        users.update_stats(stats)
 
     print(f"Finished importing {username}")
 
