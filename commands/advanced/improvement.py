@@ -6,6 +6,7 @@ from database.bot_users import get_user
 import database.users as users
 import database.races as races
 from commands.advanced.races import get_params
+from config import prefix
 import graphs
 import utils
 import errors
@@ -13,7 +14,8 @@ import errors
 info = {
     "name": "improvement",
     "aliases": ["imp", "timeimprovement", "timp"],
-    "description": "Displays a graph of a user's WPM over time",
+    "description": "Displays a graph of a user's WPM over races\n"
+                   f"`{prefix}timeimprovement` will graph WPM over time",
     "parameters": "[username] <start_date/start_number> <end_date/end_number>",
     "defaults": {
         "end_date": "today",
@@ -23,6 +25,7 @@ info = {
         "improvement keegant",
         "improvement keegant 2022-04-20 2023-04-20",
         "improvement keegant 800k 900k",
+        "timeimprovement keegant",
     ],
     "import": True,
 }
