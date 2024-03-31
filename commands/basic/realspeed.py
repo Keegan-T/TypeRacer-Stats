@@ -17,7 +17,6 @@ import database.races as races
 import database.races_300 as races_300
 import database.modified_races as modified_races
 from commands.basic.download import run as download, update_text_stats
-from database.records import update_300_club
 
 graph_commands = ["realspeedgraph", "rsg", "rg", "adjustedgraph", "ag", "ag*"]
 info = {

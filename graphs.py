@@ -179,6 +179,9 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
 
     for i, line in enumerate(ax.get_lines()):
         label = line.get_label()
+        if label == "Raw Speed":
+            line.set_color("#FFB600")
+            recolored_line = 1
         if label.startswith("_"):
             label = "\u200B" + label
         line_handler = LineHandler()
