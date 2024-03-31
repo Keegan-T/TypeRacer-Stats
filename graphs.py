@@ -179,7 +179,7 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
 
     for i, line in enumerate(ax.get_lines()):
         label = line.get_label()
-        if label == "Raw Speed":
+        if label == "Raw Adjusted":
             line.set_color("#FFB600")
             recolored_line = 1
         if label.startswith("_"):
@@ -390,6 +390,7 @@ def match(user, rankings, title, y_label, file_name, limit_y=True):
     caller_index = 0
     starts = []
     remaining = []
+    comparison = False
 
     if "average_adjusted_wpm" in rankings[0]:
         racer = rankings[0]
@@ -405,20 +406,23 @@ def match(user, rankings, title, y_label, file_name, limit_y=True):
         for i, racer in enumerate(rankings):
             zorder = len(rankings) + 5 - i
             racer_username = racer["username"]
-            if racer_username == caller:
+            if racer_username in [caller, "Adjusted"]:
                 caller_index = i
                 zorder *= 10
+                if racer_username == "Adjusted":
+                    comparison = True
             average_wpm = racer["average_wpm"]
             keystrokes = np.arange(1, len(average_wpm) + 1)
             ax.plot(keystrokes, average_wpm, label=racer_username, zorder=zorder)
             starts += average_wpm[:9]
             remaining += average_wpm[9:]
 
-        ax.set_ylim(0, plt.ylim()[1])
+        if not comparison:
+            ax.set_ylim(bottom=0)
 
     if remaining and limit_y:
         if max(starts) > max(remaining):
-            ax.set_ylim(0, 1.2 * max(remaining))
+            ax.set_ylim(top=1.2 * max(remaining))
 
     ax.set_xlabel("Keystrokes")
     ax.set_ylabel(y_label)

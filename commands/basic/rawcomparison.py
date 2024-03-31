@@ -108,15 +108,16 @@ async def run(ctx, user, username, race_number, universe):
         title += f"\nUniverse: {universe}"
     file_name = f"{username}_{race_number}_real_vs_raw.png"
 
+    print(race_info)
 
     rankings = [
         {
-            "username": "Raw Speed",
-            "average_wpm": race_info["raw_wpm_over_keystrokes"],
+            "username": "Raw Adjusted",
+            "average_wpm": race_info["raw_wpm_adjusted_over_keystrokes"],
         },
         {
-            "username": username,
-            "average_wpm": race_info["wpm_over_keystrokes"],
+            "username": "Adjusted",
+            "average_wpm": race_info["wpm_adjusted_over_keystrokes"],
         }
     ]
 
