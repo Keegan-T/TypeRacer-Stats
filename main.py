@@ -8,7 +8,7 @@ import traceback
 import utils
 import errors
 from config import prefix, bot_token, staging_token, bot_owner, log_channel
-from database.banned import get_banned
+from commands.checks import ban_check
 from database import records
 from database.bot_users import update_commands
 from tasks import import_competitions, update_important_users, update_top_tens
@@ -39,11 +39,6 @@ async def error_notify(log_message, error):
     )
 
     await logs.send(log_message)
-
-
-def ban_check(ctx):
-    if ctx.author.id == bot_owner: return True
-    return str(ctx.author.id) not in get_banned()
 
 
 bot.add_check(ban_check)

@@ -1,11 +1,10 @@
 from discord import Embed
 from discord.ext import commands
-import errors
 import utils
 from database.bot_users import get_user
-from commands.admin.ban import admin_check
 import database.races_300 as races_300
 from database import records
+from commands.checks import admin_check
 
 info = {
     "name": "clubremove",
@@ -14,6 +13,7 @@ info = {
     "parameters": "[username]",
     "usages": ["clubremove keegant"],
 }
+
 
 class ClubRemove(commands.Cog):
     def __init__(self, bot):
@@ -31,6 +31,7 @@ class ClubRemove(commands.Cog):
         await run(ctx, user, username)
         await records.update_300_club(self.bot)
 
+
 async def run(ctx, user, username):
     races_300.delete_user_scores(username)
 
@@ -41,6 +42,7 @@ async def run(ctx, user, username):
     )
 
     await ctx.send(embed=embed)
+
 
 async def setup(bot):
     await bot.add_cog(ClubRemove(bot))

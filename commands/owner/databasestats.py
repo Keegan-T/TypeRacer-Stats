@@ -1,14 +1,15 @@
 from discord import Embed
 from discord.ext import commands
 from database.bot_users import get_user
-from commands.owner.deleterace import owner_check
 import database.users as users
+from commands.checks import owner_check
 
 info = {
     "name": "databasestats",
     "aliases": ["dbs", "db"],
     "description": "Displays database stats",
 }
+
 
 class DatabaseStats(commands.Cog):
     def __init__(self, bot):
@@ -20,6 +21,7 @@ class DatabaseStats(commands.Cog):
         user = get_user(ctx)
 
         await run(ctx, user)
+
 
 async def run(ctx, user):
     stats = users.get_stats()
@@ -34,6 +36,7 @@ async def run(ctx, user):
     )
 
     await ctx.send(embed=embed)
+
 
 async def setup(bot):
     await bot.add_cog(DatabaseStats(bot))

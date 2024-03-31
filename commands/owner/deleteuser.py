@@ -3,36 +3,34 @@ from discord.ext import commands
 import asyncio
 import colors
 from database.bot_users import get_user
-from database.races import delete_race
+from database.users import delete_user
 from commands.checks import owner_check
 
 info = {
-    "name": "deleterace",
-    "aliases": ["dr"],
-    "description": "Delete's a race from the database",
-    "parameters": "[username] [race_number]",
-    "usages": ["delete keegant 416689"],
-    "import": False,
+    "name": "deleteuser",
+    "aliases": ["du"],
+    "description": "Delete's a user from the database",
+    "parameters": "[username]",
+    "usages": ["delete keegant"],
 }
 
 
-class DeleteRace(commands.Cog):
+class DeleteUser(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command(aliases=info["aliases"])
     @commands.check(owner_check)
-    async def deleterace(self, ctx, *params):
+    async def deleteuser(self, ctx, *params):
         user = get_user(ctx)
 
         if not params:
             return
         username = params[0]
-        race_number = params[1]
 
         embed = Embed(
             title="Are You Sure?",
-            description=f"You are about to permanently delete race `{username}|{race_number}`\n"
+            description=f"You are about to permanently delete user `{username}`\n"
                         f'Please type "confirm" to proceed with deletion',
             color=colors.warning,
         )
@@ -46,19 +44,19 @@ class DeleteRace(commands.Cog):
         except asyncio.TimeoutError:
             return
         else:
-            await run(ctx, user, username, race_number)
+            await run(ctx, user, username)
 
 
 async def setup(bot):
-    await bot.add_cog(DeleteRace(bot))
+    await bot.add_cog(DeleteUser(bot))
 
 
-async def run(ctx, user, username, race_number):
-    delete_race(username, race_number)
+async def run(ctx, user, username):
+    delete_user(username)
 
     embed = Embed(
-        title=f"Race Deleted",
-        description=f"Race `{username}|{race_number}` has been removed from the database",
+        title=f"User Deleted",
+        description=f"User `{username}` has been removed from the database",
         color=user["colors"]["embed"],
     )
 

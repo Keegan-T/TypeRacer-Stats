@@ -3,7 +3,7 @@ from discord.ext import commands
 import colors
 from database.bot_users import get_user
 from database.banned import get_banned, ban, unban
-from config import bot_admins
+from commands.checks import admin_check
 
 info = {
     "name": "ban",
@@ -11,12 +11,7 @@ info = {
     "description": "Bans or unbans a user from being able to use the bot",
     "parameters": "[discord_id]",
     "usages": ["ban 225472450794618881"],
-    "import": False,
 }
-
-
-def admin_check(ctx):
-    return ctx.author.id in bot_admins
 
 
 class Ban(commands.Cog):

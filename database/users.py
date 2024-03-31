@@ -196,10 +196,6 @@ def delete_user(username):
         [username]
     )
     db.run(
-        "DELETE FROM races_300 WHERE username = ?",
-        [username]
-    )
-    db.run(
         "DELETE FROM users WHERE username = ?",
         [username]
     )

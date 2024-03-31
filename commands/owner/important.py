@@ -4,7 +4,7 @@ import errors
 from database.bot_users import get_user
 from api.users import get_stats
 import database.important_users as important_users
-from commands.owner.deleterace import owner_check
+from commands.checks import owner_check
 
 info = {
     "name": "updateimportant",

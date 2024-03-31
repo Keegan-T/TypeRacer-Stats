@@ -3,13 +3,14 @@ from discord.ext import commands
 import errors
 from database.bot_users import get_user
 import database.texts as texts
-from commands.owner.deleterace import owner_check
+from commands.checks import owner_check
 
 info = {
     "name": "toggletext",
     "aliases": ["enabletext", "et", "disabletext", "dt"],
     "description": "Enables/disabled texts",
 }
+
 
 class ToggleText(commands.Cog):
     def __init__(self, bot):
@@ -26,6 +27,7 @@ class ToggleText(commands.Cog):
         text_id = params[0]
 
         await run(ctx, user, text_id)
+
 
 async def run(ctx, user, text_id):
     text = texts.get_text(text_id)
@@ -45,6 +47,7 @@ async def run(ctx, user, text_id):
     )
 
     await ctx.send(embed=embed)
+
 
 async def setup(bot):
     await bot.add_cog(ToggleText(bot))

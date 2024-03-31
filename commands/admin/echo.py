@@ -1,5 +1,5 @@
 from discord.ext import commands
-from config import bot_admins, supporters
+from commands.checks import echo_check
 
 info = {
     "name": "echo",
@@ -7,8 +7,6 @@ info = {
     "description": "Echo",
 }
 
-def echo_check(ctx):
-    return ctx.author.id in bot_admins + supporters
 
 class Echo(commands.Cog):
     def __init__(self, bot):
@@ -23,8 +21,10 @@ class Echo(commands.Cog):
         await ctx.message.delete()
         await run(ctx, " ".join(params))
 
+
 async def run(ctx, message):
     await ctx.send(content=message)
+
 
 async def setup(bot):
     await bot.add_cog(Echo(bot))
