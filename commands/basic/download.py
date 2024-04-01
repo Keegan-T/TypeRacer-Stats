@@ -219,10 +219,7 @@ def update_text_stats(username):
     print("Updating text stats")
 
     text_bests = users.get_text_bests(username)
-    max_quote = users.get_max_quote(username)
     text_stats = utils.get_text_stats(text_bests)
-    text_stats['max_quote_times'] = max_quote['occurrences']
-    text_stats['max_quote_id'] = max_quote['text_id']
 
     users.update_text_stats(username, text_stats)
 

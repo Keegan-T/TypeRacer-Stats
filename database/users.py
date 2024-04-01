@@ -52,17 +52,53 @@ def get_users_from_list(usernames):
 
 
 def get_most(column, limit):
-    top = db.fetch(
-        f"""
-            SELECT * FROM users
-            WHERE disqualified = 0
-            ORDER BY {column} DESC
-            LIMIT ?
-        """,
-        [limit]
-    )
+    top = db.fetch(f"""
+        SELECT * FROM users
+        WHERE disqualified = 0
+        ORDER BY {column} DESC
+        LIMIT ?
+    """, [limit])
 
     return top
+
+async def get_most_text_repeats(limit):
+    top = await db.fetch_async("""
+        SELECT username, text_id, MAX(times_typed) AS max_times
+        FROM (
+            SELECT username, text_id, COUNT(*) AS times_typed
+            FROM races
+            INDEXED BY idx_races_username_text_id
+            GROUP BY username, text_id
+            ORDER BY times_typed DESC
+        ) AS subquery
+        GROUP BY username
+        ORDER BY max_times DESC
+        LIMIT ?;
+    """, [limit])
+
+    top_dict = {}
+
+    for user in top:
+        username, max_quote, max_quote_times = user
+        top_dict[username] = {
+            "max_quote": max_quote,
+            "max_quote_times": max_quote_times,
+        }
+
+    username_list = ",".join([f"'{user[0]}'" for user in top])
+    user_list = db.fetch(f"""
+        SELECT * FROM users
+        WHERE username IN ({username_list})
+    """)
+    user_list = [dict(user) for user in user_list]
+    for user in user_list:
+        username = user["username"]
+        user["max_quote"] = top_dict[username]["max_quote"]
+        user["max_quote_times"] = top_dict[username]["max_quote_times"]
+
+    user_list.sort(key=lambda x: x["max_quote_times"], reverse=True)
+
+    return user_list
 
 
 def get_most_daily_races(limit):
@@ -116,15 +152,12 @@ def get_most_total_points(limit):
 
 
 def get_top_text_best(limit):
-    top = db.fetch(
-        """
-            SELECT * FROM users
-            WHERE texts_typed >= 1000
-            ORDER BY text_best_average DESC
-            LIMIT ?
-        """,
-        [limit]
-    )
+    top = db.fetch("""
+        SELECT * FROM users
+        WHERE texts_typed >= 1500
+        ORDER BY text_best_average DESC
+        LIMIT ?
+    """, [limit])
 
     return top
 
@@ -163,19 +196,14 @@ def update_stats(user):
 
 
 def update_text_stats(username, stats):
-    db.run(
-        """
-            UPDATE users
-            SET texts_typed = ?, text_best_average = ?, text_wpm_total = ?,
-            max_quote_times = ?, max_quote_id = ?
-            WHERE username = ? 
-        """,
-        [
-            stats['texts_typed'], stats['text_best_average'], stats['text_wpm_total'],
-            stats['max_quote_times'], stats['max_quote_id'],
-            username
-        ]
-    )
+    db.run("""
+        UPDATE users
+        SET texts_typed = ?, text_best_average = ?, text_wpm_total = ?
+        WHERE username = ? 
+    """, [
+        stats['texts_typed'], stats['text_best_average'],
+        stats['text_wpm_total'], username
+    ])
 
 
 def update_awards(username, first, second, third):
@@ -253,41 +281,6 @@ def get_text_bests(username, race_stats=False):
     filtered_tb = [text for text in text_bests if text[0] not in disabled_text_ids]
 
     return filtered_tb
-
-
-### Old version
-# db.fetch(
-#     """
-#         WITH TextBests AS (
-#           SELECT text_id, quote, wpm, number, timestamp, ROW_NUMBER() OVER (PARTITION BY text_id ORDER BY wpm DESC) AS row_num
-#           FROM races
-#           JOIN texts ON texts.id = races.text_id
-#           WHERE username = 'keegant'
-#         )
-#         SELECT text_id, quote, wpm, number, timestamp
-#         FROM TextBests
-#         WHERE row_num = 1
-#         ORDER BY wpm DESC
-#     """
-# )
-
-
-def get_max_quote(username):
-    max_quote = db.fetch(
-        """
-            SELECT text_id, COUNT(text_id) AS occurrences
-            FROM races
-            INDEXED BY idx_races_username_text_id
-            WHERE username = ?
-            GROUP BY text_id
-            ORDER BY occurrences DESC
-            LIMIT 1
-        """,
-        [username]
-    )
-
-    return max_quote[0]
-
 
 def get_profile_picture_link(username):
     user = db.fetch(

@@ -9,6 +9,12 @@ from config import records_channel
 
 medals = [":first_place:", ":second_place:", ":third_place:"]
 countries = {}
+exclude_300s = {
+    "izanagiii",
+    "i_dont_know_you_know",
+    "taran",
+    "slowaccount",
+}
 
 
 def get_countries():
@@ -200,6 +206,7 @@ def club_300():
     scores_string = ""
     scores_string2 = ""
     scores = races_300.get_races_unique_usernames()
+    scores = [score for score in scores if score["username"] not in exclude_300s]
     for score in scores[:25]:
         i += 1
         if score["wpm_adjusted"] >= 400:
@@ -407,7 +414,7 @@ def text_records():
     text_bests = users.get_top_text_best(3)
     total_text_wpm = users.get_most("text_wpm_total", 3)
     most_texts = users.get_most("texts_typed", 3)
-    max_quote = users.get_most("max_quote_times", 3)
+    max_quote = users.get_most_text_repeats(3)
     text_bests_str = ""
     total_text_wpm_str = ""
     most_texts_str = ""

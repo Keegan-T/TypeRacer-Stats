@@ -86,7 +86,7 @@ async def run(ctx, user, category, text_id=None):
         leaderboard = users.get_top_text_best(limit)
         for leader in leaderboard:
             leaders.append(f"{leader['text_best_average']:,.2f} WPM")
-        embed.set_footer(text="Minimum 1,000 Texts Typed")
+        embed.set_footer(text="Minimum 1,500 Texts Typed")
 
     elif category == "textstyped":
         title = "Texts Typed"
@@ -110,7 +110,7 @@ async def run(ctx, user, category, text_id=None):
             embed.url = urls.trdata_text(text_id)
         else:
             title = "Text Repeats"
-            leaderboard = users.get_most("max_quote_times", limit)
+            leaderboard = await users.get_most_text_repeats(limit)
             for leader in leaderboard:
                 leaders.append(
                     f"{leader['max_quote_times']:,} times - [Text #{leader['max_quote_id']}]"
