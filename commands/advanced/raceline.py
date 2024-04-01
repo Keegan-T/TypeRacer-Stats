@@ -152,7 +152,7 @@ async def run(ctx, user, usernames, start_date, end_date, points=False):
     if start_time > 0:
         title += f"\n{utils.get_display_date_range(start_date, end_date)}"
     elif datetime.now(timezone.utc).date() != end_date.date():
-        title += f"\n{utils.get_display_date_range(datetime.fromtimestamp(lines[0][5], tz=timezone.utc), end_date)}"
+        title += f"\n{utils.get_display_date_range(datetime.fromtimestamp(lines[0][4], tz=timezone.utc), end_date)}"
 
     lines.sort(key=lambda x: x[3], reverse=True)
 
