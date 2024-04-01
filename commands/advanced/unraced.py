@@ -1,5 +1,6 @@
 from discord import Embed
 from discord.ext import commands
+import urls
 import utils
 import errors
 import colors
@@ -49,8 +50,9 @@ async def run(ctx, user, username):
     unraced_string = ""
 
     for text in unraced[:5]:
+        text_id = text["id"]
         unraced_string += (
-            f"**Text #{text['id']}** - [Ghost]({text['ghost']})\n"
+            f"[Text #{text_id}]({urls.trdata_text(text_id)}) - [Ghost]({text['ghost']})\n"
             f'"{utils.truncate_clean(text["quote"], 500)}"\n\n'
         )
 
