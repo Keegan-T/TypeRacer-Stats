@@ -81,7 +81,7 @@ async def get_most_text_repeats(limit):
     for user in top:
         username, max_quote, max_quote_times = user
         top_dict[username] = {
-            "max_quote": max_quote,
+            "max_quote_id": max_quote,
             "max_quote_times": max_quote_times,
         }
 
@@ -93,7 +93,7 @@ async def get_most_text_repeats(limit):
     user_list = [dict(user) for user in user_list]
     for user in user_list:
         username = user["username"]
-        user["max_quote"] = top_dict[username]["max_quote"]
+        user["max_quote_id"] = top_dict[username]["max_quote_id"]
         user["max_quote_times"] = top_dict[username]["max_quote_times"]
 
     user_list.sort(key=lambda x: x["max_quote_times"], reverse=True)
