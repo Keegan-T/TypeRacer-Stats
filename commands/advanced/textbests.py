@@ -99,7 +99,7 @@ async def run(ctx, user, username, n, worst):
         text_id = text["text_id"]
         quote = utils.truncate_clean(text_list[text_id]["quote"], 60)
         scores += (
-            f"[{text['wpm']:,.2f} WPM]({urls.trdata_text(text_id)}) - "
+            f"[{text['wpm']:,.2f} WPM]({urls.replay(username, text['number'])}) - "
             f"Race #{text['number']:,} - "
             f"[Text #{text_id}]({urls.trdata_text(text_id)}) - "
             f'{utils.discord_timestamp(text["timestamp"])}\n"{quote}"\n\n'
