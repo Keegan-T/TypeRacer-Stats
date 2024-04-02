@@ -102,7 +102,6 @@ async def run(ctx, user, category, text_id=None):
             title = f"Text #{text_id} Repeats"
             leaderboard = texts.get_text_repeat_leaderboard(text_id)
             for leader in leaderboard:
-                print(dict(leader))
                 leaders.append(
                     f"[{leader['times']:,} times]"
                     f"({urls.trdata_text_races(leader['username'], text_id)})"

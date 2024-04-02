@@ -159,15 +159,8 @@ async def run(ctx, user, username, text_id=None, race_number=None):
             f"<t:{int(recent['timestamp'])}:R>"
         )
 
-    embed.add_field(name="Stats", value=stats_string)
-
-    embed.description = description
+    embed.description = description + f"\n\n{stats_string}"
     embed.color = color
-
-    # utils.time_start()
-    # top_10 = texts.get_top_10(text_id)
-    # print(top_10)
-    # utils.time_end()
 
     if graph:
         title = f"WPM Improvement - {username} - Text #{text_id}"

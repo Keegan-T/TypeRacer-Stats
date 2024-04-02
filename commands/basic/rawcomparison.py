@@ -101,14 +101,12 @@ async def run(ctx, user, username, race_number, universe):
     utils.add_profile(embed, stats)
     utils.add_universe(embed, universe)
 
-    embed.add_field(name="Speeds", value=speeds_string, inline=False)
+    embed.description += f"\n\n{speeds_string}"
 
     title = f"Race Graph - {username} - Race #{race_number:,}"
     if universe != "play":
         title += f"\nUniverse: {universe}"
     file_name = f"{username}_{race_number}_real_vs_raw.png"
-
-    print(race_info)
 
     rankings = [
         {

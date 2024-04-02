@@ -82,6 +82,7 @@ async def run(ctx, user, username, category, text_id, reverse=True):
         if text_id not in text_list:
             return await ctx.send(embed=errors.unknown_text())
         text = text_list[text_id]
+        text["text_id"] = text_id
         race_list = sorted(races.get_text_races(username, text_id), key=lambda x: x["wpm"], reverse=reverse)[:limit]
 
         limit = len(race_list)
@@ -102,11 +103,14 @@ async def run(ctx, user, username, category, text_id, reverse=True):
         average /= limit
         average_score = f"{average:,.2f} WPM"
 
-        top = f"**{'Best' if reverse else 'Worst'} {limit} Average:** {average_score}\n\n" + top
-        top = f'"{utils.truncate_clean(text["quote"], 1000)}"\n\n' + top
+        top = (
+            f"{utils.text_description(text)}\n\n"
+            f"**{'Best' if reverse else 'Worst'} {limit} Average:** {average_score}\n\n"
+            f"{top}"
+        )
 
         embed = Embed(
-            title=f"Top {limit} {'Best' if reverse else 'Worst'} Races (Text #{text_id})",
+            title=f"Top {limit} {'Best' if reverse else 'Worst'} Races",
             description=top,
             color=user["colors"]["embed"],
         )
@@ -121,6 +125,7 @@ async def run(ctx, user, username, category, text_id, reverse=True):
 
         for race in race_list:
             quote = utils.truncate_clean(race["quote"], 60)
+            text_id = race["text_id"]
             if category == "wpm":
                 score = f"{race['wpm']:,.2f} WPM"
             else:
@@ -129,7 +134,8 @@ async def run(ctx, user, username, category, text_id, reverse=True):
             top += (
                 f"[{score}]"
                 f"({urls.replay(username, race['number'])})"
-                f" - Race #{race['number']:,} - Text #{race['text_id']} - "
+                f" - Race #{race['number']:,} - "
+                f"[Text #{text_id}]({urls.trdata_text(text_id)}) - "
                 f"<t:{int(race['timestamp'])}:R>\n{quote}\n\n"
             )
 
