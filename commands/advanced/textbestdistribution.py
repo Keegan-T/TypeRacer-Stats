@@ -82,7 +82,7 @@ async def run(ctx, user, username):
         f"{'Bracket':<{spacing[0] + 5}} | "
         f"{'Over':>{spacing[1]}} | "
         f"{'Done':>{spacing[2] + 1}} | "
-        f"{'Left':>{spacing[3]}}\n"
+        f"{'Left':>{spacing[3]}}\t\t\n"
     )
 
     for bracket in brackets:
@@ -94,7 +94,7 @@ async def run(ctx, user, username):
         )
         breakdown += f"{bracket_str}\n"
 
-    description += f"\n\n**Distribution:**\n```ansi\n{breakdown}```"
+    description += f"\n\n**Distribution:**\n```\n{breakdown}```"
 
     embed = Embed(
         title=f"Text Best Distribution",
