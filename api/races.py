@@ -153,7 +153,7 @@ def get_race(username, race_number, timestamp, universe="play"):
 async def get_match(username, race_number, universe="play"):
     match = await get_race_info(username, race_number, get_opponents=True, universe=universe)
 
-    if not match or "unlagged" not in match:
+    if not match or isinstance(match, int) or "unlagged" not in match:
         return None
 
     rankings = [{
@@ -170,6 +170,8 @@ async def get_match(username, race_number, universe="play"):
             opp_username = opponent[0]
             opp_race_number = opponent[2]
             opp_race_info = await get_race_info(opp_username, opp_race_number, universe=universe)
+            if not opp_race_info or isinstance(opp_race_info, int):
+                continue
             rankings.append({
                 "username": opp_username,
                 "race_number": opp_race_number,
