@@ -181,6 +181,8 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
         label = line.get_label()
         if label == "Raw Adjusted":
             line.set_color("#FFB600")
+            if int(user["id"]) != bot_owner:
+                line.set_linewidth(1)
             recolored_line = 1
         if label.startswith("_"):
             label = "\u200B" + label
