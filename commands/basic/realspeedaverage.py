@@ -124,6 +124,7 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
     raw_unlagged = 0
     raw_adjusted = 0
     correction = 0
+    correction_percent = 0
     reverse_lag = False
     races = "**Races**\n"
 
@@ -157,6 +158,7 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
             raw_unlagged += race["raw_unlagged"]
             raw_adjusted += race["raw_adjusted"]
             correction += race["correction"]
+            correction_percent += race["correction"] / race["ms"]
 
         flag = ""
         if race["lagged"] > round(race["unlagged"], 2):
@@ -198,7 +200,7 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
         raw_unlagged /= race_count
         raw_adjusted /= race_count
         correction /= race_count
-        correction_percent = (correction / ms) * 100
+        correction_percent /= race_count * 100
         real_speeds += (
             f"**Raw Unlagged:** {raw_unlagged:,.2f} WPM\n"
             f"**Raw Adjusted:**  {raw_adjusted:,.3f} WPM\n"
