@@ -124,7 +124,11 @@ async def run(ctx, user, username, number, kind):
                 race_range = [end_index, end_index + 1]
                 break
 
-    completion_races = race_list[race_range[0]:race_range[1]]
+    if not race_range:
+        completion_races = race_list
+        fastest = completion_races[-1][7] - completion_races[0][7]
+    else:
+        completion_races = race_list[race_range[0]:race_range[1]]
     start_time = completion_races[0][7]
     end_time = completion_races[-1][7]
 
