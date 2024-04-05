@@ -82,6 +82,9 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         race_list = await races.get_races(
             username, columns=columns, start_time=start_date.timestamp(), end_time=end_date.timestamp())
 
+    if len(race_list) == 0:
+        return await ctx.send(embed=errors.no_races_in_range())
+
     race_list.sort(key=lambda x: x[1])
     wpm = []
     timestamps = []

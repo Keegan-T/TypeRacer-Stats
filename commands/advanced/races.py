@@ -115,14 +115,14 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         end = datetime.now(timezone.utc).timestamp()
         race_list = await races.get_races(username, columns, start, end)
         if not race_list:
-            return await ctx.send(embed=no_data())
+            return await ctx.send(embed=errors.no_races_in_range())
 
     elif start_date is None:
         end_number = min(end_number, stats["races"])
         title += f"Races {start_number:,} - {end_number:,}"
         race_list = await races.get_races(username, columns, start_number=start_number, end_number=end_number)
         if not race_list:
-            return await ctx.send(embed=no_data())
+            return await ctx.send(embed=errors.no_races_in_range())
         start = race_list[0][7]
         end = race_list[-1][7] + 0.01
 
@@ -135,7 +135,7 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         title += utils.get_display_date_range(start_date, end_date)
         race_list = await races.get_races(username, columns, start_date.timestamp(), end_date.timestamp())
         if not race_list:
-            return await ctx.send(embed=no_data())
+            return await ctx.send(embed=errors.no_races_in_range())
 
     race_list.sort(key=lambda x: x[7])
 
@@ -292,14 +292,6 @@ def same_dates():
         description="Dates cannot be the same",
         color=colors.error,
     )
-
-def no_data():
-    return Embed(
-        title="No Data",
-        description="User has no data in the specified range",
-        color=colors.error,
-    )
-
 
 
 async def setup(bot):

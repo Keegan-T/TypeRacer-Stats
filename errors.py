@@ -63,7 +63,14 @@ def invalid_username():
 def no_races():
     return Embed(
         title="No Races Found",
-        description="This user has not completed any races",
+        description="User has not completed any races",
+        color=error,
+    )
+
+def no_races_in_range():
+    return Embed(
+        title="No Races Found",
+        description="User has no races in this range",
         color=error,
     )
 

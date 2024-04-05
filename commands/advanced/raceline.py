@@ -175,8 +175,8 @@ def too_many_usernames():
 
 def no_data():
     return Embed(
-        title="No Data",
-        description="Given users have no data in the specified range",
+        title="Not Enough Data",
+        description="At least one user has no races in this range",
         color=colors.error,
     )
 
