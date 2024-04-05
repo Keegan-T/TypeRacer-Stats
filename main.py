@@ -22,7 +22,7 @@ staging = False
 ###########################
 
 async def log_command(ctx):
-    log = utils.command_log(ctx)
+    log = utils.command_log_message(ctx)
     logs = bot.get_channel(log_channel)
 
     await logs.send(log)
@@ -32,13 +32,11 @@ async def error_notify(log_message, error):
     logs = bot.get_channel(log_channel)
     error_traceback = traceback.format_exception(type(error), error, error.__traceback__)
 
-    log_message = (
+    await logs.send(
         f"<@{bot_owner}>\n"
         f"{log_message}\n"
         f"```ansi\n\u001B[2;31m{''.join([line for line in error_traceback])}\u001B[0m```"
     )
-
-    await logs.send(log_message)
 
 
 bot.add_check(ban_check)
@@ -73,7 +71,12 @@ async def on_command_error(ctx, error):
     elif isinstance(error, commands.CommandNotFound):
         return
 
-    log = utils.command_log(ctx)
+    elif isinstance(error, discord.errors.Forbidden):
+        logs = bot.get_channel(log_channel)
+        await logs.send("Missing permissions")
+        return
+
+    log = utils.error_log_message(ctx)
     if not staging:
         await error_notify(log, error)
     traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)

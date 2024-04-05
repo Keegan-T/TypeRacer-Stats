@@ -5,6 +5,7 @@ import matplotlib.colors as mcolors
 import urls
 import time
 from database.bot_users import get_user
+from config import bot_owner
 
 
 def get_display_number(number):
@@ -527,20 +528,33 @@ def rank(number):
     return str(number)
 
 
-def command_log(ctx):
-    user = get_user(ctx.author.id)
-    linked = user["username"]
-    author = ctx.author
-    server = ctx.guild.name if ctx.guild else "DM"
-    if hasattr(ctx, "message"):
-        message = ctx.message.content
-    else:
-        message = ctx.content
+def command_log_message(message):
+    message_link = "[DM]"
+    if message.guild:
+        message_link = f"https://discord.com/channels/{message.guild.id}/{message.channel.id}/{message.id}"
 
-    return (
-        f"`{server} | [{author.id}] {author.name} "
-        f"{('(' + linked + ')') if linked else ''}: {message}`"
-    )
+    user = get_user(message.author.id)
+    author = message.author.id
+    mention = "**You**" if author == bot_owner else f"<@{author}>"
+    username = user["username"]
+    linked_account = f" ({username})" if username else ""
+    message = message.content
+
+    return f"{message_link} {mention}{linked_account}: `{message}`"
+
+def error_log_message(ctx):
+    message_link = "[DM]"
+    if ctx.guild:
+        message_link = f"https://discord.com/channels/{ctx.guild.id}/{ctx.channel.id}/{ctx.message.id}"
+
+    user = get_user(ctx.author.id)
+    author = ctx.author.id
+    mention = "**You**" if author == bot_owner else f"<@{author}>"
+    username = user["username"]
+    linked_account = f" ({username})" if username else ""
+    message = ctx.message.content
+
+    return f"{message_link} {mention}{linked_account}: `{message}`"
 
 def race_id(username, number):
     return f"{username}|{number}"
