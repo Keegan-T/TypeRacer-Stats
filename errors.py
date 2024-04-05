@@ -136,10 +136,10 @@ def greater_than(n):
         color=error,
     )
 
-def command_cooldown(remaining_time):
+def command_cooldown(cooldown_expiration):
     return Embed(
         title="Command On Cooldown",
-        description=f"Please wait {remaining_time:,.2f}s before running the command again",
+        description=f"You may use the command again {utils.discord_timestamp(cooldown_expiration)}",
         color=error,
     )
 

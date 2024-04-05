@@ -66,7 +66,7 @@ async def on_command_error(ctx, error):
         return await ctx.send(embed=errors.unexpected_quote())
 
     elif isinstance(error, commands.CommandOnCooldown):
-        return await ctx.send(embed=errors.command_cooldown(error.retry_after))
+        return await ctx.send(embed=errors.command_cooldown(datetime.now().timestamp() + error.retry_after))
 
     elif isinstance(error, commands.CommandNotFound):
         return
