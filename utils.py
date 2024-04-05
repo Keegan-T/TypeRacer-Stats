@@ -6,6 +6,7 @@ import urls
 import time
 from database.bot_users import get_user
 from config import bot_owner
+import os
 
 
 def get_display_number(number):
@@ -578,3 +579,11 @@ def get_universe_multiplier(universe):
     elif universe in ["lang_zh", "lang_zh-tw", "new_lang_zh-tw", "lang_ja"]:
         return 60000
     return 12000
+
+def remove_file(file_name):
+    try:
+        os.remove(file_name)
+    except (FileNotFoundError, PermissionError):
+        return
+    except Exception:
+        raise Exception

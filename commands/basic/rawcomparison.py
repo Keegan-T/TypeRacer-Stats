@@ -1,21 +1,15 @@
 from discord import Embed, File
 from discord.ext import commands
-import os
-
 import graphs
 import utils
 import errors
 import urls
-import colors
-from urllib.parse import urlparse
 from config import prefix
 from database.bot_users import get_user
 from api.users import get_stats
 from api.races import get_race_info
 import commands.recent as recent
-import database.races as races
 import database.races_300 as races_300
-import database.modified_races as modified_races
 from commands.basic.realspeed import get_params
 
 info = {
@@ -128,7 +122,7 @@ async def run(ctx, user, username, race_number, universe):
 
     await ctx.send(embed=embed, file=file)
 
-    os.remove(file_name)
+    utils.remove_file(file_name)
 
     recent.text_id = race_info["text_id"]
 

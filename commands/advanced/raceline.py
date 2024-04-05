@@ -9,7 +9,6 @@ import colors
 from database.bot_users import get_user
 import database.races as races
 import database.users as users
-import os
 import commands.locks as locks
 from commands.basic.realspeedaverage import command_in_use
 
@@ -162,7 +161,7 @@ async def run(ctx, user, usernames, start_date, end_date, points=False):
     file = File(file_name, filename=file_name)
     await ctx.send(file=file)
 
-    os.remove(file_name)
+    utils.remove_file(file_name)
 
 
 def too_many_usernames():

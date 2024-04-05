@@ -1,9 +1,7 @@
-import importlib
-import os
-
 from discord import Embed
 from discord.ext import commands
-
+import importlib
+import os
 import utils
 import errors
 import colors

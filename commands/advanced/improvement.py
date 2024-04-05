@@ -1,6 +1,5 @@
 from discord import Embed, File
 from discord.ext import commands
-import os
 from datetime import datetime, timezone
 from database.bot_users import get_user
 import database.users as users
@@ -36,7 +35,6 @@ class Improvement(commands.Cog):
         self.bot = bot
 
     @commands.command(aliases=info["aliases"])
-    @commands.cooldown(1, 5, commands.BucketType.user)
     async def improvement(self, ctx, *params):
         user = get_user(ctx)
 
@@ -135,7 +133,7 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
 
     await ctx.send(embed=embed, file=file)
 
-    os.remove(file_name)
+    utils.remove_file(file_name)
 
 
 async def setup(bot):

@@ -4,7 +4,6 @@ import graphs
 import utils
 import errors
 import colors
-import os
 from config import prefix
 from database.bot_users import get_user, update_colors
 import matplotlib.pyplot as plt
@@ -117,11 +116,11 @@ async def run(ctx, user, element, color):
     graphs.sample(user)
 
     file_name = "sample.png"
-    file = File("sample.png", filename=f"sample.png")
-    embed.set_image(url="attachment://sample.png")
+    file = File(file_name, filename=file_name)
+    embed.set_image(url=f"attachment://{file_name}")
     await ctx.send(embed=embed, file=file)
 
-    os.remove(file_name)
+    utils.remove_file(file_name)
 
 
 async def view(ctx, user):
@@ -155,11 +154,12 @@ async def reset(ctx, user):
         color=user["colors"]["embed"],
     )
 
-    file = File("sample.png", filename=f"sample.png")
-    embed.set_image(url="attachment://sample.png")
+    file_name = "sample.png"
+    file = File(file_name, filename=file_name)
+    embed.set_image(url=f"attachment://{file_name}")
     await ctx.send(embed=embed, file=file)
 
-    os.remove("sample.png")
+    utils.remove_file(file_name)
 
 def invalid_color():
     return Embed(

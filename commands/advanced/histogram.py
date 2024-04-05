@@ -4,7 +4,6 @@ import graphs
 import utils
 import errors
 import colors
-import os
 from database.bot_users import get_user
 import database.users as users
 import database.races as races
@@ -183,7 +182,7 @@ async def run(ctx, user, username, category):
 
     await ctx.send(embed=embed, file=file)
 
-    os.remove(file_name)
+    utils.remove_file(file_name)
 
 
 def missing_info():

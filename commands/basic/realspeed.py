@@ -1,7 +1,5 @@
 from discord import Embed, File
 from discord.ext import commands
-import os
-
 import graphs
 import utils
 import errors
@@ -201,7 +199,7 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
 
         await ctx.send(embed=embed, file=file)
 
-        os.remove(file_name)
+        utils.remove_file(file_name)
 
     else:
         await ctx.send(embed=embed)

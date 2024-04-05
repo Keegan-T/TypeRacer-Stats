@@ -1,11 +1,9 @@
 from discord import Embed, File
 from discord.ext import commands
-import os
-
-import utils
 from database.bot_users import get_user
 from database.users import get_text_bests
 from commands.advanced.compare import get_params, no_common_texts
+import utils
 import graphs
 import errors
 import urls
@@ -132,7 +130,7 @@ async def run(ctx, user, username1, username2):
 
     await ctx.send(embed=embed, file=file)
 
-    os.remove(file_name)
+    utils.remove_file(file_name)
 
 
 async def setup(bot):

@@ -1,6 +1,5 @@
 from discord import Embed, File
 from discord.ext import commands
-import os
 import graphs
 import utils
 import errors
@@ -102,8 +101,9 @@ async def run(ctx, user, username, race_number, universe):
 
     await ctx.send(embed=embed, file=file)
 
+    utils.remove_file(file_name)
+
     recents.text_id = match["text_id"]
-    os.remove(file_name)
 
 
 async def setup(bot):
