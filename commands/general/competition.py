@@ -73,12 +73,6 @@ class Competition(commands.Cog):
 
 
 async def run(ctx, user, kind, sort, date):
-    sort_title = ""
-    if sort == "races":
-        sort_title = "(By Races) "
-    elif sort == "wpm":
-        sort_title = "(By WPM) "
-
     now = utils.now()
 
     if kind == "week":
@@ -87,7 +81,7 @@ async def run(ctx, user, kind, sort, date):
         start_date = utils.floor_week(date)
         end_date = start_date + relativedelta(days=7)
         date_string = utils.get_display_date_range(start_date, (end_date - relativedelta(days=1)))
-        title = f"Weekly Competition {sort_title}- {date_string}"
+        title = "Weekly"
 
         next_comp_start = utils.floor_week(now + relativedelta(days=7))
         requested_comp_start = start_date
@@ -96,7 +90,7 @@ async def run(ctx, user, kind, sort, date):
         if ctx.invoked_with in ["lastcomp", "lc"]:
             date -= relativedelta(months=1)
         date_string = date.strftime("%B %Y")
-        title = f"Monthly Competition {sort_title}- {date_string}"
+        title = "Monthly"
 
         next_comp_start = utils.floor_month(now + relativedelta(months=1))
         requested_comp_start = utils.floor_month(date)
@@ -106,7 +100,7 @@ async def run(ctx, user, kind, sort, date):
         if ctx.invoked_with in ["lastcomp", "lc"]:
             date -= relativedelta(years=1)
         date_string = date.year
-        title = f"Yearly Competition {sort_title}- {date_string}"
+        title = "Yearly"
 
         next_comp_start = utils.floor_year(now + relativedelta(years=1))
         requested_comp_start = utils.floor_year(date)
@@ -114,7 +108,8 @@ async def run(ctx, user, kind, sort, date):
     else:
         if ctx.invoked_with in ["lastcomp", "lc"]:
             date -= relativedelta(days=1)
-        title = f"Daily Competition {sort_title}- {utils.get_display_date(date)}"
+        date_string = utils.get_display_date(date)
+        title = "Daily"
 
         next_comp_start = utils.floor_day(now + relativedelta(days=1))
         requested_comp_start = utils.floor_day(date)
@@ -122,6 +117,12 @@ async def run(ctx, user, kind, sort, date):
     if requested_comp_start >= next_comp_start:
         return await competition_not_started(ctx, title, user, requested_comp_start)
 
+    title += " Competition"
+    if sort == "races":
+        title += " (By Races)"
+    elif sort == "wpm":
+        title += " (By WPM)"
+    title += f" - {date_string}"
 
     competition = competitions_api.get_competition_info(date, kind, sort, 10)
     date_string = date.strftime("%Y-%m-%d")
