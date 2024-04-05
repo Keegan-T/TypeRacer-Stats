@@ -170,6 +170,8 @@ async def get_match(username, race_number, universe="play"):
             opp_username = opponent[0]
             opp_race_number = opponent[2]
             opp_race_info = await get_race_info(opp_username, opp_race_number, universe=universe)
+            if not opp_race_info or isinstance(opp_race_info, int):
+                continue
             rankings.append({
                 "username": opp_username,
                 "race_number": opp_race_number,
