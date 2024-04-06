@@ -87,7 +87,7 @@ async def update_important_users():
               users.get_top_text_best(10) + \
               users.get_most("text_wpm_total", 10) + \
               users.get_most("texts_typed", 10) + \
-              users.get_most_text_repeats(10) + \
+              await users.get_most_text_repeats(10) + \
               users.get_most_awards(10)
 
     for leader in leaders:
