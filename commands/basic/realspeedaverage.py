@@ -200,7 +200,8 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
         raw_unlagged /= race_count
         raw_adjusted /= race_count
         correction /= race_count
-        correction_percent /= race_count * 100
+        correction_percent /= race_count
+        correction_percent *= 100
         real_speeds += (
             f"**Raw Unlagged:** {raw_unlagged:,.2f} WPM\n"
             f"**Raw Adjusted:**  {raw_adjusted:,.3f} WPM\n"
