@@ -1,8 +1,11 @@
 import sqlite3
+import threading
+
 import aiosqlite
 
 db = sqlite3.connect("./data/typeracerstats.db")
 db.row_factory = sqlite3.Row
+db_lock = threading.Lock()
 
 
 def fetch(query, params=[]):
@@ -28,11 +31,11 @@ async def fetch_async(query, params=[]):
 
 
 def run(query, params=[]):
-    cursor = db.cursor()
-
     try:
-        cursor.execute(query, params)
-        db.commit()
+        with db_lock:
+            cursor = db.cursor()
+            cursor.execute(query, params)
+            db.commit()
 
     except Exception as e:
         print(f"Error executing query: {e}")
@@ -41,11 +44,13 @@ def run(query, params=[]):
     finally:
         cursor.close()
 
+
 def run_many(query, data):
-    cursor = db.cursor()
     try:
-        cursor.executemany(query, data)
-        db.commit()
+        with db_lock:
+            cursor = db.cursor()
+            cursor.executemany(query, data)
+            db.commit()
 
     except Exception as e:
         print(f"Error executing query: {e}")
