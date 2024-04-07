@@ -42,7 +42,7 @@ async def update(bot):
 
     messages.reverse()
 
-    records = get_records()
+    records = await get_records()
 
     # No messages, mounting for the first time
     if not messages:
@@ -91,7 +91,7 @@ async def update_300_club(bot):
 
     print("Updated 300 Club")
 
-def get_records():
+async def get_records():
     date = datetime.now()
     get_countries()
 
@@ -111,7 +111,7 @@ def get_records():
         race_records(),
         point_records(),
         speedrun_records(),
-        text_records(),
+        await text_records(),
         award_records(),
         last_updated,
     ]
@@ -405,7 +405,7 @@ def speedrun_records():
     return embed
 
 
-def text_records():
+async def text_records():
     embed = Embed(
         title="Text Records",
         color=colors.gold,
@@ -414,7 +414,7 @@ def text_records():
     text_bests = users.get_top_text_best(3)
     total_text_wpm = users.get_most("text_wpm_total", 3)
     most_texts = users.get_most("texts_typed", 3)
-    max_quote = users.get_most_text_repeats(3)
+    max_quote = await users.get_most_text_repeats(3)
     text_bests_str = ""
     total_text_wpm_str = ""
     most_texts_str = ""
