@@ -44,8 +44,8 @@
 
 4/1/2024
 - Added link to text in -unraced
-- Updated -textbests to show top 10 best quotes instead of 5 best & 5 worst
-- Added -textbests [username] worst to show top 10 worst quotes
+- Updated -textbests to show top 10 best texts instead of 5 best & 5 worst
+- Added -textbests [username] worst to show top 10 worst texts
 
 4/2/2024
 - Fixed -textbestdistribution block text formatting (thanks discord)
@@ -58,9 +58,8 @@
 4/7/2024
 - Fixed #typeracer-records not updating
 
-4/8/2024
+4/13/2024
 - Added -changelog
-- Simplified welcome message
-
-4/12/2024
-- Auto import has been removed due to synchronization issues
+- Mitigated database locking issues
+- Shortened welcome message
+- Fixed users showing up twice in top 10s
