@@ -12,7 +12,7 @@ from api.users import get_stats
 from api.competitions import get_competition_info
 from database.bot_users import get_user
 from commands.advanced.races import add_stats
-from commands.basic.download import run as download, update_text_stats
+from commands.basic.download import run as download
 
 info = {
     "name": "day",
@@ -80,7 +80,7 @@ async def run(ctx, user, username, date):
         return await ctx.send(embed=errors.import_required(username))
 
     api_stats = get_stats(username)
-    new_races = await download(username)
+    await download(stats=api_stats)
 
     week_commands = ["week", "w", "lastweek", "yesterweek", "lw", "yw"]
     month_commands = ["month", "m", "lastmonth", "yestermonth", "lm", "ym"]
@@ -148,9 +148,6 @@ async def run(ctx, user, username, date):
     add_stats(embed, username, race_list, start_time, end_time)
 
     await ctx.send(embed=embed)
-
-    if new_races:
-        update_text_stats(username)
 
 
 async def setup(bot):

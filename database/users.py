@@ -176,26 +176,26 @@ def get_most_awards(limit):
 
 
 def update_stats(user):
-    db.run(
-        """
-            UPDATE users
-            SET username = ?, display_name = ?, premium = ?, has_pic = ?, country = ?, joined = ?,
-            wpm_average_all_time = ?, wpm_average_last_10 = ?, wpm_best = ?, wpm_verified = ?,
-            races = ?, wins = ?, points = ?, points_retroactive = ?, seconds = ?, characters = ?, 
-            avatar = ?, disqualified = ?, last_updated = ?
-            WHERE username = ?
-        """,
-        (
-            user['username'], user['display_name'], user['premium'], user['has_pic'], user['country'],
-            user['joined'], user['wpm_average'], user['wpm_last_10'], user['wpm_best'], user['wpm_verified'],
-            user['races'], user['wins'], user['points'], user['retroactive_points'], user['seconds'],
-            user['characters'], user['avatar'], user['disqualified'], time.time(),
-            user['username']
-        )
-    )
+    db.run("""
+        UPDATE users
+        SET username = ?, display_name = ?, premium = ?, has_pic = ?, country = ?, joined = ?,
+        wpm_average_all_time = ?, wpm_average_last_10 = ?, wpm_best = ?, wpm_verified = ?,
+        races = ?, wins = ?, points = ?, points_retroactive = ?, seconds = ?, characters = ?, 
+        avatar = ?, disqualified = ?, last_updated = ?
+        WHERE username = ?
+    """, (
+        user['username'], user['display_name'], user['premium'], user['has_pic'], user['country'],
+        user['joined'], user['wpm_average'], user['wpm_last_10'], user['wpm_best'], user['wpm_verified'],
+        user['races'], user['wins'], user['points'], user['retroactive_points'], user['seconds'],
+        user['characters'], user['avatar'], user['disqualified'], time.time(),
+        user['username']
+    ))
 
 
-def update_text_stats(username, stats):
+def update_text_stats(username):
+    text_bests = get_text_bests(username)
+    stats = utils.get_text_stats(text_bests)
+
     db.run("""
         UPDATE users
         SET texts_typed = ?, text_best_average = ?, text_wpm_total = ?
@@ -207,14 +207,11 @@ def update_text_stats(username, stats):
 
 
 def update_awards(username, first, second, third):
-    db.run(
-        """
-            UPDATE users
-            SET awards_first = ?, awards_second = ?, awards_third = ?
-            WHERE username = ?
-        """,
-        [first, second, third, username]
-    )
+    db.run("""
+        UPDATE users
+        SET awards_first = ?, awards_second = ?, awards_third = ?
+        WHERE username = ?
+    """, [first, second, third, username])
 
 
 def delete_user(username):

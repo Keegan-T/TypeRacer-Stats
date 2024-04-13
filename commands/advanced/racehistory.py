@@ -1,6 +1,5 @@
 import math
 from datetime import datetime
-
 from dateutil.relativedelta import relativedelta
 from discord import Embed
 from discord.ext import commands
@@ -12,7 +11,7 @@ import database.races as races
 import database.texts as texts
 from database.bot_users import get_user
 from api.users import get_stats
-from commands.basic.download import run as download, update_text_stats
+from commands.basic.download import run as download
 
 categories = ["races", "day", "week", "month", "year"]
 sorts = ["points", "races", "time", "wpm", "date"]
@@ -85,7 +84,7 @@ async def run(ctx, user, username, category, sort):
         return await ctx.send(embed=errors.import_required(username))
 
     api_stats = get_stats(username)
-    new_races = await download(stats=api_stats)
+    await download(stats=api_stats)
 
     if category == "races":
         columns = ["number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
@@ -119,8 +118,6 @@ async def run(ctx, user, username, category, sort):
 
     await ctx.send(embed=embed)
 
-    if new_races:
-        update_text_stats(username)
 
 async def get_history(username, category, sort):
     sort_key = {"points": 3, "races": 2, "time": 5, "wpm": 4}.get(sort, 0)

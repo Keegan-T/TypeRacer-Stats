@@ -72,7 +72,7 @@ async def import_competitions():
     print("Imported all new competitions")
 
 async def update_important_users():
-    from commands.basic.download import run as download, update_text_stats
+    from commands.basic.download import run as download
     from commands.locks import import_lock
 
     user_list = important_users.get_users()
@@ -97,10 +97,10 @@ async def update_important_users():
             important_users.add_user(username)
             user_list.append(username)
 
+    await import_lock.acquire()
     for username in user_list:
-        async with import_lock:
-            if await download(username):
-                update_text_stats(username)
+        await download(username)
+    await import_lock.release()
 
 
 async def update_top_tens():

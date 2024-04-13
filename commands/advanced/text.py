@@ -1,6 +1,6 @@
 from discord import Embed, File
 from discord.ext import commands
-import commands.recent as recents
+import commands.recent as recent
 import graphs
 import utils
 import errors
@@ -12,8 +12,8 @@ from api.users import get_stats
 import database.texts as texts
 import database.races as races
 import database.users as users
-from commands.basic.download import run as download, update_text_stats
 import database.text_results as top_tens
+from commands.basic.download import run as download
 
 info = {
     "name": "text",
@@ -56,7 +56,7 @@ async def get_params(ctx, user, params):
     if len(params) > 1:
         text_id = params[1]
         if text_id == "^":
-            text_id = recents.text_id
+            text_id = recent.text_id
 
     if not username:
         await ctx.send(embed=errors.missing_param(info))
@@ -71,7 +71,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
         return await ctx.send(embed=errors.import_required(username))
 
     api_stats = get_stats(username)
-    new_races = await download(stats=api_stats)
+    await download(stats=api_stats)
 
     graph = ctx.invoked_with in ["textgraph", "tg", "racetextgraph", "rtg"]
 
@@ -112,7 +112,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
     times_typed = len(race_list)
     wpm = [race["wpm"] for race in race_list]
     average = sum(wpm) / times_typed
-    recent = race_list[-1]
+    recent_race = race_list[-1]
 
     stats_string = f"**Times Typed:** {times_typed:,}\n"
 
@@ -120,10 +120,10 @@ async def run(ctx, user, username, text_id=None, race_number=None):
         best = max(race_list, key=lambda r: r["wpm"])
         worst = min(race_list, key=lambda r: r["wpm"])
         previous_best = max(race_list[:-1], key=lambda r: r["wpm"])
-        if recent["wpm"] > previous_best["wpm"]:
+        if recent_race["wpm"] > previous_best["wpm"]:
             description = (
-                    f"**Recent Personal Best!** {recent['wpm']:,.2f} WPM (+" +
-                    f"{recent['wpm'] - previous_best['wpm']:,.2f} WPM)\n\n" +
+                    f"**Recent Personal Best!** {recent_race['wpm']:,.2f} WPM (+" +
+                    f"{recent_race['wpm'] - previous_best['wpm']:,.2f} WPM)\n\n" +
                     description
             )
 
@@ -135,8 +135,8 @@ async def run(ctx, user, username, text_id=None, race_number=None):
                 f"<t:{int(previous_best['timestamp'])}:R>\n"
                 f"**Worst:** [{worst['wpm']:,.2f} WPM]({urls.replay(username, worst['number'])}) - "
                 f"<t:{int(worst['timestamp'])}:R>\n"
-                f"**Recent:** [{recent['wpm']:,.2f} WPM]({urls.replay(username, recent['number'])}) - "
-                f"<t:{int(recent['timestamp'])}:R>"
+                f"**Recent:** [{recent_race['wpm']:,.2f} WPM]({urls.replay(username, recent_race['number'])}) - "
+                f"<t:{int(recent_race['timestamp'])}:R>"
             )
         else:
             stats_string += (
@@ -145,17 +145,17 @@ async def run(ctx, user, username, text_id=None, race_number=None):
                 f"<t:{int(best['timestamp'])}:R>\n"
                 f"**Worst:** [{worst['wpm']:,.2f} WPM]({urls.replay(username, worst['number'])}) - "
                 f"<t:{int(worst['timestamp'])}:R>\n"
-                f"**Recent:** [{recent['wpm']:,.2f} WPM]({urls.replay(username, recent['number'])}) - "
-                f"<t:{int(recent['timestamp'])}:R>"
+                f"**Recent:** [{recent_race['wpm']:,.2f} WPM]({urls.replay(username, recent_race['number'])}) - "
+                f"<t:{int(recent_race['timestamp'])}:R>"
             )
 
     else:
         color = colors.success
         description = f"**New Text!**\n\n" + description
         stats_string += (
-            f"**Recent:** [{recent['wpm']:,.2f} WPM]"
-            f"({urls.replay(username, recent['number'])}) - "
-            f"<t:{int(recent['timestamp'])}:R>"
+            f"**Recent:** [{recent_race['wpm']:,.2f} WPM]"
+            f"({urls.replay(username, recent_race['number'])}) - "
+            f"<t:{int(recent_race['timestamp'])}:R>"
         )
 
     embed.description = description + f"\n\n{stats_string}"
@@ -178,14 +178,14 @@ async def run(ctx, user, username, text_id=None, race_number=None):
 
     await top_tens.update_results(text_id)
     top_10 = top_tens.get_top_10(text_id)
-    top_10_score = next((score for score in top_10 if score["id"] == recent["id"]), None)
+    top_10_score = next((score for score in top_10 if score["id"] == recent_race["id"]), None)
 
     if top_10_score:
         description = ""
         position = 0
         for i, race in enumerate(top_10):
             bold = ""
-            if race["id"] == recent["id"]:
+            if race["id"] == recent_race["id"]:
                 bold = "**"
                 position = i + 1
             username = race["username"]
@@ -203,9 +203,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
 
         await ctx.send(embed=embed)
 
-    recents.text_id = text_id
-    if new_races:
-        update_text_stats(username)
+    recent.text_id = text_id
 
 
 async def setup(bot):

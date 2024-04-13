@@ -10,11 +10,12 @@ from config import prefix
 from database.bot_users import get_user
 from api.users import get_stats
 from api.races import get_race_info
-import commands.recent as recents
+import commands.recent as recent
 import database.races as races
+import database.users as users
 import database.races_300 as races_300
 import database.modified_races as modified_races
-from commands.basic.download import run as download, update_text_stats
+from commands.basic.download import run as download
 
 graph_commands = ["realspeedgraph", "rsg", "rg", "adjustedgraph", "ag", "ag*"]
 info = {
@@ -204,22 +205,22 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
     else:
         await ctx.send(embed=embed)
 
-    recents.text_id = race_info["text_id"]
+    recent.text_id = race_info["text_id"]
 
     if universe == "play" and reverse_lag:
-        if username == "slowtexts":
+        user = users.get_user(username)
+        if not user or username == "slowtexts":
             return
         modified_race = modified_races.get_race(username, race_number)
         if not modified_race:
+            await download(stats=stats)
+            await races.correct_race(username, race_number, race_info)
             embed = Embed(
                 title="Reverse Lag Detected",
                 description="This score has been corrected in the database",
                 color=colors.error,
             )
             await ctx.send(embed=embed)
-            if await download(stats=stats, override=True):
-                update_text_stats(username)
-            await races.correct_race(username, race_number, race_info)
 
 
 async def setup(bot):

@@ -10,7 +10,7 @@ import commands.recent as recent
 from database.bot_users import get_user
 from api.users import get_stats
 from datetime import datetime
-from commands.basic.download import run as download, update_text_stats
+from commands.basic.download import run as download
 
 info = {
     "name": "checksaves",
@@ -66,7 +66,7 @@ async def run(ctx, user, username, text_id):
         return await ctx.send(embed=errors.import_required(username))
 
     api_stats = get_stats(username)
-    new_races = await download(stats=api_stats)
+    await download(stats=api_stats)
 
     text = texts.get_text(text_id)
     if text is None:
@@ -112,8 +112,6 @@ async def run(ctx, user, username, text_id):
 
     await ctx.send(embed=embed)
     recent.text_id = text_id
-    if new_races:
-        update_text_stats(username)
 
 
 async def setup(bot):

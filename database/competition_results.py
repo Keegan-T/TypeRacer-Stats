@@ -1,4 +1,5 @@
 from database import db
+import copy
 
 
 async def get_competitions():
@@ -71,6 +72,14 @@ async def get_awards(username=None):
     awards = {}
     ranks = ["first", "second", "third"]
 
+    award_dict = {
+        "day": {"first": 0, "second": 0, "third": 0},
+        "week": {"first": 0, "second": 0, "third": 0},
+        "month": {"first": 0, "second": 0, "third": 0},
+        "year": {"first": 0, "second": 0, "third": 0},
+        "total": 0
+    }
+
     competitions = await get_competitions()
     for competition in competitions:
         kind = competition["type"]
@@ -79,13 +88,7 @@ async def get_awards(username=None):
         for position, competitor in enumerate(podium):
             user = competitor['username']
             if user not in awards:
-                awards[user] = {
-                    'day': {'first': 0, 'second': 0, 'third': 0},
-                    'week': {'first': 0, 'second': 0, 'third': 0},
-                    'month': {'first': 0, 'second': 0, 'third': 0},
-                    'year': {'first': 0, 'second': 0, 'third': 0},
-                    'total': 0
-                }
+                awards[user] = copy.deepcopy(award_dict)
             awards[user][kind][ranks[position]] += 1
             awards[user]['total'] += 1
 
@@ -93,13 +96,7 @@ async def get_awards(username=None):
         if username in awards:
             return awards[username]
         else:
-            return {
-                'day': {'first': 0, 'second': 0, 'third': 0},
-                'week': {'first': 0, 'second': 0, 'third': 0},
-                'month': {'first': 0, 'second': 0, 'third': 0},
-                'year': {'first': 0, 'second': 0, 'third': 0},
-                'total': 0
-            }
+            return copy.deepcopy(award_dict)
 
     awards_list = dict(sorted(awards.items(), key=lambda x: x[1]["total"], reverse=True))
 

@@ -33,7 +33,6 @@ info = {
 }
 
 
-
 class Download(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -53,6 +52,7 @@ class Download(commands.Cog):
         async with import_lock:
             await run(username, ctx=ctx, bot_user=user)
 
+
 async def run(username=None, stats=None, ctx=None, bot_user=None, override=False):
     invoked = True if ctx else False
 
@@ -61,14 +61,14 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, override=False
         if not stats:
             if invoked:
                 await ctx.send(embed=errors.invalid_username())
-            return False
+            return
     else:
         username = stats["username"]
 
     if stats["races"] == 0:
         if invoked:
             await ctx.send(embed=errors.no_races())
-        return False
+        return
 
     user = users.get_user(username)
     races_left = stats["races"]
@@ -105,7 +105,7 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, override=False
     if races_left > 10_000 and (invoked and ctx.author.id not in bot_admins) and not override:
         if invoked:
             await too_many_races(ctx, bot_user, username, races_left)
-        return False
+        return
 
     new_races = races_left > 0
     if new_races:
@@ -121,118 +121,101 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, override=False
     end_time = time.time()
     race_list = []
 
-    try:
-        while True:
-            if races_left == 0:
-                break
+    while True:
+        if races_left == 0:
+            break
 
-            print(f"Fetching races")
-            race_data = await get_races(username, start_time, end_time, 1000)
+        print(f"Fetching races")
+        race_data = await get_races(username, start_time, end_time, 1000)
 
-            if race_data == -1:  # Request failed
-                raise ValueError
+        if race_data == -1:  # Request failed
+            raise ValueError
 
-            elif not race_data:  # No more races to download
-                break
+        elif not race_data:  # No more races to download
+            break
 
-            for race in race_data:
-                # Excluding 0 WPM (modified cheated) races
-                wpm = race["wpm"]
-                if wpm == 0.0:
-                    modified_races.add_cheated_race(username, race)
-                    continue
+        for race in race_data:
+            # Excluding 0 WPM (modified cheated) races
+            wpm = race["wpm"]
+            if wpm == 0.0:
+                modified_races.add_cheated_race(username, race)
+                continue
 
-                # Checking for new texts
-                text_id = race["tid"]
-                if text_id not in text_list:
-                    print(f"New text found! #{text_id}")
+            # Checking for new texts
+            text_id = race["tid"]
+            if text_id not in text_list:
+                print(f"New text found! #{text_id}")
 
-                    text = {
-                        "id": text_id,
-                        "quote": get_quote(text_id),
-                        "disabled": 0,
-                        "ghost": urls.ghost(username, race["gn"])
-                    }
-                    texts.add_text(text)
-                    text_list[text_id] = text
+                text = {
+                    "id": text_id,
+                    "quote": get_quote(text_id),
+                    "disabled": 0,
+                    "ghost": urls.ghost(username, race["gn"])
+                }
+                texts.add_text(text)
+                text_list[text_id] = text
 
-                    await text_results.update_results(text_id)
-                    await asyncio.sleep(2)
+                await text_results.update_results(text_id)
+                await asyncio.sleep(2)
 
-                quote = text_list[text_id]["quote"]
+            quote = text_list[text_id]["quote"]
 
-                # Checking for no accuracy
-                if "ac" not in race:
-                    race["ac"] = 0
+            # Checking for no accuracy
+            if "ac" not in race:
+                race["ac"] = 0
 
-                # Checking for 0 points
-                if race["pts"] == 0:
-                    points = utils.calculate_points(quote, race["wpm"])
-                    race["pts"] = points
-                    stats["retroactive_points"] += points
+            # Checking for 0 points
+            if race["pts"] == 0:
+                points = utils.calculate_points(quote, race["wpm"])
+                race["pts"] = points
+                stats["retroactive_points"] += points
 
-                # Manually checking for new best WPM
-                if wpm > stats["wpm_best"]:
-                    stats["wpm_best"] = wpm
+            # Manually checking for new best WPM
+            if wpm > stats["wpm_best"]:
+                stats["wpm_best"] = wpm
 
-                # Only updating seconds / characters for new races
-                if not new_user and race["t"] > stats["last_updated"]:
-                    stats["seconds"] += utils.calculate_seconds(quote, wpm)
-                    stats["characters"] += len(quote)
+            # Only updating seconds / characters for new races
+            if not new_user and race["t"] > stats["last_updated"]:
+                stats["seconds"] += utils.calculate_seconds(quote, wpm)
+                stats["characters"] += len(quote)
 
-                race_list.append((
-                    utils.race_id(username, race["gn"]), username, race["tid"], race["gn"],
-                    race["wpm"], race["ac"], race["pts"], race["r"], race["np"], race["t"],
-                ))
+            race_list.append((
+                utils.race_id(username, race["gn"]), username, race["tid"], race["gn"],
+                race["wpm"], race["ac"], race["pts"], race["r"], race["np"], race["t"],
+            ))
 
-            end_time = min(race_list, key=lambda r: r[9])[9] - 0.01
-
-    except Exception as e:
-        raise e
+        end_time = min(race_list, key=lambda r: r[9])[9] - 0.01
 
     if new_user:
         users.add_user(username)
-        users.update_stats(stats)
+        await update_award_count(username)
+
+    users.update_stats(stats)
 
     if new_races:
         races.add_races(race_list)
-        if invoked:
-            await import_complete(ctx, bot_user, username, notify=races_left > 1000)
-            update_text_stats(username)
+        users.update_text_stats(username)
 
-    else:
-        if invoked:
+    if invoked:
+        if new_races:
+            await import_complete(ctx, bot_user, username, notify=races_left > 1000)
+        else:
             await no_new_races(ctx, bot_user, username)
 
-    if new_user:
-        await update_award_count(username)
-
-    else:
-        users.update_stats(stats)
-
     print(f"Finished importing {username}")
-
-    return new_races
-
-
-def update_text_stats(username):
-    print("Updating text stats")
-
-    text_bests = users.get_text_bests(username)
-    text_stats = utils.get_text_stats(text_bests)
-
-    users.update_text_stats(username, text_stats)
 
 
 async def update_award_count(username):
     print("Updating award count")
 
     awards = await competition_results.get_awards(username)
-    first = awards['day']['first'] + awards['week']['first'] + awards['month']['first'] + awards['year']['first']
-    second = awards['day']['second'] + awards['week']['second'] + awards['month']['second'] + awards['year']['second']
-    third = awards['day']['third'] + awards['week']['third'] + awards['month']['third'] + awards['year']['third']
-
+    first = second = third = 0
+    for kind in list(awards.values())[:-1]:
+        first += kind["first"]
+        second += kind["second"]
+        third += kind["third"]
     users.update_awards(username, first, second, third)
+
 
 async def no_new_races(ctx, user, username):
     username = utils.escape_discord_format(username)
