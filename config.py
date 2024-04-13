@@ -1,12 +1,20 @@
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
 
 load_dotenv()
 
+if "bot_token" in os.environ:
+    print("=== Running in Production ===")
+    staging = False
+    bot_token = os.getenv("bot_token")
+    records_channel = 692303437882458122
+else:
+    print("=== Running in Staging ===")
+    bot_token = os.getenv("staging_token")
+    staging = True
+    records_channel = 1199677882730029086
+
 prefix = "-"
-bot_token = os.getenv("bot_token")
-staging_token = os.getenv("staging_token")
-records_channel = 692303437882458122
 bot_owner = 155481579005804544
 bot_admins = [
     bot_owner,

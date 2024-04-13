@@ -7,7 +7,7 @@ import asyncio
 import traceback
 import utils
 import errors
-from config import prefix, bot_token, staging_token, bot_owner, log_channel
+from config import prefix, bot_token, bot_owner, log_channel, staging
 from commands.checks import ban_check
 from database import records
 from database.bot_users import update_commands
@@ -16,10 +16,8 @@ from database.welcomed import get_welcomed, add_welcomed
 
 bot = commands.Bot(command_prefix=prefix, case_insensitive=True, intents=discord.Intents.all())
 bot.remove_command("help")
+bot.add_check(ban_check)
 
-##### FOR DEVELOPMENT #####
-staging = False
-###########################
 
 async def log_command(ctx):
     log = utils.command_log_message(ctx)
@@ -38,11 +36,6 @@ async def error_notify(log_message, error):
         f"```ansi\n\u001B[2;31m{''.join([line for line in error_traceback])}\u001B[0m```"
     )
 
-
-bot.add_check(ban_check)
-
-
-##### BOT EVENTS #####
 
 @bot.event
 async def on_ready():
@@ -84,7 +77,6 @@ async def on_command_error(ctx, error):
 
 @bot.event
 async def on_message(message):
-    # if message.channel.id != 1197837519090352168: return
     user_id = message.author.id
     welcomed = get_welcomed()
 
@@ -98,7 +90,7 @@ async def on_message(message):
         elif replied_message.author.id == 742267194443956334: # Prevent the bot from overlapping with the other
             return
 
-    if message.content.startswith(prefix):
+    if message.content.startswith(prefix) and not staging:
         await log_command(message)
 
     await bot.process_commands(message)
@@ -108,13 +100,8 @@ async def on_command(ctx):
     user_id = ctx.author.id
 
     welcome_message = (
-        f"### Welcome to the new and improved TypeRacer Stats!\n"
-        f"On release there will be various bugs and issues, if you find any please contact `@keegant`\n"
-        f"`-help` to view a full list of available commands.\n"
-        f"`-about` to view information about the bot.\n"
-        f"[Click here](https://keegan-t.github.io/TypeRacer-Stats-Changes/) to view a comprehensive list of changes.\n"
-        f"**You must link your account again!**\n"
-        f"Happy typing! :slight_smile:"
+        f"### Welcome to TypeRacer Stats!\n"
+        f"Run `{prefix}link [typeracer_username]` to start using the bot\n"
     )
 
     welcomed = get_welcomed()
@@ -128,8 +115,6 @@ async def on_command_completion(ctx):
     if not staging:
         update_commands(ctx.author.id, ctx.command.name)
 
-
-##### BOT TASKS #####
 
 @tasks.loop(minutes=1)
 async def loops():
@@ -150,20 +135,16 @@ async def loops():
 
 
 async def load_commands():
-    groups = ["account", "admin", "advanced", "basic", "general", "info", "owner", "unlisted"]
+    for dir in os.listdir("./commands"):
+        if not dir.startswith("_") and os.path.isdir(os.path.join("./commands", dir)):
+            for file in os.listdir(f"./commands/{dir}"):
+                if file.endswith(".py") and not file.startswith("_"):
+                    await bot.load_extension(f"commands.{dir}.{file[:-3]}")
 
-    for group in groups:
-        for file in os.listdir(f"./commands/{group}"):
-            if file.endswith(".py") and not file.startswith("_"):
-                await bot.load_extension(f"commands.{group}.{file[:-3]}")
 
-
-async def start():
+async def main():
     await load_commands()
-    if staging:
-        await bot.start(staging_token)
-    else:
-        await bot.start(bot_token)
+    await bot.start(bot_token)
 
 
-asyncio.run(start())
+asyncio.run(main())
