@@ -33,18 +33,20 @@ def get_top_10s():
     return filtered_top_10s
 
 def get_top_10(text_id):
-    top_10 = db.fetch("""
+    top_10 = []
+
+    results = db.fetch("""
         SELECT * FROM text_results
         WHERE text_id = ?
-        AND (username, wpm) IN (
-            SELECT username, MAX(wpm)
-            FROM text_results
-            WHERE text_id = ?
-            GROUP BY username
-        )
         ORDER BY wpm DESC
-        LIMIT 10
-    """, [text_id, text_id])
+    """, [text_id])
+
+    for result in results:
+        if any(score["username"] == result["username"] for score in top_10):
+            continue
+        top_10.append(result)
+        if len(top_10) == 10:
+            break
 
     return top_10
 
@@ -118,7 +120,7 @@ async def update_results(text_id):
         params += [score["id"], int(text_id), score["username"],
                    score["number"], score["wpm"], score["timestamp"]]
 
-    value_string = ("(?, ?, ?, ?, ?, ?)," * (len(top_10)))[:-1]
+    value_string = ("(?, ?, ?, ?, ?, ?)," * len(top_10))[:-1]
 
     db.run(f"""
         INSERT OR IGNORE INTO text_results

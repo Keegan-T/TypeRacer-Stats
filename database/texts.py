@@ -1,6 +1,5 @@
 from database import db
 import urls
-from commands.basic.download import update_text_stats
 
 def get_texts(as_dictionary=False, include_disabled=True):
     texts = db.fetch(f"""
@@ -134,6 +133,7 @@ def update_slow_ghosts():
 
 async def enable_text(text_id):
     from database.text_results import update_results
+    from database.users import update_text_stats
 
     db.run("""
         UPDATE texts
@@ -156,6 +156,7 @@ async def enable_text(text_id):
 
 def disable_text(text_id):
     from database.text_results import delete_results
+    from database.users import update_text_stats
 
     db.run("""
         UPDATE texts

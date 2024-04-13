@@ -6,8 +6,8 @@ from bs4 import BeautifulSoup
 import utils
 from dateutil import parser
 
-async def get_races(username, start_date, end_date, races_per_page):
-    url = f"https://data.typeracer.com/games?playerId=tr:{username}&startDate={start_date}&endDate={end_date}&n={races_per_page}"
+async def get_races(username, start_time, end_time, races_per_page):
+    url = f"https://data.typeracer.com/games?playerId=tr:{username}&startDate={start_time}&endDate={end_time}&n={races_per_page}"
 
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
