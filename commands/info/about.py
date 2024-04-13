@@ -24,8 +24,13 @@ async def run(ctx, user):
     supporter_list = ", ".join([f"<@{supporter}>" for supporter in supporters])
 
     description = (
-        "<@1213306973374644256> is an extensive <:typeracer_logo:1219587776308183060> [TypeRacer](https://play.typeracer.com/) statistics bot designed to enhance the TypeRacer experience. It is a rewrite of the popular <@742267194443956334> by <@697048255254495312>, providing a handful of new commands and features.\n\n"
-        "Developed by <@155481579005804544>, written in <:python_logo:1219588087383064647> Python.\n\n"
+        "<@1213306973374644256> is an extensive <:typeracer_logo:1219587776308183060> [TypeRacer]"
+        "(https://play.typeracer.com/) statistics bot designed to enhance the TypeRacer experience. "
+        "It is a rewrite of the popular <@742267194443956334> by <@697048255254495312>, "
+        "providing a handful of new commands and features.\n[Click here]"
+        "(https://keegan-t.github.io/TypeRacer-Stats-Changes/) to view a comprehensive list of changes.\n\n"
+        "Developed by <@155481579005804544>, written in <:python_logo:1219588087383064647> Python.\n"
+        "If you find any issues, please contact me!\n\n"
         f"**Supporters** <:support:1220863071086575716>\n{supporter_list}\n\n"
         f"**Bot Admins**\n{bot_admins_list}\n"
     )
