@@ -19,7 +19,7 @@ class Keegan(commands.Cog):
 
 async def run(ctx):
     embed = Embed(
-        description="[Teminite - Yours](https://www.youtube.com/watch?v=Id78y7mpU2c) :saxophone:",
+        description="Allow me to present the [TypeRacer Anthem](https://www.udio.com/songs/rN78d8eaGt8vFrqfaQwrne)",
         color=0,
     )
 
