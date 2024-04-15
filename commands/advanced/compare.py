@@ -77,6 +77,9 @@ async def run(ctx, user, username1, username2):
 
     tb_dict1 = {text[0]: text[1:] for text in text_bests1}
     tb_dict2 = {text[0]: text[1:] for text in text_bests2}
+    user1_better = 0
+    user2_better = 0
+    wpm_match = None
 
     comparison = {}
 
@@ -85,6 +88,12 @@ async def run(ctx, user, username1, username2):
             score1 = tb_dict1[text_id]
             score2 = tb_dict2[text_id]
             gap = score1[0] - score2[0]
+            if gap > 0:
+                user1_better += 1
+            elif gap < 0:
+                user2_better += 1
+            else:
+                wpm_match = (score1, score2)
             comparison[text_id] = (tb_dict1[text_id], tb_dict2[text_id], gap)
 
     if not comparison:
@@ -92,8 +101,8 @@ async def run(ctx, user, username1, username2):
 
     comparison = sorted(comparison.items(), key=lambda x: x[1][2], reverse=True)
 
-    stats1 = f"**{username1}**\n"
-    stats2 = f"**{username2}**\n"
+    stats1 = f"**{username1}** (+{user1_better:,} texts)\n"
+    stats2 = f"**{username2}** (+{user2_better:,} texts)\n"
 
     for i, text in enumerate(comparison[:10]):
         gap = text[1][2]
@@ -101,6 +110,12 @@ async def run(ctx, user, username1, username2):
         stats1 += (
             f"{i + 1}. [{text[1][0][0]:,.2f}]({urls.replay(username1, text[1][0][1])}) vs. "
             f"[{text[1][1][0]:,.2f}]({urls.replay(username2, text[1][1][1])}) {gap_string}\n"
+        )
+
+    if wpm_match:
+        stats1 += (
+            f"\n:handshake: [{wpm_match[0][0]:,.2f}]({urls.replay(username1, wpm_match[0][1])})"
+            f" vs. [{wpm_match[1][0]:,.2f}]({urls.replay(username2, wpm_match[1][1])})\n"
         )
 
     for i, text in enumerate(comparison[-10:][::-1]):

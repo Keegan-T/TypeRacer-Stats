@@ -63,3 +63,14 @@
 - Mitigated database locking issues
 - Shortened welcome message
 - Fixed users showing up twice in top 10s
+
+4/15/2024
+- Added banned status to -stats
+- Added total command usage to -commandleaderboard [user]
+- Added -searchid [text_id] to search for text IDs instead grouping it with similar results
+- Added -miniday that will only show basic stats
+- Added better text count to -compare
+- Added handshake texts to -compare
+- Added a list of disabled texts in -disabledtexts
+- Fixed -realspeedaverage not accepting comma formatted numbers
+- Fixed incorrect correction times for quotes with "|" in them

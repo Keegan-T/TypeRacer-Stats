@@ -16,9 +16,10 @@ from commands.basic.download import run as download
 
 info = {
     "name": "day",
-    "aliases": ["d", "yesterday", "yd"],
+    "aliases": ["d", "yesterday", "yd", "miniday", "md"],
     "description": "Displays a user's stats for a given day\n"
-                   f"`{prefix}yesterday [username]` shows stats for the previous day",
+                   f"`{prefix}yesterday [username]` shows stats for the previous day\n"
+                   f"`{prefix}miniday [username]` will only show basic stats",
     "parameters": "[username] <date>",
     "defaults": {
         "date": "today"
@@ -82,13 +83,13 @@ async def run(ctx, user, username, date):
     api_stats = get_stats(username)
     await download(stats=api_stats)
 
-    week_commands = ["week", "w", "lastweek", "yesterweek", "lw", "yw"]
-    month_commands = ["month", "m", "lastmonth", "yestermonth", "lm", "ym"]
-    year_commands = ["year", "y", "lastyear", "yesteryear", "ly", "yy"]
+    week_commands = ["week", "w", "lastweek", "yesterweek", "lw", "yw", "miniweek", "mw"]
+    month_commands = ["month", "m", "lastmonth", "yestermonth", "lm", "ym", "minimonth", "mm"]
+    year_commands = ["year", "y", "lastyear", "yesteryear", "ly", "yy", "miniyear", "my"]
     command = ctx.invoked_with
 
     if command in week_commands:
-        if command in week_commands[2:]:
+        if command in week_commands[2:6]:
             date -= relativedelta(days=7)
         competition = get_competition_info(date, "week", results_per_page=1)
         start_date = utils.floor_week(date)
@@ -99,7 +100,7 @@ async def run(ctx, user, username, date):
         title = f"Weekly Stats - {date_string}"
 
     elif command in month_commands:
-        if command in month_commands[2:]:
+        if command in month_commands[2:6]:
             date -= relativedelta(months=1)
         competition = get_competition_info(date, "month", results_per_page=1)
         start_date = utils.floor_month(date)
@@ -110,7 +111,7 @@ async def run(ctx, user, username, date):
         title = f"Monthly Stats - {date_string}"
 
     elif command in year_commands:
-        if command in year_commands[2:]:
+        if command in year_commands[2:6]:
             date -= relativedelta(years=1)
         competition = get_competition_info(date, "year", results_per_page=1)
         start_date = utils.floor_year(date)
@@ -121,7 +122,7 @@ async def run(ctx, user, username, date):
         title = f"Yearly Stats - {date_string}"
 
     else:
-        if command in info["aliases"][1:]:
+        if command in info["aliases"][1:3]:
             date -= timedelta(days=1)
         competition = get_competition_info(date, "day", results_per_page=1)
         start_time = utils.floor_day(date).timestamp()
@@ -145,7 +146,8 @@ async def run(ctx, user, username, date):
         else:
             embed.description = f":first_place: **Competition Winner** :first_place:"
 
-    add_stats(embed, username, race_list, start_time, end_time)
+    mini_commands = ["miniday", "miniweek", "minimonth", "miniyear", "md", "mw", "mm", "my"]
+    add_stats(embed, username, race_list, start_time, end_time, mini=ctx.invoked_with in mini_commands)
 
     await ctx.send(embed=embed)
 

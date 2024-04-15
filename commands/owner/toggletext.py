@@ -7,7 +7,7 @@ from commands.checks import owner_check
 
 info = {
     "name": "toggletext",
-    "aliases": ["enabletext", "et", "disabletext", "dt"],
+    "aliases": ["textenable", "te", "textdisable", "td"],
     "description": "Enables/disabled texts",
 }
 
@@ -35,7 +35,7 @@ async def run(ctx, user, text_id):
         return await ctx.send(embed=errors.unknown_text())
 
     status = "Disabled"
-    if ctx.invoked_with in ["disabletext", "dt"]:
+    if ctx.invoked_with in ["textdisable", "td"]:
         texts.disable_text(text_id)
     else:
         status = "Enabled"

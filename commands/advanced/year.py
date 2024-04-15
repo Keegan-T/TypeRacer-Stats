@@ -5,9 +5,10 @@ from commands.advanced.day import get_params, run
 
 info = {
     "name": "year",
-    "aliases": ["y", "lastyear", "yesteryear", "ly", "yy"],
+    "aliases": ["y", "lastyear", "yesteryear", "ly", "yy", "miniyear", "my"],
     "description": "Displays a user's stats for a given year\n"
-                   f"`{prefix}lastyear [username]` shows stats for the previous year",
+                   f"`{prefix}lastyear [username]` shows stats for the previous year\n"
+                   f"`{prefix}miniyear [username]` will only show basic stats",
     "parameters": "[username] <year>",
     "defaults": {
         "date": "this year"

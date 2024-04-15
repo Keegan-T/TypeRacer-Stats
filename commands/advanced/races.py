@@ -150,7 +150,7 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
     await ctx.send(embed=embed)
 
 
-def add_stats(embed, username, race_list, start, end):
+def add_stats(embed, username, race_list, start, end, mini=False):
     end = min(end, datetime.now(timezone.utc).timestamp())
 
     text_list = texts.get_texts(as_dictionary=True)
@@ -226,7 +226,7 @@ def add_stats(embed, username, race_list, start, end):
         f"**Points:** {points:,.0f} ({points_per_race:,.2f} points/race)"
     )
 
-    if len(race_list) > 10:
+    if len(race_list) > 10 and not mini:
         summary_string += f"\n**Best Last 10:** {best_last_10 / 10:,.2f} WPM"
 
     embed.add_field(
@@ -234,6 +234,9 @@ def add_stats(embed, username, race_list, start, end):
         value=summary_string,
         inline=False,
     )
+
+    if mini:
+        return
 
     details = (
         f"**Words Typed:** {words:,} ({words_per_race:,.2f} words/race)\n"

@@ -68,14 +68,14 @@ async def get_params(ctx, user, params, command=info):
 
     if len(params) > 1:
         try:
-            start_number = int(params[1])
+            start_number = utils.parse_value_string(params[1])
         except ValueError:
             await ctx.send(embed=errors.invalid_param(command))
             raise
 
     if len(params) > 2:
         try:
-            end_number = int(params[2])
+            end_number = utils.parse_value_string(params[2])
         except ValueError:
             await ctx.send(embed=errors.invalid_param(command))
             raise ValueError

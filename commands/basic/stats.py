@@ -80,7 +80,7 @@ async def run(ctx, user, username):
         f"{'**Name: **' + stats['display_name'] if stats['display_name'] else ''}\n"
         f"**Joined:** {datetime.fromtimestamp(joined, tz=timezone.utc).strftime('%b. %d, %Y')}{anniversary}\n"
         f"**Membership:** {'Premium' if stats['premium'] else 'Basic'}"
-    )
+    ) + "\n**Status:** Banned" * stats['disqualified']
 
     stats_string = (
         f"**Races:** {stats['races']:,}\n"

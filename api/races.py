@@ -77,7 +77,7 @@ async def get_race_info(username, race_number, get_lagged=True, get_raw=False, g
         return details
 
     universe_multiplier = utils.get_universe_multiplier(universe)
-    delay_data = ",".join(typing_log.split("|")[0].split(",")[3:])
+    delay_data = ",".join(",".join(typing_log.split("|")[0:quote.count("|") + 1]).split(",")[3:])
     log_details = utils.get_log_details(delay_data, universe_multiplier)
     for key, value in log_details.items():
         details[key] = value
@@ -102,7 +102,7 @@ async def get_race_info(username, race_number, get_lagged=True, get_raw=False, g
     # Calculating raw speeds
     if get_raw:
         raw_speeds = utils.get_raw_speeds(typing_log)
-        duration = raw_speeds["duration"]
+        duration = details["ms"]
         raw_duration = raw_speeds["raw_duration"]
         correction = duration - raw_duration
         raw_unlagged = universe_multiplier * len(delays) / raw_duration

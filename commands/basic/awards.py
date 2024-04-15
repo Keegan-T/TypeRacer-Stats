@@ -9,7 +9,7 @@ from commands.basic.stats import get_params
 
 info = {
     "name": "awards",
-    "aliases": ["medals", "aw", "md"],
+    "aliases": ["medals", "aw"],
     "description": "Displays a breakdown of a user's competition awards",
     "parameters": "[username]",
     "usages": ["awards keegant"],

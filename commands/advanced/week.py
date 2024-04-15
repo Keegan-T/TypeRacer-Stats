@@ -5,9 +5,10 @@ from commands.advanced.day import get_params, run
 
 info = {
     "name": "week",
-    "aliases": ["w", "lastweek", "yesterweek", "lw", "yw"],
+    "aliases": ["w", "lastweek", "yesterweek", "lw", "yw", "miniweek", "mw"],
     "description": "Displays a user's stats for a given week\n"
-                   f"`{prefix}lastweek [username]` shows stats for the previous week",
+                   f"`{prefix}lastweek [username]` shows stats for the previous week\n"
+                   f"`{prefix}miniweek [username]` will only show basic stats",
     "parameters": "[username] <date>",
     "defaults": {
         "date": "this week"

@@ -5,9 +5,10 @@ from commands.advanced.day import get_params, run
 
 info = {
     "name": "month",
-    "aliases": ["m", "lastmonth", "yestermonth", "lm", "ym"],
+    "aliases": ["m", "lastmonth", "yestermonth", "lm", "ym", "minimonth", "mm"],
     "description": "Displays a user's stats for a given month\n"
-                   f"`{prefix}lastmonth [username]` shows stats for the previous month",
+                   f"`{prefix}lastmonth [username]` shows stats for the previous month\n"
+                   f"`{prefix}minimonth [username]` will only show basic stats",
     "parameters": "[username] <month>",
     "defaults": {
         "date": "this month"

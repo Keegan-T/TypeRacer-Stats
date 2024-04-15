@@ -1,5 +1,7 @@
 from discord import Embed
 from discord.ext import commands
+
+import urls
 import utils
 import errors
 import colors
@@ -11,13 +13,12 @@ import Levenshtein
 
 info = {
     "name": "search",
-    "aliases": ["query", "q", "lf"],
+    "aliases": ["query", "q", "lf", "searchid", "id"],
     "description": "Searches the text database for matching results\n"
                    "Displays similar results if there are no exact matches\n"
-                   f"`{prefix}search [text_id]` will search for a text ID",
+                   f"`{prefix}searchid [text_id]` will search for a text ID",
     "parameters": "[query]",
-    "usages": ["search They don't know"],
-    "import": False,
+    "usages": ["search They don't know", "search 3550533"],
 }
 
 
@@ -35,27 +36,39 @@ class Search(commands.Cog):
 
 
 async def run(ctx, user, query):
-    text_list = get_texts()
-    query_title = query.replace("`", "")
-    query = query.lower()
     query_length = len(query)
-    results = []
-
-    search_id = next((text for text in text_list if str(text["id"]) == query), None)
-
-    for text in text_list:
-        if query in text["quote"].lower():
-            results.append(text)
-
     if query_length > 250:
         return await ctx.send(embed=big_query())
 
-    result_count = len(results)
-    show_similar = result_count == 0
+    text_list = get_texts()
+    query_title = query.replace("`", "")
+    query = query.lower()
+    search_id = ctx.invoked_with in ["searchid", "id"]
+    title = f"Text {'ID ' * search_id}Search"
+    results = []
 
+    if search_id:
+        text_id_match = next((text for text in text_list if str(text["id"]) == query), None)
+        if text_id_match:
+            results.append(text_id_match)
+        else:
+            embed = Embed(
+                title=title,
+                description=f'No results found.\n**Query:** "{query}"',
+                color=user["colors"]["embed"],
+            )
+            return await ctx.send(embed=embed)
+
+    else:
+        for text in text_list:
+            if query in text["quote"].lower():
+                results.append(text)
+
+    result_count = len(results)
+    no_matches = result_count == 0
     max_chars = 150
 
-    if show_similar:
+    if no_matches:
         for text in text_list:
             quote = text["quote"].lower()
             min_leven = {"distance": float("inf"), "start": 0, "end": 0}
@@ -81,25 +94,22 @@ async def run(ctx, user, query):
         f'result{"s" * (result_count != 1)}.\n**Query:** "{query_title}"\n'
     )
 
-    if show_similar:
+    if no_matches:
         results_string = f'No results found, displaying similar results.\n**Query:** "{query_title}"\n'
 
     if search_id:
-        results.insert(0, search_id)
-
-    for result in results[:10]:
-        if result == search_id:
-            quote = utils.truncate_clean(result["quote"], max_chars)
-            results_string += (
-                f"\n[#**{result['id']}**](https://typeracerdata.com/text?id={result['id']}) - ID Match"
-                f"{' (Disabled)' * result['disabled']} - [Ghost]({result['ghost']})\n"
-                f'"{quote}"\n'
-            )
-
-        else:
+        result = results[0]
+        quote = utils.truncate_clean(result["quote"], max_chars)
+        results_string += (
+            f"\n[#**{result['id']}**]({urls.trdata_text(result['id'])})"
+            f"{' (Disabled)' * result['disabled']} - [Ghost]({result['ghost']})\n"
+            f'"{quote}"\n'
+        )
+    else:
+        for result in results[:10]:
             quote = result["quote"].strip().replace("*", "\*").replace("_", "\_")
             chars = max_chars - query_length
-            if show_similar:
+            if no_matches:
                 start_index = result["leven"]["start"]
                 end_index = result["leven"]["end"]
                 query_index = start_index
@@ -139,14 +149,14 @@ async def run(ctx, user, query):
                 f"{' (Disabled) ' * result['disabled']}"
             )
 
-            if show_similar:
+            if no_matches:
                 similarity = (1 - (result["leven"]["distance"] / query_length)) * 100
                 results_string += f" - {similarity:,.2f}% Match"
 
             results_string += f' - [Ghost]({result["ghost"]})\n"{substring}"\n'
 
     embed = Embed(
-        title=f"Text Search",
+        title=title,
         description=results_string,
         color=user["colors"]["embed"],
     )

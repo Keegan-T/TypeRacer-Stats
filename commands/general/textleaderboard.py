@@ -11,7 +11,7 @@ import database.text_results as top_tens
 
 info = {
     "name": "textleaderboard",
-    "aliases": ["tl", "10"],
+    "aliases": ["tlb", "tl", "10"],
     "description": "Displays the top 10 leaderboard for a text",
     "defaults": {
         "text_id": "the most recently viewed text ID"

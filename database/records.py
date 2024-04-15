@@ -451,7 +451,7 @@ async def text_records():
         )
 
     embed.add_field(
-        name="Text Best WPM (Min. 1,000 Texts Typed)",
+        name="Text Best WPM (Min. 1,500 Texts Typed)",
         value=text_bests_str,
         inline=False,
     )
