@@ -100,7 +100,7 @@ async def update_important_users():
     await import_lock.acquire()
     for username in user_list:
         await download(username)
-    await import_lock.release()
+    import_lock.release()
 
 
 async def update_top_tens():
