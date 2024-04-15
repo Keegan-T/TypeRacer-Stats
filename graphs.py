@@ -20,8 +20,6 @@ default_palette = [
 rcParams["axes.prop_cycle"] = plt.cycler(color=default_palette)
 rcParams["font.family"] = "sans-serif"
 rcParams["font.sans-serif"] = ["Exo 2"]
-if not staging:
-    rcParams["font.sans-serif"] = ["/home/TypeRacer-Stats/Exo2.ttf"]
 rcParams["font.size"] = 11
 cmap_keegant = LinearSegmentedColormap.from_list('keegant', ["#0094FF", "#FF00DC"])
 
