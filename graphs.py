@@ -7,6 +7,7 @@ from matplotlib.legend_handler import HandlerLine2D
 from matplotlib.ticker import FuncFormatter
 from matplotlib import rcParams
 import numpy as np
+from config import staging
 
 import utils
 from utils import format_big_number
@@ -19,6 +20,8 @@ default_palette = [
 rcParams["axes.prop_cycle"] = plt.cycler(color=default_palette)
 rcParams["font.family"] = "sans-serif"
 rcParams["font.sans-serif"] = ["Exo 2"]
+if not staging:
+    rcParams["font.sans-serif"] = ["/home/TypeRacer-Stats/Exo2.ttf"]
 rcParams["font.size"] = 11
 cmap_keegant = LinearSegmentedColormap.from_list('keegant', ["#0094FF", "#FF00DC"])
 
