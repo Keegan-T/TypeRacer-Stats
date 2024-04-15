@@ -74,3 +74,4 @@
 - Added a list of disabled texts in -disabledtexts
 - Fixed -realspeedaverage not accepting comma formatted numbers
 - Fixed incorrect correction times for quotes with "|" in them
+- Fixed graph font not loading
