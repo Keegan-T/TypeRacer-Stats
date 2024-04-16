@@ -16,7 +16,7 @@ from commands.basic.download import run as download
 
 info = {
     "name": "day",
-    "aliases": ["d", "yesterday", "yd", "miniday", "md"],
+    "aliases": ["d", "miniday", "md", "yesterday", "yd", "miniyesterday", "myd"],
     "description": "Displays a user's stats for a given day\n"
                    f"`{prefix}yesterday [username]` shows stats for the previous day\n"
                    f"`{prefix}miniday [username]` will only show basic stats",
@@ -122,7 +122,7 @@ async def run(ctx, user, username, date):
         title = f"Yearly Stats - {date_string}"
 
     else:
-        if command in info["aliases"][1:3]:
+        if command in info["aliases"][3:]:
             date -= timedelta(days=1)
         competition = get_competition_info(date, "day", results_per_page=1)
         start_time = utils.floor_day(date).timestamp()
@@ -146,7 +146,7 @@ async def run(ctx, user, username, date):
         else:
             embed.description = f":first_place: **Competition Winner** :first_place:"
 
-    mini_commands = ["miniday", "miniweek", "minimonth", "miniyear", "md", "mw", "mm", "my"]
+    mini_commands = ["miniday", "miniyesterday", "miniweek", "minimonth", "miniyear", "md", "myd", "mw", "mm", "my"]
     add_stats(embed, username, race_list, start_time, end_time, mini=ctx.invoked_with in mini_commands)
 
     await ctx.send(embed=embed)
