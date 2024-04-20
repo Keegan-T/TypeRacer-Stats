@@ -123,13 +123,17 @@ async def loops():
         try:
             await logs.send("Importing competitions")
             await import_competitions()
+            await logs.send("Finished importing competitions")
             await logs.send("Updating important users")
             await update_important_users()
+            await logs.send("Finished updating important users")
             await logs.send(f"Updating records")
             await records.update(bot)
+            await logs.send(f"Finished updating records")
             if datetime.utcnow().day == 1:
                 await logs.send(f"Updating top tens")
                 await update_top_tens()
+                await logs.send(f"Finished updating top tens")
         except Exception as error:
             await error_notify("Task Failure", error)
 

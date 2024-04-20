@@ -1,4 +1,5 @@
 from database import db
+from database.alts import get_alts
 import urls
 
 def get_texts(as_dictionary=False, include_disabled=True):
@@ -21,13 +22,10 @@ def get_texts(as_dictionary=False, include_disabled=True):
 
 
 def get_text(text_id):
-    text = db.fetch(
-        """
-            SELECT * FROM texts
-            WHERE id = ?
-        """,
-        [text_id]
-    )
+    text = db.fetch("""
+        SELECT * FROM texts
+        WHERE id = ?
+    """, [text_id])
 
     if not text:
         return None
@@ -55,43 +53,42 @@ def get_disabled_text_ids():
 
 
 def add_text(text):
-    db.run(
-        """
-            INSERT INTO texts
-            VALUES (?, ?, ?, ?)
-        """,
-        [text['id'], text['quote'], False, text["ghost"]]
-    )
+    db.run("""
+        INSERT INTO texts
+        VALUES (?, ?, ?, ?)
+    """, [text['id'], text['quote'], False, text["ghost"]])
 
 
 def update_text(text_id, quote):
-    db.run(
-        """
-            UPDATE texts
-            SET quote = ?
-            WHERE id = ? 
-        """,
-        [quote, text_id]
-    )
+    db.run("""
+        UPDATE texts
+        SET quote = ?
+        WHERE id = ? 
+    """, [quote, text_id])
 
 
 def get_top_10(text_id):
-    top_10 = db.fetch("""
-        SELECT * FROM (
-            SELECT races.id, races.username, text_id, wpm, timestamp, number, disqualified,
-            ROW_NUMBER() OVER (
-                PARTITION BY races.username
-                ORDER BY wpm DESC
-            ) AS ranking
-            FROM races
-            JOIN users ON users.username = races.username
-            WHERE text_id = ?
-            AND disqualified = 0
-        )
-        WHERE ranking = 1
-        ORDER BY wpm DESC
-        LIMIT 10
+    results = db.fetch("""
+        SELECT * FROM races
+        WHERE text_id = ?
     """, [text_id])
+
+    results.sort(key=lambda x: x["wpm"], reverse=True)
+
+    top_10 = []
+    alts = get_alts()
+
+    for result in results:
+        username = result["username"]
+        if username in alts:
+            existing_score = next((score for score in top_10 if score["username"] in alts[username]), None)
+        else:
+            existing_score = next((score for score in top_10 if score["username"] == username), None)
+        if existing_score:
+            continue
+        top_10.append(result)
+        if len(top_10) == 10:
+            break
 
     return top_10
 

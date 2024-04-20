@@ -1,10 +1,16 @@
+import asyncio
+import aiohttp
+import utils
 import database.competition_results as competition_results
 import database.users as users
+import database.texts as texts
 from api.competitions import get_competition
 from datetime import datetime, timezone
 from dateutil.relativedelta import relativedelta
 import database.important_users as important_users
-import database.texts as texts
+from commands.basic.download import run as download
+from commands.locks import import_lock
+import database.db as db
 
 
 async def import_competitions():
@@ -71,10 +77,8 @@ async def import_competitions():
 
     print("Imported all new competitions")
 
-async def update_important_users():
-    from commands.basic.download import run as download
-    from commands.locks import import_lock
 
+async def update_important_users():
     user_list = important_users.get_users()
     print(f"Updating {len(user_list)} important users...")
 
@@ -103,14 +107,99 @@ async def update_important_users():
     import_lock.release()
 
 
+async def import_top_ten_users():
+    from api.texts import get_top_10_user_stats
+    from api.users import get_stats
+
+    unique_users = {}
+    text_ids = [str(text["id"]) for text in texts.get_texts(include_disabled=False)]
+    partitions = [text_ids[i:i + 100] for i in range(0, len(text_ids), 100)]
+
+    for i in range(len(partitions)):
+        utils.time_start()
+        print(f"Fetching quotes #{partitions[i][0]} - #{partitions[i][-1]} "
+              f"({((i + 1) / len(partitions) * 100):,.2f}%)")
+        async with aiohttp.ClientSession() as session:
+            stats_list = await asyncio.gather(*[get_top_10_user_stats(session, text_id) for text_id in partitions[i]])
+            for user_stats in stats_list:
+                for stats in user_stats:
+                    username = stats["id"][3:]
+                    if username not in unique_users:
+                        unique_users[username] = stats
+        utils.time_end()
+
+    for stats in unique_users.values():
+        stats = get_stats(stats=stats)
+        if stats is None:
+            continue
+        async with import_lock:
+            await download(stats=stats, override=True)
+
+
 async def update_top_tens():
-    from database.text_results import update_results
+    import database.text_results as text_results
+    from database.alts import get_alts
 
-    print("Updating top tens...")
-    text_ids = [text["id"] for text in texts.get_texts(include_disabled=False)]
+    await import_top_ten_users()
 
-    for i, text_id in enumerate(text_ids):
-        print(f"Updating text #{text_id} ({i + 1:,}/{len(text_ids):,})")
-        await update_results(text_id)
+    alts = get_alts()
+    banned = set(users.get_disqualified_users())
+    top_10s = {}
 
-    print("Finished updating top tens")
+    limit = 1000000
+    offset = 0
+    race_list = 1
+
+    utils.time_start()
+    while race_list:
+        print("Fetching 1,000,000 races...")
+        race_list = await db.fetch_async("""
+            SELECT username, text_id, number, wpm, timestamp FROM races
+            LIMIT ?, ?
+        """, [offset, limit])
+        utils.time_split()
+
+        for race in race_list:
+            username, text_id, _, wpm, _ = race
+            if username in banned:
+                continue
+            if text_id not in top_10s:
+                top_10s[text_id] = []
+
+            if username in alts:
+                existing_score = next((score for score in top_10s[text_id] if score[0] in alts[username]), None)
+            else:
+                existing_score = next((score for score in top_10s[text_id] if score[0] == username), None)
+
+            if existing_score:
+                if wpm > existing_score[3]:
+                    top_10s[text_id].remove(existing_score)
+                    top_10s[text_id].append(race)
+                    top_10s[text_id] = sorted(top_10s[text_id], key=lambda x: x[3], reverse=True)[:10]
+            else:
+                top_10s[text_id].append(race)
+                top_10s[text_id] = sorted(top_10s[text_id], key=lambda x: x[3], reverse=True)[:10]
+
+        utils.time_split()
+
+        offset += limit
+
+    results = []
+
+    disabled_text_ids = texts.get_disabled_text_ids()
+    for text_id, top_10 in top_10s.items():
+        if int(text_id) in disabled_text_ids:
+            continue
+        for score in top_10:
+            username = score["username"]
+            number = score["number"]
+            results.append((
+                utils.race_id(username, number), score["text_id"],
+                username, number, score["wpm"], score["timestamp"],
+            ))
+
+    print(f"Adding {len(results)} results")
+    utils.time_start()
+    text_results.add_results(results)
+    utils.time_end()
+    print("Added results")

@@ -3,7 +3,14 @@ from collections import defaultdict
 import api.texts as texts_api
 import database.modified_races as modified_races
 import database.texts as texts
-import utils
+from database.alts import get_alts
+
+
+def add_results(results):
+    db.run_many("""
+        INSERT OR IGNORE INTO text_results
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, results)
 
 
 def get_count():
@@ -11,8 +18,10 @@ def get_count():
 
     return number
 
+
 def get_top_10s():
     results = db.fetch("SELECT * FROM text_results")
+    alts = get_alts()
 
     top_10s = defaultdict(list)
     for result in results:
@@ -22,33 +31,46 @@ def get_top_10s():
     for text_id, scores in top_10s.items():
         scores.sort(key=lambda x: x["wpm"], reverse=True)
 
-        unique_scores = {}
+        unique_scores = []
         for score in scores:
             username = score["username"]
-            if username not in unique_scores:
-                unique_scores[username] = score
+            if username in alts:
+                existing_score = next((score for score in unique_scores if score["username"] in alts[username]), None)
+            else:
+                existing_score = next((score for score in unique_scores if score["username"] == username), None)
 
-        filtered_top_10s[text_id] = [score for score in unique_scores.values()][:10]
+            if not existing_score:
+                unique_scores.append(score)
+
+        filtered_top_10s[text_id] = unique_scores[:10]
 
     return filtered_top_10s
 
-def get_top_10(text_id):
-    top_10 = []
 
+def get_top_10(text_id):
     results = db.fetch("""
         SELECT * FROM text_results
         WHERE text_id = ?
         ORDER BY wpm DESC
     """, [text_id])
 
+    top_10 = []
+    alts = get_alts()
+
     for result in results:
-        if any(score["username"] == result["username"] for score in top_10):
+        username = result["username"]
+        if username in alts:
+            existing_score = next((score for score in top_10 if score["username"] in alts[username]), None)
+        else:
+            existing_score = next((score for score in top_10 if score["username"] == username), None)
+        if existing_score:
             continue
         top_10.append(result)
         if len(top_10) == 10:
             break
 
     return top_10
+
 
 def get_top_10_counts(username):
     top_10s = get_top_10s()
@@ -60,6 +82,7 @@ def get_top_10_counts(username):
             top_10_counts[usernames.index(username)] += 1
 
     return top_10_counts
+
 
 def get_top_n_counts(n=10):
     top_10_users = defaultdict(int)
@@ -73,18 +96,28 @@ def get_top_n_counts(n=10):
 
     return sorted_users[:10], len(top_10s)
 
+
 async def update_results(text_id):
     disabled_text_ids = texts.get_disabled_text_ids()
     if text_id in disabled_text_ids:
         return
 
-    modified_ids = modified_races.get_ids()
-    api_top_10 = await texts_api.get_top_10(text_id)
-
     scores = []
 
-    ids = []
-    for score in api_top_10:
+    top_10_database = texts.get_top_10(text_id)
+    for score in top_10_database:
+        scores.append((
+            score["id"],
+            int(text_id),
+            score["username"],
+            score["number"],
+            score["wpm"],
+            score["timestamp"],
+        ))
+
+    top_10_api = await texts_api.get_top_10(text_id)
+    modified_ids = modified_races.get_ids()
+    for score in top_10_api:
         race, user = score
         username = user["id"][3:]
         number = race["gn"]
@@ -93,39 +126,19 @@ async def update_results(text_id):
         if id in modified_ids:
             continue
 
-        scores.append({
-            "id": id,
-            "username": username,
-            "number": number,
-            "wpm": race["wpm"],
-            "timestamp": race["t"],
-        })
-        ids.append(id)
+        scores.append((
+            id,
+            int(text_id),
+            username,
+            number,
+            race["wpm"],
+            race["t"],
+        ))
 
-    top_10_database = texts.get_top_10(text_id)
+    print(f"Adding {len(scores)} scores")
+    add_results(scores)
+    print("Added scores.")
 
-    new_scores = [score for score in top_10_database if score["id"] not in ids]
-    for score in new_scores:
-        scores.append({
-            "id": score["id"],
-            "username": score["username"],
-            "number": score["number"],
-            "wpm": score["wpm"],
-            "timestamp": score["timestamp"],
-        })
-
-    top_10 = sorted(scores, key=lambda x: x["wpm"], reverse=True)[:10]
-    params = []
-    for score in top_10:
-        params += [score["id"], int(text_id), score["username"],
-                   score["number"], score["wpm"], score["timestamp"]]
-
-    value_string = ("(?, ?, ?, ?, ?, ?)," * len(top_10))[:-1]
-
-    db.run(f"""
-        INSERT OR IGNORE INTO text_results
-        VALUES {value_string}
-    """, params)
 
 def delete_result(id):
     db.run("""
@@ -133,11 +146,13 @@ def delete_result(id):
         WHERE id = ?
     """, [id])
 
+
 def delete_results(text_id):
     db.run("""
         DELETE FROM text_results
         WHERE text_id = ?
     """, [text_id])
+
 
 def delete_user_results(username):
     db.run("""
