@@ -75,3 +75,6 @@
 - Fixed -realspeedaverage not accepting comma formatted numbers
 - Fixed incorrect correction times for quotes with "|" in them
 - Fixed graph font not loading
+
+4/20/2024
+- Added a system to filter alt accounts from top 10s
