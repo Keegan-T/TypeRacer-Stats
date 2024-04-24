@@ -39,9 +39,11 @@ async def error_notify(log_message, error):
 
 @bot.event
 async def on_ready():
-    print("Bot ready.")
     from database import db
-    db.run("""DELETE FROM text_results WHERE username = 'foggyy'""")
+    banned = {'foggyy', 'godtyper1337', 'flatrix', 'aaaa', 'david_chu_ghost', 'spiderclaws', 'xxot1xx', 'blade5468', 'dumbythumby', 'mzleumlkgzsjelhnsf', 'joshunq', 'performancecheck', 'alan_david', 'zombieswap2', 'shinrinyokuu', 'jojosiwafan123456789'}
+    for username in banned:
+        db.run("delete from text_results where username = ?", [username])
+    print("Bot ready.")
     if not staging:
         loops.start()
 

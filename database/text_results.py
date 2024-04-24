@@ -48,7 +48,6 @@ def get_top_10s():
 
 
 def get_top_10(text_id):
-    from database.users import get_disqualified_users
     results = db.fetch("""
         SELECT * FROM text_results
         WHERE text_id = ?
@@ -57,12 +56,9 @@ def get_top_10(text_id):
 
     top_10 = []
     alts = get_alts()
-    banned = set(get_disqualified_users())
 
     for result in results:
         username = result["username"]
-        if username in banned:
-            continue
         if username in alts:
             existing_score = next((score for score in top_10 if score["username"] in alts[username]), None)
         else:
@@ -102,6 +98,7 @@ def get_top_n_counts(n=10):
 
 
 async def update_results(text_id):
+    text_id = int(text_id)
     disabled_text_ids = texts.get_disabled_text_ids()
     if text_id in disabled_text_ids:
         return
@@ -111,12 +108,8 @@ async def update_results(text_id):
     top_10_database = texts.get_top_10(text_id)
     for score in top_10_database:
         scores.append((
-            score["id"],
-            int(text_id),
-            score["username"],
-            score["number"],
-            score["wpm"],
-            score["timestamp"],
+            score["id"], text_id, score["username"],
+            score["number"], score["wpm"], score["timestamp"],
         ))
 
     top_10_api = await texts_api.get_top_10(text_id)
@@ -131,12 +124,8 @@ async def update_results(text_id):
             continue
 
         scores.append((
-            id,
-            int(text_id),
-            username,
-            number,
-            race["wpm"],
-            race["t"],
+            id, text_id, username,
+            number, race["wpm"], race["t"],
         ))
 
     print(f"Adding {len(scores)} scores")

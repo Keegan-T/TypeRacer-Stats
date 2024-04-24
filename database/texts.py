@@ -68,6 +68,7 @@ def update_text(text_id, quote):
 
 
 def get_top_10(text_id):
+    from database.users import get_disqualified_users
     results = db.fetch("""
         SELECT * FROM races
         WHERE text_id = ?
@@ -77,9 +78,12 @@ def get_top_10(text_id):
 
     top_10 = []
     alts = get_alts()
+    banned = set(get_disqualified_users())
 
     for result in results:
         username = result["username"]
+        if username in banned:
+            continue
         if username in alts:
             existing_score = next((score for score in top_10 if score["username"] in alts[username]), None)
         else:
