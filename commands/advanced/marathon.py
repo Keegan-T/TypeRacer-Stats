@@ -11,7 +11,7 @@ from commands.advanced.races import add_stats
 types = ["races", "points"]
 info = {
     "name": "marathon",
-    "aliases": ["mt", "42"],
+    "aliases": ["42"],
     "description": "Displays the maximum amount of races/points a user completed in a timeframe\n"
                    "Time can be given as seconds, or a duration string (1d 12h 30m 15s)",
     "parameters": "[username] <type> <time>",

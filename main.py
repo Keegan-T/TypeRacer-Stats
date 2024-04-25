@@ -39,8 +39,6 @@ async def error_notify(log_message, error):
 
 @bot.event
 async def on_ready():
-    from database import db
-    db.run("delete from text_results where text_id = ?", [3622397])
     print("Bot ready.")
     if not staging:
         loops.start()

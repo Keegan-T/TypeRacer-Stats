@@ -78,3 +78,8 @@
 
 4/20/2024
 - Added a system to filter alt accounts from top 10s
+
+4/24/2024
+- Added -missingtens
+- Fixed a bug where disabled texts entered top 10 counts
+- Fixed a bug where disqualified users entered top 10 counts
