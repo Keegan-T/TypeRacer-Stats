@@ -19,7 +19,7 @@ class Keegan(commands.Cog):
 
 async def run(ctx):
     embed = Embed(
-        description="Allow me to present the [TypeRacer Anthem](https://www.udio.com/songs/rN78d8eaGt8vFrqfaQwrne)",
+        description="[You Said You'd Be There When I Fall](https://www.youtube.com/watch?v=9Rb33Lj9VuE)",
         color=0,
     )
 
