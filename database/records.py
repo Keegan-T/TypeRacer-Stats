@@ -70,10 +70,10 @@ async def update_300_club(bot):
 
     messages.reverse()
 
-    club_300_1, club_300_2 = club_300()
+    club_400, club_300_1, club_300_2 = get_club_scores()
 
     records = [
-        club_400(),
+        club_400,
         club_300_1,
         club_300_2,
     ]
@@ -101,11 +101,11 @@ async def get_records():
         color=colors.gold,
     )
 
-    club_300_1, club_300_2 = club_300()
+    club_400, club_300_1, club_300_2 = get_club_scores()
 
     embeds = [
         speed_records(),
-        club_400(),
+        club_400,
         club_300_1,
         club_300_2,
         race_records(),
@@ -180,61 +180,54 @@ def speed_records():
     return embed
 
 
-def club_400():
+def get_club_scores():
+    from database.alts import get_alts
+
     i = 1
-    scores_string = ""
     scores = races_300.get_races_unique_usernames()
+    top_scores = []
+    alts = get_alts()
     for score in scores:
-        if score["wpm_adjusted"] < 400:
-            break
-        score["position"] = i
-        score_string = get_score_string(score)
-        scores_string += score_string + "\n"
-        i += 1
+        username = score["username"]
+        if username in alts:
+            existing_score = next((score for score in top_scores if score["username"] in alts[username]), None)
+        else:
+            existing_score = next((score for score in top_scores if score["username"] == username), None)
+        if not existing_score:
+            score["position"] = i
+            top_scores.append(score)
+            i += 1
 
-    embed = Embed(
+    score_string_400 = ""
+    score_string_300_1 = ""
+    score_string_300_2 = ""
+    for score in top_scores:
+        score_string = get_score_string(score)
+        if score["wpm_adjusted"] >= 400:
+            score_string_400 += score_string
+        elif score["position"] <= 25:
+            score_string_300_1 += score_string
+        else:
+            score_string_300_2 += score_string
+
+    embed_400 = Embed(
         title="˜”\*°• 400 WPM Club •°\*”˜",
-        description=scores_string,
+        description=score_string_400,
         color=colors.gold,
     )
 
-    return embed
-
-
-def club_300():
-    i = 0
-    scores_string = ""
-    scores_string2 = ""
-    scores = races_300.get_races_unique_usernames()
-    scores = [score for score in scores if score["username"] not in exclude_300s]
-    for score in scores[:25]:
-        i += 1
-        if score["wpm_adjusted"] >= 400:
-            continue
-        score["position"] = i
-        score_string = get_score_string(score)
-        scores_string += score_string + "\n"
-
-    for score in scores[25:]:
-        i += 1
-        if score["wpm_adjusted"] >= 400:
-            continue
-        score["position"] = i
-        score_string = get_score_string(score)
-        scores_string2 += score_string + "\n"
-
-    embed = Embed(
+    embed_300_1 = Embed(
         title="300 WPM Club",
-        description=scores_string,
+        description=score_string_300_1,
         color=colors.gold,
     )
 
-    embed2 = Embed(
-        description=scores_string2,
+    embed_300_2 = Embed(
+        description=score_string_300_2,
         color=colors.gold,
     )
 
-    return embed, embed2
+    return embed_400, embed_300_1, embed_300_2
 
 
 def race_records():

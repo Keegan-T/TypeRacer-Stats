@@ -84,8 +84,18 @@ async def run(ctx, user, username, category, text_id, reverse=True):
         text = text_list[text_id]
         text["text_id"] = text_id
         race_list = sorted(races.get_text_races(username, text_id), key=lambda x: x["wpm"], reverse=reverse)[:limit]
-
         limit = len(race_list)
+        embed = Embed()
+        embed.color = user["colors"]["embed"]
+        utils.add_profile(embed, stats)
+        recent.text_id = text_id
+
+        if limit == 0:
+            description = utils.text_description(text)
+            embed.title = f"Top 10 {'Best' if reverse else 'Worst'} Races"
+            embed.description = (description + "\n\nUser has no races on this text\n"
+                                               f"[Race this text]({text['ghost']})")
+            return await ctx.send(embed=embed)
 
         top = ""
         average = 0
@@ -109,11 +119,8 @@ async def run(ctx, user, username, category, text_id, reverse=True):
             f"{top}"
         )
 
-        embed = Embed(
-            title=f"Top {limit} {'Best' if reverse else 'Worst'} Races",
-            description=top,
-            color=user["colors"]["embed"],
-        )
+        embed.title = f"Top {limit} {'Best' if reverse else 'Worst'} Races"
+        embed.description = top
 
     else:
         race_list = await races.get_races(username, with_texts=True, order_by=category, reverse=reverse, limit=limit)
@@ -153,8 +160,6 @@ async def run(ctx, user, username, category, text_id, reverse=True):
     utils.add_profile(embed, stats)
 
     await ctx.send(embed=embed)
-    if text_id is not None:
-        recent.text_id = text_id
 
 
 async def setup(bot):

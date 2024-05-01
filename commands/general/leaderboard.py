@@ -146,15 +146,16 @@ async def run(ctx, user, category, text_id=None):
             top = int(category)
         title = f"Top {top} Appearances"
         leaderboard, text_count = top_tens.get_top_n_counts(top)
-        for leader in leaderboard:
-            leaders.append(f"{leader[1]:,}")
 
-        for i, leader in enumerate(leaderboard):
+        for i, leader in enumerate(leaderboard[:10]):
             rank = utils.rank(i + 1)
             username = utils.escape_discord_format(leader[0])
-            leaderboard_string += f"{rank} {username} - {leaders[i]}\n"
+            leaderboard_string += f"{rank} {username} - {leader[1]:,}\n"
 
-        embed.set_footer(text=f"{text_count:,} total texts")
+        embed.set_footer(
+            text=f"{text_count:,} total texts\n"
+                 f"{len(leaderboard):,} total users"
+        )
 
     if category != "toptens" and not category.isnumeric():
         for i, leader in enumerate(leaderboard):

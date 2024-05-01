@@ -83,3 +83,8 @@
 - Added -missingtens
 - Fixed a bug where disabled texts entered top 10 counts
 - Fixed a bug where disqualified users entered top 10 counts
+
+5/1/2024
+- Added total usage count to -commandleaderboard overall and per command
+- Added user count to -leaderboard toptens
+- Filtered alt accounts from the 300 WPM club

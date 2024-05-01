@@ -65,6 +65,11 @@ async def run(ctx, user, username):
 
     shuffle(missing_texts)
 
+    embed = Embed(
+        title="Missing Top Tens",
+        color=user["colors"]["embed"],
+    )
+
     if not missing_texts:
         description = "User ranks in every top 10 for texts they have typed!"
 
@@ -80,12 +85,10 @@ async def run(ctx, user, username):
                 f"[Ghost]({text_list[text_id]['ghost']})\n"
                 f'"{utils.truncate_clean(text_list[text_id]["quote"], 60)}"\n\n'
             )
+            if difference < 0:
+                embed.set_footer(text="Negative differences mean that a higher score exists on an alternate account")
 
-    embed = Embed(
-        title="Missing Top Tens",
-        description=description,
-        color=user["colors"]["embed"],
-    )
+    embed.description = description
     utils.add_profile(embed, stats)
 
     await ctx.send(embed=embed)

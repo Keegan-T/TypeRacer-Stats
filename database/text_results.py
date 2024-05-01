@@ -94,7 +94,7 @@ def get_top_n_counts(n=10):
 
     sorted_users = sorted(top_10_users.items(), key=lambda x: x[1], reverse=True)
 
-    return sorted_users[:10], len(top_10s)
+    return sorted_users, len(top_10s)
 
 
 async def update_results(text_id):

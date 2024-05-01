@@ -60,7 +60,7 @@ async def get_params(ctx, user, params, command=info):
         await ctx.send(embed=errors.missing_param(command))
         raise ValueError
 
-    return username.lower(), n
+    return username.lower(), int(n)
 
 
 async def run(ctx, user, username, n):

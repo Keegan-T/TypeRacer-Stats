@@ -29,7 +29,10 @@ async def get_top_10_user_stats(session, text_id):
     url = urls.top_10(text_id)
     user_stats = []
     async with session.get(url) as response:
-        top_10 = await response.json(content_type="text/html")
-        for score in top_10[1]:
-            user_stats.append(score[1])
-        return user_stats
+        try:
+            top_10 = await response.json(content_type="text/html")
+            for score in top_10[1]:
+                user_stats.append(score[1])
+            return user_stats
+        except:
+            return []

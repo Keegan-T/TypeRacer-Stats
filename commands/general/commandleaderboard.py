@@ -67,7 +67,14 @@ async def command_leaderboard(ctx, user, command):
 
     command = alias_dict[command]
     all_commands = get_all_commands()
-    command_usage = [bot_user for bot_user in all_commands if command in bot_user["commands"]]
+
+    command_usage = []
+    total_usages = 0
+    for bot_user in all_commands:
+        user_commands = bot_user["commands"]
+        if command in user_commands:
+            command_usage.append(bot_user)
+            total_usages += user_commands[command]
     sorted_usage = sorted(command_usage, key=lambda x: x["commands"][command], reverse=True)
 
     description = ""
@@ -79,16 +86,12 @@ async def command_leaderboard(ctx, user, command):
         description=description,
         color=user["colors"]["embed"],
     )
+    embed.set_footer(text=f"Total Usages: {total_usages:,}")
 
     await ctx.send(embed=embed)
 
 
 async def user_leaderboard(ctx, user, discord_id):
-    embed = Embed(
-        title=f"Most Used Commands",
-        color=user["colors"]["embed"],
-    )
-
     if discord_id == "all":
         command_usage = get_total_commands()
         description = "**Overall**\n\n"
@@ -97,14 +100,19 @@ async def user_leaderboard(ctx, user, discord_id):
         if not command_usage:
             return await ctx.send(embed=no_commands(discord_id))
         description = f"<@{discord_id}>\n\n"
-        embed.set_footer(text=f"Total Commands: {sum([command[1] for command in command_usage.items()]):,}")
-
+        
+    total_usages = sum([command[1] for command in command_usage.items()])
     most_used_commands = sorted(command_usage.items(), key=lambda x: x[1], reverse=True)
     for i, command in enumerate(most_used_commands[:10]):
         name, usages = command
         description += f"{i + 1}. {name} - {usages:,}\n"
 
-    embed.description = description
+    embed = Embed(
+        title=f"Most Used Commands",
+        description=description,
+        color=user["colors"]["embed"],
+    )
+    embed.set_footer(text=f"Total Usages: {total_usages:,}")
 
     await ctx.send(embed=embed)
 

@@ -107,6 +107,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
         embed.description = (description + "\n\nUser has no races on this text\n"
                                            f"[Race this text]({text['ghost']})")
         embed.color = color
+        recent.text_id = text_id
         return await ctx.send(embed=embed)
 
     times_typed = len(race_list)
