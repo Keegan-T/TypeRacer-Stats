@@ -204,11 +204,11 @@ def get_club_scores():
     for score in top_scores:
         score_string = get_score_string(score)
         if score["wpm_adjusted"] >= 400:
-            score_string_400 += score_string
+            score_string_400 += score_string + "\n"
         elif score["position"] <= 25:
-            score_string_300_1 += score_string
+            score_string_300_1 += score_string + "\n"
         else:
-            score_string_300_2 += score_string
+            score_string_300_2 += score_string + "\n"
 
     embed_400 = Embed(
         title="˜”\*°• 400 WPM Club •°\*”˜",
