@@ -1,19 +1,12 @@
 {
   "speed": [
     {
-      "record": "Fastest Race (Unlagged Speed)",
-      "username": "taran127",
-      "lagged": 379.03,
-      "unlagged": 410.78,
-      "date": "10/14/2020",
-      "race": 325
-    },
-    {
       "record": "Fastest Race (Adjusted Speed)",
       "username": "taran127",
-      "adjusted": 419.453,
-      "date": "10/14/2020",
-      "race": 325
+      "lagged": 409.80,
+      "adjusted": 421.053,
+      "date": "4/19/2024",
+      "race": 1506
     },
     {
       "record": "Fastest Race (Maintrack) (Unlagged Speed)",

@@ -129,7 +129,7 @@ def speed_records():
     embed.add_field(
         name=records[0]['record'],
         value=f"{get_flag(records[0]['username'])}{records[0]['username']} - "
-              f"[{records[0]['unlagged']} WPM]"
+              f"[{records[0]['adjusted']} WPM]"
               f"(https://data.typeracer.com/pit/result?id=|tr:{records[0]['username']}|{records[0]['race']}) "
               f"({records[0]['lagged']} WPM Lagged) - {records[0]['date']}",
         inline=False
@@ -138,42 +138,33 @@ def speed_records():
     embed.add_field(
         name=records[1]['record'],
         value=f"{get_flag(records[1]['username'])}{records[1]['username']} - "
-              f"[{records[1]['adjusted']} WPM]"
-              f"(https://data.typeracer.com/pit/result?id=|tr:{records[1]['username']}|{records[1]['race']}) - "
-              f"{records[1]['date']}",
+              f"[{records[1]['unlagged']} WPM]"
+              f"(https://data.typeracer.com/pit/result?id=|tr:{records[1]['username']}|{records[1]['race']}) "
+              f"({records[1]['lagged']} WPM Lagged) - {records[1]['date']}",
         inline=False
     )
 
     embed.add_field(
         name=records[2]['record'],
         value=f"{get_flag(records[2]['username'])}{records[2]['username']} - "
-              f"[{records[2]['unlagged']} WPM]"
-              f"(https://data.typeracer.com/pit/result?id=|tr:{records[2]['username']}|{records[2]['race']}) "
-              f"({records[2]['lagged']} WPM Lagged) - {records[2]['date']}",
+              f"[{records[2]['adjusted']} WPM]"
+              f"(https://data.typeracer.com/pit/result?id=|tr:{records[2]['username']}|{records[2]['race']}) - "
+              f"{records[2]['date']}",
         inline=False
     )
-
     embed.add_field(
         name=records[3]['record'],
         value=f"{get_flag(records[3]['username'])}{records[3]['username']} - "
-              f"[{records[3]['adjusted']} WPM]"
-              f"(https://data.typeracer.com/pit/result?id=|tr:{records[3]['username']}|{records[3]['race']}) - "
-              f"{records[3]['date']}",
+              f"[{records[3]['unlagged']} WPM]({records[3]['link']}) "
+              f"({records[3]['lagged']} WPM Lagged) - {records[3]['date']}",
         inline=False
     )
+
     embed.add_field(
         name=records[4]['record'],
         value=f"{get_flag(records[4]['username'])}{records[4]['username']} - "
               f"[{records[4]['unlagged']} WPM]({records[4]['link']}) "
               f"({records[4]['lagged']} WPM Lagged) - {records[4]['date']}",
-        inline=False
-    )
-
-    embed.add_field(
-        name=records[5]['record'],
-        value=f"{get_flag(records[5]['username'])}{records[5]['username']} - "
-              f"[{records[5]['unlagged']} WPM]({records[5]['link']}) "
-              f"({records[5]['lagged']} WPM Lagged) - {records[5]['date']}",
         inline=False
     )
 
