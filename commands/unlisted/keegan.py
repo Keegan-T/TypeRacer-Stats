@@ -19,7 +19,7 @@ class Keegan(commands.Cog):
 
 async def run(ctx):
     embed = Embed(
-        description="[You Said You'd Be There When I Fall](https://www.youtube.com/watch?v=9Rb33Lj9VuE)",
+        description="[But can you do this?](https://www.youtube.com/watch?v=9-cRwoIjfKM)",
         color=0,
     )
 
