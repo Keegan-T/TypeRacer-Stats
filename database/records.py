@@ -395,6 +395,9 @@ async def text_records():
         color=colors.gold,
     )
 
+    from database.texts import get_text_count
+    text_count = get_text_count()
+    min_texts = int(text_count * 0.2)
     text_bests = users.get_top_text_best(3)
     total_text_wpm = users.get_most("text_wpm_total", 3)
     most_texts = users.get_most("texts_typed", 3)
@@ -435,7 +438,7 @@ async def text_records():
         )
 
     embed.add_field(
-        name="Text Best WPM (Min. 1,500 Texts Typed)",
+        name=f"Text Best WPM (Min. {min_texts:,} Texts Typed)",
         value=text_bests_str,
         inline=False,
     )

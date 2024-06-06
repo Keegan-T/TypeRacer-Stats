@@ -152,12 +152,15 @@ def get_most_total_points(limit):
 
 
 def get_top_text_best(limit):
+    from database.texts import get_text_count
+    text_count = get_text_count()
+    min_texts = int(text_count * 0.2)
     top = db.fetch("""
         SELECT * FROM users
-        WHERE texts_typed >= 1500
+        WHERE texts_typed >= ?
         ORDER BY text_best_average DESC
         LIMIT ?
-    """, [limit])
+    """, [min_texts, limit])
 
     return top
 

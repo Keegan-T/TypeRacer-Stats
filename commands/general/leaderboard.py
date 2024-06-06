@@ -82,11 +82,13 @@ async def run(ctx, user, category, text_id=None):
         embed.set_footer(text=f"Across {comp_count:,} competitions")
 
     elif category == "textbests":
+        text_count = texts.get_text_count()
+        min_texts = int(text_count * 0.2)
         title = "Text Bests"
         leaderboard = users.get_top_text_best(limit)
         for leader in leaderboard:
             leaders.append(f"{leader['text_best_average']:,.2f} WPM")
-        embed.set_footer(text="Minimum 1,500 Texts Typed")
+        embed.set_footer(text=f"Minimum {min_texts:,} Texts Typed (20%)")
 
     elif category == "textstyped":
         title = "Texts Typed"

@@ -88,3 +88,6 @@
 - Added total usage count to -commandleaderboard overall and per command
 - Added user count to -leaderboard toptens
 - Filtered alt accounts from the 300 WPM club
+
+6/5/2024
+- Updated text best leaderboard requirement (from 1,500 texts to 20% of total texts)
