@@ -86,7 +86,7 @@ async def run(ctx, user, username, date):
     week_commands = ["week", "w", "lastweek", "yesterweek", "lw", "yw", "miniweek", "mw"]
     month_commands = ["month", "m", "lastmonth", "yestermonth", "lm", "ym", "minimonth", "mm"]
     year_commands = ["year", "y", "lastyear", "yesteryear", "ly", "yy", "miniyear", "my"]
-    command = ctx.invoked_with
+    command = ctx.invoked_with.lower()
 
     if command in week_commands:
         if command in week_commands[2:6]:
