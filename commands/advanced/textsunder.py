@@ -4,7 +4,7 @@ from commands.advanced.textsover import run, get_params
 
 info = {
     "name": "textsunder",
-    "aliases": ["tu"],
+    "aliases": ["tu", "tur"],
     "description": "Displays the number of texts a user has less than a category threshold\n"
                    "Add `random` as a parameter to randomize the order in which races are displayed",
     "parameters": "[username] [threshold] <category>",
@@ -32,7 +32,8 @@ class TextsUnder(commands.Cog):
             username, threshold, category, random = await get_params(ctx, user, params, info)
         except ValueError:
             return
-
+        if ctx.invoked_with.lower() == "tur":
+            random = True
         await run(ctx, user, username, threshold, category, over=False, random=random)
 
 

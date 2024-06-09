@@ -3,8 +3,8 @@ from discord.ext import commands
 import errors
 import urls
 import utils
+from config import prefix
 from database.bot_users import get_user
-from commands.basic.stats import get_params
 import database.texts as texts
 import database.users as users
 import database.text_results as text_results
@@ -13,9 +13,10 @@ from random import shuffle
 info = {
     "name": "missingtens",
     "aliases": ["mt", "josh"],
-    "description": "Displays a randomized list of texts a user has typed but not ranked within the top 10",
+    "description": "Displays a list of texts a user has typed but not ranked within the top 10\n"
+                   f"Use `{prefix}missingtens [username] random` to randomize the list",
     "parameters": "[username]",
-    "usages": ["missingtens joshua728"],
+    "usages": ["missingtens joshua728", "missingtens poke1 random"],
 }
 
 
@@ -28,14 +29,30 @@ class MissingTens(commands.Cog):
         user = get_user(ctx)
 
         try:
-            username = await get_params(ctx, user, params, info)
+            username, random = await get_params(ctx, user, params, info)
         except ValueError:
             return
 
-        await run(ctx, user, username)
+        await run(ctx, user, username, random)
 
 
-async def run(ctx, user, username):
+async def get_params(ctx, user, params, command=info):
+    username = user["username"]
+    random = False
+
+    if params and params[0].lower() != "me":
+        username = params[0]
+
+    if not username:
+        await ctx.send(embed=errors.missing_param(command))
+        raise ValueError
+
+    if len(params) > 1 and params[1] in ["random", "rand", "r"]:
+        random = True
+
+    return username.lower(), random
+
+async def run(ctx, user, username, random):
     stats = users.get_user(username)
     if not stats:
         return await ctx.send(embed=errors.import_required(username))
@@ -57,13 +74,17 @@ async def run(ctx, user, username):
             tenth_wpm = score["wpm"]
         if missing:
             difference = tenth_wpm - wpm
-            missing_texts.append({
-                "text_id": text_id,
-                "wpm": wpm,
-                "difference": difference,
-            })
+            if difference >= 0:
+                missing_texts.append({
+                    "text_id": text_id,
+                    "wpm": wpm,
+                    "difference": difference,
+                })
 
-    shuffle(missing_texts)
+    if random:
+        shuffle(missing_texts)
+    else:
+        missing_texts.sort(key=lambda x: x["difference"])
 
     embed = Embed(
         title="Missing Top Tens",
