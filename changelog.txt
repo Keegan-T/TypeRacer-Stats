@@ -91,3 +91,9 @@
 
 6/5/2024
 - Updated text best leaderboard requirement (from 1,500 texts to 20% of total texts)
+
+6/7/2024
+- Fixed case insensitivity not working on certain commands
+
+6/10/2024
+- Added sort options to -missingtens (best, worst, random)

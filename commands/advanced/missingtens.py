@@ -13,10 +13,16 @@ from random import shuffle
 info = {
     "name": "missingtens",
     "aliases": ["mt", "josh"],
-    "description": "Displays a list of texts a user has typed but not ranked within the top 10\n"
-                   f"Use `{prefix}missingtens [username] random` to randomize the list",
-    "parameters": "[username]",
-    "usages": ["missingtens joshua728", "missingtens poke1 random"],
+    "description": "Displays a list of texts a user has typed but not ranked within the top 10",
+    "parameters": "[username] <sort>",
+    "defaults": {
+        "sort": "best",
+    },
+    "usages": [
+        "missingtens joshua728",
+        "missingtens helloimnotgood1 worst",
+        "missingtens poke1 random"
+    ],
 }
 
 
@@ -29,16 +35,16 @@ class MissingTens(commands.Cog):
         user = get_user(ctx)
 
         try:
-            username, random = await get_params(ctx, user, params, info)
+            username, sort = await get_params(ctx, user, params, info)
         except ValueError:
             return
 
-        await run(ctx, user, username, random)
+        await run(ctx, user, username, sort)
 
 
 async def get_params(ctx, user, params, command=info):
     username = user["username"]
-    random = False
+    sort = "best"
 
     if params and params[0].lower() != "me":
         username = params[0]
@@ -47,12 +53,15 @@ async def get_params(ctx, user, params, command=info):
         await ctx.send(embed=errors.missing_param(command))
         raise ValueError
 
-    if len(params) > 1 and params[1] in ["random", "rand", "r"]:
-        random = True
+    if len(params) > 1:
+        if params[1] in ["random", "rand", "r"]:
+            sort = "random"
+        elif params[1] == "worst":
+            sort = "worst"
 
-    return username.lower(), random
+    return username.lower(), sort
 
-async def run(ctx, user, username, random):
+async def run(ctx, user, username, sort):
     stats = users.get_user(username)
     if not stats:
         return await ctx.send(embed=errors.import_required(username))
@@ -81,10 +90,12 @@ async def run(ctx, user, username, random):
                     "difference": difference,
                 })
 
-    if random:
-        shuffle(missing_texts)
-    else:
+    if sort == "best":
         missing_texts.sort(key=lambda x: x["difference"])
+    elif sort == "worst":
+        missing_texts.sort(key=lambda x: -x["difference"])
+    elif sort == "random":
+        shuffle(missing_texts)
 
     embed = Embed(
         title="Missing Top Tens",
