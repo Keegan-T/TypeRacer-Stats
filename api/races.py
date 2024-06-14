@@ -111,6 +111,7 @@ async def get_race_info(username, race_number, get_lagged=True, get_raw=False, g
         details["raw_unlagged"] = raw_unlagged
         details["raw_adjusted"] = raw_adjusted
         raw_delays = raw_speeds["delays"]
+        details["raw_delays"] = raw_delays
 
         raw_wpm_over_keystrokes = utils.get_wpm_over_keystrokes(raw_delays)
         raw_wpm_adjusted_over_keystrokes, instant_chars = utils.get_adjusted_wpm_over_keystrokes(raw_delays)

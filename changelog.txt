@@ -97,3 +97,6 @@
 
 6/10/2024
 - Added sort options to -missingtens (best, worst, random)
+
+6/14/2024
+- Added -wpmsegments

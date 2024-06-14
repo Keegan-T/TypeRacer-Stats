@@ -1,11 +1,14 @@
 import re
 from datetime import datetime, timezone
+from urllib.parse import urlparse
+from dateutil import parser
 from dateutil.relativedelta import relativedelta
 import matplotlib.colors as mcolors
 import urls
 import time
 from database.bot_users import get_user
 from config import bot_owner
+import commands.recent as recent
 import os
 
 
@@ -78,7 +81,7 @@ def split_log(log):
     return quote, delays
 
 
-def get_log_details(log, multiplier=12):
+def get_log_details(log, multiplier=12000):
     quote, delays = split_log(log)
 
     total_ms = sum(delays)
@@ -206,6 +209,8 @@ def parse_duration_string(duration):
     units = {"d": 0, "h": 0, "m": 0, "s": 0}
 
     durations = re.findall(r'(\d+(?:\.\d+)?)(\D*)', duration)
+    if not durations:
+        raise ValueError
 
     for value, unit in durations:
         value = float(value)
@@ -469,10 +474,8 @@ def reset_cooldown(function, ctx):
 
 
 def get_discord_id(string):
-    if "&" in string:
-        return None
-
-    if (string.startswith("<@") and string.endswith(">")) or (string.isnumeric() and 17 <= len(string) <= 19):
+    if ((string.startswith("<@") and string.endswith(">") and "&" not in string)
+            or (string.isnumeric() and 17 <= len(string) <= 19)):
         id = string.translate(string.maketrans("", "", "<@>"))
         return id
 
@@ -587,3 +590,183 @@ def remove_file(file_name):
         return
     except Exception:
         raise Exception
+
+def is_required(param):
+    return param.startswith("[") and param.endswith("]")
+
+def get_choices(param):
+    if ":" in param:
+        return param.split(":")[1].split("|")
+
+    return []
+
+def get_url_info(url):
+    result = urlparse(url)
+    if not (result.netloc and result.scheme):
+        return None
+    try:
+        parts = url.replace("%7C", "|").split("|")
+        universe = parts[-3].split("?id=")[1]
+        if not universe:
+            universe = "play"
+        username = parts[-2][3:]
+        race_number = int(parts[-1].split("&")[0])
+
+        return username, race_number, universe
+    except Exception:
+        return None
+
+def parse_command(ctx, args, command):
+    args = [arg.lower() for arg in args]
+    params = command.split(" ")
+    return_args = []
+
+    for i, param in enumerate(params):
+        missing = len(args) < i + 1
+        default = None
+        if missing and "username" not in param:
+            if is_required(param):
+                return print("Missing required parameter.")
+            choices = get_choices(param)
+            if choices:
+                default = choices[0]
+
+        if "username" in param:
+            user = get_user(ctx)
+            username = user["username"]
+
+            if not missing and args[i] != "me":
+                username = args[i]
+            if not username:
+                return print("Missing username parameter. Try running -link!")
+
+            return_args.append(username)
+
+        if "choice" in param:
+            choices = get_choices(param)
+
+            if missing:
+                choice = choices[0]
+            else:
+                choice = get_category(choices, args[i])
+            if not choice:
+                return print("Invalid choice. Choices were:", choices)
+
+            return_args.append(choice)
+
+        if "date" in param:
+            if missing:
+                return_args.append(datetime.now(timezone.utc))
+            else:
+                try:
+                    date = parser.parse(args[i])
+                    return_args.append(date)
+                except ValueError:
+                    return print("Invalid date format.")
+
+        if "duration" in param:
+            try:
+                seconds = parse_duration_string(default if missing else args[i])
+            except ValueError:
+                return print("Invalid duration format.")
+
+            return_args.append(seconds)
+
+        if "textid" in param:
+            if missing or args[i] == "^":
+                text_id = recent.text_id
+            else:
+                text_id = args[i]
+
+            return_args.append(text_id)
+
+        if "discordid" in param:
+            discord_id = get_discord_id(args[i])
+            if not discord_id:
+                return print("Invalid discord ID")
+
+            return_args.append(discord_id)
+
+        if "number" in param or "int" in param:
+            try:
+                value = parse_value_string(default if missing else args[i])
+            except (ValueError, TypeError):
+                return print("Invalid number.")
+
+            if "int" in param:
+                value = int(value)
+
+            return_args.append(value)
+
+    return return_args
+
+def get_segments(text, n=None):
+    if not n:
+        n = round(len(text) / 10)
+        if n > 10:
+            n = 10
+    words = text.split(" ")
+    word_count = len(words)
+    if word_count <= n or len(text) <= 60:
+        full_words = [word + " " for word in words[:-1]]
+        full_words.append(words[-1])
+
+    else:
+        segments = []
+        line_size = len(text) / n
+        for i in range(n):
+            start = round(line_size * i)
+            end = round(line_size * (i + 1))
+            segments.append(text[start:end])
+
+        full_words = []
+        for i in range(len(segments)):
+            segment = segments[i]
+            if i == len(segments) - 1:
+                full_words.append(segment)
+                break
+
+            original_segment = segment
+            original_next_segment = segments[i + 1]
+            prev_space = segment.rfind(" ")
+            drop_chars = len(segment) - prev_space - 1
+            add_chars = segments[i + 1].find(" ") + 1
+            if i == 0 or drop_chars >= add_chars:
+                try:
+                    while segment[-1] != " ":
+                        segment += segments[i + 1][0]
+                        segments[i + 1] = segments[i + 1][1:]
+                except IndexError:
+                    segment = original_segment
+                    segments[i + 1] = original_next_segment
+                    try:
+                        while segment[-1] != " ":
+                            segments[i + 1] = segment[-1] + segments[i + 1]
+                            segment = segment[:len(segment) - 1]
+                    except:
+                        return get_segments(text, n - 1)
+            else:
+                try:
+                    while segment[-1] != " ":
+                        segments[i + 1] = segment[-1] + segments[i + 1]
+                        segment = segment[:len(segment) - 1]
+                except:
+                    segment = original_segment
+                    segments[i + 1] = original_next_segment
+                    try:
+                        while segment[-1] != " ":
+                            segment += segments[i + 1][0]
+                            segments[i + 1] = segments[i + 1][1:]
+                    except IndexError:
+                        return get_segments(text, n - 1)
+
+            full_words.append(segment)
+
+    words_1 = full_words[0][:-1].split(" ")
+    words_2 = full_words[1][:-1].split(" ")
+
+    if len(words_1) == 3 and len(words_2) == 1:
+        full_words[0] = f"{words_1[0]} {words_1[1]} "
+        full_words[1] = f"{words_1[-1]} {words_2[0]} "
+
+    return full_words
