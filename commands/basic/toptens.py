@@ -74,7 +74,7 @@ async def run(ctx, user, username, best):
     typed_appearance_percent = (top_10_count / texts_typed) * 100
 
     embed.description = (
-        f"**Apperances:** {top_10_count:,}\n"
+        f"**Appearances:** {top_10_count:,}\n"
         f"**Texts Typed:**  {texts_typed:,} ({typed_appearance_percent:,.2f}%)\n"
         f"**Total Texts:** {total_texts:,} ({total_appearance_percent:,.2f}%)"
     )
