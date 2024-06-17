@@ -7,40 +7,40 @@ import utils
 from database.bot_users import get_user
 from api.users import get_stats
 from api.races import get_race_info
-from commands.basic.realspeed import get_params
+from commands.basic.realspeed import get_args
 
-info = {
+command = {
     "name": "wpmsegments",
     "aliases": ["ws"],
     "description": "Displays a bar graph of WPM segments over a race",
     "parameters": "[username] <race_number>",
     "usages": ["wpmsegments keegant 420"],
+    "multiverse": True,
 }
+
 
 class WpmSegments(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def wpmsegments(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def wpmsegments(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, race_number, universe = await get_params(ctx, user, params)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
+        username, race_number, universe = result
         await run(ctx, user, username, race_number, universe)
+
 
 async def run(ctx, user, username, race_number, universe):
     stats = get_stats(username, universe=universe)
     if not stats:
         return await ctx.send(embed=errors.invalid_username())
 
-    if race_number is None:
-        race_number = stats["races"]
-
-    elif race_number < 1:
+    if race_number < 1:
         race_number = stats["races"] + race_number
 
     race_info = await get_race_info(username, race_number, get_lagged=True, universe=universe, get_raw=True)

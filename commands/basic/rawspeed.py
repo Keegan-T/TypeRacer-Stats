@@ -1,14 +1,15 @@
 from discord.ext import commands
 from config import prefix
 from database.bot_users import get_user
-from commands.basic.realspeed import get_params, run
+from commands.basic.realspeed import get_args, run
+import utils
 
 graph_commands = ["rawgraph", "rawg", "rawadjustedgraph", "rag"]
-info = {
+command = {
     "name": "rawspeed",
     "aliases": ["raw"] + graph_commands,
     "description": "Displays raw speeds for a given user's race, subtracting correction time\n"
-                   f"`{prefix}rawspeed [username] <-n> will return real speeds for n races ago`\n"
+                   f"`{prefix}rawspeed [username] <-n> will return raw speeds for n races ago`\n"
                    f"`{prefix}rawgraph` will add a graph of the race",
     "parameters": "[username] <race_number>",
     "defaults": {
@@ -19,7 +20,6 @@ info = {
         "rawspeed keegant -1",
         "rawspeed https://data.typeracer.com/pit/result?id=|tr:keegant|1000000",
     ],
-    "import": False,
     "multiverse": True,
 }
 
@@ -28,15 +28,15 @@ class RawSpeed(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info['aliases'])
-    async def rawspeed(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def rawspeed(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, race_number, universe = await get_params(ctx, user, params, info)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
+        username, race_number, universe = result
         await run(ctx, user, username, race_number, ctx.invoked_with.lower() in graph_commands, universe, raw=True)
 
 

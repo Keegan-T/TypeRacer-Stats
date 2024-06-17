@@ -14,7 +14,7 @@ from statistics import mode
 from collections import Counter
 
 categories = ["wpm", "accuracy", "textbests"]
-info = {
+command = {
     "name": "histogram",
     "aliases": ["hist", "hg"],
     "description": "Displays a histogram and relevant stats for a category",
@@ -27,7 +27,6 @@ info = {
         "histogram skyprompdvorak accuracy",
         "histogram joshua728 textbests"
     ],
-    "import": True,
 }
 
 
@@ -35,36 +34,23 @@ class Histogram(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def histogram(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def histogram(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, category = await get_params(ctx, user, params)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
+
+        username, category = result
 
         await run(ctx, user, username, category)
 
 
-async def get_params(ctx, user, params):
-    username = user["username"]
-    category = "wpm"
+def get_args(user, args, info):
+    params = f"username category:{'|'.join(categories)}"
 
-    if params and params[0].lower() != "me":
-        username = params[0]
-
-    if len(params) > 1:
-        category = utils.get_category(categories, params[1])
-        if not category:
-            await ctx.send(embed=errors.invalid_option("category", categories))
-            raise ValueError
-
-    if not username:
-        await ctx.send(embed=errors.missing_param(info))
-        raise ValueError
-
-    return username.lower(), category
+    return utils.parse_command(user, params, args, info)
 
 
 # async def run_time(ctx, user, username):

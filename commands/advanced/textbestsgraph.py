@@ -10,7 +10,7 @@ import database.races as races
 import database.texts as texts
 
 categories = ["races", "time", "texts"]
-info = {
+command = {
     "name": "textbestsgraph",
     "aliases": ["tbg"],
     "description": "Displays a graph of a user's text best average over time",
@@ -23,7 +23,6 @@ info = {
         "textbestsgraph keegant races",
         "textbestsgraph keegant texts",
     ],
-    "import": True,
 }
 
 
@@ -31,26 +30,21 @@ class TextBestsGraph(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def textbestsgraph(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def textbestsgraph(self, ctx, *args):
         user = get_user(ctx)
 
-        username = user["username"]
-        category = "races"
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
-        if params and params[0].lower() != "me":
-            username = params[0].lower()
-
-        if len(params) > 1:
-            category = utils.get_category(categories, params[1])
-            if not category:
-                return await ctx.send(embed=errors.invalid_option("category", categories))
-
-        if not username:
-            return await ctx.send(embed=errors.missing_param(info))
-
+        username, category = result
         await run(ctx, user, username, category)
 
+def get_args(user, args, info):
+    params = f"username category:{'|'.join(categories)}"
+
+    return utils.parse_command(user, params, args, info)
 
 async def run(ctx, user, username, category):
     stats = users.get_user(username)

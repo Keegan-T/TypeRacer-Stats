@@ -18,7 +18,7 @@ elements = {
     "grid": "Grid",
 }
 
-info = {
+command = {
     "name": "setcolor",
     "aliases": ["sc"],
     "description": "Allows for customization of embed and graph colors\n"
@@ -39,7 +39,6 @@ info = {
         "setcolor @keegant",
         "setcolor reset",
     ],
-    "import": False,
 }
 
 
@@ -47,47 +46,47 @@ class SetColor(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info['aliases'])
-    async def setcolor(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def setcolor(self, ctx, *args):
         user = get_user(ctx)
 
         try:
-            element, color = await get_params(ctx, user, params)
+            element, color = await get_args(ctx, user, args)
         except ValueError:
             return
 
         await run(ctx, user, element, color)
 
 
-async def get_params(ctx, user, params):
-    if not params:
+async def get_args(ctx, user, args):
+    if not args:
         user["discord_id"] = str(ctx.author.id)
         await view(ctx, user)
         raise ValueError
 
-    if params[0] == "reset":
+    if args[0] == "reset":
         await reset(ctx, user)
         raise ValueError
 
-    discord_id = utils.get_discord_id(params[0])
+    discord_id = utils.get_discord_id(args[0])
     if discord_id:
         user = get_user(discord_id)
         await view(ctx, user)
         raise ValueError
 
-    if len(params) < 2:
-        await ctx.send(embed=errors.missing_param(info))
+    if len(args) < 2:
+        await ctx.send(embed=errors.missing_argument(command))
         raise ValueError
 
-    element = utils.get_category(elements, params[0])
+    element = utils.get_category(elements, args[0])
     if not element:
-        await ctx.send(embed=errors.invalid_option("element", elements.keys()))
+        await ctx.send(embed=errors.invalid_choice("element", elements.keys()))
         raise ValueError
 
-    color = utils.parse_color(params[1])
+    color = utils.parse_color(args[1])
     if color is None:
-        if element == "line" and params[1] in plt.colormaps():
-            color = params[1]
+        if element == "line" and args[1] in plt.colormaps():
+            color = args[1]
         else:
             await ctx.send(embed=invalid_color())
             raise ValueError

@@ -10,7 +10,8 @@ import database.users as users
 import database.text_results as text_results
 from random import shuffle
 
-info = {
+sorts = ["best", "worst", "random"]
+command = {
     "name": "missingtens",
     "aliases": ["mt", "josh"],
     "description": "Displays a list of texts a user has typed but not ranked within the top 10",
@@ -30,36 +31,23 @@ class MissingTens(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def missingtens(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def missingtens(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, sort = await get_params(ctx, user, params, info)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
+        username, sort = get_args(user, args, command)
         await run(ctx, user, username, sort)
 
 
-async def get_params(ctx, user, params, command=info):
-    username = user["username"]
-    sort = "best"
+def get_args(user, args, info):
+    params = f"username sort:{'|'.join(sorts)}"
 
-    if params and params[0].lower() != "me":
-        username = params[0]
+    return utils.parse_command(user, params, args, info)
 
-    if not username:
-        await ctx.send(embed=errors.missing_param(command))
-        raise ValueError
-
-    if len(params) > 1:
-        if params[1] in ["random", "rand", "r"]:
-            sort = "random"
-        elif params[1] == "worst":
-            sort = "worst"
-
-    return username.lower(), sort
 
 async def run(ctx, user, username, sort):
     stats = users.get_user(username)

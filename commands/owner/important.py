@@ -6,8 +6,8 @@ from api.users import get_stats
 import database.important_users as important_users
 from commands.checks import owner_check
 
-info = {
-    "name": "updateimportant",
+command = {
+    "name": "important",
     "aliases": ["addimportant", "ai", "removeimportant", "ri"],
     "description": "Adds or removes a username from the list of users to import daily",
 }
@@ -17,12 +17,12 @@ class Important(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
+    @commands.command(aliases=command["aliases"])
     @commands.check(owner_check)
-    async def important(self, ctx, *params):
+    async def important(self, ctx, *args):
         user = get_user(ctx)
 
-        username = params[0]
+        username = args[0]
 
         stats = get_stats(username)
         if not stats:

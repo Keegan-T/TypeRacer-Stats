@@ -6,13 +6,12 @@ from database.bot_users import get_user
 from database.races import delete_race
 from commands.checks import owner_check
 
-info = {
+command = {
     "name": "deleterace",
     "aliases": ["dr"],
     "description": "Delete's a race from the database",
     "parameters": "[username] [race_number]",
     "usages": ["delete keegant 416689"],
-    "import": False,
 }
 
 
@@ -20,15 +19,15 @@ class DeleteRace(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
+    @commands.command(aliases=command["aliases"])
     @commands.check(owner_check)
-    async def deleterace(self, ctx, *params):
+    async def deleterace(self, ctx, *args):
         user = get_user(ctx)
 
-        if not params:
+        if not args:
             return
-        username = params[0]
-        race_number = params[1]
+        username = args[0]
+        race_number = args[1]
 
         embed = Embed(
             title="Are You Sure?",

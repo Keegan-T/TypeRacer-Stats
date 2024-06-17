@@ -9,16 +9,16 @@ from dateutil import parser
 from config import prefix
 import api.competitions as competitions_api
 
-types = ["day", "week", "month", "year"]
+periods = ["day", "week", "month", "year"]
 sorts = ["points", "races", "wpm"]
-info = {
+command = {
     "name": "competition",
     "aliases": ["comp", "c", "lastcomp", "lc"],
     "description": "Displays the top 10 users in a competition\n"
                    f"`{prefix}lastcomp` will show the previous competition",
-    "parameters": "<type> <date> <sort>",
+    "parameters": "<period> <date> <sort>",
     "defaults": {
-        "type": "day",
+        "period": "day",
         "date": "today",
         "sort": "points",
     },
@@ -28,7 +28,6 @@ info = {
         "competition month 6/2022 points",
         "competition year 2023 races",
     ],
-    "import": False,
 }
 
 
@@ -36,40 +35,42 @@ class Competition(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def competition(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def competition(self, ctx, *args):
         user = get_user(ctx)
 
-        kind = "day"
+        period = "day"
         sort = "points"
         date = datetime.now(tz=timezone.utc)
 
         # Shorthands
-        if len(params) == 1 and utils.get_category(sorts, params[0]):
-            return await run(ctx, user, kind, utils.get_category(sorts, params[0]), date)
+        # -comp races
+        if len(args) == 1 and utils.get_category(sorts, args[0]):
+            return await run(ctx, user, period, utils.get_category(sorts, args[0]), date)
 
-        if len(params) == 2 and utils.get_category(types, params[0]) and utils.get_category(sorts, params[1]):
-            return await run(ctx, user, utils.get_category(types, params[0]),
-                             utils.get_category(sorts, params[1]), date)
+        # -comp day races
+        if len(args) == 2 and utils.get_category(periods, args[0]) and utils.get_category(sorts, args[1]):
+            return await run(ctx, user, utils.get_category(periods, args[0]),
+                             utils.get_category(sorts, args[1]), date)
 
-        if len(params) > 0:
-            kind = utils.get_category(types, params[0])
-            if not kind:
-                return await ctx.send(embed=errors.invalid_option("type", types))
+        if len(args) > 0:
+            period = utils.get_category(periods, args[0])
+            if not period:
+                return await ctx.send(embed=errors.invalid_choice("period", periods))
 
-        if len(params) > 1:
-            date_string = params[1]
+        if len(args) > 1:
+            date_string = args[1]
             try:
                 date = parser.parse(date_string)
             except ValueError:
                 return await ctx.send(embed=errors.invalid_date())
 
-        if len(params) > 2:
-            sort = utils.get_category(sorts, params[2])
+        if len(args) > 2:
+            sort = utils.get_category(sorts, args[2])
             if not sort:
-                return await ctx.send(embed=errors.invalid_option("sort", sorts))
+                return await ctx.send(embed=errors.invalid_choice("sort", sorts))
 
-        await run(ctx, user, kind, sort, date)
+        await run(ctx, user, period, sort, date)
 
 
 async def run(ctx, user, kind, sort, date):
@@ -168,6 +169,7 @@ async def run(ctx, user, kind, sort, date):
 
     await ctx.send(embed=embed)
 
+
 async def competition_not_started(ctx, title, user, start):
     await ctx.send(embed=Embed(
         title=title,
@@ -179,34 +181,3 @@ async def competition_not_started(ctx, title, user, start):
 
 async def setup(bot):
     await bot.add_cog(Competition(bot))
-
-# Different formatted version (columns aligned in code block)
-# description = ""
-#
-# max_len = {"username": 0, "points": 0, "races": 5}
-#
-# for i, competitor in enumerate(competition):
-#     max_len['username'] = max(max_len['username'], len(competitor['username']))
-#     max_len['points'] = max(max_len['points'], len(f"{competitor['points']:,}"))
-#     max_len['races'] = max(max_len['races'], len(f"{competitor['races']:,}"))
-#
-# description += (
-#         "    " +
-#         "Username".ljust(max_len["username"]) + " | " +
-#         "Points".ljust(max_len["points"]) + " | " +
-#         "Races".ljust(max_len["races"]) + " | " +
-#         "Average".ljust(9) + " | " +
-#         "Acc.\n"
-# )
-#
-# for i, competitor in enumerate(competition):
-#     rank = i + 1
-#
-#     description += (
-#             f"{rank}. ".rjust(4) +
-#             f"{competitor['username']}".ljust(max_len['username']) + " | " +
-#             f"{competitor['points']:,}".rjust(max_len['points']) + " | " +
-#             f"{competitor['races']:,}".rjust(max_len['races']) + " | " +
-#             f"{competitor['average_wpm']} WPM".rjust(9) + " | " +
-#             f"{competitor['accuracy'] * 100:,.1f}%\n"
-#     )

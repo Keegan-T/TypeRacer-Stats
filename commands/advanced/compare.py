@@ -7,13 +7,12 @@ import utils
 from database.bot_users import get_user
 from database.users import get_text_bests
 
-info = {
+command = {
     "name": "compare",
     "aliases": ["vs"],
     "description": "Displays the top 10 races for each user sorted by text best WPM difference",
     "parameters": "[username_1] [username_2]",
     "usages": ["compare keegant poem"],
-    "import": True,
 }
 
 
@@ -21,56 +20,36 @@ class Compare(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def compare(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def compare(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username1, username2 = await get_params(ctx, user, params)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
+        username1, username2 = result
         await run(ctx, user, username1, username2)
 
 
-async def get_params(ctx, user, params, command=info):
-    username1 = None
-    username2 = None
+def get_args(user, args, info):
+    params = "username username"
 
-    if not params:
-        await ctx.send(embed=errors.missing_param(command))
-        raise ValueError
-
-    if len(params) == 1:
-        username1 = user["username"]
-        username2 = params[0]
-
-    if len(params) == 2:
-        if params[0].lower() == "me":
-            username1 = user["username"]
-        else:
-            username1 = params[0]
-
-        if params[1].lower() == "me":
-            username2 = user["username"]
-        else:
-            username2 = params[1]
-
-    if not username1 or not username2:
-        await ctx.send(embed=errors.missing_param(info))
-        raise ValueError
-
-    if username1 == username2:
-        await ctx.send(embed=same_username())
-        raise ValueError
-
-    return username1.lower(), username2.lower()
+    return utils.parse_command(user, params, args, info)
 
 
 async def run(ctx, user, username1, username2):
+    if username1 == username2:
+        return await ctx.send(embed=same_username())
+
+    if username2 == user["username"]:
+        username2 = username1
+        username1 = user["username"]
+
     text_bests1 = get_text_bests(username1, race_stats=True)
     if not text_bests1:
         return await ctx.send(embed=errors.import_required(username1))
+
     text_bests2 = get_text_bests(username2, race_stats=True)
     if not text_bests2:
         return await ctx.send(embed=errors.import_required(username2))

@@ -13,7 +13,7 @@ from api.races import get_race_info
 from commands.basic.realspeed import run as run_realspeed
 import commands.locks as locks
 
-info = {
+command = {
     "name": "realspeedaverage",
     "aliases": ["rsa", "realspeedaverageraces", "rsar", "rsa*"],
     "description": "Displays unlagged and adjusted speeds over a race interval\n"
@@ -25,7 +25,6 @@ info = {
         "realspeedaverage keegant 5",
         "realspeedaverage keegant 101 110"
     ],
-    "import": False,
     "multiverse": True,
 }
 
@@ -34,9 +33,9 @@ class RealSpeedAverage(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info['aliases'])
+    @commands.command(aliases=command["aliases"])
     @commands.cooldown(1, 20, commands.BucketType.user)
-    async def realspeedaverage(self, ctx, *params):
+    async def realspeedaverage(self, ctx, *args):
         if locks.average_lock.locked():
             self.realspeedaverage.reset_cooldown(ctx)
             return await ctx.send(embed=command_in_use())
@@ -44,46 +43,20 @@ class RealSpeedAverage(commands.Cog):
         async with locks.average_lock:
             user = get_user(ctx)
 
-            try:
-                username, start_number, end_number, universe = await get_params(ctx, user, params)
-            except ValueError:
+            result = get_args(user, args, command)
+            if utils.is_embed(result):
                 self.realspeedaverage.reset_cooldown(ctx)
-                return
+                return await ctx.send(embed=result)
 
+            username, start_number, end_number = result
+            universe = user["universe"]
             await run(ctx, user, username, start_number, end_number, universe)
 
 
-async def get_params(ctx, user, params, command=info):
-    start_number = None
-    end_number = None
-    universe = user["universe"]
+def get_args(user, args, info):
+    params = "username int:10 int"
 
-    if not params or params[0].lower() == "me":
-        username = user["username"]
-        if not username:
-            await ctx.send(embed=errors.missing_param(command))
-            raise ValueError
-    else:
-        username = params[0]
-
-    if len(params) > 1:
-        try:
-            start_number = utils.parse_value_string(params[1])
-        except ValueError:
-            await ctx.send(embed=errors.invalid_param(command))
-            raise
-
-    if len(params) > 2:
-        try:
-            end_number = utils.parse_value_string(params[2])
-        except ValueError:
-            await ctx.send(embed=errors.invalid_param(command))
-            raise ValueError
-
-        if start_number > end_number:
-            start_number, end_number = end_number, start_number
-
-    return username.lower(), start_number, end_number, universe
+    return utils.parse_command(user, params, args, info)
 
 
 async def run(ctx, user, username, start_number, end_number, universe, raw=False):
@@ -97,7 +70,7 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
         return await ctx.send(embed=errors.invalid_username())
 
     race_count = stats["races"]
-    if not end_number:
+    if end_number is None:
         end_number = race_count
         if start_number:
             start_number = race_count - start_number + 1
@@ -260,12 +233,14 @@ def rate_limit_execeded():
         color=colors.error,
     )
 
+
 def max_range():
     return Embed(
         title="Too Many Races",
         description="Can only check the average of up to 10 races at once",
         color=colors.error,
     )
+
 
 def command_in_use():
     return Embed(

@@ -1,11 +1,10 @@
 from discord import Embed
 from discord.ext import commands
-
 import colors
 from database.bot_users import get_user, update_universe
 from api.universes import get_universe_list
 
-info = {
+command = {
     "name": "setuniverse",
     "aliases": ["su"],
     "description": "Sets the TypeRacer universe for your account to retrieve stats from\n"
@@ -15,26 +14,27 @@ info = {
         "universe": "play",
     },
     "usages": ["setuniverse dictionary"],
-    "import": False,
 }
+
 
 class SetUniverse(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def setuniverse(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def setuniverse(self, ctx, *args):
         user = get_user(ctx)
 
         universe = "play"
-        if params:
-            universe = params[0].lower()
+        if args:
+            universe = args[0].lower()
 
         universes = get_universe_list()
         if universe not in universes:
             return await ctx.send(embed=unknown_universe())
 
         await run(ctx, user, universe)
+
 
 async def run(ctx, user, universe):
     update_universe(ctx.author.id, universe)
@@ -47,12 +47,14 @@ async def run(ctx, user, universe):
 
     await ctx.send(embed=embed)
 
+
 def unknown_universe():
     return Embed(
         title="Unknown Universe",
         description="Failed to recognize this universe",
         color=colors.error,
     )
+
 
 async def setup(bot):
     await bot.add_cog(SetUniverse(bot))

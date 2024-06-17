@@ -1,9 +1,10 @@
 from discord.ext import commands
 from config import prefix
 from database.bot_users import get_user
-from commands.advanced.day import get_params, run
+from commands.advanced.day import get_args, run
+import utils
 
-info = {
+command = {
     "name": "year",
     "aliases": ["y", "lastyear", "yesteryear", "ly", "yy", "miniyear", "my"],
     "description": "Displays a user's stats for a given year\n"
@@ -14,7 +15,6 @@ info = {
         "date": "this year"
     },
     "usages": ["year keegant 2021"],
-    "import": True,
 }
 
 
@@ -22,15 +22,15 @@ class Year(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def year(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def year(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, date = await get_params(ctx, user, params, info)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
+        username, date = result
         await run(ctx, user, username, date)
 
 

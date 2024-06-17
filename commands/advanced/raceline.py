@@ -12,7 +12,7 @@ import database.users as users
 import commands.locks as locks
 from commands.basic.realspeedaverage import command_in_use
 
-info = {
+command = {
     "name": "raceline",
     "aliases": ["rl"],
     "description": "Displays a graph of user's races over time",
@@ -23,7 +23,6 @@ info = {
         "raceline 4/20/22 keegant 1/1/24",
         "raceline keegant mark40511 charlieog wordracer888 deroche1",
     ],
-    "import": True,
 }
 
 
@@ -31,63 +30,58 @@ class RaceLine(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info['aliases'])
-    async def raceline(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def raceline(self, ctx, *args):
         if locks.line_lock.locked():
             return await ctx.send(embed=command_in_use())
 
         async with locks.line_lock:
             user = get_user(ctx)
-            try:
-                usernames, start_date, end_date = await get_params(ctx, user, params)
-            except ValueError:
-                return
 
+            result = get_args(user, args, command)
+            if utils.is_embed(result):
+                return await ctx.send(embed=result)
+
+            usernames, start_date, end_date = result
             await run(ctx, user, usernames, start_date, end_date)
 
 
-async def get_params(ctx, user, params, command=info):
-    usernames = []
+def get_args(user, args, info):
+    args = [arg.lower() for arg in args]
+    username = user["username"]
     start_date = datetime.fromtimestamp(0, timezone.utc)
     end_date = datetime.now(timezone.utc)
 
-    if len(params) < 2:
-        if not params or params[0].lower() == "me":
-            username = user["username"]
+    if len(args) < 2:
+        if not args or args[0] == "me":
             if not username:
-                await ctx.send(embed=errors.missing_param(command))
-                raise ValueError
+                return errors.missing_argument(info)
+            usernames = [username]
         else:
-            username = params[0]
+            usernames = [args[0]]
 
-        usernames = [username]
-
-    elif len(params) > 1:
-        usernames = list(params)
+    else:
+        usernames = list(args)
 
         try:
-            start_date = utils.floor_day(parser.parse(params[0]))
+            start_date = utils.floor_day(parser.parse(usernames[0]))
             usernames = usernames[1:]
         except ValueError:
             pass
 
         try:
-            end_date = utils.floor_day(parser.parse(params[-1]))
+            end_date = utils.floor_day(parser.parse(usernames[-1]))
             usernames = usernames[:-1]
         except ValueError:
             pass
 
-    if user["username"]:
-        for i in range(len(usernames)):
-            if usernames[i] == "me":
-                usernames[i] = user["username"]
+    if username:
+        usernames = [username if name == "me" else name for name in usernames]
 
     unique_usernames = []
     for username in usernames:
-        username = username.lower()
         if not users.get_user(username):
-            await ctx.send(embed=errors.import_required(username))
-            raise ValueError
+            return errors.import_required(username)
         if username not in unique_usernames:
             unique_usernames.append(username)
 

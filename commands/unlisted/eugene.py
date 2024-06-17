@@ -1,7 +1,7 @@
 from discord import Embed
 from discord.ext import commands
 
-info = {
+command = {
     "name": "eugene",
     "aliases": ["e5"],
     "description": "To remind us of the legend",
@@ -12,8 +12,8 @@ class Eugene(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def eugene(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def eugene(self, ctx):
         await run(ctx)
 
 

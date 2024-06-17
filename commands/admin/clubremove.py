@@ -6,7 +6,7 @@ import database.races_300 as races_300
 from database import records
 from commands.checks import admin_check
 
-info = {
+command = {
     "name": "clubremove",
     "aliases": ["cr"],
     "description": "Remove a user from the 300 WPM club",
@@ -19,14 +19,14 @@ class ClubRemove(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
+    @commands.command(aliases=command["aliases"])
     @commands.check(admin_check)
-    async def clubremove(self, ctx, *params):
+    async def clubremove(self, ctx, *args):
         user = get_user(ctx)
 
-        if not params:
+        if not args:
             return
-        username = params[0]
+        username = args[0]
 
         await run(ctx, user, username)
         await records.update_300_club(self.bot)

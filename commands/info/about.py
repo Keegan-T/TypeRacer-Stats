@@ -3,21 +3,23 @@ from discord.ext import commands
 from database.bot_users import get_user
 from config import bot_admins, supporters
 
-info = {
+command = {
     "name": "about",
     "aliases": ["info"],
     "description": "Displays information about the bot",
 }
 
+
 class About(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def about(self, ctx,):
+    @commands.command(aliases=command["aliases"])
+    async def about(self, ctx):
         user = get_user(ctx)
 
         await run(ctx, user)
+
 
 async def run(ctx, user):
     bot_admins_list = ", ".join([f"<@{admin}>" for admin in bot_admins[1:]])
@@ -35,7 +37,6 @@ async def run(ctx, user):
         f"**Bot Admins**\n{bot_admins_list}\n"
     )
 
-
     embed = Embed(
         title="TypeRacer Stats",
         description=description,
@@ -43,6 +44,7 @@ async def run(ctx, user):
     )
 
     await ctx.send(embed=embed)
+
 
 async def setup(bot):
     await bot.add_cog(About(bot))

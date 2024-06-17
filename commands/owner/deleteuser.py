@@ -6,10 +6,10 @@ from database.bot_users import get_user
 from database.users import delete_user
 from commands.checks import owner_check
 
-info = {
+command = {
     "name": "deleteuser",
     "aliases": ["du"],
-    "description": "Delete's a user from the database",
+    "description": "Deletes a user from the database",
     "parameters": "[username]",
     "usages": ["delete keegant"],
 }
@@ -19,14 +19,14 @@ class DeleteUser(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
+    @commands.command(aliases=command["aliases"])
     @commands.check(owner_check)
-    async def deleteuser(self, ctx, *params):
+    async def deleteuser(self, ctx, *args):
         user = get_user(ctx)
 
-        if not params:
+        if not args:
             return
-        username = params[0]
+        username = args[0]
 
         embed = Embed(
             title="Are You Sure?",

@@ -4,21 +4,23 @@ from datetime import datetime, timezone
 from database.bot_users import get_user
 import database.users as users
 import database.races as races
-from commands.advanced.races import get_params
+from commands.advanced.races import get_args
 from config import prefix
 import graphs
 import utils
 import errors
 
-info = {
+command = {
     "name": "improvement",
     "aliases": ["imp", "timeimprovement", "timp"],
     "description": "Displays a graph of a user's WPM over races\n"
                    f"`{prefix}timeimprovement` will graph WPM over time",
     "parameters": "[username] <start_date/start_number> <end_date/end_number>",
     "defaults": {
+        "start_date": "the user's account creation date",
         "end_date": "today",
-        "end_number": "the user's most recent race number"
+        "start_number": 1,
+        "end_number": "the user's most recent race number",
     },
     "usages": [
         "improvement keegant",
@@ -26,7 +28,6 @@ info = {
         "improvement keegant 800k 900k",
         "timeimprovement keegant",
     ],
-    "import": True,
 }
 
 
@@ -34,16 +35,16 @@ class Improvement(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def improvement(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def improvement(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, start_date, end_date, start_number, end_number = await get_params(ctx, user, params, info)
-        except ValueError:
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
             self.improvement.reset_cooldown(ctx)
-            return
+            return await ctx.send(embed=result)
 
+        username, start_date, end_date, start_number, end_number = result
         time = ctx.invoked_with in ["timeimprovement", "timp"]
         await run(ctx, user, username, start_date, end_date, start_number, end_number, time)
 

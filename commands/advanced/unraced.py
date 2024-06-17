@@ -5,18 +5,17 @@ import utils
 import errors
 import colors
 from database.bot_users import get_user
-from commands.basic.stats import get_params
+from commands.basic.stats import get_args
 import database.users as users
 import database.texts as texts
 import random
 
-info = {
+command = {
     "name": "unraced",
     "aliases": ["ur"],
-    "description": "Displays 5 unraced quotes for a user",
+    "description": "Displays 5 texts a user has not yet raced",
     "parameters": "[username]",
     "usages": ["unraced keegant"],
-    "import": True,
 }
 
 
@@ -24,15 +23,15 @@ class Unraced(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def unraced(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def unraced(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username = await get_params(ctx, user, params, info)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
+        username = result
         await run(ctx, user, username)
 
 

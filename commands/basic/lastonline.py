@@ -2,20 +2,19 @@ from discord import Embed
 from discord.ext import commands
 import utils
 import errors
-from commands.basic.stats import get_params
+from commands.basic.stats import get_args
 from api.users import get_latest_race
 from database.bot_users import get_user
 from utils import format_duration_short
 from datetime import datetime
 from api.users import get_stats
 
-info = {
+command = {
     "name": "lastonline",
     "aliases": ["lo"],
     "description": "Displays the time since a user's last race",
     "parameters": "[username]",
     "usages": ["lastonline keegant"],
-    "import": False,
     "multiverse": True,
 }
 
@@ -24,15 +23,15 @@ class LastOnline(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info['aliases'])
-    async def lastonline(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def lastonline(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username = await get_params(ctx, user, params, info)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
+        username = result
         await run(ctx, user, username)
 
 
@@ -49,7 +48,7 @@ async def run(ctx, user, username=None):
 
     latest_race = get_latest_race(username, universe)
     if not latest_race:
-        embed.description="User has never played"
+        embed.description = "User has never played"
 
     else:
         last_online = latest_race["t"]

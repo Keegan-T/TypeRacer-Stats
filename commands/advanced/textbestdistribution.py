@@ -4,17 +4,16 @@ import math
 import utils
 import errors
 from database.bot_users import get_user
-from commands.basic.stats import get_params
+from commands.basic.stats import get_args
 import database.users as users
 import database.texts as texts
 
-info = {
+command = {
     "name": "textbestdistribution",
     "aliases": ["tbd", "bd"],
     "description": "Displays a WPM distribution of a user's text bests",
     "parameters": "[username]",
     "usages": ["textbestdistribution keegant"],
-    "import": True,
 }
 
 
@@ -22,15 +21,15 @@ class TextBestDistribution(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info['aliases'])
-    async def textbestdistribution(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def textbestdistribution(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username = await get_params(ctx, user, params, info)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
+        username = result
         await run(ctx, user, username)
 
 

@@ -1,12 +1,12 @@
 from discord import Embed
-
 import utils
 from colors import error
 from config import prefix
 
-def missing_param(info):
+
+def missing_argument(info):
     return Embed(
-        title="Missing Parameters",
+        title="Missing Argument",
         description=f"Command parameters:\n"
                     f"`{prefix}{info['name']} {info['parameters']}`\n"
                     f"Example usage:\n" +
@@ -14,9 +14,10 @@ def missing_param(info):
         color=error,
     )
 
-def invalid_param(info):
+
+def invalid_argument(info):
     return Embed(
-        title="Invalid Parameters",
+        title="Invalid Argument",
         description=f"Command parameters:\n"
                     f"`{prefix}{info['name']} {info['parameters']}`\n"
                     f"Example usage:\n" +
@@ -24,13 +25,15 @@ def invalid_param(info):
         color=error,
     )
 
-def invalid_option(param, options):
+
+def invalid_choice(param, choices):
     return Embed(
-        title="Invalid Parameter",
+        title="Invalid Argument",
         description=f"Parameter `{param}` can only be:\n" +
-                    "\n".join([f"`{option}`" for option in options]),
+                    "\n".join([f"`{choice}`" for choice in choices]),
         color=error,
     )
+
 
 def closing_quote():
     return Embed(
@@ -39,12 +42,14 @@ def closing_quote():
         color=error,
     )
 
+
 def unexpected_quote():
     return Embed(
         title="Unxpected Quote",
         description="Command parameter contains an unexpected quote",
         color=error,
     )
+
 
 def invalid_command():
     return Embed(
@@ -53,12 +58,14 @@ def invalid_command():
         color=error,
     )
 
+
 def invalid_username():
     return Embed(
         title="Invalid Username",
         description="User does not exist",
         color=error,
     )
+
 
 def no_races():
     return Embed(
@@ -67,12 +74,14 @@ def no_races():
         color=error,
     )
 
+
 def no_races_in_range():
     return Embed(
         title="No Races Found",
         description="User has no races in this range",
         color=error,
     )
+
 
 def import_required(username):
     username = username.replace("`", "")
@@ -81,6 +90,7 @@ def import_required(username):
         description=f"Must `{prefix}import {username}` to use this command",
         color=error,
     )
+
 
 def race_not_found(username, race_number, universe="play"):
     race_id = f"{username}|{race_number}"
@@ -93,6 +103,7 @@ def race_not_found(username, race_number, universe="play"):
         color=error,
     )
 
+
 def logs_not_found(username, race_number, universe="play"):
     race_id = f"{username}|{race_number}"
     if universe != "play":
@@ -104,15 +115,17 @@ def logs_not_found(username, race_number, universe="play"):
         color=error,
     )
 
+
 def invalid_duration_format():
     return Embed(
         title="Invalid Duration",
         description="Invalid duration format. Accepted formats:\n"
                     "`1d`\n"
                     "`12h30m`\n"
-                    "`2d 12h 30m 15.5s`",
+                    "`2d12h30m15.5s`",
         color=error,
     )
+
 
 def invalid_number_format():
     return Embed(
@@ -122,12 +135,14 @@ def invalid_number_format():
         color=error,
     )
 
+
 def invalid_date():
     return Embed(
         title="Invalid Date",
         description="Unrecognized date format",
         color=error,
     )
+
 
 def greater_than(n):
     return Embed(
@@ -136,12 +151,14 @@ def greater_than(n):
         color=error,
     )
 
+
 def command_cooldown(cooldown_expiration):
     return Embed(
         title="Command On Cooldown",
         description=f"You may use the command again {utils.discord_timestamp(cooldown_expiration)}",
         color=error,
     )
+
 
 def unknown_text():
     return Embed(

@@ -6,7 +6,7 @@ from database.bot_users import get_user
 import database.users as users
 
 categories = ["wpm", "points"]
-info = {
+command = {
     "name": "racesover",
     "aliases": ["ro"],
     "description": "Displays the number of races a user has greater than or equal to a category threshold",
@@ -18,7 +18,6 @@ info = {
         "racesover keegant 300 wpm",
         "racesover joshua728 1000 points",
     ],
-    "import": True,
 }
 
 
@@ -26,55 +25,28 @@ class RacesOver(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def racesover(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def racesover(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, threshold, category = await get_params(ctx, user, params)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
+        username, threshold, category = result
         await run(ctx, user, username, threshold, category)
 
 
-async def get_params(ctx, user, params, command=info):
-    category = "wpm"
+def get_args(user, args, info):
+    params = f"username [int] category:{'|'.join(categories)}"
 
-    if len(params) < 2:
-        await ctx.send(embed=errors.missing_param(command))
-        raise ValueError
-
-    username = user["username"]
-
-    if params[0].lower() != "me":
-        username = params[0]
-
-    threshold = params[1]
-    try:
-        threshold = utils.parse_value_string(threshold)
-    except ValueError:
-        await ctx.send(embed=errors.invalid_number_format())
-        raise
-
-    if threshold < 0:
-        await ctx.send(embed=errors.greater_than(0))
-        raise ValueError
-
-    if len(params) > 2:
-        category = utils.get_category(categories, params[2])
-        if not category:
-            await ctx.send(embed=errors.invalid_option("category", categories))
-            raise ValueError
-
-    if not username:
-        await ctx.send(embed=errors.missing_param(info))
-        raise ValueError
-
-    return username.lower(), threshold, category
+    return utils.parse_command(user, params, args, info)
 
 
 async def run(ctx, user, username, threshold, category, over=True):
+    if threshold < 0:
+        return await ctx.send(embed=errors.greater_than(0))
+
     stats = users.get_user(username)
     if not stats:
         return await ctx.send(embed=errors.import_required(username))

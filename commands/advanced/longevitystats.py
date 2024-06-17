@@ -8,76 +8,55 @@ from database.bot_users import get_user
 import database.races as races
 import database.users as users
 
-types = ["day", "week", "month", "year"]
-info = {
+periods = ["month", "day", "week", "year"]
+command = {
     "name": "longevitystats",
     "aliases": ["ginoo75", "ginoo", "wellknown", "ls"],
     "description": "Displays the number of times a user has completed n races in a time period",
-    "parameters": "[username] <n> <type>",
+    "parameters": "[username] <n> <period>",
     "defaults": {
         "n": 1000,
-        "type": "month",
+        "period": "month",
     },
     "usages": [
         "longevitystats ginoo75",
         "longevitystats mark40511 1",
         "longevitystats keegant 1k day"
     ],
-    "import": True,
 }
+
 
 class LongevityStats(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def longevitystats(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def longevitystats(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, kind, n = await get_params(ctx, user, params)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
-        await run(ctx, user, username, kind, n)
+        username, n, period = result
+        await run(ctx, user, username, n, period)
 
-async def get_params(ctx, user, params):
-    username = user["username"]
-    n = 1000
-    kind = "month"
 
-    if params and params[0].lower() != "me":
-        username = params[0]
+def get_args(user, args, info):
+    params = f"username int:1000 period:{'|'.join(periods)}"
 
-    if len(params) > 1:
-        try:
-            n = utils.parse_value_string(params[1])
-        except ValueError:
-            await ctx.send(embed=errors.invalid_number_format())
-            raise
+    return utils.parse_command(user, params, args, info)
 
-    if len(params) > 2:
-        kind = utils.get_category(types, params[2])
-        if not kind:
-            await ctx.send(embed=errors.invalid_option("type", types))
-            raise ValueError
 
+async def run(ctx, user, username, n, time_period):
     if n < 1:
-        await ctx.send(embed=errors.greater_than(0))
-        raise ValueError
+        return await ctx.send(embed=errors.greater_than(0))
 
-    if not username:
-        await ctx.send(embed=errors.missing_param(info))
-        raise ValueError
-
-    return username.lower(), kind, n
-
-async def run(ctx, user, username, kind, n):
     stats = users.get_user(username)
     if not stats:
         return await ctx.send(embed=errors.import_required(username))
 
-    all_history = await get_history(username, kind)
+    all_history = await get_history(username, time_period)
     history = [period for period in all_history if period[2] >= n]
     over = len(history)
 
@@ -99,21 +78,21 @@ async def run(ctx, user, username, kind, n):
             best_streak = current_streak
 
     if best_streak[0] == 0:
-        description = f"User has not achieved this many races in a {kind}"
+        description = f"User has not achieved this many races in a {time_period}"
 
     else:
-        best_streak_range = get_streak_string(best_streak[1], best_streak[2], kind)
+        best_streak_range = get_streak_string(best_streak[1], best_streak[2], time_period)
 
         description = f"**Best Streak:** {best_streak[0]:,} ({best_streak_range})\n"
 
         streak_end = current_streak[2]
-        if kind == "day":
+        if time_period == "day":
             now = utils.floor_day(utils.now())
             previous = now - relativedelta(days=1)
-        elif kind == "week":
+        elif time_period == "week":
             now = utils.floor_week(utils.now())
             previous = now - relativedelta(days=7)
-        elif kind == "month":
+        elif time_period == "month":
             now = utils.floor_month(utils.now())
             previous = now - relativedelta(months=1)
         else:
@@ -121,21 +100,22 @@ async def run(ctx, user, username, kind, n):
             previous = now - relativedelta(years=1)
 
         if streak_end == now.timestamp() or streak_end == previous.timestamp():
-            current_streak_range = get_streak_string(current_streak[1], current_streak[2], kind)
+            current_streak_range = get_streak_string(current_streak[1], current_streak[2], time_period)
             description += f"**Current Streak:** {current_streak[0]:,} ({current_streak_range})\n"
         else:
             description += f"**Current Streak:** 0\n"
 
-        description += f"**Total {kind.title()}s:** {over:,}"
+        description += f"**Total {time_period.title()}s:** {over:,}"
 
     embed = Embed(
-        title=f"Longevity Stats - {kind.title()}s ({n:,} Races)",
+        title=f"Longevity Stats - {time_period.title()}s ({n:,} Races)",
         description=description,
         color=user["colors"]["embed"],
     )
     utils.add_profile(embed, stats)
 
     await ctx.send(embed=embed)
+
 
 async def get_history(username, kind):
     race_list = await races.get_races(username, columns=["timestamp"])
@@ -165,6 +145,7 @@ async def get_history(username, kind):
             history[-1][2] += 1
 
     return history
+
 
 def get_streak_string(start, end, kind):
     streak_start = datetime.utcfromtimestamp(start)

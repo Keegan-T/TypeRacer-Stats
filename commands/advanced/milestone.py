@@ -6,24 +6,26 @@ import urls
 from database.bot_users import get_user
 from api.races import get_race_info
 from commands.basic.race import add_stats
-import commands.recent as recents
+import commands.recent as recent
 import database.users as users
 import database.races as races
 import database.texts as texts
 
 categories = ["races", "points", "wpm", "texts"]
-info = {
+command = {
     "name": "milestone",
     "aliases": ["ms"],
     "description": "Displays the race upon which a user achieved a milestone",
-    "parameters": "[username] [milestone] [category]",
+    "parameters": "[username] [milestone] <category>",
+    "defualts": {
+        "category": "races",
+    },
     "usages": [
         "milestone keegant 500000 races",
         "milestone wordracer888 10m points",
         "milestone deroche1 300 wpm",
         "milestone rektless 10k texts",
     ],
-    "import": True,
 }
 
 
@@ -31,52 +33,29 @@ class Milestone(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def milestone(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def milestone(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, milestone, category = await get_params(ctx, user, params)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
+
+        username, milestone, category = result
 
         await run(ctx, user, username, milestone, category)
 
 
-async def get_params(ctx, user, params):
-    if len(params) < 3:
-        await ctx.send(embed=errors.missing_param(info))
-        raise ValueError
+def get_args(user, args, info):
+    params = f"username [int] category:{'|'.join(categories)}"
 
-    username = user["username"]
-
-    if params[0].lower() != "me":
-        username = params[0]
-
-    milestone = params[1]
-    try:
-        milestone = utils.parse_value_string(milestone)
-    except ValueError:
-        await ctx.send(embed=errors.invalid_number_format())
-        raise
-
-    if milestone <= 0:
-        await ctx.send(embed=errors.greater_than(0))
-        raise ValueError
-
-    category = utils.get_category(categories, params[2])
-    if not category:
-        await ctx.send(embed=errors.invalid_option("category", categories))
-        raise ValueError
-
-    if not username:
-        await ctx.send(embed=errors.missing_param(info))
-        raise ValueError
-
-    return username.lower(), milestone, category
+    return utils.parse_command(user, params, args, info)
 
 
 async def run(ctx, user, username, milestone, category):
+    if milestone <= 0:
+        return await ctx.send(embed=errors.greater_than(0))
+
     stats = users.get_user(username)
     if not stats:
         return await ctx.send(embed=errors.import_required(username))
@@ -107,7 +86,7 @@ async def run(ctx, user, username, milestone, category):
 
     await ctx.send(embed=embed)
 
-    recents.text_id = race_info["text_id"]
+    recent.text_id = race_info["text_id"]
 
 
 async def setup(bot):

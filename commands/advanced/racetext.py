@@ -1,10 +1,11 @@
 from discord.ext import commands
 from config import prefix
 from database.bot_users import get_user
-from commands.basic.realspeed import get_params
+from commands.basic.realspeed import get_args
 from commands.advanced.text import run
+import utils
 
-info = {
+command = {
     "name": "racetext",
     "aliases": ["rt", "racetextgraph", "rtg"],
     "description": "Displays a user's stats about the text of a specific race\n"
@@ -19,7 +20,6 @@ info = {
         "racetext keegant -1",
         "racetext https://data.typeracer.com/pit/result?id=|tr:keegant|1000000",
     ],
-    "import": True,
 }
 
 
@@ -27,15 +27,15 @@ class RaceText(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def racetext(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def racetext(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, race_number, _ = await get_params(ctx, user, params, info)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
+        username, race_number, _ = result
         await run(ctx, user, username, race_number=race_number)
 
 

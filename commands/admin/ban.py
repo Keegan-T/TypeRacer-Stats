@@ -5,7 +5,7 @@ from database.bot_users import get_user
 from database.banned import get_banned, ban, unban
 from commands.checks import admin_check
 
-info = {
+command = {
     "name": "ban",
     "aliases": ["perish", "unban"],
     "description": "Bans or unbans a user from being able to use the bot",
@@ -18,12 +18,12 @@ class Ban(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
+    @commands.command(aliases=command["aliases"])
     @commands.check(admin_check)
-    async def ban(self, ctx, *params):
+    async def ban(self, ctx, *args):
         user = get_user(ctx)
 
-        user_id = params[0].translate(params[0].maketrans("", "", "<@>"))
+        user_id = args[0].translate(args[0].maketrans("", "", "<@>"))
 
         try:
             await self.bot.fetch_user(user_id)

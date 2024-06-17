@@ -1,8 +1,9 @@
 from discord.ext import commands
 from database.bot_users import get_user
-from commands.advanced.racesover import get_params, run
+from commands.advanced.racesover import get_args, run
+import utils
 
-info = {
+command = {
     "name": "racesunder",
     "aliases": ["ru"],
     "description": "Displays the number of races a user has less than a category threshold",
@@ -14,7 +15,6 @@ info = {
         "racesunder keegant 100 wpm",
         "racesunder keegant 50 points",
     ],
-    "import": True,
 }
 
 
@@ -22,16 +22,16 @@ class RacesUnder(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def racesunder(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def racesunder(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, threshold, category = await get_params(ctx, user, params, info)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
-        await run(ctx, user, username, threshold, category, False)
+        username, threshold, category = result
+        await run(ctx, user, username, threshold, category, over=False)
 
 
 async def setup(bot):

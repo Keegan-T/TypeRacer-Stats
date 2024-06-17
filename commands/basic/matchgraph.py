@@ -8,12 +8,12 @@ from config import prefix
 from database.bot_users import get_user
 from api.users import get_stats
 from api.races import get_match
-from commands.basic.realspeed import get_params
+from commands.basic.realspeed import get_args
 from commands.locks import match_lock
 from commands.basic.realspeedaverage import command_in_use
-import commands.recent as recents
+import commands.recent as recent
 
-info = {
+command = {
     "name": "matchgraph",
     "aliases": ["mg", "mg*"],
     "description": "Displays a graph of up to 10 user's unlagged WPM in a race\n"
@@ -27,7 +27,6 @@ info = {
         "realspeed keegant -1",
         "matchgraph https://data.typeracer.com/pit/result?id=play|tr:poem|200000"
     ],
-    "import": False,
     "multiverse": True,
 }
 
@@ -36,18 +35,19 @@ class MatchGraph(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def matchgraph(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def matchgraph(self, ctx, *args):
         if match_lock.locked():
             return await ctx.send(embed=command_in_use())
 
         async with match_lock:
             user = get_user(ctx)
 
-            try:
-                username, race_number, universe = await get_params(ctx, user, params, info)
-            except ValueError:
-                return
+            result = get_args(user, args, command)
+            if utils.is_embed(result):
+                return await ctx.send(embed=result)
+
+            username, race_number, universe = result
 
             await run(ctx, user, username, race_number, universe)
 
@@ -57,10 +57,7 @@ async def run(ctx, user, username, race_number, universe):
     if not stats:
         return await ctx.send(embed=errors.invalid_username())
 
-    if race_number is None:
-        race_number = stats["races"]
-
-    elif race_number < 1:
+    if race_number < 1:
         race_number = stats["races"] + race_number
 
     match = await get_match(username, race_number, universe)
@@ -103,7 +100,7 @@ async def run(ctx, user, username, race_number, universe):
 
     utils.remove_file(file_name)
 
-    recents.text_id = match["text_id"]
+    recent.text_id = match["text_id"]
 
 
 async def setup(bot):

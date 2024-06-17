@@ -5,21 +5,23 @@ import urls
 import utils
 from database.bot_users import get_user
 
-info = {
+command = {
     "name": "disabledtexts",
     "aliases": ["dt"],
     "description": "Displays a list of texts that have been removed from text stats",
 }
 
+
 class DisabledTexts(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def disabledtexts(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def disabledtexts(self, ctx):
         user = get_user(ctx)
 
         await run(ctx, user)
+
 
 async def run(ctx, user):
     disabled_text_ids = texts.get_disabled_text_ids()
@@ -35,6 +37,7 @@ async def run(ctx, user):
     )
 
     await ctx.send(embed=embed)
+
 
 async def setup(bot):
     await bot.add_cog(DisabledTexts(bot))

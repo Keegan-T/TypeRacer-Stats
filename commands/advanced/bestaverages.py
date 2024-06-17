@@ -8,7 +8,7 @@ from database.bot_users import get_user
 import database.users as users
 import database.races as races
 
-info = {
+command = {
     "name": "bestaverages",
     "aliases": ["ba"],
     "description": "Displays a user's top 10 best average of n races\n"
@@ -18,7 +18,6 @@ info = {
         "n": 10,
     },
     "usages": ["bestaverages keegant 10"],
-    "import": True,
 }
 
 
@@ -26,47 +25,31 @@ class BestAverages(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def bestaverages(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def bestaverages(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, n = await get_params(ctx, user, params)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
+        username, n = result
         await run(ctx, user, username, n)
 
 
-async def get_params(ctx, user, params, command=info):
-    username = user["username"]
-    n = 10
+def get_args(user, args, info):
+    params = "username int:10"
 
-    if params and params[0].lower() != "me":
-        username = params[0]
-
-    if len(params) > 1:
-        try:
-            n = utils.parse_value_string(params[1])
-        except ValueError:
-            await ctx.send(embed=errors.invalid_number_format())
-            raise ValueError
-
-    if n < 1:
-        await ctx.send(embed=errors.greater_than(0))
-        raise ValueError
-
-    if not username:
-        await ctx.send(embed=errors.missing_param(command))
-        raise ValueError
-
-    return username.lower(), int(n)
+    return utils.parse_command(user, params, args, info)
 
 
 async def run(ctx, user, username, n):
     stats = users.get_user(username)
     if not stats:
         return await ctx.send(embed=errors.import_required(username))
+
+    if n < 1:
+        return await ctx.send(embed=errors.greater_than(0))
 
     if n > stats["races"]:
         return await ctx.send(embed=not_enough_races())

@@ -8,7 +8,7 @@ import colors
 from config import prefix
 from database.bot_users import get_user, get_commands, get_all_commands, get_total_commands
 
-info = {
+command = {
     "name": "commandleaderboard",
     "aliases": ["clb"],
     "description": "Displays command usage stats for a specific user or command\n"
@@ -22,7 +22,6 @@ info = {
         "commandleaderboard 155481579005804544",
         "commandleaderboard stats"
     ],
-    "import": False,
 }
 
 
@@ -30,26 +29,26 @@ class CommandLeaderboard(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def commandleaderboard(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def commandleaderboard(self, ctx, *args):
         user = get_user(ctx)
 
         discord_id = ctx.author.id
 
-        if params:
-            discord_id = utils.get_discord_id(params[0])
+        if args:
+            discord_id = utils.get_discord_id(args[0])
             if discord_id:
                 return await user_leaderboard(ctx, user, discord_id)
-            elif params[0] == "all":
+            elif args[0] == "all":
                 return await user_leaderboard(ctx, user, "all")
 
-            command = params[0]
-            return await command_leaderboard(ctx, user, command)
+            command_name = args[0]
+            return await command_leaderboard(ctx, user, command_name)
 
         return await user_leaderboard(ctx, user, discord_id)
 
 
-async def command_leaderboard(ctx, user, command):
+async def command_leaderboard(ctx, user, name):
     alias_dict = {}
 
     groups = ["account", "admin", "advanced", "basic", "general", "info", "owner", "unlisted"]
@@ -62,27 +61,27 @@ async def command_leaderboard(ctx, user, command):
                 for alias in aliases:
                     alias_dict[alias] = command_name
 
-    if command not in alias_dict:
+    if name not in alias_dict:
         return await ctx.send(embed=errors.invalid_command())
 
-    command = alias_dict[command]
+    name = alias_dict[name]
     all_commands = get_all_commands()
 
     command_usage = []
     total_usages = 0
     for bot_user in all_commands:
         user_commands = bot_user["commands"]
-        if command in user_commands:
+        if name in user_commands:
             command_usage.append(bot_user)
-            total_usages += user_commands[command]
-    sorted_usage = sorted(command_usage, key=lambda x: x["commands"][command], reverse=True)
+            total_usages += user_commands[name]
+    sorted_usage = sorted(command_usage, key=lambda x: x["commands"][name], reverse=True)
 
     description = ""
     for i, bot_user in enumerate(sorted_usage[:10]):
-        description += f"{i + 1}. <@{bot_user['id']}> - {bot_user['commands'][command]:,}\n"
+        description += f"{i + 1}. <@{bot_user['id']}> - {bot_user['commands'][name]:,}\n"
 
     embed = Embed(
-        title=f"Usage Leaderboard - {command}",
+        title=f"Usage Leaderboard - {name}",
         description=description,
         color=user["colors"]["embed"],
     )
@@ -100,11 +99,11 @@ async def user_leaderboard(ctx, user, discord_id):
         if not command_usage:
             return await ctx.send(embed=no_commands(discord_id))
         description = f"<@{discord_id}>\n\n"
-        
+
     total_usages = sum([command[1] for command in command_usage.items()])
     most_used_commands = sorted(command_usage.items(), key=lambda x: x[1], reverse=True)
-    for i, command in enumerate(most_used_commands[:10]):
-        name, usages = command
+    for i, command_info in enumerate(most_used_commands[:10]):
+        name, usages = command_info
         description += f"{i + 1}. {name} - {usages:,}\n"
 
     embed = Embed(

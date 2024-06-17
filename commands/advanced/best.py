@@ -10,7 +10,7 @@ import database.races as races
 import database.texts as texts
 
 categories = ["wpm", "points"]
-info = {
+command = {
     "name": "best",
     "aliases": ["top"],
     "description": "Displays a user's top 10 best races in a category\n"
@@ -24,7 +24,6 @@ info = {
         "best joshua728 points",
         "best keegant 3810446",
     ],
-    "import": True,
 }
 
 
@@ -32,43 +31,37 @@ class Best(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def best(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def best(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, category, text_id = await get_params(ctx, user, params)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
+        username, category, text_id = result
         await run(ctx, user, username, category, text_id)
 
 
-async def get_params(ctx, user, params, command=info):
-    username = user["username"]
-    category = "wpm"
+def get_args(user, args, info):
     text_id = None
 
-    if params and params[0].lower() != "me":
-        username = params[0]
+    if len(args) == 2 and args[1].isnumeric():
+        params = "username text_id"
+    else:
+        params = f"username category:{'|'.join(categories)}"
 
-    if len(params) > 1:
-        if params[1] == "^":
-            text_id = int(recent.text_id)
-        elif params[1].isnumeric():
-            text_id = int(params[1])
-        else:
-            category = utils.get_category(categories, params[1])
-            if not category:
-                await ctx.send(embed=errors.invalid_option("category", categories))
-                raise ValueError
+    result = utils.parse_command(user, params, args, info)
+    if utils.is_embed(result):
+        return result
 
+    username, category = result
 
-    if not username:
-        await ctx.send(embed=errors.missing_param(command))
-        raise ValueError
+    if "text_id" in params:
+        text_id = category
+        category = None
 
-    return username.lower(), category, text_id
+    return username, category, text_id
 
 
 async def run(ctx, user, username, category, text_id, reverse=True):

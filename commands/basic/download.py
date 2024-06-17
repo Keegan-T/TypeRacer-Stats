@@ -15,13 +15,13 @@ from database.bot_users import get_user
 from api.users import get_stats, get_joined
 from api.texts import get_quote
 from api.races import get_races
-from commands.basic.stats import get_params
+from commands.basic.stats import get_args
 from config import bot_admins
 import database.text_results as text_results
 import database.races_300 as races_300
 from commands.locks import import_lock
 
-info = {
+command = {
     "name": "download",
     "aliases": ["getdata", "import", "dl", "gd", "i"],
     "description": "Downloads a given user's complete race history\n"
@@ -29,7 +29,6 @@ info = {
                    "Capped at 10,000 races for non-admins",
     "parameters": "[username]",
     "usages": ["download keegant"],
-    "import": False,
 }
 
 
@@ -37,17 +36,18 @@ class Download(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def download(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def download(self, ctx, *args):
         if import_lock.locked():
             return await ctx.send(embed=import_in_progress())
 
         user = get_user(ctx)
 
-        try:
-            username = await get_params(ctx, user, params, info)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
+
+        username = result
 
         async with import_lock:
             await run(username, ctx=ctx, bot_user=user)

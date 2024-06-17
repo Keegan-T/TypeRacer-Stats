@@ -3,21 +3,23 @@ from discord.ext import commands
 from database.bot_users import get_user
 from config import donate_link
 
-info = {
+command = {
     "name": "support",
     "aliases": ["donate"],
     "description": "Show your support for TypeRacer Stats <:support:1220863071086575716>",
 }
 
+
 class Support(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def support(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def support(self, ctx):
         user = get_user(ctx)
 
         await run(ctx, user)
+
 
 async def run(ctx, user):
     description = (
@@ -34,6 +36,7 @@ async def run(ctx, user):
     )
 
     await ctx.send(embed=embed)
+
 
 async def setup(bot):
     await bot.add_cog(Support(bot))

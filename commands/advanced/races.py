@@ -10,22 +10,22 @@ import database.users as users
 import database.races as races
 import database.texts as texts
 
-info = {
+command = {
     "name": "races",
     "aliases": ["racedetails", "rd"],
-    "description": "Displays a user's race stats within a timeframe\n"
-                   "Shows all-time stats by default",
+    "description": "Displays a user's race stats within a timeframe",
     "parameters": "[username] <start_date/start_number> <end_date/end_number>",
     "defaults": {
+        "start_date": "the user's account creation date",
         "end_date": "today",
-        "end_number": "the user's most recent race number"
+        "start_number": 1,
+        "end_number": "the user's most recent race number",
     },
     "usages": [
         "races keegant",
         "races keegant 2022-04-20 2023-04-20",
         "races keegant 800k 900k",
     ],
-    "import": True,
 }
 
 
@@ -33,67 +33,56 @@ class Races(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info['aliases'])
-    async def races(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def races(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, start_date, end_date, start_number, end_number = await get_params(ctx, user, params)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
+        username, start_date, end_date, start_number, end_number = result
         await run(ctx, user, username, start_date, end_date, start_number, end_number)
 
 
-async def get_params(ctx, user, params, command=info):
-    username = user["username"]
+def get_args(user, args, info):
     start_date = None
     end_date = None
     start_number = None
     end_number = None
 
-    if params and params[0].lower() != "me":
-        username = params[0]
+    params = "username int int"
+    result = utils.parse_command(user, params, args, info)
 
-    if len(params) > 1:
-        start = params[1]
+    if utils.is_embed(result):
+        params = "username date date"
+        result = utils.parse_command(user, params, args, info)
 
-        try:
-            start_number = utils.parse_value_string(start)
-        except ValueError:
-            try:
-                start_date = utils.floor_day(parser.parse(start))
-            except ValueError:
-                await ctx.send(embed=errors.invalid_param(command))
-                raise
+        if utils.is_embed(result):
+            return result
 
-    if len(params) > 2:
-        end = params[2]
+        username, start_date, end_date = result
 
-        try:
-            end_number = utils.parse_value_string(end)
-        except ValueError:
-            try:
-                end_date = utils.floor_day(parser.parse(end))
-            except ValueError:
-                await ctx.send(embed=errors.invalid_param(command))
-                raise
+        if start_date:
+            start_date = utils.floor_day(start_date)
 
-    if start_number and start_number < 1 or end_number and end_number < 1:
-        await ctx.send(embed=errors.greater_than(0))
-        raise ValueError
+        if end_date:
+            end_date = utils.floor_day(end_date)
 
-    if start_number and end_number and start_number > end_number:
-        start_number, end_number = end_number, start_number
+        if start_date and end_date and start_date > end_date:
+            start_date, end_date = end_date, start_date
 
-    if start_date and end_date and start_date > end_date:
-        start_date, end_date = end_date, start_date
+    else:
+        username, start_number, end_number = result
 
-    if not username:
-        await ctx.send(embed=errors.missing_param(command))
-        raise ValueError
+        if (isinstance(start_number, int) and start_number < 1 or
+                isinstance(end_number, int) and end_number < 1):
+            return errors.greater_than(0)
 
-    return username.lower(), start_date, end_date, start_number, end_number
+        if start_number and end_number and start_number > end_number:
+            start_number, end_number = end_number, start_number
+
+    return username, start_date, end_date, start_number, end_number
 
 
 async def run(ctx, user, username, start_date, end_date, start_number, end_number):
@@ -242,7 +231,7 @@ def add_stats(embed, username, race_list, start, end, mini=False):
         f"**Words Typed:** {words:,} ({words_per_race:,.2f} words/race)\n"
         f"**Characters Typed:** {characters:,} ({characters_per_race:,.2f} chars/race)\n"
         f"**Race Time:** {utils.format_duration_short(seconds)} ({seconds_per_race:,.2f}s/race)\n"
-        f"**Time Difference:** {utils.format_duration_short(seconds_elapsed)}\n" # Race Timespan, Time Elapsed, Time Difference
+        f"**Time Difference:** {utils.format_duration_short(seconds_elapsed)}\n"  # Race Timespan, Time Elapsed, Time Difference
         f"**Unique Texts:** {text_count:,}\n\n"
     )
 

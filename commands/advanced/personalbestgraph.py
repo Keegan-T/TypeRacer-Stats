@@ -8,17 +8,16 @@ from database.bot_users import get_user
 import database.users as users
 import database.races as races
 
-types = ["races", "time"]
-info = {
+categories = ["races", "time"]
+command = {
     "name": "personalbestgraph",
     "aliases": ["pbg"],
     "description": "Displays a graph of a user's personal best WPM over races/time",
-    "parameters": "[username] <type>",
+    "parameters": "[username] <category>",
     "defaults": {
-        "type": "races"
+        "category": "races"
     },
     "usages": ["personalbestgraph keegant time", "personalbestgraph poem races"],
-    "import": True,
 }
 
 
@@ -26,33 +25,30 @@ class PersonalBestGraph(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def personalbestgraph(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def personalbestgraph(self, ctx, *args):
         user = get_user(ctx)
 
-        username = user["username"]
-        kind = "races"
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
-        if params and params[0].lower() != "me":
-            username = params[0].lower()
-
-        if len(params) > 1:
-            kind = utils.get_category(types, params[1])
-            if not kind:
-                return await ctx.send(embed=errors.invalid_option("type", types))
-
-        if not username:
-            return await ctx.send(embed=errors.missing_param(info))
-
-        await run(ctx, user, username, kind)
+        username, category = result
+        await run(ctx, user, username, category)
 
 
-async def run(ctx, user, username, kind):
+def get_args(user, args, info):
+    params = f"username category:{'|'.join(categories)}"
+
+    return utils.parse_command(user, params, args, info)
+
+
+async def run(ctx, user, username, category):
     stats = users.get_user(username)
     if not stats:
         return await ctx.send(embed=errors.import_required(username))
 
-    column = 2 if kind == "time" else 1
+    column = 2 if category == "time" else 1
     race_list = await races.get_races(username, columns=["wpm", "number", "timestamp"])
     race_list.sort(key=lambda r: r[1])
 
@@ -67,7 +63,7 @@ async def run(ctx, user, username, kind):
             y.append(wpm)
             x.append(race[column])
 
-    indicator = f"#{pbs[0]['number']:,}" if kind == "races" else f"<t:{int(pbs[0]['timestamp'])}:R>"
+    indicator = f"#{pbs[0]['number']:,}" if category == "races" else f"<t:{int(pbs[0]['timestamp'])}:R>"
     description = (
         f"**First Race:** [{pbs[0]['wpm']:,.2f} WPM]"
         f"({urls.replay(username, pbs[0]['number'])}) - {indicator}\n"
@@ -80,7 +76,7 @@ async def run(ctx, user, username, kind):
         next_pb = pbs[i + 1]
         next_wpm = next_pb["wpm"]
         next_number = next_pb["number"]
-        next_indicator = f"#{next_number:,}" if kind == "races" else f"<t:{int(next_pb['timestamp'])}:R>"
+        next_indicator = f"#{next_number:,}" if category == "races" else f"<t:{int(next_pb['timestamp'])}:R>"
         next_barrier = next_wpm - (next_wpm % 10)
 
         if next_barrier > current_pb:
@@ -93,7 +89,7 @@ async def run(ctx, user, username, kind):
             )
 
     if latest_break != pbs[-1]:
-        indicator = f"#{pbs[-1]['number']:,}" if kind == "races" else f"<t:{int(pbs[-1]['timestamp'])}:R>"
+        indicator = f"#{pbs[-1]['number']:,}" if category == "races" else f"<t:{int(pbs[-1]['timestamp'])}:R>"
         description += (
             f"**Best Race:** [{pbs[-1]['wpm']:,.2f} WPM]"
             f"({urls.replay(username, pbs[-1]['number'])}) - "
@@ -107,8 +103,8 @@ async def run(ctx, user, username, kind):
     )
     utils.add_profile(embed, stats)
 
-    file_name = f"personal_best_over_{kind}_{username}.png"
-    graphs.personal_bests(user, username, x, y, kind, file_name)
+    file_name = f"personal_best_over_{category}_{username}.png"
+    graphs.personal_bests(user, username, x, y, category, file_name)
 
     embed.set_image(url=f"attachment://{file_name}")
     file = File(file_name, filename=file_name)

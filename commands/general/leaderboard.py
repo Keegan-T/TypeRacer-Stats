@@ -12,14 +12,13 @@ import database.competition_results as competition_results
 
 categories = ["races", "points", "awards", "textbests", "textstyped", "toptens",
               "textrepeats", "totaltextwpm", "wpm", "racetime", "characters"]
-info = {
+command = {
     "name": "leaderboard",
     "aliases": ["lb"],
     "description": "Displays the top 10 users in a category\n"
                    f"`{prefix}leaderboard [n]` will show top n appearances",
     "parameters": "[category]",
     "usages": [f"leaderboard {category}" for category in categories],
-    "import": False,
 }
 
 
@@ -27,25 +26,25 @@ class Leaderboard(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info['aliases'])
-    async def leaderboard(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def leaderboard(self, ctx, *args):
         user = get_user(ctx)
         text_id = None
 
-        if not params:
-            return await ctx.send(embed=errors.missing_param(info))
+        if not args:
+            return await ctx.send(embed=errors.missing_argument(command))
 
-        category_string = params[0]
+        category_string = args[0]
 
         if category_string.isnumeric() and 1 <= int(category_string) <= 10:
             category = category_string
         else:
             category = utils.get_category(categories, category_string)
             if not category:
-                return await ctx.send(embed=errors.invalid_option("category", categories))
+                return await ctx.send(embed=errors.invalid_choice("category", categories))
 
-        if len(params) > 1:
-            text_id = params[1]
+        if len(args) > 1:
+            text_id = args[1]
 
         await run(ctx, user, category, text_id)
 

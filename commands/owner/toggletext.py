@@ -5,7 +5,7 @@ from database.bot_users import get_user
 import database.texts as texts
 from commands.checks import owner_check
 
-info = {
+command = {
     "name": "toggletext",
     "aliases": ["textenable", "te", "textdisable", "td"],
     "description": "Enables/disabled texts",
@@ -16,15 +16,15 @@ class ToggleText(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
+    @commands.command(aliases=command["aliases"])
     @commands.check(owner_check)
-    async def toggletext(self, ctx, *params):
+    async def toggletext(self, ctx, *args):
         user = get_user(ctx)
 
-        if not params:
+        if not args:
             return await ctx.send(embed=errors.unknown_text())
 
-        text_id = params[0]
+        text_id = args[0]
 
         await run(ctx, user, text_id)
 

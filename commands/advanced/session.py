@@ -7,23 +7,22 @@ from database.bot_users import get_user
 import database.users as users
 import database.races as races
 
-types = ["races", "time"]
-info = {
+categories = ["races", "time"]
+command = {
     "name": "session",
     "aliases": ["ss"],
     "description": "Displays the maximum duration/race get_count sessions for a user with a given minimum break\n"
                    "A session ends whenever two races are greater apart in time than the minimum break",
-    "parameters": "[username] <type> <seconds>",
+    "parameters": "[username] <category> <time>",
     "defaults": {
-        "type": "races",
-        "seconds": "1800 (30 minutes)",
+        "category": "races",
+        "time": "30 minutes",
     },
     "usages": [
         "session keegant",
-        "session keegant races 3600",
-        "session keegant time 1d",
+        "session keegant races 1h30m",
+        "session keegant time 1h30m",
     ],
-    "import": True,
 }
 
 
@@ -31,32 +30,22 @@ class Session(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def session(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def session(self, ctx, *args):
         user = get_user(ctx)
-        seconds = 1800
-        kind = "races"
 
-        username = user["username"]
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
-        if params and params[0].lower() != "me":
-            username = params[0].lower()
+        username, category, seconds = result
+        await run(ctx, user, username, category, seconds)
 
-        if len(params) > 1:
-            kind = utils.get_category(types, params[1])
-            if not kind:
-                return await ctx.send(embed=errors.invalid_option("type", types))
 
-        if len(params) > 2:
-            try:
-                seconds = utils.parse_duration_string(params[2])
-            except ValueError:
-                return await ctx.send(embed=errors.invalid_duration_format())
+def get_args(user, args, info):
+    params = f"username category:{'|'.join(categories)} duration:1800"
 
-        if not username:
-            return await ctx.send(embed=errors.missing_param(info))
-
-        await run(ctx, user, username, kind, seconds)
+    return utils.parse_command(user, params, args, info)
 
 
 async def run(ctx, user, username, kind, seconds):

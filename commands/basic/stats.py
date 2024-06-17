@@ -7,13 +7,12 @@ from database.bot_users import get_user
 from api.users import get_stats, get_joined
 import database.users as users
 
-info = {
+command = {
     "name": "stats",
     "aliases": ["profile", "s"],
     "description": "Displays stats about a user's TypeRacer account",
     "parameters": "[username]",
     "usages": ["stats keegant"],
-    "import": False,
     "multiverse": True,
 }
 
@@ -26,29 +25,22 @@ class Stats(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info['aliases'])
-    async def stats(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def stats(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username = await get_params(ctx, user, params, info)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
+        username = result
         await run(ctx, user, username)
 
 
-async def get_params(ctx, user, params, command=info):
-    username = user["username"]
+def get_args(user, args, info):
+    params = "username"
 
-    if params and params[0].lower() != "me":
-        username = params[0]
-
-    if not username:
-        await ctx.send(embed=errors.missing_param(command))
-        raise ValueError
-
-    return username.lower()
+    return utils.parse_command(user, params, args, info)[0]
 
 
 async def run(ctx, user, username):
@@ -77,10 +69,10 @@ async def run(ctx, user, username):
     embed = Embed(color=user['colors']["embed"])
 
     general_string = (
-        f"{'**Name: **' + stats['display_name'] if stats['display_name'] else ''}\n"
-        f"**Joined:** {datetime.fromtimestamp(joined, tz=timezone.utc).strftime('%b. %d, %Y')}{anniversary}\n"
-        f"**Membership:** {'Premium' if stats['premium'] else 'Basic'}"
-    ) + "\n**Status:** Banned" * stats['disqualified']
+                         f"{'**Name: **' + stats['display_name'] if stats['display_name'] else ''}\n"
+                         f"**Joined:** {datetime.fromtimestamp(joined, tz=timezone.utc).strftime('%b. %d, %Y')}{anniversary}\n"
+                         f"**Membership:** {'Premium' if stats['premium'] else 'Basic'}"
+                     ) + "\n**Status:** Banned" * stats['disqualified']
 
     stats_string = (
         f"**Races:** {stats['races']:,}\n"

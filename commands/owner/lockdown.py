@@ -3,7 +3,7 @@ from discord.ext import commands
 import colors
 from commands.checks import owner_check
 
-info = {
+command = {
     "name": "lockdown",
     "aliases": ["ld"],
     "description": "Terminates bot usage for everyone except the owner",
@@ -14,7 +14,7 @@ class Lockdown(commands.Cog):
         self.bot = bot
         self.lockdown = False
 
-    @commands.command(aliases=info["aliases"])
+    @commands.command(aliases=command["aliases"])
     @commands.check(owner_check)
     async def lockdown(self, ctx):
         if not self.lockdown:

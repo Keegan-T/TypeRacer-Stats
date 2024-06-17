@@ -1,8 +1,9 @@
 from discord.ext import commands
 from database.bot_users import get_user
-from commands.advanced.textsover import run, get_params
+from commands.advanced.textsover import run, get_args
+import utils
 
-info = {
+command = {
     "name": "textsunder",
     "aliases": ["tu", "tur"],
     "description": "Displays the number of texts a user has less than a category threshold\n"
@@ -16,7 +17,6 @@ info = {
         "textsunder charlieog 5000 times",
         "textsunder keegant 200 wpm random",
     ],
-    "import": True,
 }
 
 
@@ -24,16 +24,16 @@ class TextsUnder(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def textsunder(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def textsunder(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, threshold, category, random = await get_params(ctx, user, params, info)
-        except ValueError:
-            return
-        if ctx.invoked_with.lower() == "tur":
-            random = True
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
+
+        username, threshold, category = result
+        random = args[-1] in ["random", "rand", "r"] or ctx.invoked_with.lower() == "tur"
         await run(ctx, user, username, threshold, category, over=False, random=random)
 
 

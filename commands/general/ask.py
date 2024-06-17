@@ -1,7 +1,7 @@
 from discord.ext import commands
 import random
 
-info = {
+command = {
     "name": "ask",
     "aliases": ["dicey", "8ball"],
     "description": "Find the answers to your most burning questions",
@@ -67,7 +67,7 @@ class Ask(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
+    @commands.command(aliases=command["aliases"])
     async def ask(self, ctx):
         await run(ctx)
 

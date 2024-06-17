@@ -5,18 +5,18 @@ import errors
 import urls
 from database.bot_users import get_user
 from api.users import get_stats
+from commands.basic.stats import get_args
 import database.users as users
 import database.text_results as top_tens
 from config import prefix
 
-info = {
+command = {
     "name": "toptens",
     "aliases": ["top10s", "10s"],
     "description": "Displays the number of text top 10s a user appears in\n"
                    f"`{prefix}top10s [username] best` will display a user's best top 10 performances",
     "parameters": "[username]",
     "usages": ["toptens joshua728"],
-    "import": False,
 }
 
 
@@ -24,33 +24,18 @@ class TopTens(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def toptens(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def toptens(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, best = await get_params(ctx, user, params)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
+
+        username = result
+        best = len(args) > 1 and args[1] == "best"
 
         await run(ctx, user, username, best)
-
-
-async def get_params(ctx, user, params):
-    username = user["username"]
-    best = False
-
-    if params and params[0].lower() != "me":
-        username = params[0]
-
-    if len(params) > 1 and params[1] == "best":
-        best = True
-
-    if not username:
-        await ctx.send(embed=errors.missing_param(info))
-        raise ValueError
-
-    return username.lower(), best
 
 
 async def run(ctx, user, username, best):

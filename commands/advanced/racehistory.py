@@ -13,13 +13,13 @@ from database.bot_users import get_user
 from api.users import get_stats
 from commands.basic.download import run as download
 
-categories = ["races", "day", "week", "month", "year"]
-sorts = ["points", "races", "time", "wpm", "date"]
-info = {
+periods = ["races", "day", "week", "month", "year"]
+sorts = ["date", "points", "races", "time", "wpm"]
+command = {
     "name": "racehistory",
     "aliases": ["rh"],
     "description": "Displays race history for a time period and sort",
-    "parameters": "[username] <time_period> <sort>",
+    "parameters": "[username] <period> <sort>",
     "defaults": {
         "time_period": "races",
         "sort": "date",
@@ -31,7 +31,6 @@ info = {
         "racehistory keegant month races",
         "racehistory keegant year time",
     ],
-    "import": True,
 }
 
 
@@ -39,46 +38,25 @@ class RaceHistory(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def racehistory(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def racehistory(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, category, sort = await get_params(ctx, user, params)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
-        await run(ctx, user, username, category, sort)
-
-
-async def get_params(ctx, user, params):
-    username = user["username"]
-    category = "races"
-    sort = "date"
-
-    if params and params[0].lower() != "me":
-        username = params[0]
-
-    if len(params) > 1:
-        category = utils.get_category(categories, params[1])
-        if not category:
-            await ctx.send(embed=errors.invalid_option("category", categories))
-            raise ValueError
-
-    if len(params) > 2:
-        sort = utils.get_category(sorts, params[2])
-        if not sort:
-            await ctx.send(embed=errors.invalid_option("sort", sorts))
-            raise ValueError
-
-    if not username:
-        await ctx.send(embed=errors.missing_param(info))
-        raise ValueError
-
-    return username.lower(), category, sort
+        username, time_period, sort = result
+        await run(ctx, user, username, time_period, sort)
 
 
-async def run(ctx, user, username, category, sort):
+def get_args(user, args, info):
+    params = f"username period:{'|'.join(periods)} sort:{'|'.join(sorts)}"
+
+    return utils.parse_command(user, params, args, info)
+
+
+async def run(ctx, user, username, time_period, sort):
     db_stats = users.get_user(username)
     if not db_stats:
         return await ctx.send(embed=errors.import_required(username))
@@ -86,7 +64,7 @@ async def run(ctx, user, username, category, sort):
     api_stats = get_stats(username)
     await download(stats=api_stats)
 
-    if category == "races":
+    if time_period == "races":
         columns = ["number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
         race_list = await races.get_races(username, columns=columns, order_by="timestamp", limit=20, reverse=True)
 
@@ -100,9 +78,9 @@ async def run(ctx, user, username, category, sort):
             )
 
     else:
-        title = f"Race History - {category.title()}s (By {utils.get_sort_title(sort)})"
+        title = f"Race History - {time_period.title()}s (By {utils.get_sort_title(sort)})"
         description = ""
-        history = await get_history(username, category, sort)
+        history = await get_history(username, time_period, sort)
         for period in history[:10]:
             description += (
                 f"**{period[1]}**\n{period[3]:,.0f} pts / {period[2]:,} races - "

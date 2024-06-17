@@ -7,19 +7,25 @@ import commands.recent as recents
 import database.races as races
 import database.texts as texts
 from database.bot_users import get_user
+from commands.basic.realspeed import get_args
 from api.users import get_stats
 from api.races import get_race_info
+from config import prefix
 
-info = {
+command = {
     "name": "race",
     "aliases": ["r"],
-    "description": "Displays information about a specific race",
+    "description": "Displays information about a user's race\n"
+                   f"`{prefix}race [username] <-n>` will return real speeds for n races ago",
     "parameters": "[username] <race_number>",
     "defaults": {
         "race_number": "the user's most recent race number"
     },
-    "usages": ["race keegant 200000"],
-    "import": False,
+    "usages": [
+        "race keegant 100000",
+        "race keegant -1",
+        "race https://data.typeracer.com/pit/result?id=|tr:keegant|1000000",
+    ],
     "multiverse": True,
 }
 
@@ -28,56 +34,22 @@ class Race(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def race(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def race(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, race_number, universe = await get_params(ctx, user, params)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
+        username, race_number, universe = result
         await run(ctx, user, username, race_number, universe)
-
-
-async def get_params(ctx, user, params):
-    username = user["username"]
-    race_number = None
-    universe = user["universe"]
-
-    if params and params[0].lower() != "me":
-        username = params[0]
-
-    # -race -1 shorthand
-    if user["username"] and params and params[0].startswith("-"):
-        try:
-            username = user["username"]
-            race_number = utils.parse_value_string(params[0])
-        except:
-            pass
-
-    if len(params) > 1:
-        race_number = params[1]
-        try:
-            race_number = utils.parse_value_string(race_number)
-        except ValueError:
-            await ctx.send(embed=errors.invalid_number_format())
-            raise
-
-    if not username:
-        await ctx.send(embed=errors.missing_param(info))
-        raise ValueError
-
-    return username.lower(), race_number, universe
 
 
 async def run(ctx, user, username, race_number, universe):
     stats = get_stats(username, universe=universe)
     if not stats:
         return await ctx.send(embed=errors.invalid_username())
-
-    if race_number is None:
-        race_number = stats["races"]
 
     if race_number < 1:
         race_number = stats["races"] + race_number
@@ -93,7 +65,6 @@ async def run(ctx, user, username, race_number, universe):
         quote = texts.get_text(race_info["text_id"])["quote"]
         race_info["quote"] = quote
         race_info["lagged"] = race_info["wpm"]
-
 
     embed = Embed(
         title=f"Race #{race_number:,}",

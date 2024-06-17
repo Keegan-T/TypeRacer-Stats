@@ -2,19 +2,18 @@ from discord import Embed, File
 from discord.ext import commands
 from database.bot_users import get_user
 from database.users import get_text_bests
-from commands.advanced.compare import get_params, no_common_texts
+from commands.advanced.compare import get_args, no_common_texts, same_username
 import utils
 import graphs
 import errors
 import urls
 
-info = {
+command = {
     "name": "comparegraph",
     "aliases": ["cg", "vsg"],
     "description": "Displays histograms comparing two user's text best WPM differences",
     "parameters": "[username_1] [username_2]",
     "usages": ["comparegraph keegant hospitalforsouls2"],
-    "import": True,
 }
 
 
@@ -22,23 +21,31 @@ class CompareGraph(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def comparegraph(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def comparegraph(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username1, username2 = await get_params(ctx, user, params, info)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
+        username1, username2 = result
         await run(ctx, user, username1, username2)
 
 
 async def run(ctx, user, username1, username2):
-    text_bests1 = get_text_bests(username1)
+    if username1 == username2:
+        return await ctx.send(embed=same_username())
+
+    if username2 == user["username"]:
+        username2 = username1
+        username1 = user["username"]
+
+    text_bests1 = get_text_bests(username1, race_stats=True)
     if not text_bests1:
         return await ctx.send(embed=errors.import_required(username1))
-    text_bests2 = get_text_bests(username2)
+
+    text_bests2 = get_text_bests(username2, race_stats=True)
     if not text_bests2:
         return await ctx.send(embed=errors.import_required(username2))
 

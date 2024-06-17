@@ -18,20 +18,21 @@ import database.modified_races as modified_races
 from commands.basic.download import run as download
 
 graph_commands = ["realspeedgraph", "rsg", "rg", "adjustedgraph", "ag", "ag*"]
-info = {
+command = {
     "name": "realspeed",
     "aliases": ["rs"] + graph_commands,
-    "description": "Displays unlagged and adjusted speeds for a given user's race\n"
-                   "Race number defaults to user's latest race\n"
-                   f"`{prefix}realspeed [replay_link]` will display the real speeds for a replay link\n"
-                   f"`{prefix}realspeed [username] <-n>` will return real speeds for n races ago",
+    "description": "Displays unlagged and adjusted speeds for a user's race\n"
+                   f"`{prefix}realspeed [username] <-n>` will return real speeds for n races ago\n"
+                   f"`{prefix}realspeedgraph` will add a graph of the race",
     "parameters": "[username] <race_number>",
+    "defaults": {
+        "race_number": "the user's most recent race number"
+    },
     "usages": [
         "realspeed keegant 100000",
         "realspeed keegant -1",
         "realspeed https://data.typeracer.com/pit/result?id=|tr:keegant|1000000",
     ],
-    "import": False,
     "multiverse": True,
 }
 
@@ -40,59 +41,42 @@ class RealSpeed(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info['aliases'])
-    async def realspeed(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def realspeed(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, race_number, universe = await get_params(ctx, user, params)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
+        username, race_number, universe = result
         await run(ctx, user, username, race_number, ctx.invoked_with in graph_commands, universe)
 
 
-async def get_params(ctx, user, params, command=info):
-    username = user["username"]
-    race_number = None
+def get_args(user, args, info):
+    params = "username int:0"
     universe = user["universe"]
 
-    if params and params[0].lower() != "me":
-        username = params[0]
+    result = utils.parse_command(user, params, args, info)
+    if utils.is_embed(result):
+        return result
 
-    # -realspeed -1 shorthand
-    if user["username"] and params and params[0].startswith("-"):
+    username, race_number = result
+
+    # Checking for link
+    race_info = utils.get_url_info(username)
+    if race_info:
+        username, race_number, universe = race_info
+
+    # Shorthand (-realspeed -1)
+    if user["username"] and username.startswith("-"):
         try:
+            race_number = utils.parse_value_string(username)
             username = user["username"]
-            race_number = utils.parse_value_string(params[0])
-        except:
+        except ValueError:
             pass
 
-    if len(params) == 1:
-        try:
-            url = params[0]
-            result = urlparse(url)
-            if result.scheme and result.netloc:
-                race_info = utils.get_race_link_info(url)
-                if not race_info:
-                    raise ValueError
-                username, race_number, universe = race_info
-        except ValueError:
-            await ctx.send(embed=errors.invalid_param(command))
-            raise
-
-    elif len(params) > 1:
-        try:
-            race_number = utils.parse_value_string(params[1])
-        except ValueError:
-            await ctx.send(embed=errors.invalid_number_format())
-            raise
-
-    if not username:
-        await ctx.send(embed=errors.missing_param(command))
-        raise ValueError
-
-    return username.lower(), race_number, universe
+    return username, race_number, universe
 
 
 async def run(ctx, user, username, race_number, graph, universe, raw=False):
@@ -100,10 +84,7 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
     if not stats:
         return await ctx.send(embed=errors.invalid_username())
 
-    if race_number is None:
-        race_number = stats["races"]
-
-    elif race_number < 1:
+    if race_number < 1:
         race_number = stats["races"] + race_number
 
     race_info = await get_race_info(username, race_number, get_lagged=True, get_raw=raw, universe=universe)
@@ -169,7 +150,7 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
     title = f"Race Graph - {username} - Race #{race_number:,}"
     if universe != "play":
         title += f"\nUniverse: {universe}"
-    file_name = f"{username}_{race_number}.png"
+    file_name = f"race_{username}_{race_number}.png"
 
     if graph:
         ranking = {"username": username}

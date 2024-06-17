@@ -9,7 +9,7 @@ import database.users as users
 import database.texts as texts
 
 categories = ["wpm", "points", "times"]
-info = {
+command = {
     "name": "textsover",
     "aliases": ["to"],
     "description": "Displays the number of texts a user has greater than or equal to a category threshold\n"
@@ -23,7 +23,6 @@ info = {
         "textsover charlieog 5000 times",
         "textsover keegant 200 wpm random",
     ],
-    "import": True,
 }
 
 
@@ -31,57 +30,23 @@ class TextsOver(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def textsover(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def textsover(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, threshold, category, random = await get_params(ctx, user, params)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
+        username, threshold, category = result
+        random = args[-1] in ["random", "rand", "r"]
         await run(ctx, user, username, threshold, category, random=random)
 
 
-async def get_params(ctx, user, params, command=info):
-    category = "wpm"
+def get_args(user, args, info):
+    params = f"username [number] category:{'|'.join(categories)}"
 
-    if len(params) < 2:
-        await ctx.send(embed=errors.missing_param(command))
-        raise ValueError
-
-    username = user["username"]
-
-    if params[0].lower() != "me":
-        username = params[0]
-
-    threshold = params[1]
-    try:
-        threshold = utils.parse_value_string(threshold)
-    except ValueError:
-        await ctx.send(embed=errors.invalid_number_format())
-        raise
-
-    if threshold <= 0:
-        await ctx.send(embed=errors.greater_than(0))
-        raise ValueError
-
-    if len(params) > 2:
-        category = utils.get_category(categories, params[2])
-        if not category:
-            await ctx.send(embed=errors.invalid_option("category", categories))
-            raise ValueError
-
-    if not username:
-        await ctx.send(embed=errors.missing_param(command))
-        raise ValueError
-
-    random = False
-    if len(params) > 3:
-        if params[3] in ["random", "rand", "r"]:
-            random = True
-
-    return username.lower(), threshold, category, random
+    return utils.parse_command(user, params, args, info)
 
 
 async def run(ctx, user, username, threshold, category, over=True, random=False):

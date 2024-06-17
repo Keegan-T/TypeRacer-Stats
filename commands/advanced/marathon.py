@@ -8,24 +8,22 @@ import database.users as users
 import database.races as races
 from commands.advanced.races import add_stats
 
-types = ["races", "points"]
-info = {
+categories = ["races", "points"]
+command = {
     "name": "marathon",
     "aliases": ["42"],
     "description": "Displays the maximum amount of races/points a user completed in a timeframe\n"
                    "Time can be given as seconds, or a duration string (1d 12h 30m 15s)",
-    "parameters": "[username] <type> <time>",
+    "parameters": "[username] <category> <time>",
     "defaults": {
-        "type": "races",
+        "category": "races",
         "time": "24 hours",
     },
     "usages": [
         "marathon keegant",
         "marathon keegant races",
-        "marathon keegant 12h",
-        "marathon keegant points 1h 30m",
+        "marathon keegant points 1h30m",
     ],
-    "import": True,
 }
 
 
@@ -33,51 +31,28 @@ class Marathon(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info['aliases'])
-    async def marathon(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def marathon(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, kind, seconds = await get_params(ctx, user, params)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
-        await run(ctx, user, username, kind, seconds)
+        username, category, seconds = result
+        await run(ctx, user, username, category, seconds)
 
 
-async def get_params(ctx, user, params):
-    username = user["username"]
-    kind = "races"
-    seconds = 86400
+def get_args(user, args, info):
+    params = f"username category:{'|'.join(categories)} duration:86400"
 
-    if params and params[0].lower() != "me":
-        username = params[0]
+    return utils.parse_command(user, params, args, info)
 
-    if len(params) > 1:
-        kind = utils.get_category(types, params[1])
-        if not kind:
-            await ctx.send(embed=errors.invalid_option("type", types))
-            raise ValueError
 
-    if len(params) > 2:
-        try:
-            seconds = utils.parse_duration_string(" ".join(params[2:]))
-        except ValueError:
-            await ctx.send(embed=errors.invalid_duration_format())
-            raise
-
+async def run(ctx, user, username, category, seconds):
     if seconds <= 0:
-        await ctx.send(embed=invalid_duration())
-        raise ValueError
+        return await ctx.send(embed=invalid_time())
 
-    if not username:
-        await ctx.send(embed=errors.missing_param(info))
-        raise ValueError
-
-    return username.lower(), kind, seconds
-
-
-async def run(ctx, user, username, kind, seconds):
     stats = users.get_user(username)
     if not stats:
         return await ctx.send(embed=errors.import_required(username))
@@ -91,7 +66,7 @@ async def run(ctx, user, username, kind, seconds):
     end_index = 0
     current = -1
 
-    if kind == "races":
+    if category == "races":
         # I deem this the "inchworm" technique
         while end_index < len(race_list):
             start_race = race_list[start_index]
@@ -130,7 +105,7 @@ async def run(ctx, user, username, kind, seconds):
     end_time = marathon_races[-1][7]
 
     embed = Embed(
-        title=f"Best {kind[:-1].title()} Marathon "
+        title=f"Best {category[:-1].title()} Marathon "
               f"({utils.format_duration_short(seconds, False)} period)",
         color=user["colors"]["embed"],
     )
@@ -142,10 +117,10 @@ async def run(ctx, user, username, kind, seconds):
     await ctx.send(embed=embed)
 
 
-def invalid_duration():
+def invalid_time():
     return Embed(
-        title="Invalid Duration",
-        description="Duration must be greater than 0 seconds",
+        title="Invalid Time",
+        description="Time must be greater than 0 seconds",
         color=colors.error,
     )
 

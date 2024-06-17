@@ -1,8 +1,9 @@
 from discord.ext import commands
 from database.bot_users import get_user
-from commands.advanced.best import get_params, run, categories
+from commands.advanced.best import get_args, run, categories
+import utils
 
-info = {
+command = {
     "name": "worst",
     "aliases": ["bottom"],
     "description": "Displays a user's bottom 10 worst races in a given category\n"
@@ -12,7 +13,6 @@ info = {
         "category": "wpm",
     },
     "usages": [f"worst keegant {category}" for category in categories],
-    "import": True,
 }
 
 
@@ -20,15 +20,16 @@ class Worst(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def worst(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def worst(self, ctx, *args):
         user = get_user(ctx)
-        try:
-            username, category, text_id = await get_params(ctx, user, params, info)
-        except ValueError:
-            return
 
-        await run(ctx, user, username, category, text_id, False)
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
+
+        username, category, text_id = result
+        await run(ctx, user, username, category, text_id, reverse=False)
 
 
 async def setup(bot):

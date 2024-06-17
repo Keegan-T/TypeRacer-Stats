@@ -14,7 +14,7 @@ from database.bot_users import get_user
 from commands.advanced.races import add_stats
 from commands.basic.download import run as download
 
-info = {
+command = {
     "name": "day",
     "aliases": ["d", "miniday", "md", "yesterday", "yd", "miniyesterday", "myd"],
     "description": "Displays a user's stats for a given day\n"
@@ -25,7 +25,6 @@ info = {
         "date": "today"
     },
     "usages": ["day keegant 2021-01-01"],
-    "import": True,
 }
 
 
@@ -33,46 +32,36 @@ class Day(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def day(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def day(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, date = await get_params(ctx, user, params)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
+        username, date = result
         await run(ctx, user, username, date)
 
 
-async def get_params(ctx, user, params, command=info):
-    username = user["username"]
-    date = datetime.now(timezone.utc)
+def get_args(user, args, info):
+    params = "username date"
 
-    if params and params[0].lower() != "me":
-        username = params[0]
+    result = utils.parse_command(user, params, args, info)
+    if utils.is_embed(result):
+        return result
 
-    if len(params) == 1:
-        date_string = " ".join(params)
-        if "/" in date_string or "-" in date_string:
-            try:
-                date = parser.parse(date_string)
-                username = user["username"]
-            except ValueError:
-                pass
+    username, date = result
 
-    if len(params) > 1:
+    # Shorthand (-day 1/1/24)
+    if user["username"] and ("/" in username or "-" in username):
         try:
-            date = parser.parse(" ".join(params[1:]))
+            date = parser.parse(username)
+            username = user["username"]
         except ValueError:
-            await ctx.send(embed=errors.invalid_date())
-            raise
+            pass
 
-    if not username:
-        await ctx.send(embed=errors.missing_param(command))
-        raise ValueError
-
-    return username.lower(), date
+    return username, date
 
 
 async def run(ctx, user, username, date):
@@ -80,16 +69,19 @@ async def run(ctx, user, username, date):
     if not stats:
         return await ctx.send(embed=errors.import_required(username))
 
+    if not date:
+        date = datetime.now(timezone.utc)
+
     api_stats = get_stats(username)
     await download(stats=api_stats)
 
     week_commands = ["week", "w", "lastweek", "yesterweek", "lw", "yw", "miniweek", "mw"]
     month_commands = ["month", "m", "lastmonth", "yestermonth", "lm", "ym", "minimonth", "mm"]
     year_commands = ["year", "y", "lastyear", "yesteryear", "ly", "yy", "miniyear", "my"]
-    command = ctx.invoked_with.lower()
+    command_name = ctx.invoked_with.lower()
 
-    if command in week_commands:
-        if command in week_commands[2:6]:
+    if command_name in week_commands:
+        if command_name in week_commands[2:6]:
             date -= relativedelta(days=7)
         competition = get_competition_info(date, "week", results_per_page=1)
         start_date = utils.floor_week(date)
@@ -99,8 +91,8 @@ async def run(ctx, user, username, date):
         date_string = utils.get_display_date_range(start_date, (end_date - relativedelta(days=1)))
         title = f"Weekly Stats - {date_string}"
 
-    elif command in month_commands:
-        if command in month_commands[2:6]:
+    elif command_name in month_commands:
+        if command_name in month_commands[2:6]:
             date -= relativedelta(months=1)
         competition = get_competition_info(date, "month", results_per_page=1)
         start_date = utils.floor_month(date)
@@ -110,8 +102,8 @@ async def run(ctx, user, username, date):
         date_string = date.strftime("%B %Y")
         title = f"Monthly Stats - {date_string}"
 
-    elif command in year_commands:
-        if command in year_commands[2:6]:
+    elif command_name in year_commands:
+        if command_name in year_commands[2:6]:
             date -= relativedelta(years=1)
         competition = get_competition_info(date, "year", results_per_page=1)
         start_date = utils.floor_year(date)
@@ -122,7 +114,7 @@ async def run(ctx, user, username, date):
         title = f"Yearly Stats - {date_string}"
 
     else:
-        if command in info["aliases"][3:]:
+        if command_name in command["aliases"][3:]:
             date -= timedelta(days=1)
         competition = get_competition_info(date, "day", results_per_page=1)
         start_time = utils.floor_day(date).timestamp()

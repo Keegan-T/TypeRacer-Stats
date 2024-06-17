@@ -4,32 +4,31 @@ import utils
 import errors
 import urls
 from database.bot_users import get_user
-from commands.basic.stats import get_params
+from commands.basic.stats import get_args
 import database.users as users
 import database.races as races
 
-info = {
+command = {
     "name": "positionstats",
     "aliases": ["ps"],
     "description": "Displays stats about the positions of a user's races",
     "parameters": "[username]",
     "usages": ["positionstats keegant"],
-    "import": True,
 }
 
 class PositionStats(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def positionstats(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def positionstats(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username = await get_params(ctx, user, params)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
+        username = result
         await run(ctx, user, username)
 
 async def run(ctx, user, username):

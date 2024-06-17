@@ -1,17 +1,16 @@
 from discord import Embed
 from discord.ext import commands
-
 import urls
 import utils
 import errors
 import colors
-import commands.recent as recents
+import commands.recent as recent
 from config import prefix
 from database.bot_users import get_user
 from database.texts import get_texts
 import Levenshtein
 
-info = {
+command = {
     "name": "search",
     "aliases": ["query", "q", "lf", "searchid", "id"],
     "description": "Searches the text database for matching results\n"
@@ -26,11 +25,11 @@ class Search(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info['aliases'])
+    @commands.command(aliases=command["aliases"])
     async def search(self, ctx, *, query=None):
         user = get_user(ctx)
         if not query:
-            return await ctx.send(embed=errors.missing_param(info))
+            return await ctx.send(embed=errors.missing_argument(command))
 
         await run(ctx, user, query)
 
@@ -166,7 +165,7 @@ async def run(ctx, user, query):
 
     await ctx.send(embed=embed)
 
-    recents.text_id = results[0]["id"]
+    recent.text_id = results[0]["id"]
 
 
 def big_query():

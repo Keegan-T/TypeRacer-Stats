@@ -8,21 +8,20 @@ import database.users as users
 import database.races as races
 from commands.advanced.races import add_stats
 
-types = ["races", "points"]
-info = {
+categories = ["races", "points"]
+command = {
     "name": "fastestcompletion",
     "aliases": ["fc"],
     "description": "Displays the shortest time a user has completed a number of race/points in",
-    "parameters": "[username] <number> <type>",
+    "parameters": "[username] <number> <category>",
     "defaults": {
         "number": 100,
-        "type": "races",
+        "category": "races",
     },
     "usages": [
         "fastestcompletion keegant 1000 races",
         "fastestcompletion keegant 10000 points",
     ],
-    "import": True,
 }
 
 
@@ -30,57 +29,34 @@ class FastestCompletion(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def fastestcompletion(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def fastestcompletion(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, number, kind = await get_params(ctx, user, params)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
-        await run(ctx, user, username, number, kind)
+        username, number, category = result
+        await run(ctx, user, username, number, category)
 
 
-async def get_params(ctx, user, params):
-    username = user["username"]
-    number = 100
-    kind = "races"
+def get_args(user, args, info):
+    params = f"username number:100 category:{'|'.join(categories)}"
 
-    if params and params[0].lower() != "me":
-        username = params[0]
+    return utils.parse_command(user, params, args, info)
 
-    if len(params) > 1:
-        try:
-            number = utils.parse_value_string(params[1])
-        except ValueError:
-            await ctx.send(embed=errors.invalid_number_format())
-            raise
 
-    if len(params) > 2:
-        kind = utils.get_category(types, params[2])
-        if not kind:
-            await ctx.send(embed=errors.invalid_option("type", types))
-            raise ValueError
-
+async def run(ctx, user, username, number, category):
     if number <= 1:
-        await ctx.send(embed=errors.greater_than(1))
-        raise ValueError
+        return await ctx.send(embed=errors.greater_than(1))
 
-    if not username:
-        await ctx.send(embed=errors.missing_param(info))
-        raise ValueError
-
-    return username.lower(), number, kind
-
-
-async def run(ctx, user, username, number, kind):
     stats = users.get_user(username)
     if not stats:
         return await ctx.send(embed=errors.import_required(username))
 
-    if (kind == "races" and number > stats["races"]) or number > stats["points"]:
-        return await ctx.send(embed=no_milestone(kind))
+    if (category == "races" and number > stats["races"]) or number > stats["points"]:
+        return await ctx.send(embed=no_milestone(category))
 
     columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
     race_list = await races.get_races(username, columns=columns)
@@ -90,7 +66,7 @@ async def run(ctx, user, username, number, kind):
     start_index = 0
     difference = float("inf")
 
-    if kind == "races":
+    if category == "races":
         end_index = number
         while end_index < len(race_list):
             start_race = race_list[start_index]
@@ -133,7 +109,7 @@ async def run(ctx, user, username, number, kind):
     end_time = completion_races[-1][7]
 
     embed = Embed(
-        title=f"Fastest Completion ({number:,} {kind.title()})",
+        title=f"Fastest Completion ({number:,} {category.title()})",
         description=f"{utils.format_duration_short(fastest, False)}",
         color=user["colors"]["embed"],
     )

@@ -12,7 +12,7 @@ from api.users import get_stats
 from datetime import datetime
 from commands.basic.download import run as download
 
-info = {
+command = {
     "name": "checksaves",
     "aliases": ["charlieog", "cs", "cog"],
     "description": "Displays the number of times you've raced a quote within the last 24 hours",
@@ -21,7 +21,6 @@ info = {
         "text_id": 3621293,
     },
     "usages": ["checksaves keegant 3810446"],
-    "import": True,
 }
 
 
@@ -29,35 +28,22 @@ class CheckSaves(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def checksaves(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def checksaves(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, text_id = await get_params(ctx, user, params)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
+        username, text_id = result
         await run(ctx, user, username, text_id)
 
 
-async def get_params(ctx, user, params):
-    username = user["username"]
-    text_id = 3621293
+def get_args(user, args, info):
+    params = "username text_id:3621293"
 
-    if params and params[0].lower() != "me":
-        username = params[0]
-
-    if len(params) > 1:
-        text_id = params[1]
-        if text_id == "^":
-            text_id = recent.text_id
-
-    if not username:
-        await ctx.send(embed=errors.missing_param(info))
-        raise ValueError
-
-    return username.lower(), text_id
+    return utils.parse_command(user, params, args, info)
 
 
 async def run(ctx, user, username, text_id):

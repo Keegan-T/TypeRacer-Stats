@@ -4,7 +4,7 @@ from database.bot_users import get_user
 import database.users as users
 from commands.checks import owner_check
 
-info = {
+command = {
     "name": "databasestats",
     "aliases": ["dbs", "db"],
     "description": "Displays database stats",
@@ -15,9 +15,9 @@ class DatabaseStats(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
+    @commands.command(aliases=command["aliases"])
     @commands.check(owner_check)
-    async def databasestats(self, ctx, *params):
+    async def databasestats(self, ctx):
         user = get_user(ctx)
 
         await run(ctx, user)

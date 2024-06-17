@@ -9,7 +9,7 @@ import api.texts as texts_api
 import commands.recent as recent
 import database.text_results as top_tens
 
-info = {
+command = {
     "name": "textleaderboard",
     "aliases": ["tlb", "tl", "10"],
     "description": "Displays the top 10 leaderboard for a text",
@@ -18,7 +18,6 @@ info = {
     },
     "parameters": "<text_id>",
     "usages": ["textleaderboard 3810446"],
-    "import": False,
 }
 
 
@@ -26,19 +25,22 @@ class TextLeaderboard(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def textleaderboard(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def textleaderboard(self, ctx, *args):
         user = get_user(ctx)
 
-        if params:
-            if params[0] == "^":
-                text_id = recent.text_id
-            else:
-                text_id = params[0]
-        else:
-            text_id = recent.text_id
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
+        text_id = result
         await run(ctx, user, text_id)
+
+
+def get_args(user, args, info):
+    params = "text_id"
+
+    return utils.parse_command(user, params, args, info)[0]
 
 
 async def run(ctx, user, text_id):

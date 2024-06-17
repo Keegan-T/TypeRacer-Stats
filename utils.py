@@ -1,9 +1,11 @@
+from discord import Embed
 import re
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 from dateutil import parser
 from dateutil.relativedelta import relativedelta
 import matplotlib.colors as mcolors
+import errors
 import urls
 import time
 from database.bot_users import get_user
@@ -437,6 +439,9 @@ category_aliases = [
     ["line", '-'],
     ["text", "txt"],
     ["grid", "#"],
+    ["best"],
+    ["worst"],
+    ["random", "rand", "r"],
 ]
 
 
@@ -546,6 +551,7 @@ def command_log_message(message):
 
     return f"{message_link} {mention}{linked_account}: `{message}`"
 
+
 def error_log_message(ctx):
     message_link = "[DM]"
     if ctx.guild:
@@ -560,8 +566,10 @@ def error_log_message(ctx):
 
     return f"{message_link} {mention}{linked_account}: `{message}`"
 
+
 def race_id(username, number):
     return f"{username}|{number}"
+
 
 def get_race_link_info(link):
     try:
@@ -576,12 +584,14 @@ def get_race_link_info(link):
     except Exception:
         return None
 
+
 def get_universe_multiplier(universe):
     if universe == "lang_ko":
         return 24000
     elif universe in ["lang_zh", "lang_zh-tw", "new_lang_zh-tw", "lang_ja"]:
         return 60000
     return 12000
+
 
 def remove_file(file_name):
     try:
@@ -591,14 +601,13 @@ def remove_file(file_name):
     except Exception:
         raise Exception
 
-def is_required(param):
-    return param.startswith("[") and param.endswith("]")
 
 def get_choices(param):
     if ":" in param:
         return param.split(":")[1].split("|")
 
     return []
+
 
 def get_url_info(url):
     result = urlparse(url)
@@ -616,45 +625,46 @@ def get_url_info(url):
     except Exception:
         return None
 
-def parse_command(ctx, args, command):
+
+def parse_command(user, params, args, command):
     args = [arg.lower() for arg in args]
-    params = command.split(" ")
+    params = params.split(" ")
     return_args = []
 
     for i, param in enumerate(params):
+        required = param.startswith("[") and param.endswith("]")
+        if required:
+            param = param[1:-1]
+        param_name = param.split(":")[0]
+
         missing = len(args) < i + 1
         default = None
-        if missing and "username" not in param:
-            if is_required(param):
-                return print("Missing required parameter.")
-            choices = get_choices(param)
-            if choices:
-                default = choices[0]
 
-        if "username" in param:
-            user = get_user(ctx)
+        if missing and "username" not in param_name:
+            if required:
+                return errors.missing_argument(command)
+            choices = get_choices(param)
+            choice = None
+            if choices:
+                choice = choices[0]
+                if param_name in ["duration", "number", "int", "text_id"]:
+                    choice = int(choice)
+            elif param_name == "text_id":
+                choice = recent.text_id
+            return_args.append(choice)
+
+
+        elif param_name == "username":
             username = user["username"]
 
             if not missing and args[i] != "me":
                 username = args[i]
             if not username:
-                return print("Missing username parameter. Try running -link!")
+                return errors.missing_argument(command)
 
             return_args.append(username)
 
-        if "choice" in param:
-            choices = get_choices(param)
-
-            if missing:
-                choice = choices[0]
-            else:
-                choice = get_category(choices, args[i])
-            if not choice:
-                return print("Invalid choice. Choices were:", choices)
-
-            return_args.append(choice)
-
-        if "date" in param:
+        elif param_name == "date":
             if missing:
                 return_args.append(datetime.now(timezone.utc))
             else:
@@ -662,17 +672,17 @@ def parse_command(ctx, args, command):
                     date = parser.parse(args[i])
                     return_args.append(date)
                 except ValueError:
-                    return print("Invalid date format.")
+                    return errors.invalid_date()
 
-        if "duration" in param:
+        elif param_name == "duration":
             try:
                 seconds = parse_duration_string(default if missing else args[i])
             except ValueError:
-                return print("Invalid duration format.")
+                return errors.invalid_duration_format()
 
             return_args.append(seconds)
 
-        if "textid" in param:
+        elif param_name == "text_id":
             if missing or args[i] == "^":
                 text_id = recent.text_id
             else:
@@ -680,25 +690,31 @@ def parse_command(ctx, args, command):
 
             return_args.append(text_id)
 
-        if "discordid" in param:
-            discord_id = get_discord_id(args[i])
-            if not discord_id:
-                return print("Invalid discord ID")
-
-            return_args.append(discord_id)
-
-        if "number" in param or "int" in param:
+        elif param_name in ["number", "int"]:
             try:
                 value = parse_value_string(default if missing else args[i])
             except (ValueError, TypeError):
-                return print("Invalid number.")
+                return errors.invalid_number_format()
 
-            if "int" in param:
+            if "int" in param_name:
                 value = int(value)
 
             return_args.append(value)
 
+        else:
+            choices = get_choices(param)
+
+            if missing:
+                choice = choices[0]
+            else:
+                choice = get_category(choices, args[i])
+            if not choice:
+                return errors.invalid_choice(param_name, choices)
+
+            return_args.append(choice)
+
     return return_args
+
 
 def get_segments(text, n=None):
     if not n:
@@ -710,57 +726,57 @@ def get_segments(text, n=None):
     if word_count <= n or len(text) <= 60:
         full_words = [word + " " for word in words[:-1]]
         full_words.append(words[-1])
+        return full_words
 
-    else:
-        segments = []
-        line_size = len(text) / n
-        for i in range(n):
-            start = round(line_size * i)
-            end = round(line_size * (i + 1))
-            segments.append(text[start:end])
+    segments = []
+    line_size = len(text) / n
+    for i in range(n):
+        start = round(line_size * i)
+        end = round(line_size * (i + 1))
+        segments.append(text[start:end])
 
-        full_words = []
-        for i in range(len(segments)):
-            segment = segments[i]
-            if i == len(segments) - 1:
-                full_words.append(segment)
-                break
+    full_words = []
+    for i in range(len(segments)):
+        segment = segments[i]
+        if i == len(segments) - 1:
+            full_words.append(segment)
+            break
 
-            original_segment = segment
-            original_next_segment = segments[i + 1]
-            prev_space = segment.rfind(" ")
-            drop_chars = len(segment) - prev_space - 1
-            add_chars = segments[i + 1].find(" ") + 1
-            if i == 0 or drop_chars >= add_chars:
-                try:
-                    while segment[-1] != " ":
-                        segment += segments[i + 1][0]
-                        segments[i + 1] = segments[i + 1][1:]
-                except IndexError:
-                    segment = original_segment
-                    segments[i + 1] = original_next_segment
-                    try:
-                        while segment[-1] != " ":
-                            segments[i + 1] = segment[-1] + segments[i + 1]
-                            segment = segment[:len(segment) - 1]
-                    except:
-                        return get_segments(text, n - 1)
-            else:
+        original_segment = segment
+        original_next_segment = segments[i + 1]
+        prev_space = segment.rfind(" ")
+        drop_chars = len(segment) - prev_space - 1
+        add_chars = segments[i + 1].find(" ") + 1
+        if i == 0 or drop_chars >= add_chars:
+            try:
+                while segment[-1] != " ":
+                    segment += segments[i + 1][0]
+                    segments[i + 1] = segments[i + 1][1:]
+            except IndexError:
+                segment = original_segment
+                segments[i + 1] = original_next_segment
                 try:
                     while segment[-1] != " ":
                         segments[i + 1] = segment[-1] + segments[i + 1]
                         segment = segment[:len(segment) - 1]
                 except:
-                    segment = original_segment
-                    segments[i + 1] = original_next_segment
-                    try:
-                        while segment[-1] != " ":
-                            segment += segments[i + 1][0]
-                            segments[i + 1] = segments[i + 1][1:]
-                    except IndexError:
-                        return get_segments(text, n - 1)
+                    return get_segments(text, n - 1)
+        else:
+            try:
+                while segment[-1] != " ":
+                    segments[i + 1] = segment[-1] + segments[i + 1]
+                    segment = segment[:len(segment) - 1]
+            except:
+                segment = original_segment
+                segments[i + 1] = original_next_segment
+                try:
+                    while segment[-1] != " ":
+                        segment += segments[i + 1][0]
+                        segments[i + 1] = segments[i + 1][1:]
+                except IndexError:
+                    return get_segments(text, n - 1)
 
-            full_words.append(segment)
+        full_words.append(segment)
 
     words_1 = full_words[0][:-1].split(" ")
     words_2 = full_words[1][:-1].split(" ")
@@ -770,3 +786,7 @@ def get_segments(text, n=None):
         full_words[1] = f"{words_1[-1]} {words_2[0]} "
 
     return full_words
+
+
+def is_embed(result):
+    return isinstance(result, Embed)

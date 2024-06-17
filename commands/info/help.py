@@ -6,13 +6,12 @@ import importlib
 from config import prefix, bot_admins
 from database.bot_users import get_user
 
-info = {
+command = {
     "name": "help",
     "aliases": ["h"],
     "description": "Displays a list of available commands, or information about a specific command",
     "parameters": "<command>",
     "usages": ["help", "help stats"],
-    "import": False,
 }
 
 
@@ -20,10 +19,10 @@ class Help(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info['aliases'])
-    async def help(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def help(self, ctx, *args):
         user = get_user(ctx)
-        if not params:
+        if not args:
             return await help_main(ctx, user)
 
         groups = ["account", "admin", "advanced", "basic", "general", "info", "unlisted"]
@@ -33,15 +32,15 @@ class Help(commands.Cog):
             for file in os.listdir(f"./commands/{group}"):
                 if file.endswith(".py") and not file.startswith("_"):
                     module = importlib.import_module(f"commands.{group}.{file[:-3]}")
-                    command_info = module.info
+                    command_info = module.command
                     for alias in [command_info["name"]] + command_info["aliases"]:
                         command_dict[alias] = command_info
 
-        command = params[0]
-        if command not in command_dict:
+        command_name = args[0]
+        if command_name not in command_dict:
             return await ctx.send(embed=errors.invalid_command())
 
-        await help_command(ctx, user, command_dict[command])
+        await help_command(ctx, user, command_dict[command_name])
 
 
 async def help_main(ctx, user):
@@ -55,7 +54,6 @@ async def help_main(ctx, user):
     )
 
     groups = ["account", "advanced", "basic", "general", "info", "admin"]
-
     command_list = {}
 
     for group in groups:
@@ -64,14 +62,12 @@ async def help_main(ctx, user):
             if file.endswith(".py") and not file.startswith("_") and not file.startswith("help"):
                 command_list[group].append(file[:-3])
 
-
-    account_commands = ", ".join(f"`{command}`" for command in command_list["account"])
-    info_commands = ", ".join(f"`{command}`" for command in command_list["info"])
-    general_commands = ", ".join(f"`{command}`" for command in command_list["general"])
-    basic_commands = ", ".join(f"`{command}`" for command in command_list["basic"])
-    advanced_commands = ", ".join(f"`{command}`" for command in command_list["advanced"])
-    admin_commands = ", ".join(f"`{command}`" for command in command_list["admin"])
-
+    account_commands = ", ".join(f"`{cmd}`" for cmd in command_list["account"])
+    info_commands = ", ".join(f"`{cmd}`" for cmd in command_list["info"])
+    general_commands = ", ".join(f"`{cmd}`" for cmd in command_list["general"])
+    basic_commands = ", ".join(f"`{cmd}`" for cmd in command_list["basic"])
+    advanced_commands = ", ".join(f"`{cmd}`" for cmd in command_list["advanced"])
+    admin_commands = ", ".join(f"`{cmd}`" for cmd in command_list["admin"])
 
     embed.add_field(name="Account Commands", value=account_commands, inline=False)
     embed.add_field(name="Info Commands", value=info_commands, inline=False)

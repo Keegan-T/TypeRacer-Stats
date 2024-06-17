@@ -1,7 +1,7 @@
 from discord import Embed
 from discord.ext import commands
 
-info = {
+command = {
     "name": "changelog",
     "aliases": ["updates", "changes", "cl"],
     "description": "Displays the most recent changes for the bot",
@@ -12,7 +12,7 @@ class Changelog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
+    @commands.command(aliases=command["aliases"])
     async def changelog(self, ctx):
         with open("./changelog.txt", "r") as file:
             change_list = "".join(file.readlines()).split("\n\n")

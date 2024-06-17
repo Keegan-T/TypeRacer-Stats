@@ -15,7 +15,7 @@ import database.users as users
 import database.text_results as top_tens
 from commands.basic.download import run as download
 
-info = {
+command = {
     "name": "text",
     "aliases": ["t", "textgraph", "tg", "personalbest", "pb"],
     "description": "Displays a user's stats about a specific text\n"
@@ -26,7 +26,6 @@ info = {
         "text_id": "the text ID of the user's most recent race",
     },
     "usages": ["text keegant 3810446"],
-    "import": True,
 }
 
 
@@ -34,35 +33,22 @@ class Text(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=info["aliases"])
-    async def text(self, ctx, *params):
+    @commands.command(aliases=command["aliases"])
+    async def text(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            username, text_id = await get_params(ctx, user, params)
-        except ValueError:
-            return
+        result = get_args(user, args, command)
+        if utils.is_embed(result):
+            return await ctx.send(embed=result)
 
+        username, text_id = result
         await run(ctx, user, username, text_id)
 
 
-async def get_params(ctx, user, params):
-    username = user["username"]
-    text_id = None
+def get_args(user, args, info):
+    params = "username text_id"
 
-    if params and params[0].lower() != "me":
-        username = params[0]
-
-    if len(params) > 1:
-        text_id = params[1]
-        if text_id == "^":
-            text_id = recent.text_id
-
-    if not username:
-        await ctx.send(embed=errors.missing_param(info))
-        raise ValueError
-
-    return username.lower(), text_id
+    return utils.parse_command(user, params, args, info)
 
 
 async def run(ctx, user, username, text_id=None, race_number=None):
@@ -164,7 +150,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
 
     if graph:
         title = f"WPM Improvement - {username} - Text #{text_id}"
-        file_name = f"{username}_text_{text_id}_improvement.png"
+        file_name = f"text_improvement_{username}_{text_id}.png"
         graphs.improvement(user, wpm, title, file_name)
 
         embed.set_image(url=f"attachment://{file_name}")
