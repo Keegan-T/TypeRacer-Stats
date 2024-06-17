@@ -42,11 +42,13 @@ class Text(commands.Cog):
             return await ctx.send(embed=result)
 
         username, text_id = result
+        if text_id == -1:
+            text_id = None
         await run(ctx, user, username, text_id)
 
 
 def get_args(user, args, info):
-    params = "username text_id"
+    params = "username text_id:-1"
 
     return utils.parse_command(user, params, args, info)
 
