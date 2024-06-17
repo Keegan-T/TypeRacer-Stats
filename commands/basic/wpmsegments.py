@@ -84,10 +84,11 @@ async def run(ctx, user, username, race_number, universe):
         f"{words:,} words - {chars:,} characters\n\n"
     )
     for segment in segments:
+        segment_text = utils.escape_discord_format(segment["text"]).replace("-", "\\-")
         description += f"**{segment['wpm']:,.2f} WPM**"
         if segment["wpm"] < segment["raw_wpm"]:
             description += f" **({segment['raw_wpm']:,.2f} Raw)**"
-        description += f"\n{segment['text']}\n"
+        description += f"\n{segment_text}\n"
 
     description += f"\nCompleted {utils.discord_timestamp(race_info['timestamp'])}"
     embed.description = description
