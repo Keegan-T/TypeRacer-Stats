@@ -56,8 +56,8 @@ async def command_leaderboard(ctx, user, name):
         for file in os.listdir(f"./commands/{group}"):
             if file.endswith(".py") and not file.startswith("_"):
                 module = importlib.import_module(f"commands.{group}.{file[:-3]}")
-                command_name = module.info["name"]
-                aliases = [command_name] + module.info["aliases"]
+                command_name = module.command["name"]
+                aliases = [command_name] + module.command["aliases"]
                 for alias in aliases:
                     alias_dict[alias] = command_name
 
