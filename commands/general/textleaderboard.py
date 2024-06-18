@@ -40,7 +40,11 @@ class TextLeaderboard(commands.Cog):
 def get_args(user, args, info):
     params = "text_id"
 
-    return utils.parse_command(user, params, args, info)[0]
+    result = utils.parse_command(user, params, args, info)
+    if utils.is_embed(result):
+        return result
+
+    return result[0]
 
 
 async def run(ctx, user, text_id):
