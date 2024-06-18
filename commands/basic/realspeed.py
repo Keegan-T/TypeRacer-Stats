@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 from config import prefix
 from database.bot_users import get_user
 from api.users import get_stats
-from api.races import get_race_info
+from api.races import get_race
 import commands.recent as recent
 import database.races as races
 import database.users as users
@@ -87,7 +87,7 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
     if race_number < 1:
         race_number = stats["races"] + race_number
 
-    race_info = await get_race_info(username, race_number, get_lagged=True, get_raw=raw, universe=universe)
+    race_info = await get_race(username, race_number, get_raw=raw, universe=universe)
     if not race_info:
         return await ctx.send(embed=errors.race_not_found(username, race_number, universe))
 

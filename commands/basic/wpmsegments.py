@@ -6,7 +6,7 @@ import urls
 import utils
 from database.bot_users import get_user
 from api.users import get_stats
-from api.races import get_race_info
+from api.races import get_race
 from commands.basic.realspeed import get_args
 
 command = {
@@ -43,7 +43,7 @@ async def run(ctx, user, username, race_number, universe):
     if race_number < 1:
         race_number = stats["races"] + race_number
 
-    race_info = await get_race_info(username, race_number, get_lagged=True, universe=universe, get_raw=True)
+    race_info = await get_race(username, race_number, universe=universe, get_raw=True)
     if not race_info:
         return await ctx.send(embed=errors.race_not_found(username, race_number, universe))
 
@@ -85,10 +85,10 @@ async def run(ctx, user, username, race_number, universe):
     )
     for segment in segments:
         segment_text = utils.escape_discord_format(segment["text"]).replace("-", "\\-")
-        description += f"**{segment['wpm']:,.2f} WPM**"
+        description += f"**{segment['wpm']:,.2f} WPM"
         if segment["wpm"] < segment["raw_wpm"]:
-            description += f" **({segment['raw_wpm']:,.2f} Raw)**"
-        description += f"\n{segment_text}\n"
+            description += f" ({segment['raw_wpm']:,.2f} Raw)"
+        description += f":** {segment_text}\n"
 
     description += f"\nCompleted {utils.discord_timestamp(race_info['timestamp'])}"
     embed.description = description

@@ -9,7 +9,7 @@ import colors
 from config import prefix
 from database.bot_users import get_user
 from api.users import get_stats
-from api.races import get_race_info
+from api.races import get_race_html_bulk, get_race_details
 from commands.basic.realspeed import run as run_realspeed
 import commands.locks as locks
 
@@ -101,22 +101,18 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
     reverse_lag = False
     races = "**Races**\n"
 
-    missed_races = []
-    rate_limit = False
+    links = []
+    for i in range(start_number, end_number + 1):
+        links.append(urls.replay(username, i, universe))
 
-    for i in range(start_number, end_number + 1, 1):
-        if i != start_number:
-            await asyncio.sleep(1)
-        race = await get_race_info(username, i, universe=universe, get_lagged=True, get_raw=raw)
-        if isinstance(race, int):
-            if race == 429:
-                for j in range(i, end_number + 1):
-                    missed_races.append(j)
-                rate_limit = True
-                break
-            else:
-                missed_races.append(i)
-        elif not race or "unlagged" not in race:
+    race_htmls = await get_race_html_bulk(links)
+    race_list = [await get_race_details(html, get_raw=raw) for html in race_htmls]
+
+    missed_races = []
+
+    for i, race in enumerate(race_list):
+        race_number = start_number + i
+        if not race or "unlagged" not in race:
             missed_races.append(i)
             continue
 
@@ -139,7 +135,7 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
             flag = " :triangular_flag_on_post:"
 
         races += (
-            f"[#{i:,}]({urls.replay(username, i, universe)}){flag}\n"
+            f"[#{race_number:,}]({urls.replay(username, race_number, universe)}){flag}\n"
             f"**Lagged:** {race['lagged']:,.2f} WPM ({race['lag']:,.2f} WPM lag)\n"
             f"**Unlagged:** {race['unlagged']:,.2f} WPM ({race['ping']:,}ms ping)\n"
             f"**Adjusted:** {race['adjusted']:,.3f} WPM ({race['start']:,}ms start)\n"
@@ -147,11 +143,8 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
         )
 
     if lagged == 0:
-        if rate_limit:
-            return await ctx.send(embed=rate_limit_execeded())
-        else:
-            return await ctx.send(embed=missing_information())
-
+        return await ctx.send(embed=missing_information())
+    
     race_count -= len(missed_races)
 
     lagged /= race_count
@@ -206,14 +199,14 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
     utils.add_profile(embed, stats)
     utils.add_universe(embed, universe)
 
-    if missed_races:
-        cause = "Rate Limit Exceeded" if rate_limit else "Missing information"
-        message = (
-            f"Missing Races: {', '.join([f'{r:,}' for r in missed_races])}\n"
-            f"Cause: {cause}\n\n"
-        )
-
-        embed.description = message + embed.description
+    # if missed_races:
+    #     cause = "Rate Limit Exceeded" if rate_limit else "Missing information"
+    #     message = (
+    #         f"Missing Races: {', '.join([f'{r:,}' for r in missed_races])}\n"
+    #         f"Cause: {cause}\n\n"
+    #     )
+    #
+    #     embed.description = message + embed.description
 
     await ctx.send(embed=embed)
 

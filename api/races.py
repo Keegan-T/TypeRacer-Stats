@@ -5,6 +5,8 @@ import re
 from bs4 import BeautifulSoup
 import utils
 from dateutil import parser
+import api.bulk as bulk
+
 
 async def get_races(username, start_time, end_time, races_per_page):
     url = f"https://data.typeracer.com/games?playerId=tr:{username}&startDate={start_time}&endDate={end_time}&n={races_per_page}"
@@ -20,25 +22,42 @@ async def get_races(username, start_time, end_time, races_per_page):
 
     return data
 
-async def get_race_info(username, race_number, get_lagged=True, get_raw=False, get_opponents=False, universe="play"):
-    url = f"https://data.typeracer.com/pit/result?id={universe}|tr:{username}|{race_number}&allowDisqualified=true"
 
+async def get_race(username, race_number, get_raw=False, get_opponents=False, universe="play"):
+    html = await get_race_html(username, race_number, universe)
+
+    return await get_race_details(html, get_raw, get_opponents, universe)
+
+
+async def get_race_html(username, race_number, universe="play"):
+    url = f"https://data.typeracer.com/pit/result?id={universe}|tr:{username}|{race_number}&allowDisqualified=true"
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
-            status_code = response.status
-            if status_code != 200:
-                print(f"Failed to fetch race {username}|{race_number}. Status: {status_code}")
-                return status_code
             html = await response.text()
 
+    return html
+
+
+async def get_race_html_bulk(urls):
+    return await bulk.fetch(urls)
+
+
+async def get_race_details(html, get_raw=False, get_opponents=False, universe="play"):
     soup = BeautifulSoup(html, "html.parser")
     details = {}
 
     # Scraping race information
-    date_td = soup.find("td", string="Date")
-    if not date_td:
+    username_td = soup.find("td", string="Racer")
+    if not username_td:
         return None
 
+    racer = username_td.find_next_sibling("td").get_text(strip=True)
+    username = racer.split("(")[1][:-1]
+
+    number_td = soup.find("td", string="Race Number")
+    race_number = int(number_td.find_next_sibling("td").get_text(strip=True))
+
+    date_td = soup.find("td", string="Date")
     date_string = date_td.find_next_sibling('td').get_text(strip=True)
     timestamp = parser.parse(date_string).timestamp()
     details["timestamp"] = timestamp
@@ -56,18 +75,17 @@ async def get_race_info(username, race_number, get_lagged=True, get_raw=False, g
     details["accuracy"] = accuracy
 
     # Getting details from API
-    if get_lagged:
-        race = get_race(username, race_number, timestamp, universe)
-        if not race:
-            return None
-        lagged = race["wpm"]
+    race = find_race(username, race_number, timestamp, universe)
+    if not race:
+        return None
+    lagged = race["wpm"]
 
-        details["lagged"] = lagged
-        details["rank"] = race["r"]
-        details["racers"] = race["np"]
-        if race["pts"] == 0:
-            race["pts"] = utils.calculate_points(quote, lagged)
-        details["points"] = race["pts"]
+    details["lagged"] = lagged
+    details["rank"] = race["r"]
+    details["racers"] = race["np"]
+    if race["pts"] == 0:
+        race["pts"] = utils.calculate_points(quote, lagged)
+    details["points"] = race["pts"]
 
     # Getting log details
     log_script = soup.find('script', text=lambda x: x and 'var typingLog =' in x)
@@ -141,7 +159,8 @@ async def get_race_info(username, race_number, get_lagged=True, get_raw=False, g
 
     return details
 
-def get_race(username, race_number, timestamp, universe="play"):
+
+def find_race(username, race_number, timestamp, universe="play"):
     url = (f"https://data.typeracer.com/games?playerId=tr:{username}"
            f"&n=20&startDate={timestamp - 5}&endDate={timestamp + 5}&universe={universe}")
     response = requests.get(url)
@@ -151,8 +170,9 @@ def get_race(username, race_number, timestamp, universe="play"):
             return race
     return None
 
+
 async def get_match(username, race_number, universe="play"):
-    match = await get_race_info(username, race_number, get_opponents=True, universe=universe)
+    match = await get_race(username, race_number, get_opponents=True, universe=universe)
 
     if not match or isinstance(match, int) or "unlagged" not in match:
         return None
@@ -170,7 +190,7 @@ async def get_match(username, race_number, universe="play"):
         for opponent in match["opponents"][:9]:
             opp_username = opponent[0]
             opp_race_number = opponent[2]
-            opp_race_info = await get_race_info(opp_username, opp_race_number, universe=universe)
+            opp_race_info = await get_race(opp_username, opp_race_number, universe=universe)
             if not opp_race_info or isinstance(opp_race_info, int):
                 continue
             rankings.append({

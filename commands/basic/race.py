@@ -9,7 +9,7 @@ import database.texts as texts
 from database.bot_users import get_user
 from commands.basic.realspeed import get_args
 from api.users import get_stats
-from api.races import get_race_info
+from api.races import get_race
 from config import prefix
 
 command = {
@@ -54,7 +54,7 @@ async def run(ctx, user, username, race_number, universe):
     if race_number < 1:
         race_number = stats["races"] + race_number
 
-    race_info = await get_race_info(username, race_number, universe=universe)
+    race_info = await get_race(username, race_number, universe=universe)
 
     if not race_info:
         if universe == "play":

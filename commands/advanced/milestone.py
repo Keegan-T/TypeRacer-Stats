@@ -4,7 +4,7 @@ import utils
 import errors
 import urls
 from database.bot_users import get_user
-from api.races import get_race_info
+from api.races import get_race
 from commands.basic.race import add_stats
 import commands.recent as recent
 import database.users as users
@@ -75,7 +75,7 @@ async def run(ctx, user, username, milestone, category):
     embed.title += f" - Race #{milestone_number:,}"
     embed.url = urls.replay(username, milestone_number)
 
-    race_info = await get_race_info(username, milestone_number, get_lagged=True)
+    race_info = await get_race(username, milestone_number)
     if not race_info:
         text_list = texts.get_texts(as_dictionary=True)
         race_info = dict(races.get_race(username, milestone_number))

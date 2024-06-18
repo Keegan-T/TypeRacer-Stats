@@ -7,7 +7,7 @@ import urls
 from config import prefix
 from database.bot_users import get_user
 from api.users import get_stats
-from api.races import get_race_info
+from api.races import get_race
 import commands.recent as recent
 import database.races_300 as races_300
 from commands.basic.realspeed import get_args
@@ -54,7 +54,7 @@ async def run(ctx, user, username, race_number, universe):
     elif race_number < 1:
         race_number = stats["races"] + race_number
 
-    race_info = await get_race_info(username, race_number, get_raw=True, universe=universe)
+    race_info = await get_race(username, race_number, get_raw=True, universe=universe)
     if not race_info or "unlagged" not in race_info:
         return await ctx.send(embed=errors.logs_not_found(username, race_number, universe))
 
