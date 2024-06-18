@@ -51,8 +51,8 @@ async def get_race_details(html, get_raw=False, get_opponents=False, universe="p
     if not username_td:
         return None
 
-    racer = username_td.find_next_sibling("td").get_text(strip=True)
-    username = racer.split("(")[1][:-1]
+    racer = username_td.find_next_sibling("td").find("a").get("href")
+    username = racer.split("=")[1]
 
     number_td = soup.find("td", string="Race Number")
     race_number = int(number_td.find_next_sibling("td").get_text(strip=True))
