@@ -6,25 +6,25 @@ from commands.basic.realspeedaverage import command_in_use
 import utils
 
 command = {
-    "name": "pointline",
-    "aliases": ["pl"],
-    "description": "Displays a graph of user's points over time",
+    "name": "textsline",
+    "aliases": ["tl"],
+    "description": "Displays a graph of user's texts typed over time",
     "parameters": "<date> [username] <username_2> ... <username_10> <date>",
     "usages": [
-        "pointline keegant",
-        "pointline 2022-04-20 keegant",
-        "pointline 4/20/22 keegant 1/1/24",
-        "pointline keegant mark40511 charlieog wordracer888 deroche1",
+        "textsline rektless",
+        "textsline 2023-09-01 clergy",
+        "textsline 2024-01-01 keegant 2024-06-01",
+        "textsline rektless clergy charlieog keegant xanderec",
     ],
 }
 
 
-class PointLine(commands.Cog):
+class TextsLine(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command(aliases=command["aliases"])
-    async def pointline(self, ctx, *args):
+    async def textsline(self, ctx, *args):
         if locks.line_lock.locked():
             return await ctx.send(embed=command_in_use())
 
@@ -36,8 +36,8 @@ class PointLine(commands.Cog):
                 return await ctx.send(embed=result)
 
             usernames, start_date, end_date = result
-            await run(ctx, user, usernames, start_date, end_date, column="points")
+            await run(ctx, user, usernames, start_date, end_date, column="text_id")
 
 
 async def setup(bot):
-    await bot.add_cog(PointLine(bot))
+    await bot.add_cog(TextsLine(bot))
