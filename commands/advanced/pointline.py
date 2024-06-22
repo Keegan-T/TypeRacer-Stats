@@ -37,7 +37,7 @@ class PointLine(commands.Cog):
                 return await ctx.send(embed=result)
 
             usernames, start_date, end_date = result
-            await run(ctx, user, usernames, start_date, end_date, points=True)
+            await run(ctx, user, usernames, start_date, end_date, column="points")
 
 
 async def setup(bot):

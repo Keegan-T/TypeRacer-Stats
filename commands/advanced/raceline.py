@@ -11,6 +11,7 @@ import database.races as races
 import database.users as users
 import commands.locks as locks
 from commands.basic.realspeedaverage import command_in_use
+from database.texts import get_disabled_text_ids
 
 command = {
     "name": "raceline",
@@ -88,10 +89,11 @@ def get_args(user, args, info):
     return unique_usernames, start_date, end_date
 
 
-async def get_lines(usernames, start_date, end_date, points=False):
+async def get_lines(usernames, start_date, end_date, column="number"):
     lines = []
     min_timestamp = float("inf")
-    columns = ["points" if points else "number", "timestamp"]
+    columns = [column, "timestamp"]
+    disabled_text_ids = get_disabled_text_ids()
     for username in usernames:
         race_list = await races.get_races(
             username, columns=columns, start_time=start_date.timestamp(), end_time=end_date.timestamp())
@@ -101,19 +103,32 @@ async def get_lines(usernames, start_date, end_date, points=False):
         x, y = [race_list[0][1]], [0]
         race_count = race_list[-1][0]
         point_count = 0
+        unique_texts = set()
+
         for i, race in enumerate(race_list):
-            timestamp = race[1]
+            text_id, timestamp = race
             if timestamp < min_timestamp:
                 min_timestamp = timestamp
 
             x.append(timestamp)
-            if points:
+
+            if column == "number":
+                y.append(race[0] - race_list[0][0] + 1)
+            elif column == "points":
                 y.append(point_count)
                 point_count += race[0]
             else:
-                y.append(race[0] - race_list[0][0] + 1)
+                y.append(len(unique_texts))
+                if text_id not in disabled_text_ids:
+                    unique_texts.add(text_id)
 
-        lines.append((username, x, y, point_count if points else race_count, min_timestamp))
+        max_value = race_count
+        if column == "points":
+            max_value = point_count
+        elif column == "text_id":
+            max_value = len(unique_texts)
+
+        lines.append((username, x, y, max_value, min_timestamp))
 
     if len(lines) == 0:
         return lines
@@ -130,13 +145,17 @@ async def get_lines(usernames, start_date, end_date, points=False):
     return lines
 
 
-async def run(ctx, user, usernames, start_date, end_date, points=False):
-    lines = await get_lines(usernames, start_date, end_date, points)
+async def run(ctx, user, usernames, start_date, end_date, column="number"):
+    lines = await get_lines(usernames, start_date, end_date, column)
 
     if not lines:
         return await ctx.send(embed=no_data())
 
-    kind = "Points" if points else "Races"
+    kind = "Races"
+    if column == "points":
+        kind = "Points"
+    elif column == "text_id":
+        kind = "Texts Typed"
     title = f"{kind} Over Time"
     if len(lines) == 1:
         title += f" - {lines[0][0]}"
