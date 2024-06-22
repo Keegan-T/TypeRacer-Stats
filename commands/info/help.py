@@ -62,6 +62,9 @@ async def help_main(ctx, user):
             if file.endswith(".py") and not file.startswith("_") and not file.startswith("help"):
                 command_list[group].append(file[:-3])
 
+    for key in command_list.keys():
+        command_list[key].sort(key=lambda x: x[0])
+
     account_commands = ", ".join(f"`{cmd}`" for cmd in command_list["account"])
     info_commands = ", ".join(f"`{cmd}`" for cmd in command_list["info"])
     general_commands = ", ".join(f"`{cmd}`" for cmd in command_list["general"])
