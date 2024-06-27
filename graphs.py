@@ -91,7 +91,7 @@ def get_interpolated_segments(x, y):
 def cmap_line(ax, line_index, user):
     line_width = 1
     cmap = get_cmap(user)
-    if int(user["id"]) == bot_owner:
+    if int(user["id"]) == bot_owner: # if cmap == "keegant": line_width = 2
         line_width = 2
 
     line = ax.get_lines()[line_index]
@@ -385,15 +385,18 @@ def improvement(user, wpm, title, file_name, timeframe="", timestamps=None):
 
     ax = plt.subplots()[1]
 
-    max_window = 50 if text_graph else 500
-    window_size = min(max(len(wpm) // 15, 1), max_window)
-    moving_wpm = np.convolve(wpm, np.ones(window_size) / window_size, mode="valid")
-
     downsample_factor = max(len(wpm) // 100000, 1)
     downsampled_indices = np.arange(0, len(wpm), downsample_factor)
-    downsampled_data = wpm[downsampled_indices]
+    downsampled_wpm = wpm[downsampled_indices]
 
-    x_points = np.arange(window_size - 1, len(wpm))
+    max_window = 50 if text_graph else 500
+    window_size = min(max(len(wpm) // 15, 1), max_window)
+
+    if len(wpm) > 10000:
+        downsample_factor *= 10
+
+    moving_wpm = np.convolve(wpm, np.ones(window_size) / window_size, mode="valid")[0::downsample_factor]
+    x_points = np.arange(window_size - 1, len(wpm))[0::downsample_factor]
 
     if timestamps:
         timestamps = np.array(timestamps)
@@ -414,7 +417,7 @@ def improvement(user, wpm, title, file_name, timeframe="", timestamps=None):
     bg_color = hex2color(user["colors"]["graphbackground"])
     point_color = "white" if np.mean(bg_color) < 0.5 else "black"
 
-    ax.scatter(downsampled_indices, downsampled_data, alpha=0.1, s=25, color=point_color, edgecolors="none")
+    ax.scatter(downsampled_indices, downsampled_wpm, alpha=0.1, s=25, color=point_color, edgecolors="none")
 
     # Interpolating for smooth colormaps
     segment_count = 50 // (len(moving_wpm) - 1) if len(moving_wpm) > 1 else 1
