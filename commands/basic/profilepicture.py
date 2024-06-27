@@ -33,7 +33,7 @@ async def run(ctx, username):
     if not stats:
         return await ctx.send(embed=errors.invalid_username())
 
-    await ctx.send(content=f"https://data.typeracer.com/misc/pic?uid=tr:{username}")
+    await ctx.send(content=f"https://data.typeracer.com/misc/pic?uid=tr:{username}&refresh=1")
 
 async def setup(bot):
     await bot.add_cog(ProfilePicture(bot))
