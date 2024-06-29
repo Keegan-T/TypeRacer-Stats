@@ -3,8 +3,8 @@ from discord.ext import commands
 import utils
 import errors
 import colors
-from dateutil import parser
 from datetime import datetime, timezone
+from dateutil.relativedelta import relativedelta
 from database.bot_users import get_user
 import database.users as users
 import database.races as races
@@ -50,6 +50,29 @@ def get_args(user, args, info):
     end_date = None
     start_number = None
     end_number = None
+
+    if len(args) > 1 and args[1]:
+        params = "username category:day|week|month|year"
+        result = utils.parse_command(user, params, args, info)
+        if not utils.is_embed(result):
+            username, date = result
+            now = utils.now()
+            if date == "day":
+                start_date = utils.floor_day(now)
+                end_date = start_date + relativedelta(days=1)
+            elif date == "week":
+                start_date = utils.floor_week(now)
+                end_date = start_date + relativedelta(weeks=1)
+            elif date == "month":
+                start_date = utils.floor_month(now)
+                end_date = start_date + relativedelta(months=1)
+            elif date == "year":
+                start_date = utils.floor_year(now)
+                end_date = start_date + relativedelta(years=1)
+
+            end_date -= relativedelta(microseconds=1)
+
+            return username, start_date, end_date, start_number, end_number
 
     params = "username int int"
     result = utils.parse_command(user, params, args, info)
