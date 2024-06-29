@@ -125,7 +125,7 @@ async def run(ctx, user, kind, sort, date):
         title += " (By WPM)"
     title += f" - {date_string}"
 
-    competition = competitions_api.get_competition_info(date, kind, sort, 10)
+    competition = await competitions_api.get_competition_info(date, kind, sort, 10)
     date_string = date.strftime("%Y-%m-%d")
     competition_url = f"https://data.typeracer.com/pit/competitions?date={date_string}&sort={sort}&kind={kind}"
     if not competition:

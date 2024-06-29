@@ -83,7 +83,7 @@ async def run(ctx, user, username, date):
     if command_name in week_commands:
         if command_name in week_commands[2:6]:
             date -= relativedelta(days=7)
-        competition = get_competition_info(date, "week", results_per_page=1)
+        competition = await get_competition_info(date, "week", results_per_page=1)
         start_date = utils.floor_week(date)
         end_date = start_date + relativedelta(days=7)
         start_time = start_date.timestamp()
@@ -94,7 +94,7 @@ async def run(ctx, user, username, date):
     elif command_name in month_commands:
         if command_name in month_commands[2:6]:
             date -= relativedelta(months=1)
-        competition = get_competition_info(date, "month", results_per_page=1)
+        competition = await get_competition_info(date, "month", results_per_page=1)
         start_date = utils.floor_month(date)
         end_date = start_date + relativedelta(months=1)
         start_time = start_date.timestamp()
@@ -105,7 +105,7 @@ async def run(ctx, user, username, date):
     elif command_name in year_commands:
         if command_name in year_commands[2:6]:
             date -= relativedelta(years=1)
-        competition = get_competition_info(date, "year", results_per_page=1)
+        competition = await get_competition_info(date, "year", results_per_page=1)
         start_date = utils.floor_year(date)
         end_date = start_date + relativedelta(years=1)
         start_time = start_date.timestamp()
@@ -116,7 +116,7 @@ async def run(ctx, user, username, date):
     else:
         if command_name in command["aliases"][3:]:
             date -= timedelta(days=1)
-        competition = get_competition_info(date, "day", results_per_page=1)
+        competition = await get_competition_info(date, "day", results_per_page=1)
         start_time = utils.floor_day(date).timestamp()
         end_time = start_time + 86400
         title = f"Daily Stats - {utils.get_display_date(date)}"

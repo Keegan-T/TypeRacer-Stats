@@ -1,12 +1,11 @@
-import requests
-from datetime import datetime, timezone
+import aiohttp
+from datetime import timezone
 from bs4 import BeautifulSoup
 from dateutil import parser
 from dateutil.relativedelta import relativedelta
-import json
 import re
 
-def get_competition_info(date, kind, sort="points", results_per_page=20):
+async def get_competition_info(date, kind, sort="points", results_per_page=20):
     sort_names = {
         "races": "gamesFinished",
         "points": "points",
@@ -18,7 +17,11 @@ def get_competition_info(date, kind, sort="points", results_per_page=20):
 
     date_string = date.strftime('%Y-%m-%d')
     url = f"https://data.typeracer.com/pit/competitions?date={date_string}&sort={sort}&kind={kind}&n={results_per_page}"
-    html = requests.get(url).text
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            if response.status != 200:
+                return None
+            html = await response.text()
     if "No results" in html:
         return None
     soup = BeautifulSoup(html, "html.parser")
@@ -42,18 +45,18 @@ def get_competition_info(date, kind, sort="points", results_per_page=20):
         average_wpm = float(columns[3].text.strip().split()[0])
 
         user_data = {
-            'username': username,
-            'country': country,
-            'races': races,
-            'points': points,
-            'accuracy': accuracy,
-            'best_wpm': best_wpm,
-            'average_wpm': average_wpm
+            "username": username,
+            "country": country,
+            "races": races,
+            "points": points,
+            "accuracy": accuracy,
+            "best_wpm": best_wpm,
+            "average_wpm": average_wpm
         }
 
         competitors.append(user_data)
 
-    end_span = soup.find('span', style='font-weight: bold;')
+    end_span = soup.find("span", style="font-weight: bold;")
     end_string = end_span.get_text(strip=True)
     end_string = " ".join(end_string.split(" ")[:3])
     end_timestamp = parser.parse(end_string).replace(tzinfo=timezone.utc).timestamp()
@@ -64,7 +67,7 @@ def get_competition_info(date, kind, sort="points", results_per_page=20):
     }
 
 
-def get_competition(date, kind):
+async def get_competition(date, kind):
     duration = relativedelta(days=1)
     if kind == "week":
         duration = relativedelta(weeks=1)
@@ -73,8 +76,10 @@ def get_competition(date, kind):
     elif kind == "year":
         duration = relativedelta(years=1)
 
-    point_leaders = get_competition_info(date, kind, "points", 100)["competitors"]
-    race_leaders = get_competition_info(date, kind, "races", 100)["competitors"]
+    point_competition = await get_competition_info(date, kind, "points", 100)
+    point_leaders = point_competition["competitors"]
+    race_competition = await get_competition_info(date, kind, "races", 100)
+    race_leaders = race_competition["competitors"]
     competitors_dict = {}
 
     for racer in point_leaders:
@@ -89,9 +94,9 @@ def get_competition(date, kind):
     end_time = (date + duration).timestamp()
 
     return {
-        'id': f"{kind[0].upper()}{date.strftime('%Y-%m-%d')}",
-        'competitors': competitors,
-        'type': kind,
-        'start_time': start_time,
-        'end_time': end_time,
+        "id": f"{kind[0].upper()}{date.strftime('%Y-%m-%d')}",
+        "competitors": competitors,
+        "type": kind,
+        "start_time": start_time,
+        "end_time": end_time,
     }

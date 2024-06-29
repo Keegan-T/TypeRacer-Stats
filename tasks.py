@@ -25,7 +25,7 @@ async def import_competitions():
     while day_check < now:
         start = day_check - offset
         print(f"Importing new daily competition: {start}")
-        competition = get_competition(start, "day")
+        competition = await get_competition(start, "day")
         competition_results.add_results(competition)
         day_check += relativedelta(days=1)
 
@@ -35,7 +35,7 @@ async def import_competitions():
     while week_check < now:
         start = week_check - offset
         print(f"Importing new weekly competition: {week_check - offset}")
-        competition = get_competition(start, "week")
+        competition = await get_competition(start, "week")
         competition_results.add_results(competition)
         week_check += relativedelta(weeks=1)
 
@@ -45,7 +45,7 @@ async def import_competitions():
     while month_check < now:
         start = month_check - offset
         print(f"Importing new monthly competition: {month_check - offset}")
-        competition = get_competition(start, "month")
+        competition = await get_competition(start, "month")
         competition_results.add_results(competition)
         month_check += relativedelta(months=1)
 
@@ -55,7 +55,7 @@ async def import_competitions():
     while year_check < now:
         start = year_check - offset
         print(f"Importing new yearly competition: {year_check - offset}")
-        competition = get_competition(start, "year")
+        competition = await get_competition(start, "year")
         competition_results.add_results(competition)
         year_check += relativedelta(years=1)
 
