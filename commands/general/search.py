@@ -152,7 +152,7 @@ async def run(ctx, user, query):
                 similarity = (1 - (result["leven"]["distance"] / query_length)) * 100
                 results_string += f" - {similarity:,.2f}% Match"
 
-            results_string += f' - [Ghost]({result["ghost"]})\n"{substring}"\n'
+            results_string += f' - {len(quote):,} characters - [Ghost]({result["ghost"]})\n"{substring}"\n'
 
     embed = Embed(
         title=title,

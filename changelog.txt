@@ -107,3 +107,6 @@
 6/27/2024
 - Optimized -improvement speeds
 - Added refresh to profile pictures
+
+6/28/2024
+- Added quote length to -search results
