@@ -106,7 +106,7 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
         links.append(urls.replay(username, i, universe))
 
     race_htmls = await get_race_html_bulk(links)
-    race_list = [await get_race_details(html, get_raw=raw) for html in race_htmls]
+    race_list = [await get_race_details(html, get_raw=raw, universe=universe) for html in race_htmls]
 
     missed_races = []
 
