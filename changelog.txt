@@ -111,3 +111,4 @@
 6/28/2024
 - Added quote length to -search results
 - Added -improvement shorthands (-improvement username day)
+- Truncated long segments -wpmsegments

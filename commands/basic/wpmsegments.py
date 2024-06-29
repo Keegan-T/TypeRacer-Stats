@@ -85,6 +85,8 @@ async def run(ctx, user, username, race_number, universe):
     )
     for segment in segments:
         segment_text = utils.escape_discord_format(segment["text"]).replace("-", "\\-")
+        if len(segment_text) > 100:
+            segment_text = f"{segment_text[:100]}..."
         description += f"**{segment['wpm']:,.2f} WPM"
         if segment["wpm"] < segment["raw_wpm"]:
             description += f" ({segment['raw_wpm']:,.2f} Raw)"
