@@ -4,9 +4,8 @@ import graphs
 import utils
 import errors
 import colors
-from config import prefix
+from config import prefix, bot_owner
 from database.bot_users import get_user, update_colors
-import matplotlib.pyplot as plt
 
 elements = {
     "embed": "Embed",
@@ -85,8 +84,11 @@ async def get_args(ctx, user, args):
 
     color = utils.parse_color(args[1])
     if color is None:
-        if element == "line" and args[1] in plt.colormaps():
+        if element == "line" and args[1] in graphs.plt.colormaps():
             color = args[1]
+            if color == "keegant" and ctx.author.id != bot_owner:
+                await ctx.send(embed=not_worthy())
+                raise ValueError
         else:
             await ctx.send(embed=invalid_color())
             raise ValueError
@@ -164,6 +166,14 @@ def invalid_color():
     return Embed(
         title="Invalid Color",
         description="Failed to recognize this color",
+        color=colors.error,
+    )
+
+
+def not_worthy():
+    return Embed(
+        title="Not Worthy",
+        description="This colormap is reserved.",
         color=colors.error,
     )
 

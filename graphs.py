@@ -18,7 +18,8 @@ rcParams["axes.prop_cycle"] = plt.cycler(color=default_palette)
 rcParams["font.family"] = "sans-serif"
 rcParams["font.sans-serif"] = ["Exo 2"]
 rcParams["font.size"] = 11
-cmap_keegant = LinearSegmentedColormap.from_list('keegant', ["#0094FF", "#FF00DC"])
+cmap_keegant = LinearSegmentedColormap.from_list("keegant", ["#0094FF", "#FF00DC"])
+plt.register_cmap(name="keegant", cmap=cmap_keegant)
 
 class LineHandler(HandlerLine2D):
     def create_artists(self, legend, orig_handle, xdescent, ydescent, width, height, fontsize, trans):
@@ -36,19 +37,12 @@ class CollectionHandler(HandlerLineCollection):
         lc.set_array(x)
         return [lc]
 
-def get_cmap(user):
-    cmap = plt.get_cmap(user["colors"]["line"])
-    if int(user["id"]) == bot_owner and cmap.name == "cool":
-        cmap = cmap_keegant
-
-    return cmap
 
 def date_x_ticks(ax, min_timestamp, max_timestamp):
     date_range = max_timestamp - min_timestamp
     step = date_range / 5
 
     ticks = [min_timestamp + step * i for i in range(6)]
-    # labels = [datetime.fromtimestamp(ts, timezone.utc).strftime("%#m/%#d/%y") for ts in ticks]
     labels = [datetime.fromtimestamp(ts, timezone.utc).strftime("%b %#d '%y") for ts in ticks]
 
     ax.set_xticks(ticks)
@@ -90,8 +84,8 @@ def get_interpolated_segments(x, y):
 
 def cmap_line(ax, line_index, user):
     line_width = 1
-    cmap = get_cmap(user)
-    if int(user["id"]) == bot_owner: # if cmap == "keegant": line_width = 2
+    cmap = plt.get_cmap(user["colors"]["line"])
+    if cmap.name == "keegant":
         line_width = 2
 
     line = ax.get_lines()[line_index]
@@ -108,7 +102,7 @@ def cmap_line(ax, line_index, user):
 
 
 def cmap_histogram(ax, user, counts, groups):
-    cmap = get_cmap(user)
+    cmap = plt.get_cmap(user["colors"]["line"])
 
     mask = np.zeros((len(groups), 2))
     mask[:, 0] = np.concatenate([groups[:-1], [groups[-1]]])
@@ -132,7 +126,7 @@ def cmap_histogram(ax, user, counts, groups):
     ax.fill_between([groups[-1], extent[1]], [0, 0], [extent[3], extent[3]], color=graph_background)
 
 def cmap_compare(ax, user, counts, groups, extent):
-    cmap = get_cmap(user)
+    cmap = plt.get_cmap(user["colors"]["line"])
 
     mask = np.zeros((len(groups), 2))
     mask[:, 0] = np.concatenate([groups[:-1], [groups[-1]]])
@@ -155,7 +149,7 @@ def cmap_compare(ax, user, counts, groups, extent):
 
 
 def cmap_bar(ax, user, labels, wpm, raw_wpm):
-    cmap = get_cmap(user)
+    cmap = plt.get_cmap(user["colors"]["line"])
 
     bars = ax.bar(labels, wpm, alpha=0)
     original_ylim = ax.get_ylim()
@@ -526,7 +520,7 @@ def histogram(user, username, values, category, file_name):
         cmap_histogram(ax, user, counts, groups)
 
     # if color in plt.colormaps():
-    #     cmap = get_cmap(user)
+    #     cmap = plt.get_cmap(user["colors"]["line"])
     #     counts, groups = np.histogram(values, bins=bins)
     #     patches = ax.bar(groups[:-1], counts, width=np.diff(groups), align="edge")
     #     for i, patch in enumerate(patches):
