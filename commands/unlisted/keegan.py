@@ -19,7 +19,7 @@ class Keegan(commands.Cog):
 
 async def run(ctx):
     embed = Embed(
-        description="[But can you do this?](https://www.youtube.com/watch?v=9-cRwoIjfKM)",
+        description="Welcome To The Multiverse.",
         color=0,
     )
 
