@@ -93,7 +93,11 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, universe="play
     else:
         print(f"Importing new data for {username} (Universe: {universe})")
         new_user = True
-        joined = await get_joined(username)
+        play_user = users.get_user(username, "play")
+        if play_user:
+            joined = play_user["joined"]
+        else:
+            joined = await get_joined(username)
         if not joined:
             if invoked:
                 await ctx.send(embed=errors.invalid_username())

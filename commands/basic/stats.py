@@ -51,13 +51,17 @@ async def run(ctx, user, username):
     if not stats:
         return await ctx.send(embed=errors.invalid_username())
 
-    db_stats = users.get_user(username)
+    db_stats = users.get_user(username, universe)
     if universe == "play" and db_stats:
         stats["wpm_best"] = db_stats["wpm_best"]
         stats["points"] += db_stats["points_retroactive"]
         joined = db_stats["joined"]
     else:
-        joined = await get_joined(username)
+        play_user = users.get_user(username, "play")
+        if play_user:
+            joined = play_user["joined"]
+        else:
+            joined = await get_joined(username)
         if not joined:
             return await ctx.send(embed=errors.invalid_username())
 
