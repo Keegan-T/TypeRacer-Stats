@@ -24,7 +24,7 @@ class DatabaseStats(commands.Cog):
 
 
 async def run(ctx, user):
-    stats = users.get_stats()
+    stats = users.get_database_stats()
 
     embed = Embed(
         title="Database Stats",

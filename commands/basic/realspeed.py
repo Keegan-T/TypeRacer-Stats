@@ -33,7 +33,6 @@ command = {
         "realspeed keegant -1",
         "realspeed https://data.typeracer.com/pit/result?id=|tr:keegant|1000000",
     ],
-    "multiverse": True,
 }
 
 

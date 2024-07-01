@@ -64,27 +64,41 @@ def get_args(user, args, info):
     return username, category, text_id
 
 
-async def run(ctx, user, username, category, text_id, reverse=True):
-    stats = users.get_user(username)
-    if not stats:
-        return await ctx.send(embed=errors.import_required(username))
+"""
+universe = user["universe"]
+, universe
+, universe=universe
+utils.add_profile(embed, stats, universe)
+utils.add_universe(embed, universe)
+"""
 
-    text_list = texts.get_texts(as_dictionary=True)
+
+async def run(ctx, user, username, category, text_id, reverse=True):
+    universe = user["universe"]
+    stats = users.get_user(username, universe)
+    if not stats:
+        return await ctx.send(embed=errors.import_required(username, universe))
+
+    text_list = texts.get_texts(as_dictionary=True, universe=universe)
     limit = 10
     if text_id is not None:
+        text_id = int(text_id)
         if text_id not in text_list:
-            return await ctx.send(embed=errors.unknown_text())
+            return await ctx.send(embed=errors.unknown_text(universe))
         text = text_list[text_id]
         text["text_id"] = text_id
-        race_list = sorted(races.get_text_races(username, text_id), key=lambda x: x["wpm"], reverse=reverse)[:limit]
+        race_list = races.get_text_races(username, text_id, universe)
+        race_list.sort(key=lambda x: x["wpm"], reverse=reverse)
+        race_list = race_list[:limit]
         limit = len(race_list)
         embed = Embed()
         embed.color = user["colors"]["embed"]
-        utils.add_profile(embed, stats)
+        utils.add_profile(embed, stats, universe)
+        utils.add_universe(embed, universe)
         recent.text_id = text_id
 
         if limit == 0:
-            description = utils.text_description(text)
+            description = utils.text_description(text, universe)
             embed.title = f"Top 10 {'Best' if reverse else 'Worst'} Races"
             embed.description = (description + "\n\nUser has no races on this text\n"
                                                f"[Race this text]({text['ghost']})")
@@ -95,10 +109,10 @@ async def run(ctx, user, username, category, text_id, reverse=True):
 
         for race in race_list:
             score = f"{race['wpm']:,.2f} WPM"
-            average += race[category]
+            average += race["wpm"]
             top += (
                 f"[{score}]"
-                f"({urls.replay(username, race['number'])})"
+                f"({urls.replay(username, race['number'], universe)})"
                 f" - Race #{race['number']:,} - "
                 f"<t:{int(race['timestamp'])}:R>\n"
             )
@@ -107,7 +121,7 @@ async def run(ctx, user, username, category, text_id, reverse=True):
         average_score = f"{average:,.2f} WPM"
 
         top = (
-            f"{utils.text_description(text)}\n\n"
+            f"{utils.text_description(text, universe)}\n\n"
             f"**{'Best' if reverse else 'Worst'} {limit} Average:** {average_score}\n\n"
             f"{top}"
         )
@@ -116,10 +130,11 @@ async def run(ctx, user, username, category, text_id, reverse=True):
         embed.description = top
 
     else:
-        race_list = await races.get_races(username, with_texts=True, order_by=category, reverse=reverse, limit=limit)
-
+        race_list = await races.get_races(
+            username, with_texts=True, order_by=category,
+            reverse=reverse, limit=limit, universe=universe
+        )
         limit = len(race_list)
-
         top = ""
         average = 0
 
@@ -133,10 +148,10 @@ async def run(ctx, user, username, category, text_id, reverse=True):
             average += race[category]
             top += (
                 f"[{score}]"
-                f"({urls.replay(username, race['number'])})"
+                f"({urls.replay(username, race['number'], universe)})"
                 f" - Race #{race['number']:,} - "
-                f"[Text #{text_id}]({urls.trdata_text(text_id)}) - "
-                f"<t:{int(race['timestamp'])}:R>\n{quote}\n\n"
+                f"[Text #{text_id}]({urls.trdata_text(text_id, universe)}) - "
+                f"<t:{int(race['timestamp'])}:R>\n\"{quote}\"\n\n"
             )
 
         average /= limit
@@ -150,7 +165,8 @@ async def run(ctx, user, username, category, text_id, reverse=True):
             color=user["colors"]["embed"],
         )
 
-    utils.add_profile(embed, stats)
+    utils.add_profile(embed, stats, universe)
+    utils.add_universe(embed, universe)
 
     await ctx.send(embed=embed)
 

@@ -47,24 +47,25 @@ def get_args(user, args, info):
 
 
 async def run(ctx, user, username, text_id):
-    stats = users.get_user(username)
+    universe = user["universe"]
+    stats = users.get_user(username, universe)
     if not stats:
-        return await ctx.send(embed=errors.import_required(username))
+        return await ctx.send(embed=errors.import_required(username, universe))
 
-    api_stats = get_stats(username)
-    await download(stats=api_stats)
+    api_stats = get_stats(username, universe=universe)
+    await download(stats=api_stats, universe=universe)
 
-    text = texts.get_text(text_id)
+    text = texts.get_text(text_id, universe)
     if text is None:
-        return await ctx.send(embed=errors.unknown_text())
+        return await ctx.send(embed=errors.unknown_text(universe))
 
     max_saves = 10
     description = (
-        f'**Text** [#{text_id}]({urls.trdata_text(text_id)}) - [Ghost]({text["ghost"]})\n'
+        f'**Text** [#{text_id}]({urls.trdata_text(text_id, universe)}) - [Ghost]({text["ghost"]})\n'
         f'"{utils.truncate_clean(text["quote"], 1000)}"'
     )
 
-    race_list = races.get_text_races(username, text_id)
+    race_list = races.get_text_races(username, text_id, universe)
     recent_scores = []
     now = datetime.now().timestamp()
 
@@ -86,7 +87,7 @@ async def run(ctx, user, username, text_id):
         for score in recent_scores[::-1]:
             description += (
                 f"{utils.format_duration_short(now - score['timestamp'])} ago - "
-                f"[{score['wpm']:,} WPM]({urls.replay(username, score['number'])})\n"
+                f"[{score['wpm']:,} WPM]({urls.replay(username, score['number'], universe)})\n"
             )
 
     embed = Embed(
@@ -94,7 +95,8 @@ async def run(ctx, user, username, text_id):
         description=description,
         color=user["colors"]["embed"],
     )
-    utils.add_profile(embed, api_stats)
+    utils.add_profile(embed, api_stats, universe)
+    utils.add_universe(embed, universe)
 
     await ctx.send(embed=embed)
     recent.text_id = text_id

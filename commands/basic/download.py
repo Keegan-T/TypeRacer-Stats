@@ -13,7 +13,7 @@ import database.competition_results as competition_results
 import asyncio
 from database.bot_users import get_user
 from api.users import get_stats, get_joined
-from api.texts import get_quote
+from api.texts import get_quote, get_text_list
 from api.races import get_races
 from commands.basic.stats import get_args
 from config import bot_admins
@@ -48,16 +48,17 @@ class Download(commands.Cog):
             return await ctx.send(embed=result)
 
         username = result
+        universe = user["universe"]
 
         async with import_lock:
-            await run(username, ctx=ctx, bot_user=user)
+            await run(username, ctx=ctx, bot_user=user, universe=universe)
 
 
-async def run(username=None, stats=None, ctx=None, bot_user=None, override=False):
+async def run(username=None, stats=None, ctx=None, bot_user=None, universe="play", override=False):
     invoked = True if ctx else False
 
     if not stats:
-        stats = get_stats(username)
+        stats = get_stats(username, universe=universe)
         if not stats:
             if invoked:
                 await ctx.send(embed=errors.invalid_username())
@@ -67,15 +68,15 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, override=False
 
     if stats["races"] == 0:
         if invoked:
-            await ctx.send(embed=errors.no_races())
+            await ctx.send(embed=errors.no_races(universe))
         return
 
-    user = users.get_user(username)
+    user = users.get_user(username, universe)
     races_left = stats["races"]
     start_time = 0
 
     if user:
-        print(f"Updating data for {username}")
+        print(f"Updating data for {username} (Universe: {universe})")
         new_user = False
         stats["joined"] = user["joined"]
         stats["wpm_best"] = user["wpm_best"]
@@ -90,7 +91,7 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, override=False
             races_300.delete_user_scores(username)
 
     else:
-        print(f"Importing new data for {username}")
+        print(f"Importing new data for {username} (Universe: {universe})")
         new_user = True
         joined = await get_joined(username)
         if not joined:
@@ -104,20 +105,22 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, override=False
 
     if races_left > 10_000 and (invoked and ctx.author.id not in bot_admins) and not override:
         if invoked:
-            await too_many_races(ctx, bot_user, username, races_left)
+            await too_many_races(ctx, bot_user, username, races_left, universe)
         return
 
     new_races = races_left > 0
     if new_races:
         if invoked:
-            await ctx.send(embed=Embed(
+            embed = Embed(
                 title=f"Import Request",
                 description=f"Downloading {races_left:,} new races for {utils.escape_discord_format(username)}",
                 color=bot_user["colors"]["embed"],
-            ))
+            )
+            utils.add_universe(embed, universe)
+            await ctx.send(embed=embed)
         print(f"Downloading {races_left:,} new races for {username}")
 
-    text_list = texts.get_texts(as_dictionary=True)
+    text_list = texts.get_texts(as_dictionary=True, universe=universe)
     end_time = time.time()
     race_list = []
 
@@ -126,7 +129,7 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, override=False
             break
 
         print(f"Fetching races")
-        race_data = await get_races(username, start_time, end_time, 1000)
+        race_data = await get_races(username, start_time, end_time, 1000, universe=universe)
 
         if race_data == -1:  # Request failed
             raise ValueError
@@ -137,7 +140,7 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, override=False
         for race in race_data:
             # Excluding 0 WPM (modified cheated) races
             wpm = race["wpm"]
-            if wpm == 0.0:
+            if wpm == 0.0 and universe == "play":
                 modified_races.add_cheated_race(username, race)
                 continue
 
@@ -150,13 +153,14 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, override=False
                     "id": text_id,
                     "quote": get_quote(text_id),
                     "disabled": 0,
-                    "ghost": urls.ghost(username, race["gn"])
+                    "ghost": urls.ghost(username, race["gn"], universe)
                 }
-                texts.add_text(text)
+                texts.add_text(text, universe)
                 text_list[text_id] = text
 
-                await text_results.update_results(text_id)
-                await asyncio.sleep(2)
+                if universe == "play":
+                    await text_results.update_results(text_id)
+                    await asyncio.sleep(2)
 
             quote = text_list[text_id]["quote"]
 
@@ -187,20 +191,21 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, override=False
         end_time = min(race_list, key=lambda r: r[9])[9] - 0.01
 
     if new_user:
-        users.add_user(username)
-        await update_award_count(username)
+        users.add_user(username, universe)
+        if universe == "play":
+            await update_award_count(username)
 
-    users.update_stats(stats)
+    users.update_stats(stats, universe)
 
     if new_races:
-        races.add_races(race_list)
-        users.update_text_stats(username)
+        races.add_races(race_list, universe)
+        users.update_text_stats(username, universe)
 
     if invoked:
         if new_races:
-            await import_complete(ctx, bot_user, username, notify=races_left > 1000)
+            await import_complete(ctx, bot_user, username, races_left > 1000, universe)
         else:
-            await no_new_races(ctx, bot_user, username)
+            await no_new_races(ctx, bot_user, username, universe)
 
     print(f"Finished importing {username}")
 
@@ -217,40 +222,62 @@ async def update_award_count(username):
     users.update_awards(username, first, second, third)
 
 
-async def no_new_races(ctx, user, username):
+def create_universe(universe):
+    print(f"Creating universe: {universe}")
+
+    print("Creating users table")
+    users.create_table(universe)
+    print("Creating races table")
+    races.create_table(universe)
+
+    print("Creating texts table")
+    texts.create_table(universe)
+    print("Fetching text list")
+    text_list = get_text_list(universe)
+    print("Adding text list")
+    texts.add_texts(text_list, universe)
+    print("Finished creating universe")
+
+
+async def no_new_races(ctx, user, username, universe):
     username = utils.escape_discord_format(username)
-    await ctx.send(
-        embed=Embed(
-            title=f"Import Request",
-            description=f"No new races to import for {username}",
-            color=user["colors"]["embed"],
-        )
+    embed = Embed(
+        title=f"Import Request",
+        description=f"No new races to import for {username}",
+        color=user["colors"]["embed"],
     )
+    utils.add_universe(embed, universe)
+
+    await ctx.send(embed=embed)
 
 
-async def too_many_races(ctx, user, username, races_left):
+async def too_many_races(ctx, user, username, races_left, universe):
     username = utils.escape_discord_format(username)
-    await ctx.send(
-        embed=Embed(
-            title=f"Import Request Rejected",
-            description=f"{races_left:,} new races to import for {username}\n"
-                        f"Users may only import up to 10,000 races at once\n"
-                        f"Have a bot admin run the command",
-            color=user["colors"]["embed"],
-        )
+    embed = Embed(
+        title=f"Import Request Rejected",
+        description=f"{races_left:,} new races to import for {username}\n"
+                    f"Users may only import up to 10,000 races at once\n"
+                    f"Have a bot admin run the command",
+        color=user["colors"]["embed"],
     )
+    utils.add_universe(embed, universe)
+
+    await ctx.send(embed=embed)
 
 
-async def import_complete(ctx, user, username, notify):
+async def import_complete(ctx, user, username, notify, universe):
     ping = f"<@{ctx.author.id}>"
     username = utils.escape_discord_format(username)
+    embed = Embed(
+        title=f"Import Complete",
+        description=f"Finished importing new races for {username}",
+        color=user["colors"]["embed"],
+    )
+    utils.add_universe(embed, universe)
+
     await ctx.send(
         content=ping if notify else "",
-        embed=Embed(
-            title=f"Import Complete",
-            description=f"Finished importing new races for {username}",
-            color=user["colors"]["embed"],
-        )
+        embed=embed
     )
 
 

@@ -282,7 +282,7 @@ def parse_color(color):
     return number
 
 
-def add_profile(embed, stats, pfp=True):
+def add_profile(embed, stats, universe="play", pfp=True):
     username = stats["username"]
     author_icon = (
         f"https://flagsapi.com/{stats['country'].upper()}/flat/64.png"
@@ -295,7 +295,7 @@ def add_profile(embed, stats, pfp=True):
 
     embed.set_author(
         name=username,
-        url=urls.profile(username),
+        url=urls.profile(username, universe),
         icon_url=author_icon,
     )
 
@@ -304,7 +304,10 @@ def add_profile(embed, stats, pfp=True):
 
 def add_universe(embed, universe):
     if universe != "play":
-        embed.set_footer(text=f"Universe: {universe}")
+        footer_text = f"Universe: {universe}"
+        if embed.footer.text:
+            footer_text = f"{embed.footer.text}\n{footer_text}"
+        embed.set_footer(text=footer_text)
 
 
 def truncate_clean(text, max_chars):
@@ -330,7 +333,7 @@ def escape_discord_format(string):
             .replace("`", ""))
 
 
-def text_description(text):
+def text_description(text, universe="play"):
     if "text_id" not in text:
         text["text_id"] = text["id"]
     quote = text["quote"]
@@ -339,7 +342,7 @@ def text_description(text):
     quote = truncate_clean(quote, 1000)
 
     return (f"**Text** - [#{text['text_id']}]"
-            f"({urls.trdata_text(text['text_id'])}) - "
+            f"({urls.trdata_text(text['text_id'], universe)}) - "
             f"{words:,} words - {chars:,} characters\n"
             f'"{quote}"')
 

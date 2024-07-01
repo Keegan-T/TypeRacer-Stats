@@ -34,18 +34,20 @@ class TextBestDistribution(commands.Cog):
 
 
 async def run(ctx, user, username):
-    stats = users.get_user(username)
+    universe = user["universe"]
+    stats = users.get_user(username, universe)
     if not stats:
-        return await ctx.send(embed=errors.import_required(username))
+        return await ctx.send(embed=errors.import_required(username, universe))
 
-    text_list = texts.get_texts(include_disabled=False)
-    text_bests = users.get_text_bests(username)
+    text_list = texts.get_texts(include_disabled=False, universe=universe)
+    text_bests = users.get_text_bests(username, universe=universe)
 
-    top_bracket = min(300, int(10 * (math.floor(text_bests[0]["wpm"] / 10))))
+    top_bracket = int(10 * (math.floor(text_bests[0]["wpm"] / 10)))
     bottom_bracket = int(10 * (math.floor(text_bests[-1]["wpm"] / 10)))
     brackets = []
     spacing = [len(str(top_bracket)), 4, 6, 4]
 
+    previous_over = 0
     for wpm in range(bottom_bracket, top_bracket + 1, 10):
         over = len([text for text in text_bests if text["wpm"] >= wpm])
         completion = f"{(over / len(text_bests)) * 100:,.2f}"
@@ -58,7 +60,10 @@ async def run(ctx, user, username):
         if len(left) > spacing[3]:
             spacing[3] = len(left)
 
+        if over == previous_over:
+            brackets.pop()
         brackets.append((wpm, over, completion, left))
+        previous_over = over
 
     average = stats["text_best_average"]
     texts_typed = stats["texts_typed"]
@@ -100,8 +105,8 @@ async def run(ctx, user, username):
         description=description,
         color=user["colors"]["embed"],
     )
-
-    utils.add_profile(embed, stats)
+    utils.add_profile(embed, stats, universe)
+    utils.add_universe(embed, universe)
 
     await ctx.send(embed=embed)
 

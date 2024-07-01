@@ -27,7 +27,6 @@ command = {
         "realspeed keegant -1",
         "matchgraph https://data.typeracer.com/pit/result?id=play|tr:poem|200000"
     ],
-    "multiverse": True,
 }
 
 

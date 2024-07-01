@@ -41,13 +41,14 @@ async def run(ctx, user, username1, username2):
         username2 = username1
         username1 = user["username"]
 
-    text_bests1 = get_text_bests(username1, race_stats=True)
+    universe = user["universe"]
+    text_bests1 = get_text_bests(username1, race_stats=True, universe=universe)
     if not text_bests1:
-        return await ctx.send(embed=errors.import_required(username1))
+        return await ctx.send(embed=errors.import_required(username1, universe))
 
-    text_bests2 = get_text_bests(username2, race_stats=True)
+    text_bests2 = get_text_bests(username2, race_stats=True, universe=universe)
     if not text_bests2:
-        return await ctx.send(embed=errors.import_required(username2))
+        return await ctx.send(embed=errors.import_required(username2, universe))
 
     tb_dict = {text[0]: text[1] for text in text_bests1}
 
@@ -79,7 +80,7 @@ async def run(ctx, user, username1, username2):
 
     if not data1:
         if not data2:
-            return await ctx.send(embed=no_common_texts())
+            return await ctx.send(embed=no_common_texts(universe))
         data1, data2 = data2, data1
         username1, username2 = username2, username1
         max_gap1, max_gap2 = max_gap2, max_gap1
@@ -90,11 +91,12 @@ async def run(ctx, user, username1, username2):
         color=user["colors"]["embed"],
         url=urls.trdata_compare(username1, username2),
     )
+    utils.add_universe(embed, universe)
 
     same_text = ""
     if wpm_match:
         same_text = (
-            f"Text [#{wpm_match[0]}]({urls.trdata_text(wpm_match[0])}&highlight={username1}) - "
+            f"Text [#{wpm_match[0]}]({urls.trdata_text(wpm_match[0], universe)}&highlight={username1}) - "
             f"{wpm_match[1]:,.2f} WPM \U0001F91D"
         )
 

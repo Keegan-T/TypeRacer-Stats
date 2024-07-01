@@ -52,11 +52,12 @@ async def run(ctx, user, username, n, time_period):
     if n < 1:
         return await ctx.send(embed=errors.greater_than(0))
 
-    stats = users.get_user(username)
+    universe = user["universe"]
+    stats = users.get_user(username, universe)
     if not stats:
-        return await ctx.send(embed=errors.import_required(username))
+        return await ctx.send(embed=errors.import_required(username, universe))
 
-    all_history = await get_history(username, time_period)
+    all_history = await get_history(username, time_period, universe)
     history = [period for period in all_history if period[2] >= n]
     over = len(history)
 
@@ -112,13 +113,14 @@ async def run(ctx, user, username, n, time_period):
         description=description,
         color=user["colors"]["embed"],
     )
-    utils.add_profile(embed, stats)
+    utils.add_profile(embed, stats, universe)
+    utils.add_universe(embed, universe)
 
     await ctx.send(embed=embed)
 
 
-async def get_history(username, kind):
-    race_list = await races.get_races(username, columns=["timestamp"])
+async def get_history(username, kind, universe):
+    race_list = await races.get_races(username, columns=["timestamp"], universe=universe)
     race_list.sort(key=lambda x: x[0])
 
     history = []

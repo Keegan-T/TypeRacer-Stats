@@ -121,7 +121,7 @@ async def help_command(ctx, user, command_info):
         )
 
     if "multiverse" in command_info:
-        embed.set_footer(text="Supports multiverse")
+        embed.set_footer(text="This command does not work in the multiverse")
 
     await ctx.send(embed=embed)
 

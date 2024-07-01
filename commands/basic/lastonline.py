@@ -15,7 +15,6 @@ command = {
     "description": "Displays the time since a user's last race",
     "parameters": "[username]",
     "usages": ["lastonline keegant"],
-    "multiverse": True,
 }
 
 

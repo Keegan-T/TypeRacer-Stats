@@ -56,33 +56,35 @@ async def run(ctx, user, username, milestone, category):
     if milestone <= 0:
         return await ctx.send(embed=errors.greater_than(0))
 
-    stats = users.get_user(username)
+    universe = user["universe"]
+    stats = users.get_user(username, universe)
     if not stats:
-        return await ctx.send(embed=errors.import_required(username))
+        return await ctx.send(embed=errors.import_required(username, universe))
 
     category_title = "WPM"
     if category != "wpm":
         category_title = category.title()
 
     embed = Embed(title=f"Milestone - {milestone:,} {category_title}", color=user["colors"]["embed"])
-    utils.add_profile(embed, stats)
+    utils.add_profile(embed, stats, universe)
+    utils.add_universe(embed, universe)
 
-    milestone_number = users.get_milestone_number(username, milestone, category)
+    milestone_number = users.get_milestone_number(username, milestone, category, universe)
     if not milestone_number:
         embed.description = "User has not achieved this milestone"
         return await ctx.send(embed=embed)
 
     embed.title += f" - Race #{milestone_number:,}"
-    embed.url = urls.replay(username, milestone_number)
+    embed.url = urls.replay(username, milestone_number, universe)
 
-    race_info = await get_race(username, milestone_number)
+    race_info = await get_race(username, milestone_number, universe=universe)
     if not race_info:
-        text_list = texts.get_texts(as_dictionary=True)
-        race_info = dict(races.get_race(username, milestone_number))
+        text_list = texts.get_texts(as_dictionary=True, universe=universe)
+        race_info = dict(races.get_race(username, milestone_number, universe))
         text = text_list[race_info["text_id"]]
         race_info["quote"] = text["quote"]
 
-    add_stats(embed, race_info)
+    add_stats(embed, race_info, universe)
 
     await ctx.send(embed=embed)
 

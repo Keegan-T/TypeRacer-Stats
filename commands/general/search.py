@@ -35,11 +35,12 @@ class Search(commands.Cog):
 
 
 async def run(ctx, user, query):
+    universe = user["universe"]
     query_length = len(query)
     if query_length > 250:
         return await ctx.send(embed=big_query())
 
-    text_list = get_texts()
+    text_list = get_texts(universe=universe)
     query_title = query.replace("`", "")
     query = query.lower()
     search_id = ctx.invoked_with in ["searchid", "id"]
@@ -56,6 +57,7 @@ async def run(ctx, user, query):
                 description=f'No results found.\n**Query:** "{query}"',
                 color=user["colors"]["embed"],
             )
+            utils.add_universe(embed, universe)
             return await ctx.send(embed=embed)
 
     else:
@@ -100,7 +102,7 @@ async def run(ctx, user, query):
         result = results[0]
         quote = utils.truncate_clean(result["quote"], max_chars)
         results_string += (
-            f"\n[#**{result['id']}**]({urls.trdata_text(result['id'])})"
+            f"\n[#**{result['id']}**]({urls.trdata_text(result['id'], universe)})"
             f"{' (Disabled)' * result['disabled']} - [Ghost]({result['ghost']})\n"
             f'"{quote}"\n'
         )
@@ -162,6 +164,8 @@ async def run(ctx, user, query):
 
     if result_count > 10:
         embed.set_footer(text="Use a more specific query to narrow search results")
+
+    utils.add_universe(embed, universe)
 
     await ctx.send(embed=embed)
 

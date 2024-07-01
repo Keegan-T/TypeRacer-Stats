@@ -3,7 +3,7 @@ from discord.ext import commands
 import utils
 import errors
 import urls
-import commands.recent as recents
+import commands.recent as recent
 import database.races as races
 import database.texts as texts
 from database.bot_users import get_user
@@ -26,7 +26,6 @@ command = {
         "race keegant -1",
         "race https://data.typeracer.com/pit/result?id=|tr:keegant|1000000",
     ],
-    "multiverse": True,
 }
 
 
@@ -57,8 +56,7 @@ async def run(ctx, user, username, race_number, universe):
     race_info = await get_race(username, race_number, universe=universe)
 
     if not race_info:
-        if universe == "play":
-            race_info = races.get_race(username, race_number)
+        race_info = races.get_race(username, race_number, universe)
         if not race_info:
             return await ctx.send(embed=errors.race_not_found(username, race_number, universe))
         race_info = dict(race_info)
@@ -74,15 +72,15 @@ async def run(ctx, user, username, race_number, universe):
     utils.add_profile(embed, stats)
     utils.add_universe(embed, universe)
 
-    add_stats(embed, race_info)
+    add_stats(embed, race_info, universe)
 
     await ctx.send(embed=embed)
 
-    recents.text_id = race_info["text_id"]
+    recent.text_id = race_info["text_id"]
 
 
-def add_stats(embed, race_info):
-    embed.description = utils.text_description(race_info)
+def add_stats(embed, race_info, universe):
+    embed.description = utils.text_description(race_info, universe)
 
     rank = race_info["rank"]
     racers = race_info["racers"]

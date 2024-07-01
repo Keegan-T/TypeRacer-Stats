@@ -2,9 +2,36 @@ from database import db
 from database.alts import get_alts
 import urls
 
-def get_texts(as_dictionary=False, include_disabled=True):
+
+def table_name(universe):
+    table = "texts"
+    if universe != "play":
+        table += f"_{universe}"
+
+    return table.replace("-", "_")
+
+
+def create_table(universe):
+    db.run(f"""
+        CREATE TABLE {table_name(universe)} (
+            id INTEGER PRIMARY KEY,
+            quote TEXT,
+            disabled INTEGER,
+            ghost TEXT
+        )    
+    """)
+
+def add_texts(text_list, universe):
+    db.run_many(f"""
+        INSERT OR IGNORE INTO {table_name(universe)}
+        VALUES (?, ?, ?, ?)
+    """, text_list)
+
+
+def get_texts(as_dictionary=False, include_disabled=True, universe="play"):
+    table = table_name(universe)
     texts = db.fetch(f"""
-        SELECT * FROM texts
+        SELECT * FROM {table}
         {'WHERE disabled = 0' * (not include_disabled)}
         ORDER BY id ASC
     """)
@@ -21,9 +48,10 @@ def get_texts(as_dictionary=False, include_disabled=True):
     return [dict(text) for text in texts]
 
 
-def get_text(text_id):
-    text = db.fetch("""
-        SELECT * FROM texts
+def get_text(text_id, universe="play"):
+    table = table_name(universe)
+    text = db.fetch(f"""
+        SELECT * FROM {table}
         WHERE id = ?
     """, [text_id])
 
@@ -33,10 +61,11 @@ def get_text(text_id):
     return text[0]
 
 
-def get_text_count():
-    text_count = db.fetch("""
+def get_text_count(universe="play"):
+    table = table_name(universe)
+    text_count = db.fetch(f"""
         SELECT COUNT(*)
-        FROM texts
+        FROM {table}
         WHERE disabled = 0
     """)[0][0]
 
@@ -52,11 +81,12 @@ def get_disabled_text_ids():
     return [text[0] for text in texts]
 
 
-def add_text(text):
-    db.run("""
-        INSERT INTO texts
+def add_text(text, universe):
+    table = table_name(universe)
+    db.run(f"""
+        INSERT INTO {table}
         VALUES (?, ?, ?, ?)
-    """, [text['id'], text['quote'], False, text["ghost"]])
+    """, [text["id"], text["quote"], False, text["ghost"]])
 
 
 def update_text(text_id, quote):

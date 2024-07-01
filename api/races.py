@@ -8,8 +8,11 @@ from dateutil import parser
 import api.bulk as bulk
 
 
-async def get_races(username, start_time, end_time, races_per_page):
-    url = f"https://data.typeracer.com/games?playerId=tr:{username}&startDate={start_time}&endDate={end_time}&n={races_per_page}"
+async def get_races(username, start_time, end_time, races_per_page, universe="play"):
+    url = (
+        f"https://data.typeracer.com/games?playerId=tr:{username}&startDate={start_time}"
+        f"&endDate={end_time}&n={races_per_page}&universe={universe}"
+    )
 
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:

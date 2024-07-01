@@ -19,6 +19,7 @@ command = {
                    f"`{prefix}leaderboard [n]` will show top n appearances",
     "parameters": "[category]",
     "usages": [f"leaderboard {category}" for category in categories],
+    "multiverse": False,
 }
 
 

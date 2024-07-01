@@ -50,10 +50,11 @@ class Improvement(commands.Cog):
 
 
 async def run(ctx, user, username, start_date, end_date, start_number, end_number, time):
-    stats = users.get_user(username)
+    universe = user["universe"]
+    stats = users.get_user(username, universe)
     if not stats:
         utils.reset_cooldown(ctx.command, ctx)
-        return await ctx.send(embed=errors.import_required(username))
+        return await ctx.send(embed=errors.import_required(username, universe))
 
     if start_number and not end_number:
         end_number = stats["races"]
@@ -66,23 +67,27 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
     if start_date is None and start_number is None:
         timeframe = f" (All-Time)"
         title += " - All-Time"
-        race_list = await races.get_races(username, columns=columns)
+        race_list = await races.get_races(username, columns=columns, universe=universe)
 
     elif start_date is None:
         end_number = min(end_number, stats["races"])
         timeframe = f" {start_number:,} - {end_number:,}"
         title += f" - Races{timeframe}"
         race_list = await races.get_races(
-            username, columns=columns, start_number=start_number, end_number=end_number)
+            username, columns=columns, start_number=start_number,
+            end_number=end_number, universe=universe
+        )
 
     else:
         timeframe = f" ({utils.get_display_date_range(start_date, end_date)})"
         title += f" - {utils.get_display_date_range(start_date, end_date)}"
         race_list = await races.get_races(
-            username, columns=columns, start_time=start_date.timestamp(), end_time=end_date.timestamp())
+            username, columns=columns, start_time=start_date.timestamp(),
+            end_time=end_date.timestamp(), universe=universe
+        )
 
     if len(race_list) == 0:
-        return await ctx.send(embed=errors.no_races_in_range())
+        return await ctx.send(embed=errors.no_races_in_range(universe))
 
     race_list.sort(key=lambda x: x[1])
     wpm = []
@@ -123,11 +128,12 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         description=description,
         color=user["colors"]["embed"],
     )
-    utils.add_profile(embed, stats)
+    utils.add_profile(embed, stats, universe)
+    utils.add_universe(embed, universe)
 
     title = f"WPM Improvement - {username}"
     file_name = f"improvement_{username}.png"
-    graphs.improvement(user, wpm, title, file_name, timeframe, timestamps if time else None)
+    graphs.improvement(user, wpm, title, file_name, timeframe, timestamps if time else None, universe=universe)
 
     embed.set_image(url=f"attachment://{file_name}")
     file = File(file_name, filename=file_name)

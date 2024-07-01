@@ -24,6 +24,7 @@ command = {
         "missingtens helloimnotgood1 worst",
         "missingtens poke1 random"
     ],
+    "multiverse": False,
 }
 
 
@@ -79,14 +80,17 @@ async def run(ctx, user, username, sort):
                 })
 
     if sort == "best":
+        sort_title = "Closest"
         missing_texts.sort(key=lambda x: x["difference"])
     elif sort == "worst":
+        sort_title = "Farthest"
         missing_texts.sort(key=lambda x: -x["difference"])
     elif sort == "random":
+        sort_title = "Randomized"
         shuffle(missing_texts)
 
     embed = Embed(
-        title="Missing Top Tens",
+        title=f"Missing Top Tens ({sort_title})",
         color=user["colors"]["embed"],
     )
 

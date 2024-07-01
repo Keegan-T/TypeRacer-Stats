@@ -20,7 +20,6 @@ command = {
         "rawspeed keegant -1",
         "rawspeed https://data.typeracer.com/pit/result?id=|tr:keegant|1000000",
     ],
-    "multiverse": True,
 }
 
 

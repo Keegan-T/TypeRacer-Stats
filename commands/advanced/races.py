@@ -3,6 +3,7 @@ from discord.ext import commands
 import utils
 import errors
 import colors
+import urls
 from datetime import datetime, timezone
 from dateutil.relativedelta import relativedelta
 from database.bot_users import get_user
@@ -109,9 +110,10 @@ def get_args(user, args, info):
 
 
 async def run(ctx, user, username, start_date, end_date, start_number, end_number):
-    stats = users.get_user(username)
+    universe = user["universe"]
+    stats = users.get_user(username, universe)
     if not stats:
-        return await ctx.send(embed=errors.import_required(username))
+        return await ctx.send(embed=errors.import_required(username, universe))
 
     if start_number and not end_number:
         end_number = stats["races"]
@@ -125,16 +127,19 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         title += "All-Time"
         start = stats["joined"]
         end = datetime.now(timezone.utc).timestamp()
-        race_list = await races.get_races(username, columns, start, end)
+        race_list = await races.get_races(username, columns, start, end, universe=universe)
         if not race_list:
-            return await ctx.send(embed=errors.no_races_in_range())
+            return await ctx.send(embed=errors.no_races_in_range(universe))
 
     elif start_date is None:
         end_number = min(end_number, stats["races"])
         title += f"Races {start_number:,} - {end_number:,}"
-        race_list = await races.get_races(username, columns, start_number=start_number, end_number=end_number)
+        race_list = await races.get_races(
+            username, columns, start_number=start_number,
+            end_number=end_number, universe=universe
+        )
         if not race_list:
-            return await ctx.send(embed=errors.no_races_in_range())
+            return await ctx.send(embed=errors.no_races_in_range(universe))
         start = race_list[0][7]
         end = race_list[-1][7] + 0.01
 
@@ -145,9 +150,12 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
             start_date = datetime.utcfromtimestamp(stats["joined"])
         end = end_date.timestamp()
         title += utils.get_display_date_range(start_date, end_date)
-        race_list = await races.get_races(username, columns, start_date.timestamp(), end_date.timestamp())
+        race_list = await races.get_races(
+            username, columns, start_date.timestamp(),
+            end_date.timestamp(), universe=universe
+        )
         if not race_list:
-            return await ctx.send(embed=errors.no_races_in_range())
+            return await ctx.send(embed=errors.no_races_in_range(universe))
 
     race_list.sort(key=lambda x: x[7])
 
@@ -156,16 +164,16 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         embed.description = "No races completed"
         return await ctx.send(embed=embed)
 
-    utils.add_profile(embed, stats)
-    add_stats(embed, username, race_list, start, end)
+    utils.add_profile(embed, stats, universe)
+    add_stats(embed, username, race_list, start, end, universe=universe)
+    utils.add_universe(embed, universe)
 
     await ctx.send(embed=embed)
 
 
-def add_stats(embed, username, race_list, start, end, mini=False):
+def add_stats(embed, username, race_list, start, end, mini=False, universe="play"):
     end = min(end, datetime.now(timezone.utc).timestamp())
-
-    text_list = texts.get_texts(as_dictionary=True)
+    text_list = texts.get_texts(as_dictionary=True, universe=universe)
 
     race_count = len(race_list)
     wins = 0
@@ -229,10 +237,9 @@ def add_stats(embed, username, race_list, start, end, mini=False):
     text_count = len(unique_texts)
 
     summary_string = (
-        f"**Average Speed:** {average_wpm:,.2f} WPM ([{worst_race['wpm']:,.2f}]"
-        f"(https://data.typeracer.com/pit/result?id=play|tr:{username}|{worst_race['number']}) - "
-        f"[{best_race['wpm']:,.2f}]"
-        f"(https://data.typeracer.com/pit/result?id=play|tr:{username}|{best_race['number']}))\n"
+        f"**Average Speed:** {average_wpm:,.2f} WPM "
+        f"([{worst_race['wpm']:,.2f}]({urls.replay(username, worst_race['number'], universe)}) - "
+        f"[{best_race['wpm']:,.2f}]({urls.replay(username, best_race['number'], universe)}))\n"
         f"**Races:** {race_count:,} ({accuracy_percent:.2f}% Accuracy)\n"
         f"**Wins:** {wins:,} ({win_percent:.2f}%)\n"
         f"**Points:** {points:,.0f} ({points_per_race:,.2f} points/race)"
@@ -254,28 +261,26 @@ def add_stats(embed, username, race_list, start, end, mini=False):
         f"**Words Typed:** {words:,} ({words_per_race:,.2f} words/race)\n"
         f"**Characters Typed:** {characters:,} ({characters_per_race:,.2f} chars/race)\n"
         f"**Race Time:** {utils.format_duration_short(seconds)} ({seconds_per_race:,.2f}s/race)\n"
-        f"**Time Difference:** {utils.format_duration_short(seconds_elapsed)}\n"  # Race Timespan, Time Elapsed, Time Difference
+        f"**Time Difference:** {utils.format_duration_short(seconds_elapsed)}\n"
         f"**Unique Texts:** {text_count:,}\n\n"
     )
 
     other_stats = (
-        f"**Race:** [#{first_race[1]:,}]"
-        f"(https://data.typeracer.com/pit/result?id=|tr:{username}|{first_race[1]}) - "
+        f"**Race:** [#{first_race[1]:,}]({urls.replay(username, first_race[1], universe)}) - "
         f"<t:{int(first_race[7])}>"
     )
 
     if len(race_list) > 1:
         other_stats = (
-            f"**First Race:** [#{first_race[1]:,}]"
-            f"(https://data.typeracer.com/pit/result?id=|tr:{username}|{first_race[1]}) - "
+            f"**First Race:** [#{first_race[1]:,}]({urls.replay(username, first_race[1], universe)}) - "
             f"<t:{int(first_race[7])}>\n"
-            f"**Last Race:** [#{last_race[1]:,}]"
-            f"(https://data.typeracer.com/pit/result?id=|tr:{username}|{last_race[1]}) - "
+            f"**Last Race:** [#{last_race[1]:,}]({urls.replay(username, last_race[1], universe)}) - "
             f"<t:{int(last_race[7])}>\n"
             f"**Longest Break:** {utils.format_duration_short(longest_break['time'])}"
             f" (Starting on Race [#{longest_break['start_race']['number']:,}]"
-            f"(https://data.typeracer.com/pit/result?id=|tr:{username}|{longest_break['start_race']['number']}))\n"
-            f"<t:{int(longest_break['start_race']['timestamp'])}> - <t:{int(longest_break['end_race']['timestamp'])}>"
+            f"({urls.replay(username, longest_break['start_race']['number'], universe)})\n"
+            f"<t:{int(longest_break['start_race']['timestamp'])}> - "
+            f"<t:{int(longest_break['end_race']['timestamp'])}>"
         )
 
     if days > 1:

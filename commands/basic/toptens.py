@@ -17,6 +17,7 @@ command = {
                    f"`{prefix}top10s [username] best` will display a user's best top 10 performances",
     "parameters": "[username]",
     "usages": ["toptens joshua728"],
+    "multiverse": False,
 }
 
 

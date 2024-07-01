@@ -36,12 +36,13 @@ class Unraced(commands.Cog):
 
 
 async def run(ctx, user, username):
-    stats = users.get_user(username)
+    universe = user["universe"]
+    stats = users.get_user(username, universe)
     if not stats:
-        return await ctx.send(embed=errors.import_required(username))
+        return await ctx.send(embed=errors.import_required(username, universe))
 
-    unraced = users.get_unraced_text_ids(username)
-    text_count = texts.get_text_count()
+    unraced = users.get_unraced_text_ids(username, universe)
+    text_count = texts.get_text_count(universe)
     unraced_count = len(unraced)
     raced_percent = ((text_count - unraced_count) / text_count) * 100
 
@@ -51,7 +52,7 @@ async def run(ctx, user, username):
     for text in unraced[:5]:
         text_id = text["id"]
         unraced_string += (
-            f"[Text #{text_id}]({urls.trdata_text(text_id)}) - [Ghost]({text['ghost']})\n"
+            f"[Text #{text_id}]({urls.trdata_text(text_id, universe)}) - [Ghost]({text['ghost']})\n"
             f'"{utils.truncate_clean(text["quote"], 500)}"\n\n'
         )
 
@@ -65,8 +66,9 @@ async def run(ctx, user, username):
         description=unraced_string,
         color=color,
     )
-    utils.add_profile(embed, stats)
+    utils.add_profile(embed, stats, universe)
     embed.set_footer(text=f"Raced {text_count - unraced_count:,}/{text_count:,} texts ({raced_percent:.2f}%)")
+    utils.add_universe(embed, universe)
 
     await ctx.send(embed=embed)
 

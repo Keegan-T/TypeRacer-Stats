@@ -89,14 +89,15 @@ def get_args(user, args, info):
     return unique_usernames, start_date, end_date
 
 
-async def get_lines(usernames, start_date, end_date, column="number"):
+async def get_lines(usernames, start_date, end_date, column="number", universe="play"):
     lines = []
     min_timestamp = float("inf")
     columns = [column, "timestamp"]
     disabled_text_ids = get_disabled_text_ids()
     for username in usernames:
         race_list = await races.get_races(
-            username, columns=columns, start_time=start_date.timestamp(), end_time=end_date.timestamp())
+            username, columns=columns, start_time=start_date.timestamp(),
+            end_time=end_date.timestamp(), universe=universe)
         race_list.sort(key=lambda r: r[1])
         if len(race_list) < 2:
             continue
@@ -133,7 +134,7 @@ async def get_lines(usernames, start_date, end_date, column="number"):
     if len(lines) == 0:
         return lines
 
-    # Extending all lines to the end of the graph
+    # Extending all lines to the end of the range
     max_timestamp = end_date.timestamp()
     for line in lines:
         end_timestamp = line[1][-1]
@@ -146,10 +147,11 @@ async def get_lines(usernames, start_date, end_date, column="number"):
 
 
 async def run(ctx, user, usernames, start_date, end_date, column="number"):
-    lines = await get_lines(usernames, start_date, end_date, column)
+    universe = user["universe"]
+    lines = await get_lines(usernames, start_date, end_date, column, universe=universe)
 
     if not lines:
-        return await ctx.send(embed=no_data())
+        return await ctx.send(embed=no_data(universe))
 
     kind = "Races"
     if column == "points":
@@ -165,6 +167,9 @@ async def run(ctx, user, usernames, start_date, end_date, column="number"):
         title += f"\n{utils.get_display_date_range(start_date, end_date)}"
     elif datetime.now(timezone.utc).date() != end_date.date():
         title += f"\n{utils.get_display_date_range(datetime.fromtimestamp(lines[0][4], tz=timezone.utc), end_date)}"
+    if universe != "play":
+        separator = " | " if "\n" in title else "\n"
+        title += f"{separator}Universe: {universe}"
 
     lines.sort(key=lambda x: x[3], reverse=True)
 
@@ -185,12 +190,15 @@ def too_many_usernames():
     )
 
 
-def no_data():
-    return Embed(
+def no_data(universe):
+    embed = Embed(
         title="Not Enough Data",
         description="At least one user has no races in this range",
         color=colors.error,
     )
+    utils.add_universe(embed, universe)
+
+    return embed
 
 
 async def setup(bot):

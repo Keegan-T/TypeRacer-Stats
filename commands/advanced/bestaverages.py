@@ -44,9 +44,10 @@ def get_args(user, args, info):
 
 
 async def run(ctx, user, username, n):
-    stats = users.get_user(username)
+    universe = user["universe"]
+    stats = users.get_user(username, universe)
     if not stats:
-        return await ctx.send(embed=errors.import_required(username))
+        return await ctx.send(embed=errors.import_required(username, universe))
 
     if n < 1:
         return await ctx.send(embed=errors.greater_than(0))
@@ -54,7 +55,7 @@ async def run(ctx, user, username, n):
     if n > stats["races"]:
         return await ctx.send(embed=not_enough_races())
 
-    race_list = await races.get_races(username, columns=["wpm", "number", "timestamp"])
+    race_list = await races.get_races(username, columns=["wpm", "number", "timestamp"], universe=universe)
     race_list.sort(key=lambda x: x[2])
     description = ""
 
@@ -89,7 +90,8 @@ async def run(ctx, user, username, n):
         description=description,
         color=user["colors"]["embed"],
     )
-    utils.add_profile(embed, stats)
+    utils.add_profile(embed, stats, universe)
+    utils.add_universe(embed, universe)
 
     await ctx.send(embed=embed)
 

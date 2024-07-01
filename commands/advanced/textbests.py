@@ -65,12 +65,13 @@ async def run(ctx, user, username, n, worst):
     if n < 1:
         return await ctx.send(embed=errors.greater_than(0))
 
-    stats = users.get_user(username)
+    universe = user["universe"]
+    stats = users.get_user(username, universe)
     if not stats:
-        return await ctx.send(embed=errors.import_required(username))
+        return await ctx.send(embed=errors.import_required(username, universe))
 
-    text_list = texts.get_texts(as_dictionary=True)
-    text_bests = users.get_text_bests(username, race_stats=True)
+    text_list = texts.get_texts(as_dictionary=True, universe=universe)
+    text_bests = users.get_text_bests(username, race_stats=True, universe=universe)
     if worst: text_bests.reverse()
     text_bests = text_bests[:n]
     texts_typed = len(text_bests)
@@ -93,9 +94,9 @@ async def run(ctx, user, username, n, worst):
         text_id = text["text_id"]
         quote = utils.truncate_clean(text_list[text_id]["quote"], 60)
         scores += (
-            f"[{text['wpm']:,.2f} WPM]({urls.replay(username, text['number'])}) - "
+            f"[{text['wpm']:,.2f} WPM]({urls.replay(username, text['number'], universe)}) - "
             f"Race #{text['number']:,} - "
-            f"[Text #{text_id}]({urls.trdata_text(text_id)}) - "
+            f"[Text #{text_id}]({urls.trdata_text(text_id, universe)}) - "
             f'{utils.discord_timestamp(text["timestamp"])}\n"{quote}"\n\n'
         )
 
@@ -108,9 +109,11 @@ async def run(ctx, user, username, n, worst):
         title=title,
         description=f"{description}\n{scores}",
         color=user["colors"]["embed"],
+        url=urls.trdata_text_analysis(username, universe),
     )
 
-    utils.add_profile(embed, stats)
+    utils.add_profile(embed, stats, universe)
+    utils.add_universe(embed, universe)
 
     await ctx.send(embed=embed)
 

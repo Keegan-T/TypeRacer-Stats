@@ -74,6 +74,7 @@ class Competition(commands.Cog):
 
 
 async def run(ctx, user, kind, sort, date):
+    universe = user["universe"]
     now = utils.now()
 
     if kind == "week":
@@ -125,9 +126,10 @@ async def run(ctx, user, kind, sort, date):
         title += " (By WPM)"
     title += f" - {date_string}"
 
-    competition = await competitions_api.get_competition_info(date, kind, sort, 10)
+    competition = await competitions_api.get_competition_info(date, kind, sort, 10, universe)
     date_string = date.strftime("%Y-%m-%d")
-    competition_url = f"https://data.typeracer.com/pit/competitions?date={date_string}&sort={sort}&kind={kind}"
+    competition_url = (f"https://data.typeracer.com/pit/competitions?date={date_string}"
+                       f"&sort={sort}&kind={kind}&universe={universe}")
     if not competition:
         embed = Embed(
             title=title,
@@ -166,6 +168,7 @@ async def run(ctx, user, kind, sort, date):
         url=competition_url,
         color=user["colors"]["embed"],
     )
+    utils.add_universe(embed, universe)
 
     await ctx.send(embed=embed)
 

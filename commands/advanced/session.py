@@ -49,11 +49,13 @@ def get_args(user, args, info):
 
 
 async def run(ctx, user, username, kind, seconds):
-    stats = users.get_user(username)
+    universe = user["universe"]
+    stats = users.get_user(username, universe)
     if not stats:
-        return await ctx.send(embed=errors.import_required(username))
+        return await ctx.send(embed=errors.import_required(username, universe))
+
     columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
-    race_list = await races.get_races(username, columns=columns)
+    race_list = await races.get_races(username, columns=columns, universe=universe)
     race_list.sort(key=lambda x: x[7])
     race_range = [0, 0]
     start_race = 0
@@ -115,8 +117,9 @@ async def run(ctx, user, username, kind, seconds):
     if kind == "time":
         embed.description = utils.format_duration_short(end_time - start_time, False)
 
-    utils.add_profile(embed, stats)
-    add_stats(embed, username, session_races, start_time, end_time)
+    utils.add_profile(embed, stats, universe)
+    add_stats(embed, username, session_races, start_time, end_time, universe=universe)
+    utils.add_universe(embed, universe)
 
     await ctx.send(embed=embed)
 

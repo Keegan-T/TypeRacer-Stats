@@ -104,24 +104,25 @@ def get_args(user, args, info):
 
 
 async def run(ctx, user, username, category):
-    stats = users.get_user(username)
+    universe = user["universe"]
+    stats = users.get_user(username, universe)
     if not stats:
-        return await ctx.send(embed=errors.import_required(username))
+        return await ctx.send(embed=errors.import_required(username, universe))
 
     category_title = "WPM"
     suffix = " WPM"
 
     if category == "wpm":
-        race_list = await races.get_races(username, columns=["wpm"])
+        race_list = await races.get_races(username, columns=["wpm"], universe=universe)
         values = [race[0] for race in race_list]
 
     elif category == "textbests":
-        race_list = users.get_text_bests(username)
+        race_list = users.get_text_bests(username, universe=universe)
         values = [race[1] for race in race_list]
         category_title = "Text Bests"
 
     else:
-        race_list = await races.get_races(username, columns=["accuracy"])
+        race_list = await races.get_races(username, columns=["accuracy"], universe=universe)
         values = [int(race[0] * 100) for race in race_list if race[0] > 0]
         category_title = "Accuracy"
         suffix = "%"
@@ -135,8 +136,6 @@ async def run(ctx, user, username, category):
     mode_value = mode(values)
     mode_frequency = Counter(values)[mode_value]
     std = np.std(value_array)
-    # wpm_skew = skew(value_array)
-    # skew_string = ("Right" if wpm_skew < 0 else "Left") + f" by {abs(wpm_skew):,.2f} WPM"
 
     distribution_stats = (
         f"**Average:** {mean:,.2f}{suffix}\n"
@@ -144,7 +143,6 @@ async def run(ctx, user, username, category):
         f"**Mode:** {mode_value:,.2f}{suffix} ({mode_frequency:,} times)\n"
         f"**Range:** {max(values) - min(values):,.2f} ({min(values):,.2f}{suffix} - {max(values):,.2f}{suffix})\n"
         f"**Standard Deviation:** {std:,.2f}{suffix}\n"
-        # f"**Skewness:** {skew_string}\n"
     )
 
     embed = Embed(
@@ -152,10 +150,10 @@ async def run(ctx, user, username, category):
         description=distribution_stats,
         color=user["colors"]["embed"],
     )
-    utils.add_profile(embed, stats)
+    utils.add_profile(embed, stats, universe)
 
     file_name = f"histogram_{username}_{category}.png"
-    graphs.histogram(user, username, values, category, file_name)
+    graphs.histogram(user, username, values, category, file_name, universe)
 
     embed.set_image(url=f"attachment://{file_name}")
     file = File(file_name, filename=file_name)
@@ -165,6 +163,7 @@ async def run(ctx, user, username, category):
             text="Due to accuracy being rounded in the API, data is not exactly as it appears\n"
                  "(i.e., data in the 99% bin include values 98.5% - 99.5%)"
         )
+    utils.add_universe(embed, universe)
 
     await ctx.send(embed=embed, file=file)
 

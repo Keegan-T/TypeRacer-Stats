@@ -47,9 +47,10 @@ def get_args(user, args, info):
     return utils.parse_command(user, params, args, info)
 
 async def run(ctx, user, username, category):
-    stats = users.get_user(username)
+    universe = user["universe"]
+    stats = users.get_user(username, universe)
     if not stats:
-        return await ctx.send(embed=errors.import_required(username))
+        return await ctx.send(embed=errors.import_required(username, universe))
 
     x = []
     y = []
@@ -58,7 +59,8 @@ async def run(ctx, user, username, category):
     wpm_total = 0
     wpm_count = 0
 
-    race_list = await races.get_races(username, columns=["number", "wpm", "text_id", "timestamp"])
+    columns = ["number", "wpm", "text_id", "timestamp"]
+    race_list = await races.get_races(username, columns=columns, universe=universe)
     race_list.sort(key=lambda r: r[0])
 
     for race in race_list:
@@ -101,10 +103,11 @@ async def run(ctx, user, username, category):
         description=description,
         color=user["colors"]["embed"],
     )
-    utils.add_profile(embed, stats)
+    utils.add_profile(embed, stats, universe)
+    utils.add_universe(embed, universe)
 
     file_name = f"text_bests_over_{category}_{username}.png"
-    graphs.text_bests(user, username, x, y, category, file_name)
+    graphs.text_bests(user, username, x, y, category, file_name, universe)
 
     embed.set_image(url=f"attachment://{file_name}")
     file = File(file_name, filename=file_name)

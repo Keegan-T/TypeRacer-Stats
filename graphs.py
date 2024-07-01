@@ -371,7 +371,7 @@ def compare(user, user1, user2, file_name):
     plt.close()
 
 
-def improvement(user, wpm, title, file_name, timeframe="", timestamps=None):
+def improvement(user, wpm, title, file_name, timeframe="", timestamps=None, universe="play"):
     text_graph = "Text #" in title
     wpm = np.array(wpm)
     best_index, best = max(enumerate(wpm), key=lambda x: x[1])
@@ -413,26 +413,24 @@ def improvement(user, wpm, title, file_name, timeframe="", timestamps=None):
 
     ax.scatter(downsampled_indices, downsampled_wpm, alpha=0.1, s=25, color=point_color, edgecolors="none")
 
-    # Interpolating for smooth colormaps
     segment_count = 50 // (len(moving_wpm) - 1) if len(moving_wpm) > 1 else 1
     if segment_count > 1:
-        x_segments = []
-        y_segments = []
-        for i in range(len(moving_wpm) - 1):
-            value = moving_wpm[i]
-            segments = np.linspace(value, moving_wpm[i + 1], segment_count)
-            for v in segments[:-1]:
-                y_segments.append(v)
-
-            segments = np.linspace(i + 1, i + 2, segment_count)
-            for v in segments[:-1]:
-                x_segments.append(v)
-
-        y_segments.append(moving_wpm[-1])
-        x_segments.append(x_points[-1])
-
+        x_segments, y_segments = get_interpolated_segments(x_points, moving_wpm)
         ax.plot(x_segments, y_segments)
-
+        # x_segments = []
+        # y_segments = []
+        # for i in range(len(moving_wpm) - 1):
+        #     value = moving_wpm[i]
+        #     segments = np.linspace(value, moving_wpm[i + 1], segment_count)
+        #     for v in segments[:-1]:
+        #         y_segments.append(v)
+        #
+        #     segments = np.linspace(x_points[i], x_points[i + 1], segment_count)
+        #     for v in segments[:-1]:
+        #         x_segments.append(v)
+        #
+        # y_segments.append(moving_wpm[-1])
+        # x_segments.append(x_points[-1])
     else:
         ax.plot(x_points, moving_wpm)
 
@@ -440,6 +438,9 @@ def improvement(user, wpm, title, file_name, timeframe="", timestamps=None):
     ax.set_ylabel("WPM")
     if window_size > 1:
         title += f"\nMoving Average of {window_size} Races"
+    if universe != "play":
+        separator = " | " if "\n" in title else "\n"
+        title += f"{separator}Universe: {universe}"
     ax.set_title(title)
     ax.grid()
 
@@ -499,7 +500,7 @@ def match(user, rankings, title, y_label, file_name, limit_y=True):
     plt.close()
 
 
-def histogram(user, username, values, category, file_name):
+def histogram(user, username, values, category, file_name, universe):
     category_title = "WPM"
     y_label = "WPM"
     bins = "auto"
@@ -510,6 +511,9 @@ def histogram(user, username, values, category, file_name):
         bins = np.arange(min(values), 102, 1)
         category_title = "Accuracy"
         y_label = "Accuracy %"
+
+    elif category == "textbests":
+        category_title = "Text Bests"
 
     ax = plt.subplots()[1]
     counts, groups = np.histogram(values, bins=bins)
@@ -536,7 +540,10 @@ def histogram(user, username, values, category, file_name):
     ax.yaxis.set_major_formatter(FuncFormatter(format_big_number))
     ax.set_xlabel(y_label)
     ax.set_ylabel("Frequency")
-    ax.set_title(f"{category_title} Histogram - {username}")
+    title = f"{category_title} Histogram - {username}"
+    if universe != "play":
+        title += f"\nUniverse: {universe}"
+    ax.set_title(title)
     ax.grid()
 
     color_graph(ax, user)
@@ -581,7 +588,7 @@ def histogram_time(user, username, activity, file_name): # Maybe for the future,
     plt.close()
 
 
-def personal_bests(user, username, x, y, category, file_name):
+def personal_bests(user, username, x, y, category, file_name, universe):
     ax = plt.subplots()[1]
 
     x_segments, y_segments = get_interpolated_segments(x, y)
@@ -600,34 +607,38 @@ def personal_bests(user, username, x, y, category, file_name):
 
     ax.set_ylabel("WPM")
     plt.grid()
-    ax.set_title(f"Personal Best Over {category.title()} - {username}")
+    title = f"Personal Best Over {category.title()} - {username}"
+    if universe != "play":
+        title += f"\nUniverse: {universe}"
+    ax.set_title(title)
 
     color_graph(ax, user)
 
     plt.savefig(file_name)
     plt.close()
 
-def text_bests(user, username, x, y, category, file_name):
+def text_bests(user, username, x, y, category, file_name, universe):
     ax = plt.subplots()[1]
     x_segments, y_segments = get_interpolated_segments(x, y)
     ax.plot(x_segments, y_segments)
 
     if category == "races":
-        title = "Races"
         ax.set_xlabel("Races")
         ax.xaxis.set_major_formatter(FuncFormatter(format_big_number))
     elif category == "time":
-        title = "Time"
         ax.set_xlabel("Date")
         date_x_ticks(ax, x[0], x[-1])
     else:
-        title = "Text Changes"
+        category = "text changes"
         ax.set_xlabel("Text Changes")
         ax.xaxis.set_major_formatter(FuncFormatter(format_big_number))
 
     ax.set_ylabel("WPM")
     plt.grid()
-    ax.set_title(f"Text Bests Over {title} - {username}")
+    title = f"Text Bests Over {category.title()} - {username}"
+    if universe != "play":
+        title += f"\nUniverse: {universe}"
+    ax.set_title(title)
 
     color_graph(ax, user)
 

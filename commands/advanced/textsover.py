@@ -50,27 +50,28 @@ def get_args(user, args, info):
 
 
 async def run(ctx, user, username, threshold, category, over=True, random=False):
-    stats = users.get_user(username)
+    universe = user["universe"]
+    stats = users.get_user(username, universe)
     if not stats:
-        return await ctx.send(embed=errors.import_required(username))
+        return await ctx.send(embed=errors.import_required(username, universe))
 
     texts_typed = stats["texts_typed"]
-    description = ""
-    text_list = texts.get_texts(as_dictionary=True)
+    text_list = texts.get_texts(as_dictionary=True, universe=universe)
 
     if over:
-        race_list = users.get_texts_over(username, threshold, category)
+        race_list = users.get_texts_over(username, threshold, category, universe)
 
     else:
-        race_list = users.get_texts_under(username, threshold, category)
+        race_list = users.get_texts_under(username, threshold, category, universe)
 
     if random:
         shuffle(race_list)
 
+    description = ""
     for race in race_list[:10]:
         text_id = race["text_id"]
         description += (
-            f"\n\n[#{text_id}]({urls.trdata_text(text_id)}) - **{race['times']:,} time"
+            f"\n\n[#{text_id}]({urls.trdata_text(text_id, universe)}) - **{race['times']:,} time"
             f"{'s' * (race['times'] != 1)}** - [Ghost]({text_list[text_id]['ghost']})\n"
             f'"{utils.truncate_clean(text_list[text_id]["quote"], 60)}"'
         )
@@ -82,9 +83,9 @@ async def run(ctx, user, username, threshold, category, over=True, random=False)
     race_count = len(race_list)
     percent = (race_count / texts_typed) * 100
     description = (
-            f"**{race_count:,}** of **{texts_typed:,}** texts are " +
-            f"{'above' if over else 'below'} {threshold:,} {category_title} "
-            f"({percent:,.2f}%)" + description
+        f"**{race_count:,}** of **{texts_typed:,}** texts are "
+        f"{'above' if over else 'below'} {threshold:,} {category_title} "
+        f"({percent:,.2f}%){description}"
     )
 
     if category == "points":
@@ -93,11 +94,13 @@ async def run(ctx, user, username, threshold, category, over=True, random=False)
         category_title = f"Time{'s' if threshold != 1 else ''}"
 
     embed = Embed(
-        title=f"Texts {'Over' if over else 'Under'} {threshold:,} {category_title}",
+        title=f"Texts {'Over' if over else 'Under'} {threshold:,} "
+              f"{category_title}{' (Randomized)' * random}",
         description=description,
         color=user["colors"]["embed"],
     )
-    utils.add_profile(embed, stats)
+    utils.add_profile(embed, stats, universe)
+    utils.add_universe(embed, universe)
 
     await ctx.send(embed=embed)
 

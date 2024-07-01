@@ -67,29 +67,38 @@ def invalid_username():
     )
 
 
-def no_races():
-    return Embed(
+def no_races(universe="play"):
+    embed = Embed(
         title="No Races Found",
         description="User has not completed any races",
         color=error,
     )
+    utils.add_universe(embed, universe)
+
+    return embed
 
 
-def no_races_in_range():
-    return Embed(
+def no_races_in_range(universe="play"):
+    embed = Embed(
         title="No Races Found",
         description="User has no races in this range",
         color=error,
     )
+    utils.add_universe(embed, universe)
+
+    return embed
 
 
-def import_required(username):
+def import_required(username, universe="play"):
     username = username.replace("`", "")
-    return Embed(
+    embed = Embed(
         title="Import Required",
         description=f"Must `{prefix}import {username}` to use this command",
         color=error,
     )
+    utils.add_universe(embed, universe)
+
+    return embed
 
 
 def race_not_found(username, race_number, universe="play"):
@@ -160,9 +169,12 @@ def command_cooldown(cooldown_expiration):
     )
 
 
-def unknown_text():
-    return Embed(
+def unknown_text(universe="play"):
+    embed = Embed(
         title="Unknown Text",
         description="Not a recognized text ID",
         color=error,
     )
+    utils.add_universe(embed, universe)
+
+    return embed

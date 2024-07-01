@@ -51,15 +51,16 @@ async def run(ctx, user, username, number, category):
     if number <= 1:
         return await ctx.send(embed=errors.greater_than(1))
 
-    stats = users.get_user(username)
+    universe = user["universe"]
+    stats = users.get_user(username, universe)
     if not stats:
-        return await ctx.send(embed=errors.import_required(username))
+        return await ctx.send(embed=errors.import_required(username, universe))
 
     if (category == "races" and number > stats["races"]) or number > stats["points"]:
-        return await ctx.send(embed=no_milestone(category))
+        return await ctx.send(embed=no_milestone(category, universe))
 
     columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
-    race_list = await races.get_races(username, columns=columns)
+    race_list = await races.get_races(username, columns=columns, universe=universe)
     race_list.sort(key=lambda x: x[7])
     fastest = float("inf")
     race_range = []
@@ -114,18 +115,22 @@ async def run(ctx, user, username, number, category):
         color=user["colors"]["embed"],
     )
 
-    utils.add_profile(embed, stats)
-    add_stats(embed, username, completion_races, start_time, end_time)
+    utils.add_profile(embed, stats, universe)
+    add_stats(embed, username, completion_races, start_time, end_time, universe=universe)
+    utils.add_universe(embed, universe)
 
     await ctx.send(embed=embed)
 
 
-def no_milestone(kind):
-    return Embed(
-        title=f"Not Enough {kind.title()}",
-        description=f"This user has not achieved this many {kind}",
+def no_milestone(category, universe):
+    embed = Embed(
+        title=f"Not Enough {category.title()}",
+        description=f"This user has not achieved this many {category}",
         color=colors.error
     )
+    utils.add_universe(embed, universe)
+
+    return embed
 
 
 async def setup(bot):

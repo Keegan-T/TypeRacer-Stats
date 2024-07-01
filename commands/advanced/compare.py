@@ -46,13 +46,15 @@ async def run(ctx, user, username1, username2):
         username2 = username1
         username1 = user["username"]
 
-    text_bests1 = get_text_bests(username1, race_stats=True)
-    if not text_bests1:
-        return await ctx.send(embed=errors.import_required(username1))
+    universe = user["universe"]
 
-    text_bests2 = get_text_bests(username2, race_stats=True)
+    text_bests1 = get_text_bests(username1, race_stats=True, universe=universe)
+    if not text_bests1:
+        return await ctx.send(embed=errors.import_required(username1, universe))
+
+    text_bests2 = get_text_bests(username2, race_stats=True, universe=universe)
     if not text_bests2:
-        return await ctx.send(embed=errors.import_required(username2))
+        return await ctx.send(embed=errors.import_required(username2, universe))
 
     tb_dict1 = {text[0]: text[1:] for text in text_bests1}
     tb_dict2 = {text[0]: text[1:] for text in text_bests2}
@@ -76,7 +78,7 @@ async def run(ctx, user, username1, username2):
             comparison[text_id] = (tb_dict1[text_id], tb_dict2[text_id], gap)
 
     if not comparison:
-        return await ctx.send(embed=no_common_texts())
+        return await ctx.send(embed=no_common_texts(universe))
 
     comparison = sorted(comparison.items(), key=lambda x: x[1][2], reverse=True)
 
@@ -87,22 +89,22 @@ async def run(ctx, user, username1, username2):
         gap = text[1][2]
         gap_string = f"({'+' * (gap >= 0)}{gap:,.2f} WPM)"
         stats1 += (
-            f"{i + 1}. [{text[1][0][0]:,.2f}]({urls.replay(username1, text[1][0][1])}) vs. "
-            f"[{text[1][1][0]:,.2f}]({urls.replay(username2, text[1][1][1])}) {gap_string}\n"
+            f"{i + 1}. [{text[1][0][0]:,.2f}]({urls.replay(username1, text[1][0][1], universe)}) vs. "
+            f"[{text[1][1][0]:,.2f}]({urls.replay(username2, text[1][1][1], universe)}) {gap_string}\n"
         )
 
     if wpm_match:
         stats1 += (
-            f"\n:handshake: [{wpm_match[0][0]:,.2f}]({urls.replay(username1, wpm_match[0][1])})"
-            f" vs. [{wpm_match[1][0]:,.2f}]({urls.replay(username2, wpm_match[1][1])})\n"
+            f"\n:handshake: [{wpm_match[0][0]:,.2f}]({urls.replay(username1, wpm_match[0][1], universe)})"
+            f" vs. [{wpm_match[1][0]:,.2f}]({urls.replay(username2, wpm_match[1][1], universe)})\n"
         )
 
     for i, text in enumerate(comparison[-10:][::-1]):
         gap = -text[1][2]
         gap_string = f"({'+' * (gap >= 0)}{gap:,.2f} WPM)"
         stats2 += (
-            f"{i + 1}. [{text[1][1][0]:,.2f}]({urls.replay(username2, text[1][1][1])}) vs. "
-            f"[{text[1][0][0]:,.2f}]({urls.replay(username1, text[1][0][1])}) {gap_string}\n"
+            f"{i + 1}. [{text[1][1][0]:,.2f}]({urls.replay(username2, text[1][1][1], universe)}) vs. "
+            f"[{text[1][0][0]:,.2f}]({urls.replay(username1, text[1][0][1], universe)}) {gap_string}\n"
         )
 
     description = stats1 + "\n" + stats2
@@ -111,8 +113,9 @@ async def run(ctx, user, username1, username2):
         title="Text Best Comparison",
         color=user["colors"]["embed"],
         description=description,
-        url=urls.trdata_compare(username1, username2),
+        url=urls.trdata_compare(username1, username2, universe),
     )
+    utils.add_universe(embed, universe)
 
     await ctx.send(embed=embed)
 
@@ -125,12 +128,15 @@ def same_username():
     )
 
 
-def no_common_texts():
-    return Embed(
+def no_common_texts(universe):
+    embed = Embed(
         title="No Data",
         description="Users do not have any texts in common",
         color=colors.error,
     )
+    utils.add_universe(embed, universe)
+
+    return embed
 
 
 async def setup(bot):

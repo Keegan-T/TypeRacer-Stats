@@ -57,22 +57,26 @@ def get_args(user, args, info):
 
 
 async def run(ctx, user, username, time_period, sort):
-    db_stats = users.get_user(username)
+    universe = user["universe"]
+    db_stats = users.get_user(username, universe)
     if not db_stats:
-        return await ctx.send(embed=errors.import_required(username))
+        return await ctx.send(embed=errors.import_required(username, universe))
 
-    api_stats = get_stats(username)
-    await download(stats=api_stats)
+    api_stats = get_stats(username, universe=universe)
+    await download(stats=api_stats, universe=universe)
 
     if time_period == "races":
         columns = ["number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
-        race_list = await races.get_races(username, columns=columns, order_by="timestamp", limit=20, reverse=True)
+        race_list = await races.get_races(
+            username, columns=columns, order_by="timestamp",
+            limit=20, reverse=True, universe=universe
+        )
 
         title = "Race History"
         description = ""
         for race in race_list:
             description += (
-                f"[#{race['number']:,}]({urls.replay(username, race['number'])}) - "
+                f"[#{race['number']:,}]({urls.replay(username, race['number'], universe)}) - "
                 f"{race['wpm']:,.2f} WPM - {math.floor(race['accuracy'] * 100):,.0f}% - {race['points']:,.0f} pts - "
                 f"{race['rank']}/{race['racers']} - <t:{int(race['timestamp'])}:R>\n"
             )
@@ -80,7 +84,7 @@ async def run(ctx, user, username, time_period, sort):
     else:
         title = f"Race History - {time_period.title()}s (By {utils.get_sort_title(sort)})"
         description = ""
-        history = await get_history(username, time_period, sort)
+        history = await get_history(username, time_period, sort, universe)
         for period in history[:10]:
             description += (
                 f"**{period[1]}**\n{period[3]:,.0f} pts / {period[2]:,} races - "
@@ -92,18 +96,18 @@ async def run(ctx, user, username, time_period, sort):
         description=description,
         color=user["colors"]["embed"],
     )
-    utils.add_profile(embed, api_stats)
+    utils.add_profile(embed, api_stats, universe)
+    utils.add_universe(embed, universe)
 
     await ctx.send(embed=embed)
 
 
-async def get_history(username, category, sort):
+async def get_history(username, category, sort, universe):
     sort_key = {"points": 3, "races": 2, "time": 5, "wpm": 4}.get(sort, 0)
     columns = ["text_id", "wpm", "points", "timestamp"]
-    race_list = await races.get_races(username, columns=columns)
+    race_list = await races.get_races(username, columns=columns, universe=universe)
     race_list.sort(key=lambda x: x[3])
-    text_list = texts.get_texts(as_dictionary=True, include_disabled=True)
-
+    text_list = texts.get_texts(as_dictionary=True, include_disabled=True, universe=universe)
     history = []
 
     for race in race_list:

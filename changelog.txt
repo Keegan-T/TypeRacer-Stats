@@ -111,4 +111,10 @@
 6/28/2024
 - Added quote length to -search results
 - Added -improvement shorthands (-improvement username day)
-- Truncated long segments -wpmsegments
+- Truncated long segments in -wpmsegments
+
+6/29/2024
+- Removed unchanging brackets and removed WPM cap from -textbestdistribution
+
+7/1/2024
+- Conquered the multiverse

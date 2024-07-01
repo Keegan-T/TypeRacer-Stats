@@ -3,24 +3,57 @@ import utils
 from database.users import correct_best_wpm
 import database.modified_races as modified_races
 
+def table_name(universe):
+    table = "races"
+    if universe != "play":
+        table += f"_{universe}"
 
-def add_races(races):
-    db.run_many("""
-        INSERT OR IGNORE INTO races
+    return table.replace("-", "_")
+
+def create_table(universe):
+    table = table_name(universe)
+    db.run(f"""
+        CREATE TABLE {table} (
+            id TEXT PRIMARY KEY,
+            username TEXT,
+            text_id INTEGER,
+            number INTEGER,
+            wpm REAL,
+            accuracy REAL,
+            points REAL,
+            rank INTEGER,
+            racers INTEGER,
+            timestamp REAL
+        )
+    """)
+
+    db.run(f"CREATE INDEX idx_{table}_username ON {table}(username)")
+    db.run(f"CREATE INDEX idx_{table}_text_id ON {table}(text_id)")
+    db.run(f"CREATE INDEX idx_{table}_username_text_id ON {table}(username, text_id)")
+    db.run(f"CREATE INDEX idx_{table}_username_text_id_wpm ON {table}(username, text_id, wpm)")
+
+
+def add_races(races, universe):
+    table = table_name(universe)
+    db.run_many(f"""
+        INSERT OR IGNORE INTO {table}
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, races)
 
 
 async def get_races(username, columns="*", start_time=None, end_time=None, start_number=None, end_number=None,
-              with_texts=False, order_by=None, reverse=False, limit=None):
+              with_texts=False, order_by=None, reverse=False, limit=None, universe="play"):
+    from database.texts import table_name as texts_table_name
+    table = table_name(universe)
+    texts_table = texts_table_name(universe)
     if columns != "*":
         columns = ",".join([c for c in columns])
     order = 'DESC' if reverse else 'ASC'
 
     races = await db.fetch_async(f"""
-        SELECT {columns} FROM races
-        INDEXED BY idx_races_username
-        {'JOIN texts ON texts.id = races.text_id' * with_texts}
+        SELECT {columns} FROM {table}
+        INDEXED BY idx_{table}_username
+        {('JOIN ' + texts_table + ' ON ' + texts_table + '.id = ' + table + '.text_id') * with_texts}
         WHERE username = ?
         {f'AND number >= {start_number}' if start_number else ''}
         {f'AND number <= {end_number}' if end_number else ''}
@@ -33,9 +66,10 @@ async def get_races(username, columns="*", start_time=None, end_time=None, start
     return races
 
 
-def get_race(username, number):
-    race = db.fetch("""
-        SELECT * FROM races
+def get_race(username, number, universe):
+    table = table_name(universe)
+    race = db.fetch(f"""
+        SELECT * FROM {table}
         WHERE id = ?
     """, [utils.race_id(username, number)])
 
@@ -45,17 +79,15 @@ def get_race(username, number):
     return race[0]
 
 
-def get_text_races(username, text_id):
-    races = db.fetch(
-        """
-            SELECT * FROM races
-            INDEXED BY idx_races_username_text_id
-            WHERE username = ?
-            AND text_id = ?
-            ORDER BY timestamp ASC
-        """,
-        [username, text_id],
-    )
+def get_text_races(username, text_id, universe):
+    table = table_name(universe)
+    races = db.fetch(f"""
+        SELECT * FROM {table}
+        INDEXED BY idx_{table}_username_text_id
+        WHERE username = ?
+        AND text_id = ?
+        ORDER BY timestamp ASC
+    """,[username, text_id])
 
     return races
 

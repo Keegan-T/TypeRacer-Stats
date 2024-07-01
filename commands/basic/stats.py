@@ -13,7 +13,6 @@ command = {
     "description": "Displays stats about a user's TypeRacer account",
     "parameters": "[username]",
     "usages": ["stats keegant"],
-    "multiverse": True,
 }
 
 

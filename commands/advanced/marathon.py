@@ -53,12 +53,13 @@ async def run(ctx, user, username, category, seconds):
     if seconds <= 0:
         return await ctx.send(embed=invalid_time())
 
-    stats = users.get_user(username)
+    universe = user["universe"]
+    stats = users.get_user(username, universe)
     if not stats:
-        return await ctx.send(embed=errors.import_required(username))
+        return await ctx.send(embed=errors.import_required(username, universe))
 
     columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
-    race_list = await races.get_races(username, columns=columns)
+    race_list = await races.get_races(username, columns=columns, universe=universe)
     race_list.sort(key=lambda x: x[7])
     marathon = 0
     race_range = []
@@ -109,10 +110,10 @@ async def run(ctx, user, username, category, seconds):
               f"({utils.format_duration_short(seconds, False)} period)",
         color=user["colors"]["embed"],
     )
+    utils.add_profile(embed, stats, universe)
+    utils.add_universe(embed, universe)
 
-    utils.add_profile(embed, stats)
-
-    add_stats(embed, username, marathon_races, start_time, end_time)
+    add_stats(embed, username, marathon_races, start_time, end_time, universe=universe)
 
     await ctx.send(embed=embed)
 

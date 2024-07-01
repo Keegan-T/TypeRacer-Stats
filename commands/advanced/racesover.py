@@ -47,15 +47,16 @@ async def run(ctx, user, username, threshold, category, over=True):
     if threshold < 0:
         return await ctx.send(embed=errors.greater_than(0))
 
-    stats = users.get_user(username)
+    universe = user["universe"]
+    stats = users.get_user(username, universe)
     if not stats:
-        return await ctx.send(embed=errors.import_required(username))
+        return await ctx.send(embed=errors.import_required(username, universe))
 
     category_title = "WPM"
     if category != "wpm":
         category_title = category.title()
 
-    times = users.count_races_over(username, category, threshold, over)
+    times = users.count_races_over(username, category, threshold, over, universe)
     percent = (times / stats["races"]) * 100
     description = (
         f"**{times:,}** of **{stats['races']:,}** races are "
@@ -68,7 +69,8 @@ async def run(ctx, user, username, threshold, category, over=True):
         description=description,
         color=user["colors"]["embed"],
     )
-    utils.add_profile(embed, stats)
+    utils.add_profile(embed, stats, universe)
+    utils.add_universe(embed, universe)
 
     await ctx.send(embed=embed)
 

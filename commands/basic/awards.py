@@ -13,6 +13,7 @@ command = {
     "description": "Displays a breakdown of a user's competition awards",
     "parameters": "[username]",
     "usages": ["awards keegant"],
+    "multiverse": False,
 }
 
 

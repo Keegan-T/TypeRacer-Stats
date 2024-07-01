@@ -16,7 +16,6 @@ command = {
         "rawspeedaverage keegant 5",
         "rawspeedaverage keegant 101 110"
     ],
-    "multiverse": True,
 }
 
 

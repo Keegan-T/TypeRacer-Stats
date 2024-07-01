@@ -5,7 +5,8 @@ from dateutil import parser
 from dateutil.relativedelta import relativedelta
 import re
 
-async def get_competition_info(date, kind, sort="points", results_per_page=20):
+
+async def get_competition_info(date, kind, sort="points", results_per_page=20, universe="play"):
     sort_names = {
         "races": "gamesFinished",
         "points": "points",
@@ -16,7 +17,8 @@ async def get_competition_info(date, kind, sort="points", results_per_page=20):
     sort = sort_names[sort]
 
     date_string = date.strftime('%Y-%m-%d')
-    url = f"https://data.typeracer.com/pit/competitions?date={date_string}&sort={sort}&kind={kind}&n={results_per_page}"
+    url = (f"https://data.typeracer.com/pit/competitions?date={date_string}&sort={sort}"
+           f"&kind={kind}&n={results_per_page}&universe={universe}")
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             if response.status != 200:

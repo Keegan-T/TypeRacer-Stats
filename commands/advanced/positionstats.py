@@ -32,12 +32,13 @@ class PositionStats(commands.Cog):
         await run(ctx, user, username)
 
 async def run(ctx, user, username):
-    stats = users.get_user(username)
+    universe = user["universe"]
+    stats = users.get_user(username, universe)
     if not stats:
-        return await ctx.send(embed=errors.import_required(username))
+        return await ctx.send(embed=errors.import_required(username, universe))
 
     columns = ["number", "rank", "racers"]
-    race_list = await races.get_races(username, columns=columns)
+    race_list = await races.get_races(username, columns=columns, universe=universe)
     race_list.sort(key=lambda x: x[0])
 
     result_dict = {}
@@ -83,26 +84,26 @@ async def run(ctx, user, username):
         f"**Races:** {race_count:,}\n"
         f"**Wins:** {wins:,} ({win_percent:,.2f}%)\n"
         f"**Most Racers:** {most_racers[1]}/{most_racers[2]:,} "
-        f"(Race [#{most_racers[0]:,}]({urls.replay(username, most_racers[0])}))\n"
+        f"(Race [#{most_racers[0]:,}]({urls.replay(username, most_racers[0], universe)}))\n"
     )
 
     if wins > 0:
         description += (
             f"**Biggest Win:** {biggest_win[1]}/{biggest_win[2]:,} "
-            f"(Race [#{biggest_win[0]:,}]({urls.replay(username, biggest_win[0])}))\n"
+            f"(Race [#{biggest_win[0]:,}]({urls.replay(username, biggest_win[0], universe)}))\n"
         )
 
     if biggest_loss[0] != 0:
         description += (
             f"**Biggest Loss:** {biggest_loss[1]}/{biggest_loss[2]:,} "
-            f"(Race [#{biggest_loss[0]:,}]({urls.replay(username, biggest_loss[0])}))\n"
+            f"(Race [#{biggest_loss[0]:,}]({urls.replay(username, biggest_loss[0], universe)}))\n"
         )
 
     if wins > 0:
         description += (
             f"**Longest Win Streak:** {win_streak[0]:,} "
-            f"(Races [#{win_streak[1]:,}]({urls.replay(username, win_streak[1])}) - "
-            f"[#{win_streak[2]:,}]({urls.replay(username, win_streak[2])}))\n"
+            f"(Races [#{win_streak[1]:,}]({urls.replay(username, win_streak[1], universe)}) - "
+            f"[#{win_streak[2]:,}]({urls.replay(username, win_streak[2], universe)}))\n"
         )
 
     description += "\n**Positions**\n"
@@ -115,7 +116,8 @@ async def run(ctx, user, username):
         description=description,
         color=user["colors"]["embed"],
     )
-    utils.add_profile(embed, stats)
+    utils.add_profile(embed, stats, universe)
+    utils.add_universe(embed, universe)
 
     await ctx.send(embed=embed)
 

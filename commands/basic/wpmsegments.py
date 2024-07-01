@@ -15,7 +15,6 @@ command = {
     "description": "Displays a bar graph of WPM segments over a race",
     "parameters": "[username] <race_number>",
     "usages": ["wpmsegments keegant 420"],
-    "multiverse": True,
 }
 
 

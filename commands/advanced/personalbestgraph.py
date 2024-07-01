@@ -44,12 +44,13 @@ def get_args(user, args, info):
 
 
 async def run(ctx, user, username, category):
-    stats = users.get_user(username)
+    universe = user["universe"]
+    stats = users.get_user(username, universe)
     if not stats:
-        return await ctx.send(embed=errors.import_required(username))
+        return await ctx.send(embed=errors.import_required(username, universe))
 
     column = 2 if category == "time" else 1
-    race_list = await races.get_races(username, columns=["wpm", "number", "timestamp"])
+    race_list = await races.get_races(username, columns=["wpm", "number", "timestamp"], universe=universe)
     race_list.sort(key=lambda r: r[1])
 
     pbs = [race_list[0]]
@@ -66,7 +67,7 @@ async def run(ctx, user, username, category):
     indicator = f"#{pbs[0]['number']:,}" if category == "races" else f"<t:{int(pbs[0]['timestamp'])}:R>"
     description = (
         f"**First Race:** [{pbs[0]['wpm']:,.2f} WPM]"
-        f"({urls.replay(username, pbs[0]['number'])}) - {indicator}\n"
+        f"({urls.replay(username, pbs[0]['number'], universe)}) - {indicator}\n"
     )
 
     latest_break = None
@@ -84,7 +85,7 @@ async def run(ctx, user, username, category):
             label = f"**Best Race:**" if i == len(pbs) - 2 else f"**Broke {next_barrier:.0f}:**"
             description += (
                 f"{label} [{next_wpm:,.2f} WPM]"
-                f"({urls.replay(username, next_pb['number'])}) - "
+                f"({urls.replay(username, next_pb['number'], universe)}) - "
                 f"{next_indicator}\n"
             )
 
@@ -92,7 +93,7 @@ async def run(ctx, user, username, category):
         indicator = f"#{pbs[-1]['number']:,}" if category == "races" else f"<t:{int(pbs[-1]['timestamp'])}:R>"
         description += (
             f"**Best Race:** [{pbs[-1]['wpm']:,.2f} WPM]"
-            f"({urls.replay(username, pbs[-1]['number'])}) - "
+            f"({urls.replay(username, pbs[-1]['number'], universe)}) - "
             f"{indicator}\n"
         )
 
@@ -101,10 +102,11 @@ async def run(ctx, user, username, category):
         description=description,
         color=user["colors"]["embed"],
     )
-    utils.add_profile(embed, stats)
+    utils.add_profile(embed, stats, universe)
+    utils.add_universe(embed, universe)
 
     file_name = f"personal_best_over_{category}_{username}.png"
-    graphs.personal_bests(user, username, x, y, category, file_name)
+    graphs.personal_bests(user, username, x, y, category, file_name, universe)
 
     embed.set_image(url=f"attachment://{file_name}")
     file = File(file_name, filename=file_name)
