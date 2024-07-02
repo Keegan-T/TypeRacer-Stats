@@ -313,6 +313,8 @@ def add_universe(embed, universe):
 def truncate_clean(text, max_chars):
     if len(text) <= max_chars:
         return escape_discord_format(text)
+    if len(text.split(" ")) == 1:
+        return text[:max_chars] + "..."
 
     substring = text[:max_chars]
     while True:
