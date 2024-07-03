@@ -59,6 +59,9 @@ async def run(ctx, user, username, number, category):
     if (category == "races" and number > stats["races"]) or number > stats["points"]:
         return await ctx.send(embed=no_milestone(category, universe))
 
+    if category == "races":
+        number = round(number)
+
     columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
     race_list = await races.get_races(username, columns=columns, universe=universe)
     race_list.sort(key=lambda x: x[7])
