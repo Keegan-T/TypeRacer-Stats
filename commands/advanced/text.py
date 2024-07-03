@@ -48,6 +48,10 @@ class Text(commands.Cog):
 
 
 def get_args(user, args, info):
+    # Shorthand (-text ^)
+    if len(args) == 1 and args[0] == "^" and user["username"]:
+        return user["username"], recent.text_id
+
     params = "username text_id:-1"
 
     return utils.parse_command(user, params, args, info)
