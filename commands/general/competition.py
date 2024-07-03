@@ -73,23 +73,24 @@ class Competition(commands.Cog):
         await run(ctx, user, period, sort, date)
 
 
-async def run(ctx, user, kind, sort, date):
+async def run(ctx, user, period, sort, date):
     universe = user["universe"]
     now = utils.now()
+    previous = ctx.invoked_with.lower() in ["lastcomp", "lc"]
 
-    if kind == "week":
-        if ctx.invoked_with in ["lastcomp", "lc"]:
-            date -= relativedelta(days=7)
+    if period == "week":
+        if previous:
+            date -= relativedelta(weeks=1)
         start_date = utils.floor_week(date)
-        end_date = start_date + relativedelta(days=7)
+        end_date = start_date + relativedelta(weeks=1)
         date_string = utils.get_display_date_range(start_date, (end_date - relativedelta(days=1)))
         title = "Weekly"
 
-        next_comp_start = utils.floor_week(now + relativedelta(days=7))
+        next_comp_start = utils.floor_week(now + relativedelta(weeks=1))
         requested_comp_start = start_date
 
-    elif kind == "month":
-        if ctx.invoked_with in ["lastcomp", "lc"]:
+    elif period == "month":
+        if previous:
             date -= relativedelta(months=1)
         date_string = date.strftime("%B %Y")
         title = "Monthly"
@@ -98,8 +99,8 @@ async def run(ctx, user, kind, sort, date):
         requested_comp_start = utils.floor_month(date)
 
 
-    elif kind == "year":
-        if ctx.invoked_with in ["lastcomp", "lc"]:
+    elif period == "year":
+        if previous:
             date -= relativedelta(years=1)
         date_string = date.year
         title = "Yearly"
@@ -108,7 +109,7 @@ async def run(ctx, user, kind, sort, date):
         requested_comp_start = utils.floor_year(date)
 
     else:
-        if ctx.invoked_with in ["lastcomp", "lc"]:
+        if previous:
             date -= relativedelta(days=1)
         date_string = utils.get_display_date(date)
         title = "Daily"
@@ -126,10 +127,10 @@ async def run(ctx, user, kind, sort, date):
         title += " (By WPM)"
     title += f" - {date_string}"
 
-    competition = await competitions_api.get_competition_info(date, kind, sort, 10, universe)
+    competition = await competitions_api.get_competition_info(date, period, sort, 10, universe)
     date_string = date.strftime("%Y-%m-%d")
     competition_url = (f"https://data.typeracer.com/pit/competitions?date={date_string}"
-                       f"&sort={sort}&kind={kind}&universe={universe}")
+                       f"&sort={sort}&kind={period}&universe={universe}")
     if not competition:
         embed = Embed(
             title=title,
@@ -138,6 +139,7 @@ async def run(ctx, user, kind, sort, date):
             color=user["colors"]["embed"],
         )
         embed.set_footer(text="Competitions started July 27th, 2017")
+        utils.add_universe(embed, universe)
 
         return await ctx.send(embed=embed)
 

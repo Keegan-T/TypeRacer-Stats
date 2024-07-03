@@ -76,51 +76,57 @@ async def run(ctx, user, username, date):
     api_stats = get_stats(username, universe=universe)
     await download(stats=api_stats, universe=universe)
 
-    week_commands = ["week", "w", "lastweek", "yesterweek", "lw", "yw", "miniweek", "mw"]
-    month_commands = ["month", "m", "lastmonth", "yestermonth", "lm", "ym", "minimonth", "mm"]
-    year_commands = ["year", "y", "lastyear", "yesteryear", "ly", "yy", "miniyear", "my"]
-    command_name = ctx.invoked_with.lower()
+    command_name = utils.get_category([
+        "day", "yesterday", "miniday", "miniyesterday",
+        "week", "lastweek", "miniweek",
+        "month", "lastmonth", "minimonth",
+        "year", "lastyear", "miniyear",
+    ], ctx.invoked_with.lower())
 
-    if command_name in week_commands:
-        if command_name in week_commands[2:6]:
-            date -= relativedelta(days=7)
-        competition = await get_competition_info(date, "week", results_per_page=1, universe=universe)
+    mini = command_name.startswith("mini")
+    previous = command_name.startswith("last") or "yester" in command_name
+    period = "day"
+    if "week" in command_name:
+        period = "week"
+    elif "month" in command_name:
+        period = "month"
+    elif "year" in command_name:
+        period = "year"
+
+    if period == "week":
+        if previous:
+            date -= relativedelta(weeks=1)
         start_date = utils.floor_week(date)
-        end_date = start_date + relativedelta(days=7)
-        start_time = start_date.timestamp()
-        end_time = end_date.timestamp()
+        end_date = start_date + relativedelta(weeks=1)
         date_string = utils.get_display_date_range(start_date, (end_date - relativedelta(days=1)))
         title = f"Weekly Stats - {date_string}"
 
-    elif command_name in month_commands:
-        if command_name in month_commands[2:6]:
+    elif period == "month":
+        if previous:
             date -= relativedelta(months=1)
-        competition = await get_competition_info(date, "month", results_per_page=1, universe=universe)
         start_date = utils.floor_month(date)
         end_date = start_date + relativedelta(months=1)
-        start_time = start_date.timestamp()
-        end_time = end_date.timestamp()
         date_string = date.strftime("%B %Y")
         title = f"Monthly Stats - {date_string}"
 
-    elif command_name in year_commands:
-        if command_name in year_commands[2:6]:
+    elif period == "year":
+        if previous:
             date -= relativedelta(years=1)
-        competition = await get_competition_info(date, "year", results_per_page=1, universe=universe)
         start_date = utils.floor_year(date)
         end_date = start_date + relativedelta(years=1)
-        start_time = start_date.timestamp()
-        end_time = end_date.timestamp()
         date_string = date.year
         title = f"Yearly Stats - {date_string}"
 
     else:
-        if command_name in command["aliases"][3:]:
+        if previous:
             date -= timedelta(days=1)
-        competition = await get_competition_info(date, "day", results_per_page=1, universe=universe)
-        start_time = utils.floor_day(date).timestamp()
-        end_time = start_time + 86400
+        start_date = utils.floor_day(date)
+        end_date = start_date + relativedelta(days=1)
         title = f"Daily Stats - {utils.get_display_date(date)}"
+
+    competition = await get_competition_info(date, period, results_per_page=1, universe=universe)
+    start_time = start_date.timestamp()
+    end_time = end_date.timestamp()
 
     columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
     race_list = await races.get_races(username, columns, start_time, end_time, universe=universe)
@@ -131,6 +137,7 @@ async def run(ctx, user, username, date):
 
     if not race_list:
         embed.description = "No races completed"
+        utils.add_universe(embed, universe)
         return await ctx.send(embed=embed)
 
     if competition and competition["competitors"][0]["username"] == username:
@@ -139,9 +146,7 @@ async def run(ctx, user, username, date):
         else:
             embed.description = f":first_place: **Competition Winner** :first_place:"
 
-    mini_commands = ["miniday", "miniyesterday", "miniweek", "minimonth", "miniyear", "md", "myd", "mw", "mm", "my"]
-    add_stats(embed, username, race_list, start_time, end_time,
-              mini=ctx.invoked_with in mini_commands, universe=universe)
+    add_stats(embed, username, race_list, start_time, end_time, mini=mini, universe=universe)
     utils.add_universe(embed, universe)
 
     await ctx.send(embed=embed)
