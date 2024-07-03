@@ -11,4 +11,5 @@ default_colors = {
     "line": "#157EFD",
     "text": "#000000",
     "grid": "#b0b0b0",
+    "raw": "#ffb600",
 }

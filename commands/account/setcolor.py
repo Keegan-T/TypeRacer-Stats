@@ -15,6 +15,7 @@ elements = {
     "line": "Line",
     "text": "Text",
     "grid": "Grid",
+    "raw": "Raw Speed",
 }
 
 command = {
@@ -35,6 +36,8 @@ command = {
         "setcolor line ffb600",
         "setcolor text 0",
         "setcolor grid lightgray",
+        "setcolor grid off",
+        "setcolor raw #ffb600",
         "setcolor @keegant",
         "setcolor reset",
     ],
@@ -89,6 +92,8 @@ async def get_args(ctx, user, args):
             if color == "keegant" and ctx.author.id != bot_owner:
                 await ctx.send(embed=not_worthy())
                 raise ValueError
+        elif element == "grid" and args[1] == "off":
+            color = "off"
         else:
             await ctx.send(embed=invalid_color())
             raise ValueError
