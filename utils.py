@@ -89,7 +89,10 @@ def get_log_details(log, multiplier=12000):
     total_ms = sum(delays)
     start = delays[0]
     unlagged = multiplier * len(quote) / total_ms
-    adjusted = multiplier * (len(quote) - 1) / (total_ms - start)
+    try:
+        adjusted = multiplier * (len(quote) - 1) / (total_ms - start)
+    except ZeroDivisionError:
+        adjusted = float("inf")
 
     details = {
         "quote": quote,
