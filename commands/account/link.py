@@ -5,6 +5,7 @@ import utils
 from database.bot_users import get_user, update_username
 from api.users import get_stats
 from commands.basic.stats import get_args
+from config import prefix
 
 command = {
     "name": "link",
@@ -36,12 +37,25 @@ async def run(ctx, user, username):
     if not get_stats(username):
         return await ctx.send(embed=errors.invalid_username())
 
+    first_link = user["username"] is None
+
     update_username(ctx.author.id, username)
+
+    description = (
+        f"<@{ctx.author.id}> has been linked to [{username}]"
+        f"(https://data.typeracer.com/pit/profile?user={username})\n\n"
+    )
+
+    if first_link:
+        description += (
+            f"For commands that require extra parameters,\n"
+            f"you can use \"me\" in the place of your username.\n"
+            f"Example: `{prefix}improvement me day`"
+        )
 
     embed = Embed(
         title="Account Linked",
-        description=f"<@{ctx.author.id}> has been linked to [{username}]"
-                    f"(https://data.typeracer.com/pit/profile?user={username})",
+        description=description,
         color=user["colors"]["embed"],
     )
 
