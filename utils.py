@@ -440,7 +440,7 @@ category_aliases = [
     ["year", "y"],
     ["lastyear", "yesteryear", "ly", "yy"],
     ["miniyear", "my"],
-    ["awards", "medals", "aw", "md"],
+    ["awards", "medals", "aw"],
     ["textbests", "tb"],
     ["textstyped", "tt"],
     ["toptens", "top10s", "10s"],
