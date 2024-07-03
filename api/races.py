@@ -126,7 +126,10 @@ async def get_race_details(html, get_raw=False, get_opponents=False, universe="p
         duration = details["ms"]
         raw_duration = raw_speeds["raw_duration"]
         correction = duration - raw_duration
-        raw_unlagged = universe_multiplier * len(delays) / raw_duration
+        try:
+            raw_unlagged = universe_multiplier * len(delays) / raw_duration
+        except ZeroDivisionError:
+            raw_unlagged = float("inf")
         try:
             raw_adjusted = universe_multiplier * (len(delays) - 1) / (raw_duration - raw_speeds["raw_start"])
         except ZeroDivisionError:

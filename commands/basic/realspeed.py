@@ -121,7 +121,10 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
 
         if raw:
             correction = race_info["correction"]
-            correction_percent = (correction / race_info["ms"]) * 100
+            try:
+                correction_percent = (correction / race_info["ms"]) * 100
+            except ZeroDivisionError:
+                correction_percent = 0
             speeds_string += (
                 f"**Raw Unlagged:** {race_info['raw_unlagged']:,.2f} WPM\n"
                 f"**Raw Adjusted:**  {race_info['raw_adjusted']:,.3f} WPM\n"
