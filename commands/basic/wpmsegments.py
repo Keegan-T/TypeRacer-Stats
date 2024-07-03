@@ -11,7 +11,7 @@ from commands.basic.realspeed import get_args
 
 command = {
     "name": "wpmsegments",
-    "aliases": ["ws"],
+    "aliases": ["segments", "ws"],
     "description": "Displays a bar graph of WPM segments over a race",
     "parameters": "[username] <race_number>",
     "usages": ["wpmsegments keegant 420"],
@@ -81,6 +81,7 @@ async def run(ctx, user, username, race_number, universe):
         f"**Text** - [#{text_id}]"
         f"({urls.trdata_text(text_id)}) - "
         f"{words:,} words - {chars:,} characters\n\n"
+        f"**Speed:** {race_info['unlagged']:,.2f} WPM ({race_info['accuracy'] * 100:,.1f}% Accuracy)\n\n"
     )
     for segment in segments:
         segment_text = utils.escape_discord_format(segment["text"]).replace("-", "\\-")
