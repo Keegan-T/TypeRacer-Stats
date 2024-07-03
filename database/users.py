@@ -22,7 +22,6 @@ def races_table_name(universe):
 
 def create_table(universe):
     table = table_name(universe)
-    print(table)
     db.run(f"""
         CREATE TABLE {table} (
             username TEXT,
