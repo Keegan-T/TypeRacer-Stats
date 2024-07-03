@@ -454,6 +454,7 @@ category_aliases = [
     ["graphbackground", "graphbg", "gbg", "gb"],
     ["axis", "ax"],
     ["line", '-'],
+    ["raw", "rawspeed"],
     ["text", "txt"],
     ["grid", "#"],
     ["best"],

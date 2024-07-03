@@ -174,7 +174,8 @@ def cmap_bar(ax, user, labels, wpm, raw_wpm):
         if bar_height < target_y_value:
             if target_y_value > max_y:
                 max_y = target_y_value
-            rect = patches.Rectangle((bar_left, bar_height), bar_width, target_y_value - bar_height, color="#ffb600")
+            rect = patches.Rectangle((bar_left, bar_height), bar_width,
+                                     target_y_value - bar_height, color=user["colors"]["raw"])
             ax.add_patch(rect)
 
     if original_ylim[1] < max_y:
@@ -221,7 +222,10 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
     ax.yaxis.label.set_color(color=colors["text"])
     ax.tick_params(axis="both", which="both", colors=colors["axis"], labelcolor=colors["text"])
 
-    ax.grid(color=colors["grid"])
+    if colors["grid"] == "off":
+        ax.grid(False)
+    else:
+        ax.grid(color=colors["grid"])
 
     legend_lines = []
     legend_labels = []
@@ -231,7 +235,7 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
     for i, line in enumerate(ax.get_lines()):
         label = line.get_label()
         if label == "Raw Adjusted":
-            line.set_color("#FFB600")
+            line.set_color(user["colors"]["raw"])
             if int(user["id"]) != bot_owner:
                 line.set_linewidth(1)
             recolored_line = 1
@@ -263,11 +267,15 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
 
 
 def sample(user):
-    x = [i for i in range(1000)]
+    x = [i for i in range(100)]
     y = x
+
+    x2 = [i for i in range(50)]
+    y2 = [i + 50 for i in x2]
 
     ax = plt.subplots()[1]
     ax.plot(x, y, label="Data")
+    ax.plot(x2, y2, label="Raw Speed", color=user["colors"]["raw"], zorder=10)
 
     plt.grid()
     ax.set_title("Sample Graph")
@@ -656,7 +664,7 @@ def race_wpm(user, segments, title, file_name):
         cmap_bar(ax, user, x, y, raw_y)
     else:
         ax.bar(x, y, color=color)
-        ax.bar(x, raw_y, color="#ffb600", zorder=0)
+        ax.bar(x, raw_y, color=user["colors"]["raw"], zorder=0)
 
     ax.set_ylabel("WPM")
     ax.set_xlabel("Segments")

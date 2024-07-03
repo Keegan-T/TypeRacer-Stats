@@ -138,6 +138,7 @@ async def view(ctx, user):
         f"**Graph Background:** {user['colors']['graphbackground']}\n"
         f"**Grid:** {user['colors']['grid']}\n"
         f"**Line:** {user['colors']['line']}\n"
+        f"**Raw Speed:** {user['colors']['raw']}\n"
         f"**Text:** {user['colors']['text']}"
     )
 

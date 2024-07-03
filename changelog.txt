@@ -118,3 +118,8 @@
 
 7/1/2024
 - Conquered the multiverse
+
+7/3/2024
+- Added speed to -wpmsegments
+- Added option to hide grid in graphs
+- Added option to change raw speed color in graphs
