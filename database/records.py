@@ -9,26 +9,19 @@ from config import records_channel
 
 medals = [":first_place:", ":second_place:", ":third_place:"]
 countries = {}
-exclude_300s = {
-    "izanagiii",
-    "i_dont_know_you_know",
-    "taran",
-    "slowaccount",
-}
 
 
 def get_countries():
     global countries
     countries = users.get_countries()
-    countries["taran"] = "us"
-    countries["taran127"] = "us"
-    countries["tedioustuna47"] = "us"
-    countries["mispelled"] = "us"
-    countries["arabianghosthaunting"] = "ph"
-    countries["wordracer888"] = "au"
-    countries["deroche1"] = "us"
-    countries["jestercaporado"] = "ph"
-    countries["yukomiya"] = "au"
+    # countries["taran"] = "us"
+    # countries["taran127"] = "us"
+    # countries["mispelled"] = "us"
+    # countries["arabianghosthaunting"] = "ph"
+    # countries["wordracer888"] = "au"
+    # countries["deroche1"] = "us"
+    # countries["jestercaporado"] = "ph"
+    # countries["yukomiya"] = "au"
 
 
 async def update(bot):
@@ -97,7 +90,7 @@ async def get_records():
 
     last_updated = Embed(
         title="Last Updated",
-        description=utils.discord_timestamp(date.timestamp(), "d"),
+        description=utils.discord_timestamp(date.timestamp()),
         color=colors.gold,
     )
 
@@ -400,7 +393,7 @@ async def text_records():
     min_texts = int(text_count * 0.2)
     text_bests = users.get_top_text_best(3)
     total_text_wpm = users.get_most("text_wpm_total", 3)
-    most_texts = users.get_most("texts_typed", 3)
+    most_texts = users.get_most("texts_typed", 20)
     max_quote = await users.get_most_text_repeats(3)
     text_bests_str = ""
     total_text_wpm_str = ""
@@ -424,11 +417,6 @@ async def text_records():
             f"({user['texts_typed']:,} texts typed)\n"
         )
 
-        user = most_texts[i]
-        username = user["username"]
-        flag = get_flag(username)
-        most_texts_str += f"{medal} {flag}{user['username']} - {user['texts_typed']:,} texts\n"
-
         user = max_quote[i]
         username = user["username"]
         flag = get_flag(username)
@@ -436,6 +424,17 @@ async def text_records():
             f"{medal} {flag}{user['username']} - [{user['max_quote_times']:,} times]"
             f"(https://typeracerdata.com/text.races?username=charlieog&text={user['max_quote_id']})\n"
         )
+
+    max_texts_typed = most_texts[0]["texts_typed"]
+    for i in range(len(most_texts)):
+        user = most_texts[i]
+        texts_typed = user["texts_typed"]
+        if texts_typed < max_texts_typed:
+            break
+        user = most_texts[i]
+        username = user["username"]
+        flag = get_flag(username)
+        most_texts_str += f"{i + 1}. {flag}{user['username']}\n"
 
     embed.add_field(
         name=f"Text Best WPM (Min. {min_texts:,} Texts Typed)",
@@ -450,7 +449,7 @@ async def text_records():
     )
 
     embed.add_field(
-        name="Most Texts Typed",
+        name=f"Text Completion Club ({max_texts_typed:,} Texts Typed)",
         value=most_texts_str,
         inline=False,
     )
@@ -510,8 +509,11 @@ def get_score_string(score):
 
 
 def get_flag(username):
-    country = countries[username.replace("\\", "")]
-    if country is None:
+    try:
+        country = countries[username.replace("\\", "")]
+        if country is None:
+            return ""
+    except KeyError:
         return ""
 
     return f":flag_{country}: "
