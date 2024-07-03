@@ -75,10 +75,12 @@ async def run(ctx, user, username):
     embed = Embed(color=user['colors']["embed"])
 
     general_string = (
-                         f"{'**Name: **' + stats['display_name'] if stats['display_name'] else ''}\n"
-                         f"**Joined:** {datetime.fromtimestamp(joined, tz=timezone.utc).strftime('%b. %d, %Y')}{anniversary}\n"
-                         f"**Membership:** {'Premium' if stats['premium'] else 'Basic'}"
-                     ) + "\n**Status:** Banned" * stats['disqualified']
+        f"{'**Name: **' + stats['display_name'] if stats['display_name'] else ''}\n"
+        f"**Joined:** {datetime.fromtimestamp(joined, tz=timezone.utc).strftime('%b. %d, %Y')}{anniversary}\n"
+        f"**Membership:** {'Premium' if stats['premium'] else 'Basic'}"
+    )
+    if stats["disqualified"]:
+        general_string += "\n**Status:** Banned"
 
     stats_string = (
         f"**Races:** {stats['races']:,}\n"
