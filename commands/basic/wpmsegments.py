@@ -56,6 +56,8 @@ async def run(ctx, user, username, race_number, universe):
 
     quote = race_info["quote"]
     text_segments = utils.get_segments(quote)
+    if "delays" not in race_info:
+        return await ctx.send(embed=errors.logs_not_found(username, race_number, universe))
     delays = race_info["delays"]
     raw_delays = race_info["raw_delays"]
     multiplier = utils.get_universe_multiplier(universe)
