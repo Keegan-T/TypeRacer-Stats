@@ -37,8 +37,6 @@ async def run(ctx, user, username):
     if not get_stats(username):
         return await ctx.send(embed=errors.invalid_username())
 
-    first_link = user["username"] is None
-
     update_username(ctx.author.id, username)
 
     description = (
@@ -46,7 +44,7 @@ async def run(ctx, user, username):
         f"(https://data.typeracer.com/pit/profile?user={username})\n\n"
     )
 
-    if first_link:
+    if user["username"] is None:
         description += (
             f"For commands that require extra parameters,\n"
             f"you can use \"me\" in the place of your username.\n"
