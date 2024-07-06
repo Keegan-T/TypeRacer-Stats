@@ -82,8 +82,8 @@ async def run(ctx, user, username1, username2):
 
     comparison = sorted(comparison.items(), key=lambda x: x[1][2], reverse=True)
 
-    stats1 = f"**{username1}** (+{user1_better:,} texts)\n"
-    stats2 = f"**{username2}** (+{user2_better:,} texts)\n"
+    stats1 = f"**{utils.escape_discord_format(username1)}** (+{user1_better:,} texts)\n"
+    stats2 = f"**{utils.escape_discord_format(username2)}** (+{user2_better:,} texts)\n"
 
     for i, text in enumerate(comparison[:10]):
         gap = text[1][2]
