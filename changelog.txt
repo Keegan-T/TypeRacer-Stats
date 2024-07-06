@@ -123,3 +123,6 @@
 - Added speed to -wpmsegments
 - Added option to hide grid in graphs
 - Added option to change raw speed color in graphs
+
+7/6/2024
+- Added new -textbests sorts (old, new)
