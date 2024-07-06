@@ -143,7 +143,7 @@ async def get_history(username, category, sort, universe):
         start = datetime.utcfromtimestamp(stats[0])
         end = datetime.utcfromtimestamp(stats[1])
         if category == "day":
-            stats[1] = start.strftime("%#m/%#d/%Y")
+            stats[1] = utils.get_display_date(start)
         elif category == "week":
             stats[1] = utils.get_display_date_range(start, end - relativedelta(days=1))
         elif category == "month":
