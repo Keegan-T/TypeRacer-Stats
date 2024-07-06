@@ -10,7 +10,7 @@ import database.users as users
 import database.texts as texts
 from config import prefix
 
-categories = ["best", "worst", "old", "new"]
+categories = ["best", "worst", "old", "new", "accuracy"]
 command = {
     "name": "textbests",
     "aliases": ["tb"],
@@ -81,6 +81,8 @@ async def run(ctx, user, username, sort, n):
     text_bests = users.get_text_bests(username, race_stats=True, universe=universe)
     if sort in ["new", "old"]:
         text_bests.sort(key=lambda x: x["timestamp"])
+    elif sort == "accuracy":
+        text_bests.sort(key=lambda x: x["accuracy"])
     if sort in ["worst", "new"]:
         text_bests.reverse()
     text_bests = text_bests[:n]
@@ -103,9 +105,10 @@ async def run(ctx, user, username, sort, n):
     for text in text_bests[:limit]:
         text_id = text["text_id"]
         quote = utils.truncate_clean(text_list[text_id]["quote"], 60)
+        race_stat = f"{text['accuracy'] * 100}% Accuracy - " if sort == "accuracy" else f"Race #{text['number']:,} - "
         scores += (
             f"[{text['wpm']:,.2f} WPM]({urls.replay(username, text['number'], universe)}) - "
-            f"Race #{text['number']:,} - "
+            f"{race_stat}"
             f"[Text #{text_id}]({urls.trdata_text(text_id, universe)}) - "
             f'{utils.discord_timestamp(text["timestamp"])}\n"{quote}"\n\n'
         )
@@ -119,6 +122,8 @@ async def run(ctx, user, username, sort, n):
         title += " (Newest)"
     elif sort == "old":
         title += " (Oldest)"
+    elif sort == "accuracy":
+        title += " (Worst Accuracy)"
 
     embed = Embed(
         title=title,

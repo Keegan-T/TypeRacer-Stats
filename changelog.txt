@@ -125,4 +125,4 @@
 - Added option to change raw speed color in graphs
 
 7/6/2024
-- Added new -textbests sorts (old, new)
+- Added new -textbests sorts (old, new, accuracy)

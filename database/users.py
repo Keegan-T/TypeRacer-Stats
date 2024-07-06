@@ -286,9 +286,9 @@ def get_text_bests(username, race_stats=False, universe="play"):
     table = races_table_name(universe)
     if race_stats:
         text_bests = db.fetch(f"""
-            SELECT text_id, wpm, number, timestamp
+            SELECT text_id, wpm, number, timestamp, accuracy
             FROM (
-                SELECT r.text_id, r.wpm, r.number, r.timestamp,
+                SELECT r.text_id, r.wpm, r.number, r.timestamp, r.accuracy,
                        ROW_NUMBER() OVER (PARTITION BY r.text_id ORDER BY r.wpm DESC) AS rn
                 FROM {table} r
                 INDEXED BY idx_{table}_username
