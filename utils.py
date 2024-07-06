@@ -463,6 +463,8 @@ category_aliases = [
     ["best"],
     ["worst"],
     ["random", "rand", "r"],
+    ["old", "oldest"],
+    ["new", "newest"],
 ]
 
 

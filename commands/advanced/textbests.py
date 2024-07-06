@@ -10,6 +10,7 @@ import database.users as users
 import database.texts as texts
 from config import prefix
 
+categories = ["best", "worst", "old", "new"]
 command = {
     "name": "textbests",
     "aliases": ["tb"],
@@ -20,6 +21,8 @@ command = {
     "usages": [
         "textbests keegant",
         "textbests keegant worst",
+        "textbests keegant old",
+        "textbests keegant new",
         "textbests charlieog 100",
     ],
 }
@@ -37,31 +40,35 @@ class TextBests(commands.Cog):
         if utils.is_embed(result):
             return await ctx.send(embed=result)
 
-        username, n, worst = result
-        await run(ctx, user, username, n, worst)
+        username, sort, n = result
+        await run(ctx, user, username, sort, n)
 
 
 def get_args(user, args, info):
-    worst = False
-    params = "username int:99999"
+    n = 99999
+    sort = "best"
 
+    params = f"username choice:{'|'.join(categories)}"
     result = utils.parse_command(user, params, args, info)
     if utils.is_embed(result):
-        if len(args) > 1 and args[1] in ["worst", "w"]:
-            username = args[0]
-            if user["username"] and username == "me":
-                username = user["username"]
-            n = 99999
-            worst = True
-        else:
-            return result
+        if len (args) > 1:
+            try:
+                username = args[0]
+                if user["username"] and username == "me":
+                    username = user["username"]
+                n = utils.parse_value_string(args[1])
+                return username, sort, n
+            except ValueError:
+                pass
+
+        return errors.invalid_choice("sort", categories)
     else:
-        username, n = result
+        username, sort = result
 
-    return username, n, worst
+    return username, sort, n
 
 
-async def run(ctx, user, username, n, worst):
+async def run(ctx, user, username, sort, n):
     if n < 1:
         return await ctx.send(embed=errors.greater_than(0))
 
@@ -72,7 +79,10 @@ async def run(ctx, user, username, n, worst):
 
     text_list = texts.get_texts(as_dictionary=True, universe=universe)
     text_bests = users.get_text_bests(username, race_stats=True, universe=universe)
-    if worst: text_bests.reverse()
+    if sort in ["new", "old"]:
+        text_bests.sort(key=lambda x: x["timestamp"])
+    if sort in ["worst", "new"]:
+        text_bests.reverse()
     text_bests = text_bests[:n]
     texts_typed = len(text_bests)
     total_text_wpm = sum(text["wpm"] for text in text_bests)
@@ -103,8 +113,13 @@ async def run(ctx, user, username, n, worst):
     title = f"Text Bests"
     if n < stats["texts_typed"]:
         title += f" (Top {n:,} Texts)"
-    elif worst:
-        title += f" (Worst Texts)"
+    elif sort == "worst":
+        title += " (Worst Texts)"
+    elif sort == "new":
+        title += " (Newest)"
+    elif sort == "old":
+        title += " (Oldest)"
+
     embed = Embed(
         title=title,
         description=f"{description}\n{scores}",
