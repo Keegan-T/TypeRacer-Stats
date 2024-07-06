@@ -41,7 +41,7 @@ async def run(ctx, user, query):
         return await ctx.send(embed=big_query())
 
     text_list = get_texts(universe=universe)
-    query_title = query.replace("`", "")
+    query_title = utils.escape_discord_format(query)
     query = query.lower()
     search_id = ctx.invoked_with in ["searchid", "id"]
     title = f"Text {'ID ' * search_id}Search"
@@ -54,7 +54,7 @@ async def run(ctx, user, query):
         else:
             embed = Embed(
                 title=title,
-                description=f'No results found.\n**Query:** "{query}"',
+                description=f'No results found.\n**Query:** "{query_title}"',
                 color=user["colors"]["embed"],
             )
             utils.add_universe(embed, universe)
