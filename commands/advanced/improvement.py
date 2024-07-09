@@ -26,6 +26,7 @@ command = {
         "improvement keegant",
         "improvement keegant 2022-04-20 2023-04-20",
         "improvement keegant 800k 900k",
+        "improvement poem day",
         "timeimprovement keegant",
     ],
 }

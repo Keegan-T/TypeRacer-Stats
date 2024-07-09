@@ -53,13 +53,15 @@ def get_args(user, args, info):
     end_number = None
 
     if len(args) > 1 and args[1]:
-        params = "username category:day|week|month|year"
+        params = "username category:day|yesterday|week|month|year"
         result = utils.parse_command(user, params, args, info)
         if not utils.is_embed(result):
             username, date = result
             now = utils.now()
-            if date == "day":
+            if "day" in date:
                 start_date = utils.floor_day(now)
+                if date == "yesterday":
+                    start_date -= relativedelta(days=1)
                 end_date = start_date + relativedelta(days=1)
             elif date == "week":
                 start_date = utils.floor_week(now)

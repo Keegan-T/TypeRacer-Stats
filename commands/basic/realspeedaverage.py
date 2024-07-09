@@ -53,6 +53,15 @@ class RealSpeedAverage(commands.Cog):
 
 
 def get_args(user, args, info):
+    # Shorthand: -rsa 5
+    if len(args) == 1 and user["username"]:
+        username = user["username"]
+        try:
+            n = utils.parse_value_string(args[0])
+            return username, n, None
+        except ValueError:
+            pass
+
     params = "username int:10 int"
 
     return utils.parse_command(user, params, args, info)
