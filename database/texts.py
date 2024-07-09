@@ -1,6 +1,7 @@
 from database import db
 from database.alts import get_alts
 import urls
+import sqlite3
 
 
 def table_name(universe):
@@ -20,6 +21,7 @@ def create_table(universe):
             ghost TEXT
         )    
     """)
+
 
 def add_texts(text_list, universe):
     db.run_many(f"""
@@ -126,6 +128,7 @@ def get_top_10(text_id):
 
     return top_10
 
+
 def update_slow_ghosts():
     texts = get_texts(include_disabled=False)
     ghosts = {}
@@ -161,6 +164,7 @@ def update_slow_ghosts():
             if race:
                 link = urls.ghost(race["username"], race["number"])
                 db.run("UPDATE texts SET ghost = ? WHERE id = ?", [link, text_id])
+
 
 async def enable_text(text_id):
     from database.text_results import update_results
@@ -207,6 +211,7 @@ def disable_text(text_id):
         username = str(username[0])
         update_text_stats(username)
 
+
 def get_text_repeat_leaderboard(text_id):
     leaderboard = db.fetch("""
         SELECT races.username, country, COUNT(*) AS times
@@ -219,3 +224,14 @@ def get_text_repeat_leaderboard(text_id):
     """, [text_id])
 
     return leaderboard
+
+
+def universe_exists(universe):
+    table = table_name(universe)
+    try:
+        db.fetch(f"SELECT * FROM {table}")
+    except sqlite3.OperationalError as e:
+        if "no such table" in str(e):
+            return False
+
+    return True

@@ -13,7 +13,7 @@ import database.competition_results as competition_results
 import asyncio
 from database.bot_users import get_user
 from api.users import get_stats, get_joined
-from api.texts import get_quote, get_text_list
+from api.texts import get_quote
 from api.races import get_races
 from commands.basic.stats import get_args
 from config import bot_admins
@@ -224,23 +224,6 @@ async def update_award_count(username):
         second += kind["second"]
         third += kind["third"]
     users.update_awards(username, first, second, third)
-
-
-def create_universe(universe):
-    print(f"Creating universe: {universe}")
-
-    print("Creating users table")
-    users.create_table(universe)
-    print("Creating races table")
-    races.create_table(universe)
-
-    print("Creating texts table")
-    texts.create_table(universe)
-    print("Fetching text list")
-    text_list = get_text_list(universe)
-    print("Adding text list")
-    texts.add_texts(text_list, universe)
-    print("Finished creating universe")
 
 
 async def no_new_races(ctx, user, username, universe):

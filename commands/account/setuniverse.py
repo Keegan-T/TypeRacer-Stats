@@ -3,6 +3,10 @@ from discord.ext import commands
 import colors
 from database.bot_users import get_user, update_universe
 from api.universes import get_universe_list
+from api.texts import get_text_list
+import database.users as users
+import database.races as races
+import database.texts as texts
 
 command = {
     "name": "setuniverse",
@@ -37,6 +41,9 @@ class SetUniverse(commands.Cog):
 
 
 async def run(ctx, user, universe):
+    if not texts.universe_exists(universe):
+        create_universe(universe)
+
     update_universe(ctx.author.id, universe)
 
     embed = Embed(
@@ -46,6 +53,23 @@ async def run(ctx, user, universe):
     )
 
     await ctx.send(embed=embed)
+
+
+def create_universe(universe):
+    print(f"Creating universe: {universe}")
+
+    print("Creating users table")
+    users.create_table(universe)
+    print("Creating races table")
+    races.create_table(universe)
+
+    print("Creating texts table")
+    texts.create_table(universe)
+    print("Fetching text list")
+    text_list = get_text_list(universe)
+    print("Adding text list")
+    texts.add_texts(text_list, universe)
+    print("Finished creating universe")
 
 
 def unknown_universe():
