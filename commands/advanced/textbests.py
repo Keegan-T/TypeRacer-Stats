@@ -17,12 +17,13 @@ command = {
     "description": "Displays a user's text best average and their best texts\n"
                    "Providing `n` will display the average of the user's top n texts\n"
                    f"`{prefix}textbests [username] worst` will show the user's worst quotes",
-    "parameters": "[username] <n>",
+    "parameters": "[username] <n/category>",
     "usages": [
         "textbests keegant",
         "textbests keegant worst",
         "textbests keegant old",
         "textbests keegant new",
+        "textbests keegant accuracy",
         "textbests charlieog 100",
     ],
 }
