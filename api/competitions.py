@@ -7,6 +7,7 @@ import re
 
 
 async def get_competition_info(date, kind, sort="points", results_per_page=20, universe="play"):
+    results_per_page = max(results_per_page, 10)
     sort_names = {
         "races": "gamesFinished",
         "points": "points",
