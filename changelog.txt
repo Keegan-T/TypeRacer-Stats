@@ -126,3 +126,6 @@
 
 7/6/2024
 - Added new -textbests sorts (old, new, accuracy)
+
+7/25/2024
+- Added a limit of 20 displayed scores in -checksaves

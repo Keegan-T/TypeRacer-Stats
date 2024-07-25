@@ -84,7 +84,9 @@ async def run(ctx, user, username, text_id):
 
     if recent_saves > 0:
         description += "\n**Recent Saves**\n"
-        for score in recent_scores[::-1]:
+        if len(recent_scores) > 20:
+            description += f"[Truncated {len(recent_scores) - 20} Scores]\n"
+        for score in recent_scores[:20][::-1]:
             description += (
                 f"{utils.format_duration_short(now - score['timestamp'])} ago - "
                 f"[{score['wpm']:,} WPM]({urls.replay(username, score['number'], universe)})\n"
