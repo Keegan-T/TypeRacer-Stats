@@ -146,7 +146,7 @@ async def run(ctx, user, query):
                 substring += "..."
 
             results_string += (
-                f"\n[#{result['id']}](https://typeracerdata.com/text?id={result['id']})"
+                f"\n[#{result['id']}]({urls.trdata_text(result['id'], universe)})"
                 f"{' (Disabled) ' * result['disabled']}"
             )
 
