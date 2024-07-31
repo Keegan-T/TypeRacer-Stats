@@ -178,3 +178,11 @@ def unknown_text(universe="play"):
     utils.add_universe(embed, universe)
 
     return embed
+
+
+def unexpected_error():
+    return Embed(
+        title="Unexpected Error",
+        description=f"An unexpected error occured",
+        color=error,
+    )

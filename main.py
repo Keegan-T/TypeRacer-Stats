@@ -74,6 +74,8 @@ async def on_command_error(ctx, error):
         await error_notify(log, error)
     traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
+    await ctx.send(embed=errors.unexpected_error())
+
 
 @bot.event
 async def on_message(message):
