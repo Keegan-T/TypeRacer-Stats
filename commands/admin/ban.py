@@ -1,6 +1,7 @@
 from discord import Embed
 from discord.ext import commands
 import colors
+import errors
 from database.bot_users import get_user
 from database.banned import get_banned, ban, unban
 from commands.checks import admin_check
@@ -22,6 +23,9 @@ class Ban(commands.Cog):
     @commands.check(admin_check)
     async def ban(self, ctx, *args):
         user = get_user(ctx)
+
+        if not args:
+            return await ctx.send(embed=errors.missing_argument(command))
 
         user_id = args[0].translate(args[0].maketrans("", "", "<@>"))
 
