@@ -80,19 +80,13 @@ def get_users():
 
 def get_user(username, universe="play"):
     table = table_name(universe)
-    try:
-        user = db.fetch(
-            f"SELECT * FROM {table} WHERE username = ?",
-            [username]
-        )
-    except sqlite3.OperationalError as e:
-        if "no such table" in str(e):
-            from commands.basic.download import create_universe
-            create_universe(universe)
-        return None
+    user = db.fetch(
+        f"SELECT * FROM {table} WHERE username = ?",
+        [username]
+    )
     if not user:
         return None
-    elif user[0]["races"] == 0:
+    elif user[0]["races"] == 0 or not user[0]["last_updated"]:
         return None
     return user[0]
 
