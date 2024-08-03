@@ -80,7 +80,7 @@ async def run(ctx, user, username, race_number, universe):
     speeds_string += f"Completed <t:{int(race_info['timestamp'])}:R>"
 
     if universe == "play" and 300 <= adjusted <= 450 and not stats["disqualified"]:
-        races_300.add_new_race(username, race_number, race_info)
+        await races_300.add_new_race(username, race_number, race_info)
 
     embed = Embed(
         title=f"Real vs. Raw Speed - Race #{race_number:,}",

@@ -9,7 +9,6 @@ from dateutil import parser
 from utils import dates
 
 
-# Retrieves all stats for a user that do not require races to be imported
 def get_stats(username=None, stats=None, universe="play"):
     if stats:
         api_data = stats
@@ -23,10 +22,10 @@ def get_stats(username=None, stats=None, universe="play"):
 
         api_data = json.loads(response.text)
 
-    tstats = api_data['tstats']
+    tstats = api_data["tstats"]
 
-    display_name = api_data['name'] if api_data['name'] else ""
-    disqualified = False if "disqualified" not in tstats else tstats['disqualified']
+    display_name = api_data["name"] if api_data["name"] else ""
+    disqualified = False if "disqualified" not in tstats else tstats["disqualified"]
 
     try:
         stats = {
@@ -63,7 +62,7 @@ async def get_joined(username):
     join_date_span = soup.find("span", string="Racing Since:")
     if not join_date_span:
         return None
-    join_date_text = join_date_span.find_next_sibling('span').get_text(strip=True)
+    join_date_text = join_date_span.find_next_sibling("span").get_text(strip=True)
     join_date = dates.floor_day(parser.parse(join_date_text))
     join_timestamp = join_date.timestamp()
 

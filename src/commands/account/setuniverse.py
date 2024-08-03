@@ -8,6 +8,7 @@ from api.texts import get_text_list
 from api.universes import get_universe_list
 from database.bot_users import get_user, update_universe
 from utils import colors
+from utils.logging import send_message
 
 command = {
     "name": "setuniverse",
@@ -57,20 +58,20 @@ async def run(ctx, user, universe):
 
 
 def create_universe(universe):
-    print(f"Creating universe: {universe}")
+    send_message(f"Creating universe: {universe}")
 
-    print("Creating users table")
+    send_message("Creating users table")
     users.create_table(universe)
-    print("Creating races table")
+    send_message("Creating races table")
     races.create_table(universe)
 
-    print("Creating texts table")
+    send_message("Creating texts table")
     texts.create_table(universe)
-    print("Fetching text list")
+    send_message("Fetching text list")
     text_list = get_text_list(universe)
-    print("Adding text list")
+    send_message("Adding text list")
     texts.add_texts(text_list, universe)
-    print("Finished creating universe")
+    send_message("Finished creating universe")
 
 
 def unknown_universe():

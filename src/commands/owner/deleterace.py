@@ -55,7 +55,7 @@ async def setup(bot):
 
 
 async def run(ctx, user, username, race_number):
-    delete_race(username, race_number)
+    await delete_race(username, race_number)
 
     embed = Embed(
         title=f"Race Deleted",

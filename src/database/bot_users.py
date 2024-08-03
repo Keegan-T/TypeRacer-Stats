@@ -14,17 +14,17 @@ def get_users():
 
 def get_user(ctx):
     if isinstance(ctx, commands.Context):
-        id = str(ctx.author.id)
+        user_id = str(ctx.author.id)
     else:
-        id = str(ctx)
+        user_id = str(ctx)
 
     user = db.fetch("""
         SELECT * FROM users
         WHERE id = ?
-    """, [id])
+    """, [user_id])
 
     if not user:
-        return add_user(id)
+        return None
 
     user = dict(user[0])
     user["colors"] = json.loads(user["colors"])
@@ -38,15 +38,10 @@ def get_all_commands():
         SELECT id, commands FROM users
     """)
 
-    # total_commands = {}
-    # for user_commands in all_commands:
-    #     for command in user_commands:
-    #         if command in total_commands:
-    #             total_commands[command] += 1
-    #         else:
-    #             total_commands[command] = 1
-
-    return [{"id": user["id"], "commands": json.loads(user["commands"])} for user in all_commands]
+    return [{
+        "id": user["id"],
+        "commands": json.loads(user["commands"])
+    } for user in all_commands]
 
 
 def get_total_commands():

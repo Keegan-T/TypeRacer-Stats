@@ -3,6 +3,7 @@ import time
 from database import db
 from utils import strings
 from utils.stats import get_text_stats
+from utils.logging import send_message
 
 
 def table_name(universe):
@@ -261,8 +262,8 @@ def update_awards(username, first, second, third):
     """, [first, second, third, username])
 
 
-def delete_user(username):
-    print(f"===== DELETING USER {username} =====")
+async def delete_user(username):
+    await send_message(f"Deleting user {username}")
     db.run(
         "DELETE FROM races WHERE username = ?",
         [username]

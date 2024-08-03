@@ -129,9 +129,7 @@ async def update_results(text_id):
             number, race["wpm"], race["t"],
         ))
 
-    print(f"Adding {len(scores)} scores")
     add_results(scores)
-    print("Added scores.")
 
 
 def delete_result(id):

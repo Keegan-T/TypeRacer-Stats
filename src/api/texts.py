@@ -55,7 +55,6 @@ def get_text_list(universe):
         text_id = int(columns[0].get_text()[1:])
         quote = columns[1].get_text().strip()
         if columns[6].get_text() == "0.00":
-            print(f"Manually fetching text {i + 1} / {len(rows)}")
             ghost = get_ghost(text_id, universe)
         else:
             link = columns[5].find("a")["href"].split("=")

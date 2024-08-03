@@ -7,26 +7,19 @@ import database.races_300 as races_300
 import database.users as users
 from config import records_channel
 from utils import colors, strings
+from utils.logging import send_message
 
 medals = [":first_place:", ":second_place:", ":third_place:"]
 countries = {}
 
 
-def get_countries():
+def set_countries():
     global countries
     countries = users.get_countries()
-    # countries["taran"] = "us"
-    # countries["taran127"] = "us"
-    # countries["mispelled"] = "us"
-    # countries["arabianghosthaunting"] = "ph"
-    # countries["wordracer888"] = "au"
-    # countries["deroche1"] = "us"
-    # countries["jestercaporado"] = "ph"
-    # countries["yukomiya"] = "au"
 
 
 async def update(bot):
-    print("Updating TypeRacer Records...")
+    await send_message("Updating TypeRacer Records")
     channel = bot.get_channel(records_channel)
     message_history = channel.history(limit=None)
     messages = []
@@ -38,24 +31,23 @@ async def update(bot):
 
     records = await get_records()
 
-    # No messages, mounting for the first time
+    # Mounting
     if not messages:
         for embed in records:
             await channel.send(embed=embed)
 
-    # Updating existing messages
+    # Updating
     else:
         record_list = iter(records)
         for message_id in messages:
             message = await channel.fetch_message(message_id)
             await message.edit(embed=next(record_list))
 
-    print("Finished Updating Records")
+    await send_message("Finished Updating Records")
 
 
 async def update_300_club(bot):
-    get_countries()
-    print("Updating 300 Club...")
+    set_countries()
     channel = bot.get_channel(records_channel)
     message_history = channel.history(limit=None)
     messages = []
@@ -73,23 +65,19 @@ async def update_300_club(bot):
         club_300_2,
     ]
 
-    # Records are not mounted
     if not messages:
         return
 
-    # Updating existing messages
     else:
         record_list = iter(records)
         for message_id in messages[1:4]:
             message = await channel.fetch_message(message_id)
             await message.edit(embed=next(record_list))
 
-    print("Updated 300 Club")
-
 
 async def get_records():
     date = datetime.now()
-    get_countries()
+    set_countries()
 
     last_updated = Embed(
         title="Last Updated",

@@ -11,10 +11,6 @@ def fetch(query, params=[]):
 
         return cursor.fetchall()
 
-    except Exception as e:
-        print(f"Error executing query: {e}")
-        raise
-
     finally:
         cursor.close()
 
@@ -25,10 +21,6 @@ def run(query, params=[]):
     try:
         cursor.execute(query, params)
         db.commit()
-
-    except Exception as e:
-        print(f"Error executing query: {e}")
-        raise
 
     finally:
         cursor.close()

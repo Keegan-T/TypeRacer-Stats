@@ -1,58 +1,34 @@
 import asyncio
 import os
-import sys
-import traceback
 from datetime import datetime
 
 import discord
 from discord.ext import commands, tasks
 
 from commands.checks import ban_check
-from config import prefix, bot_token, bot_owner, log_channel, staging
+from config import prefix, bot_token, staging, welcome_message, log_channel_id, legacy_bot_id
 from database import records
-from database.bot_users import update_commands
-from database.welcomed import get_welcomed, add_welcomed
+from database.bot_users import get_user, add_user, update_commands
 from tasks import import_competitions, update_important_users, update_top_tens
-from utils import errors, logging
-
-sys.path.insert(0, "")
+from utils import errors
+from utils.logging import set_log_channel, get_log_message, send_message, send_log, send_error
 
 bot = commands.Bot(command_prefix=prefix, case_insensitive=True, intents=discord.Intents.all())
 bot.remove_command("help")
 bot.add_check(ban_check)
 
 
-async def log_command(ctx):
-    log = logging.log_message(ctx)
-    logs = bot.get_channel(log_channel)
-
-    await logs.send(log)
-
-
-async def error_notify(log_message, error):
-    logs = bot.get_channel(log_channel)
-    error_traceback = traceback.format_exception(type(error), error, error.__traceback__)
-
-    await logs.send(
-        f"<@{bot_owner}>\n"
-        f"{log_message}\n"
-        f"```ansi\n\u001B[2;31m{''.join([line for line in error_traceback])}\u001B[0m```"
-    )
-
-
 @bot.event
 async def on_ready():
-    print("Bot ready.")
+    set_log_channel(bot.get_channel(log_channel_id))
+    await send_message("Bot ready.")
     if not staging:
         loops.start()
 
 
 @bot.event
 async def on_command_error(ctx, error):
-    if isinstance(error, commands.CheckFailure):
-        user_id = ctx.author.id
-        user = await bot.fetch_user(user_id)
-        print(f"Check failure! {user} ({user_id}) attempted to use {ctx.command}")
+    if isinstance(error, (commands.CheckFailure, commands.CommandNotFound)):
         return
 
     elif isinstance(error, commands.ExpectedClosingQuoteError):
@@ -64,57 +40,36 @@ async def on_command_error(ctx, error):
     elif isinstance(error, commands.CommandOnCooldown):
         return await ctx.send(embed=errors.command_cooldown(datetime.now().timestamp() + error.retry_after))
 
-    elif isinstance(error, commands.CommandNotFound):
-        return
-
-    elif isinstance(error, discord.errors.Forbidden):
-        logs = bot.get_channel(log_channel)
-        await logs.send("Missing permissions")
-        return
-
-    log = logging.log_message(ctx.message)
-    if not staging:
-        await error_notify(log, error)
-    traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+    log_message = get_log_message(ctx.message)
+    await send_error(log_message, error)
 
     await ctx.send(embed=errors.unexpected_error())
 
 
 @bot.event
 async def on_message(message):
-    user_id = message.author.id
-    welcomed = get_welcomed()
-
-    if user_id in welcomed and message.reference and message.content.startswith(prefix):
+    if message.reference and message.content.startswith(prefix):
         replied_message_id = message.reference.message_id
         replied_message = await message.channel.fetch_message(replied_message_id)
 
         if replied_message.author == bot.user:
             await message.reply(content=f"No need to reply to me anymore!")
 
-        elif replied_message.author.id == 742267194443956334:  # Prevent the bot from overlapping with the other
+        elif replied_message.author.id == legacy_bot_id:
             return
 
     if message.content.startswith(prefix) and not staging:
-        await log_command(message)
+        await send_log(message)
 
     await bot.process_commands(message)
 
 
 @bot.event
 async def on_command(ctx):
-    user_id = ctx.author.id
-
-    welcome_message = (
-        f"### Welcome to TypeRacer Stats!\n"
-        f"Run `{prefix}link [typeracer_username]` to start using the bot\n"
-    )
-
-    welcomed = get_welcomed()
-
-    if user_id not in welcomed:
+    user = get_user(ctx)
+    if not user:
         await ctx.reply(content=welcome_message)
-        add_welcomed(user_id)
+        add_user(ctx)
 
 
 @bot.event
@@ -126,23 +81,22 @@ async def on_command_completion(ctx):
 @tasks.loop(minutes=1)
 async def loops():
     if datetime.utcnow().hour == 4 and datetime.utcnow().minute == 0:
-        logs = bot.get_channel(log_channel)
         try:
-            await logs.send("Importing competitions")
+            await send_message("Importing competitions")
             await import_competitions()
-            await logs.send("Finished importing competitions")
-            await logs.send("Updating important users")
+            await send_message("Finished importing competitions")
+            await send_message("Updating important users")
             await update_important_users()
-            await logs.send("Finished updating important users")
-            await logs.send(f"Updating records")
+            await send_message("Finished updating important users")
+            await send_message(f"Updating records")
             await records.update(bot)
-            await logs.send(f"Finished updating records")
+            await send_message(f"Finished updating records")
             if datetime.utcnow().day == 1:
-                await logs.send(f"Updating top tens")
+                await send_message(f"Updating top tens")
                 await update_top_tens()
-                await logs.send(f"Finished updating top tens")
+                await send_message(f"Finished updating top tens")
         except Exception as error:
-            await error_notify("Task Failure", error)
+            await send_error("Task Failure", error)
 
 
 async def load_commands():
@@ -158,4 +112,5 @@ async def main():
     await bot.start(bot_token)
 
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

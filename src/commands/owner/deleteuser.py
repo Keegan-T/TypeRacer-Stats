@@ -54,7 +54,7 @@ async def setup(bot):
 
 
 async def run(ctx, user, username):
-    delete_user(username)
+    await delete_user(username)
 
     embed = Embed(
         title=f"User Deleted",

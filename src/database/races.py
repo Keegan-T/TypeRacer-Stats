@@ -3,7 +3,7 @@ from database import db
 from database.users import correct_best_wpm
 from utils import strings
 from utils.stats import calculate_points
-
+from utils.logging import send_message
 
 def table_name(universe):
     table = "races"
@@ -96,7 +96,7 @@ def get_text_races(username, text_id, universe):
 
 
 async def correct_race(username, race_number, race):
-    print(f"Correcting WPM for race {username}|{race_number}")
+    await send_message(f"Correcting WPM for race {username}|{race_number}")
 
     import database.text_results as top_tens
     id = f"{username}|{race_number}"
@@ -105,7 +105,6 @@ async def correct_race(username, race_number, race):
     points = calculate_points(race["quote"], unlagged_wpm)
 
     # Updating WPM & points in the main table
-    print("Updating races table")
     db.run("""
         UPDATE races
         SET wpm = ?, points = ?
@@ -113,11 +112,9 @@ async def correct_race(username, race_number, race):
     """, [round(unlagged_wpm, 2), points, id])
 
     # Adding race to modified races
-    print("Updating modified_races table")
     modified_races.add_race(username, race_number, wpm, unlagged_wpm)
 
     # Removing the race from text results
-    print("Deleting from top 10 results")
     id = f"{username}|{race_number}"
     top_tens.delete_result(id)
     text_id = db.fetch("""
@@ -127,16 +124,14 @@ async def correct_race(username, race_number, race):
     """, [id])[0][0]
 
     # Updating top 10
-    print("Updating top ten")
     await top_tens.update_results(text_id)
 
     # Correcting user's best WPM in the users table
-    print("Correcting best wpm")
     correct_best_wpm(username)
 
 
-def delete_race(username, race_number):
-    print(f"!!! DELETING RACE {username}|{race_number}")
+async def delete_race(username, race_number):
+    await send_message(f"Deleting race {username}|{race_number}")
 
     db.run("""
         INSERT INTO modified_races (id, username, number, wpm)

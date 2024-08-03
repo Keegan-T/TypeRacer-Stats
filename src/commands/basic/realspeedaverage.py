@@ -203,15 +203,6 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
     embeds.add_profile(embed, stats)
     embeds.add_universe(embed, universe)
 
-    # if missed_races:
-    #     cause = "Rate Limit Exceeded" if rate_limit else "Missing information"
-    #     message = (
-    #         f"Missing Races: {', '.join([f'{r:,}' for r in missed_races])}\n"
-    #         f"Cause: {cause}\n\n"
-    #     )
-    #
-    #     embed.description = message + embed.description
-
     await ctx.send(embed=embed)
 
 
