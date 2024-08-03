@@ -1,6 +1,6 @@
 <br />
 <div align="center">
-  
+
   <img src="https://i.imgur.com/KzKWgCI.png" alt="Logo" width="120" height="120">
 
   # TypeRacer Stats
@@ -40,9 +40,15 @@ To view help about a specific command, run `-help [command]`.
 The bot is not currently available for invites to other Discord servers, however DM usage is open for all users.
 
 ## Creator
-Keegan Tournay
+The bot is created and maintained by Keegan Tournay.
 <br />
 Contact me on Discord `@keegant` if you have any questions or concerns.
+<br /><br />
+Hosting is paid out of pocket to provide 24/7 availability for the community.
+<br />
+One month of upkeep costs $6.00 USD. Support is always appreciated! 💜
+<br /><br />
+[![Support the project](https://img.shields.io/badge/support-00457C?style=for-the-badge&logo=paypal&logoColor=white)](https://www.paypal.com/donate/?business=X9JW4MC3CLNAE&no_recurring=0&currency_code=USD&item_name=TypeRacer+Stats)
 
 ## Thank You To
 * [fiveoutofnine](https://www.fiveoutofnine.com/) for his original bot and repository.
