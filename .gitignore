@@ -2,7 +2,7 @@
 __pycache__/
 **/__pycache__/
 .env
-data/users.db
-data/typeracerstats.db
-sandbox.py
-commands/template.txt
+src/data/users.db
+src/data/typeracerstats.db
+src/sandbox.py
+src/commands/template.txt
