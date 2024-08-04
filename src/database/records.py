@@ -7,7 +7,7 @@ import database.races_300 as races_300
 import database.users as users
 from config import records_channel
 from utils import colors, strings
-from utils.logging import send_message
+from utils.logging import log
 
 medals = [":first_place:", ":second_place:", ":third_place:"]
 countries = {}
@@ -19,7 +19,7 @@ def set_countries():
 
 
 async def update(bot):
-    await send_message("Updating TypeRacer Records")
+    log("Updating TypeRacer Records")
     channel = bot.get_channel(records_channel)
     message_history = channel.history(limit=None)
     messages = []
@@ -43,7 +43,7 @@ async def update(bot):
             message = await channel.fetch_message(message_id)
             await message.edit(embed=next(record_list))
 
-    await send_message("Finished Updating Records")
+    log("Finished Updating Records")
 
 
 async def update_300_club(bot):

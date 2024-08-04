@@ -1,16 +1,12 @@
 import time
 import traceback
 
-from config import bot_owner, staging
+import requests
+
+from config import bot_owner, staging, webhook
 from database.bot_users import get_user
 
-log_channel = None
 start = 0
-
-
-def set_log_channel(channel):
-    global log_channel
-    log_channel = channel
 
 
 def time_start():
@@ -44,26 +40,20 @@ def get_log_message(message):
     return f"{message_link} {mention}{linked_account}: `{content}`"
 
 
-async def send_message(message):
+def log(message):
     if staging:
         return print(message)
 
-    await log_channel.send(message)
+    requests.post(webhook, json={"content": message})
 
 
-async def send_log(message):
-    log_message = get_log_message(message)
-
-    await send_message(log_message)
-
-
-async def send_error(log_message, error):
+def log_error(log_message, error):
     if staging:
         return traceback.print_exception(type(error), error, error.__traceback__)
 
     error_traceback = traceback.format_exception(type(error), error, error.__traceback__)
 
-    await log_channel.send(
+    log(
         f"<@{bot_owner}>\n"
         f"{log_message}\n"
         f"```ansi\n\u001B[2;31m{''.join([line for line in error_traceback])}\u001B[0m```"

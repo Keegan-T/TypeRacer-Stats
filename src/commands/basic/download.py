@@ -19,7 +19,7 @@ from commands.locks import import_lock
 from config import bot_admins
 from database.bot_users import get_user
 from utils import errors, colors, urls, strings, embeds
-from utils.logging import send_message
+from utils.logging import log
 from utils.stats import calculate_points, calculate_seconds
 
 command = {
@@ -77,7 +77,7 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, universe="play
     start_time = 0
 
     if user:
-        await send_message(f"Updating data for {username} (Universe: {universe})")
+        log(f"Updating data for {username} (Universe: {universe})")
         new_user = False
         stats["joined"] = user["joined"]
         stats["wpm_best"] = user["wpm_best"]
@@ -92,7 +92,7 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, universe="play
             races_300.delete_user_scores(username)
 
     else:
-        await send_message(f"Importing new data for {username} (Universe: {universe})")
+        log(f"Importing new data for {username} (Universe: {universe})")
         new_user = True
         play_user = users.get_user(username, "play")
         if play_user:
@@ -123,7 +123,7 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, universe="play
             )
             embeds.add_universe(embed, universe)
             await ctx.send(embed=embed)
-        await send_message(f"Downloading {races_left:,} new races for {username}")
+        log(f"Downloading {races_left:,} new races for {username}")
 
     text_list = texts.get_texts(as_dictionary=True, universe=universe)
     end_time = time.time()
@@ -133,7 +133,6 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, universe="play
         if races_left == 0:
             break
 
-        await send_message(f"Fetching races")
         race_data = await get_races(username, start_time, end_time, 1000, universe=universe)
 
         if race_data == -1:  # Request failed
@@ -152,7 +151,7 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, universe="play
             # Checking for new texts
             text_id = race["tid"]
             if text_id not in text_list:
-                await send_message(f"New text found! #{text_id}")
+                log(f"New text found! #{text_id}")
 
                 text = {
                     "id": text_id,
@@ -212,11 +211,11 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, universe="play
         else:
             await no_new_races(ctx, bot_user, username, universe)
 
-    await send_message(f"Finished importing {username}")
+    log(f"Finished importing {username}")
 
 
 async def update_award_count(username):
-    await send_message("Updating award count")
+    log("Updating award count")
 
     awards = await competition_results.get_awards(username)
     first = second = third = 0

@@ -1,6 +1,6 @@
 from database import db
 
-from utils.logging import send_message
+from utils.logging import log
 
 
 def add_race(race):
@@ -22,7 +22,7 @@ async def add_new_race(username, race_number, race_info):
             break
 
     if not in_list:
-        await send_message(f"New 300 WPM! {username}|{race_number}")
+        log(f"New 300 WPM! {username}|{race_number}")
         add_race({
             "username": username,
             "number": race_number,

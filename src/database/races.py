@@ -3,7 +3,7 @@ from database import db
 from database.users import correct_best_wpm
 from utils import strings
 from utils.stats import calculate_points
-from utils.logging import send_message
+from utils.logging import log
 
 def table_name(universe):
     table = "races"
@@ -96,7 +96,7 @@ def get_text_races(username, text_id, universe):
 
 
 async def correct_race(username, race_number, race):
-    await send_message(f"Correcting WPM for race {username}|{race_number}")
+    log(f"Correcting WPM for race {username}|{race_number}")
 
     import database.text_results as top_tens
     id = f"{username}|{race_number}"
@@ -131,7 +131,7 @@ async def correct_race(username, race_number, race):
 
 
 async def delete_race(username, race_number):
-    await send_message(f"Deleting race {username}|{race_number}")
+    log(f"Deleting race {username}|{race_number}")
 
     db.run("""
         INSERT INTO modified_races (id, username, number, wpm)

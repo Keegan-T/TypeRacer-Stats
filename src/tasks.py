@@ -13,7 +13,7 @@ from api.competitions import get_competition
 from commands.basic.download import run as download
 from commands.locks import import_lock
 from utils import strings
-from utils.logging import send_message, time_start, time_split
+from utils.logging import log
 
 
 async def import_competitions():
@@ -27,7 +27,7 @@ async def import_competitions():
     day_check = day_end + offset
     while day_check < now:
         start = day_check - offset
-        await send_message(f"Importing new daily competition: {start}")
+        log(f"Importing new daily competition: {start}")
         competition = await get_competition(start, "day")
         competition_results.add_results(competition)
         day_check += relativedelta(days=1)
@@ -37,7 +37,7 @@ async def import_competitions():
     week_check = week_end + offset
     while week_check < now:
         start = week_check - offset
-        await send_message(f"Importing new weekly competition: {week_check - offset}")
+        log(f"Importing new weekly competition: {week_check - offset}")
         competition = await get_competition(start, "week")
         competition_results.add_results(competition)
         week_check += relativedelta(weeks=1)
@@ -47,7 +47,7 @@ async def import_competitions():
     month_check = month_end + offset
     while month_check < now:
         start = month_check - offset
-        await send_message(f"Importing new monthly competition: {month_check - offset}")
+        log(f"Importing new monthly competition: {month_check - offset}")
         competition = await get_competition(start, "month")
         competition_results.add_results(competition)
         month_check += relativedelta(months=1)
@@ -57,12 +57,12 @@ async def import_competitions():
     year_check = year_end + offset
     while year_check < now:
         start = year_check - offset
-        await send_message(f"Importing new yearly competition: {year_check - offset}")
+        log(f"Importing new yearly competition: {year_check - offset}")
         competition = await get_competition(start, "year")
         competition_results.add_results(competition)
         year_check += relativedelta(years=1)
 
-    await send_message("Updating award counts")
+    log("Updating award counts")
     awards_list = await competition_results.get_awards()
     user_list = users.get_users()
 
@@ -77,12 +77,12 @@ async def import_competitions():
         if user["awards_first"] != first or user["awards_second"] != second or user["awards_third"] != third:
             users.update_awards(username, first, second, third)
 
-    await send_message("Imported all new competitions")
+    log("Imported all new competitions")
 
 
 async def update_important_users():
     user_list = important_users.get_users()
-    await send_message(f"Updating {len(user_list)} important users...")
+    log(f"Updating {len(user_list)} important users...")
 
     leaders = users.get_most("races", 10) + \
               users.get_most_daily_races(10) + \
@@ -99,7 +99,7 @@ async def update_important_users():
     for leader in leaders:
         username = leader["username"]
         if leader["username"] not in user_list:
-            await send_message(f"Adding top 10 user {username} to daily imports")
+            log(f"Adding top 10 user {username} to daily imports")
             important_users.add_user(username)
             user_list.append(username)
 
@@ -118,7 +118,7 @@ async def import_top_ten_users():
     partitions = [text_ids[i:i + 100] for i in range(0, len(text_ids), 100)]
 
     for i in range(len(partitions)):
-        await send_message(
+        log(
             f"Fetching quotes #{partitions[i][0]} - #{partitions[i][-1]} "
             f"({((i + 1) / len(partitions) * 100):,.2f}%)"
         )
@@ -153,8 +153,7 @@ async def update_top_tens():
     race_list = 1
 
     while race_list:
-        time_start()
-        await send_message("Fetching 100,000 races...")
+        log("Fetching 100,000 races...")
         race_list = await db.fetch_async("""
             SELECT username, text_id, number, wpm, timestamp FROM races
             LIMIT ?, ?
@@ -180,7 +179,6 @@ async def update_top_tens():
             else:
                 top_10s[text_id].append(race)
                 top_10s[text_id] = sorted(top_10s[text_id], key=lambda x: x[3], reverse=True)[:10]
-        time_split()
         offset += limit
 
     results = []
@@ -197,6 +195,6 @@ async def update_top_tens():
                 username, number, score["wpm"], score["timestamp"],
             ))
 
-    await send_message(f"Adding {len(results)} results")
+    log(f"Adding {len(results)} results")
     text_results.add_results(results)
-    await send_message("Added results")
+    log("Added results")

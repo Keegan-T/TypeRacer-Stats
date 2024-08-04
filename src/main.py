@@ -6,12 +6,12 @@ import discord
 from discord.ext import commands, tasks
 
 from commands.checks import ban_check
-from config import prefix, bot_token, staging, welcome_message, log_channel_id, legacy_bot_id
+from config import prefix, bot_token, staging, welcome_message, legacy_bot_id
 from database import records
 from database.bot_users import get_user, add_user, update_commands
 from tasks import import_competitions, update_important_users, update_top_tens
 from utils import errors
-from utils.logging import set_log_channel, get_log_message, send_message, send_log, send_error
+from utils.logging import get_log_message, log, log_error
 
 bot = commands.Bot(command_prefix=prefix, case_insensitive=True, intents=discord.Intents.all())
 bot.remove_command("help")
@@ -20,8 +20,7 @@ bot.add_check(ban_check)
 
 @bot.event
 async def on_ready():
-    set_log_channel(bot.get_channel(log_channel_id))
-    await send_message("Bot ready.")
+    log("Bot ready.")
     if not staging:
         loops.start()
 
@@ -41,7 +40,7 @@ async def on_command_error(ctx, error):
         return await ctx.send(embed=errors.command_cooldown(datetime.now().timestamp() + error.retry_after))
 
     log_message = get_log_message(ctx.message)
-    await send_error(log_message, error)
+    log_error(log_message, error)
 
     await ctx.send(embed=errors.unexpected_error())
 
@@ -59,7 +58,8 @@ async def on_message(message):
             return
 
     if message.content.startswith(prefix) and not staging:
-        await send_log(message)
+        log_message = get_log_message(message)
+        log(log_message)
 
     await bot.process_commands(message)
 
@@ -82,21 +82,21 @@ async def on_command_completion(ctx):
 async def loops():
     if datetime.utcnow().hour == 4 and datetime.utcnow().minute == 0:
         try:
-            await send_message("Importing competitions")
+            log("Importing competitions")
             await import_competitions()
-            await send_message("Finished importing competitions")
-            await send_message("Updating important users")
+            log("Finished importing competitions")
+            log("Updating important users")
             await update_important_users()
-            await send_message("Finished updating important users")
-            await send_message(f"Updating records")
+            log("Finished updating important users")
+            log(f"Updating records")
             await records.update(bot)
-            await send_message(f"Finished updating records")
+            log(f"Finished updating records")
             if datetime.utcnow().day == 1:
-                await send_message(f"Updating top tens")
+                log(f"Updating top tens")
                 await update_top_tens()
-                await send_message(f"Finished updating top tens")
+                log(f"Finished updating top tens")
         except Exception as error:
-            await send_error("Task Failure", error)
+            log_error("Task Failure", error)
 
 
 async def load_commands():
