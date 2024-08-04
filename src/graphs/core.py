@@ -100,29 +100,6 @@ def get_line_cmap(ax, line_index, user):
     return lc
 
 
-def cmap_compare(ax, user, counts, groups, extent):
-    cmap = plt.get_cmap(user["colors"]["line"])
-
-    mask = np.zeros((len(groups), 2))
-    mask[:, 0] = np.concatenate([groups[:-1], [groups[-1]]])
-    mask[:-1, 1] = counts
-
-    ax.barh(groups[:-1], counts, height=np.diff(groups), align="edge", alpha=0)
-    original_xlim = ax.get_xlim()
-
-    x = np.linspace(0, 10, 100)
-    y = np.linspace(0, 10, 100)
-    X, Y = np.meshgrid(x, y)
-
-    ax.imshow(X, cmap=cmap, extent=extent, origin="lower", aspect="auto")
-    ax.set_xlim(original_xlim)
-
-    graph_background = user["colors"]["graphbackground"]
-    ax.fill_betweenx(mask[:, 0], mask[:, 1], extent[1], color=graph_background, step='post')
-    ax.fill_betweenx([extent[2], groups[0]], [0, 0], [extent[1], extent[1]], color=graph_background)
-    ax.fill_betweenx([groups[-1], extent[3]], [0, 0], [extent[1], extent[1]], color=graph_background)
-
-
 def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
     colors = user["colors"]
     ax.set_facecolor(colors["graphbackground"])
