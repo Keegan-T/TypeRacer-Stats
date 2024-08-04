@@ -69,7 +69,7 @@ async def on_command(ctx):
     user = get_user(ctx)
     if not user:
         await ctx.reply(content=welcome_message)
-        add_user(ctx)
+        add_user(ctx.author.id)
 
 
 @bot.event
