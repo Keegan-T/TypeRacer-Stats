@@ -24,7 +24,7 @@ def get_user(ctx):
     """, [user_id])
 
     if not user:
-        return None
+        return add_user(user_id)
 
     user = dict(user[0])
     user["colors"] = json.loads(user["colors"])
