@@ -9,6 +9,7 @@ from commands.checks import ban_check
 from config import prefix, bot_token, staging, welcome_message, legacy_bot_id
 from database import records
 from database.bot_users import get_user, update_commands, add_user
+from database.welcomed import get_welcomed, add_welcomed
 from tasks import import_competitions, update_important_users, update_top_tens
 from utils import errors
 from utils.logging import get_log_message, log, log_error
@@ -68,6 +69,12 @@ async def on_message(message):
     if message.content.startswith(prefix) and not staging:
         log_message = get_log_message(message)
         log(log_message)
+        user_id = message.author.id
+        welcomed = get_welcomed()
+        if user_id not in welcomed:
+            await message.reply(content=welcome_message)
+            add_welcomed(user_id)
+            return
 
     await bot.process_commands(message)
 
