@@ -8,7 +8,7 @@ from discord.ext import commands, tasks
 from commands.checks import ban_check
 from config import prefix, bot_token, staging, welcome_message, legacy_bot_id
 from database import records
-from database.bot_users import get_user, update_commands, add_user
+from database.bot_users import update_commands
 from database.welcomed import get_welcomed, add_welcomed
 from tasks import import_competitions, update_important_users, update_top_tens
 from utils import errors
@@ -24,14 +24,6 @@ async def on_ready():
     log("Bot ready.")
     if not staging:
         loops.start()
-
-
-@bot.before_invoke
-async def welcome(ctx):
-    user = get_user(ctx)
-    if not user:
-        add_user(ctx.author.id)
-        await ctx.reply(content=welcome_message)
 
 
 @bot.event
