@@ -33,7 +33,7 @@ async def run(ctx, user):
         "providing a handful of new commands and features.\n[Click here]"
         "(https://keegan-t.github.io/TypeRacer-Stats-Changes/) to view a comprehensive list of changes.\n\n"
         "Developed by <@155481579005804544>, written in <:python_logo:1219588087383064647> Python.\n"
-        "If you find any issues, please contact me!\n\n"
+        "<:github:1269454402415100015> [GitHub Repository](https://github.com/Keegan-T/TypeRacer-Stats)\n\n"
         f"**Supporters** <:support:1220863071086575716>\n{supporter_list}\n\n"
         f"**Bot Admins**\n{bot_admins_list}\n"
     )
