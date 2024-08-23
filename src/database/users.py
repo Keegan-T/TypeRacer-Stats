@@ -1,6 +1,7 @@
 import time
 
 from database import db
+from database.texts import get_disabled_text_ids
 from utils import strings
 from utils.logging import log
 from utils.stats import get_text_stats
@@ -55,15 +56,6 @@ def create_table(universe):
     """)
 
     db.run(f"CREATE UNIQUE INDEX idx_{table}_username ON {table} (username)")
-
-
-def get_disabled_texts():
-    texts = db.fetch("""
-        SELECT * FROM texts
-        WHERE disabled = 1
-    """)
-
-    return texts
 
 
 def add_user(username, universe):
@@ -311,7 +303,7 @@ def get_text_bests(username, race_stats=False, universe="play"):
             ORDER BY wpm DESC
         """, [username])
 
-    disabled_text_ids = [text[0] for text in get_disabled_texts()]
+    disabled_text_ids = get_disabled_text_ids()
     filtered_tb = [text for text in text_bests if text[0] not in disabled_text_ids]
 
     return filtered_tb
@@ -361,7 +353,7 @@ def get_texts_over(username, threshold, category, universe):
         ORDER BY times DESC
     """, [username])
 
-    disabled_text_ids = [text[0] for text in get_disabled_texts()]
+    disabled_text_ids = get_disabled_text_ids()
     filtered_texts = [text for text in texts if text[0] not in disabled_text_ids]
 
     return filtered_texts
@@ -398,7 +390,7 @@ def get_texts_under(username, threshold, category, universe):
             ORDER BY times DESC
         """, [username, username])
 
-    disabled_text_ids = [text[0] for text in get_disabled_texts()]
+    disabled_text_ids = get_disabled_text_ids()
     filtered_texts = [text for text in texts if text[0] not in disabled_text_ids]
 
     return filtered_texts
@@ -445,7 +437,7 @@ def get_milestone_number(username, milestone, category, universe):
         return None
 
     else:
-        disabled_ids = [text[0] for text in get_disabled_texts()]
+        disabled_text_ids = get_disabled_text_ids()
         unique_texts = set()
         races = db.fetch(f"""
             SELECT number, text_id
@@ -455,7 +447,7 @@ def get_milestone_number(username, milestone, category, universe):
             ORDER BY timestamp ASC
         """, [username])
         for race in races:
-            if race[1] not in disabled_ids:
+            if race[1] not in disabled_text_ids:
                 unique_texts.add(race[1])
             if len(unique_texts) >= milestone:
                 return race[0]
@@ -503,7 +495,7 @@ def get_texts_typed(username):
         WHERE username = ?
     """, [username])
 
-    disabled_text_ids = [text[0] for text in get_disabled_texts()]
+    disabled_text_ids = get_disabled_text_ids()
 
     filtered_texts_typed = []
     for text in texts_typed:
