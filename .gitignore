@@ -4,5 +4,6 @@ __pycache__/
 .env
 src/data/users.db
 src/data/typeracerstats.db
+src/data/message.txt
 src/sandbox.py
 src/commands/template.txt
