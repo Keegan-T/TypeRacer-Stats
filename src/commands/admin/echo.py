@@ -20,11 +20,7 @@ class Echo(commands.Cog):
             return
 
         await ctx.message.delete()
-        await run(ctx, " ".join(args))
-
-
-async def run(ctx, message):
-    await ctx.send(content=message)
+        await ctx.send(content=" ".join(args))
 
 
 async def setup(bot):

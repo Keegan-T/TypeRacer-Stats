@@ -60,17 +60,13 @@ async def run(ctx, user, universe):
 def create_universe(universe):
     log(f"Creating universe: {universe}")
 
-    log("Creating users table")
     users.create_table(universe)
-    log("Creating races table")
     races.create_table(universe)
 
-    log("Creating texts table")
     texts.create_table(universe)
-    log("Fetching text list")
     text_list = get_text_list(universe)
-    log("Adding text list")
     texts.add_texts(text_list, universe)
+
     log("Finished creating universe")
 
 

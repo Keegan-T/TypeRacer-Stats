@@ -18,10 +18,14 @@ def get_url_info(url):
         return None
 
 
-def replay(username, race_number, universe="play"):
+def replay(username, race_number, universe="play", dq=False):
     if universe == "play":
         universe = ""
-    return f"https://data.typeracer.com/pit/result?id={universe}%7Ctr:{username}%7C{race_number}"
+    url = f"https://data.typeracer.com/pit/result?id={universe}%7Ctr:{username}%7C{race_number}"
+    if dq:
+        url += "&allowDisqualified=true"
+
+    return url
 
 
 def ghost(username, race_number, universe="play"):
@@ -31,7 +35,7 @@ def ghost(username, race_number, universe="play"):
     return f"https://play.typeracer.com/?ghost=%7Ctr%3A{username}%7C{race_number}"
 
 
-def profile(username, universe):
+def profile(username, universe="play"):
     if universe != "play":
         return f"https://data.typeracer.com/pit/profile?user={username}&universe={universe}"
 
@@ -42,8 +46,44 @@ def profile_picture(username):
     return f"https://data.typeracer.com/misc/pic?uid=tr:{username}"
 
 
+def stats(username, universe):
+    return f"https://data.typeracer.com/users?id=tr:{username}&universe={universe}"
+
+
 def top_10(text_id, universe="play"):
     return f"https://data.typeracer.com/textstats?textId={text_id}&distinct=1&universe={universe}&playerId=a"
+
+
+def competition(date, period, sort, results_per_page, universe):
+    sort = {
+        "races": "gamesFinished",
+        "points": "points",
+        "wpm": "wpm",
+        "best": "bestGameWpm",
+        "accuracy": "accuracy",
+    }.get(sort, "points")
+    date_string = date.strftime("%Y-%m-%d")
+    results_per_page = max(results_per_page, 10)
+
+    return (
+        f"https://data.typeracer.com/pit/competitions?date={date_string}"
+        f"&sort={sort}&kind={period}&n={results_per_page}&universe={universe}"
+    )
+
+
+def games(username, start_time, end_time, races_per_page, universe="play"):
+    return (
+        f"https://data.typeracer.com/games?playerId=tr:{username}&startDate={start_time}"
+        f"&endDate={end_time}&n={races_per_page}&universe={universe}"
+    )
+
+
+def text_info(text_id):
+    return f"https://data.typeracer.com/pit/text_info?id={text_id}"
+
+
+def trdata_text_list(universe):
+    return f"https://typeracerdata.com/texts?sort=id&texts=full&universe={universe}"
 
 
 def trdata_text_analysis(username, universe="play"):

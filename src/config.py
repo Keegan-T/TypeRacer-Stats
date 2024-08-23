@@ -39,6 +39,7 @@ supporters = [
     191227023140585472,  # poem
     389528520201601026,  # ginoo
 ]
+bot_id = 1213306973374644256
 legacy_bot_id = 742267194443956334
 
 donate_link = "https://www.paypal.com/donate/?business=X9JW4MC3CLNAE&no_recurring=0&currency_code=USD&item_name=TypeRacer+Stats"

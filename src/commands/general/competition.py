@@ -8,7 +8,7 @@ from discord.ext import commands
 import api.competitions as competitions_api
 from config import prefix
 from database.bot_users import get_user
-from utils import errors, strings, dates, embeds
+from utils import errors, strings, dates, embeds, urls
 
 periods = ["day", "week", "month", "year"]
 sorts = ["points", "races", "wpm"]
@@ -99,7 +99,6 @@ async def run(ctx, user, period, sort, date):
         next_comp_start = dates.floor_month(now + relativedelta(months=1))
         requested_comp_start = dates.floor_month(date)
 
-
     elif period == "year":
         if previous:
             date -= relativedelta(years=1)
@@ -129,9 +128,8 @@ async def run(ctx, user, period, sort, date):
     title += f" - {date_string}"
 
     competition = await competitions_api.get_competition_info(date, period, sort, 10, universe)
-    date_string = date.strftime("%Y-%m-%d")
-    competition_url = (f"https://data.typeracer.com/pit/competitions?date={date_string}"
-                       f"&sort={sort}&kind={period}&universe={universe}")
+    competition_url = urls.competition(date, period, sort, 10, universe)
+
     if not competition:
         embed = Embed(
             title=title,

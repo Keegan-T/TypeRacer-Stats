@@ -1,7 +1,7 @@
 from discord import Embed
 from discord.ext import commands
 
-from config import bot_admins, supporters
+from config import bot_admins, supporters, bot_owner, bot_id, legacy_bot_id
 from database.bot_users import get_user
 
 command = {
@@ -23,19 +23,19 @@ class About(commands.Cog):
 
 
 async def run(ctx, user):
-    bot_admins_list = ", ".join([f"<@{admin}>" for admin in bot_admins[1:]])
+    admin_list = ", ".join([f"<@{admin}>" for admin in bot_admins[1:]])
     supporter_list = ", ".join([f"<@{supporter}>" for supporter in supporters])
 
     description = (
-        "<@1213306973374644256> is an extensive <:typeracer_logo:1219587776308183060> [TypeRacer]"
+        f"<@{bot_id}> is an extensive <:typeracer_logo:1219587776308183060> [TypeRacer]"
         "(https://play.typeracer.com/) statistics bot designed to enhance the TypeRacer experience. "
-        "It is a rewrite of the popular <@742267194443956334> by <@697048255254495312>, "
+        f"It is a rewrite of the popular <@{legacy_bot_id}> by <@697048255254495312>, "
         "providing a handful of new commands and features.\n[Click here]"
         "(https://keegan-t.github.io/TypeRacer-Stats-Changes/) to view a comprehensive list of changes.\n\n"
-        "Developed by <@155481579005804544>, written in <:python_logo:1219588087383064647> Python.\n"
+        f"Developed by <@{bot_owner}>, written in <:python_logo:1219588087383064647> Python.\n"
         "<:github:1269454402415100015> [GitHub Repository](https://github.com/Keegan-T/TypeRacer-Stats)\n\n"
         f"**Supporters** <:support:1220863071086575716>\n{supporter_list}\n\n"
-        f"**Bot Admins**\n{bot_admins_list}\n"
+        f"**Bot Admins**\n{admin_list}\n"
     )
 
     embed = Embed(

@@ -6,7 +6,7 @@ from discord import Embed
 import database.races_300 as races_300
 import database.users as users
 from config import records_channel
-from utils import colors, strings
+from utils import colors, strings, urls
 from utils.logging import log
 
 medals = [":first_place:", ":second_place:", ":third_place:"]
@@ -26,7 +26,6 @@ async def update(bot):
     async for message in message_history:
         if message.author == bot.user:
             messages.append(message.id)
-
     messages.reverse()
 
     records = await get_records()
@@ -110,47 +109,22 @@ def speed_records():
 
     embed = Embed(title="Speed Records", color=colors.gold)
 
-    embed.add_field(
-        name=records[0]['record'],
-        value=f"{get_flag(records[0]['username'])}{records[0]['username']} - "
-              f"[{records[0]['adjusted']} WPM]"
-              f"(https://data.typeracer.com/pit/result?id=|tr:{records[0]['username']}|{records[0]['race']}) "
-              f"({records[0]['lagged']} WPM Lagged) - {records[0]['date']}",
-        inline=False
-    )
-
-    embed.add_field(
-        name=records[1]['record'],
-        value=f"{get_flag(records[1]['username'])}{records[1]['username']} - "
-              f"[{records[1]['unlagged']} WPM]"
-              f"(https://data.typeracer.com/pit/result?id=|tr:{records[1]['username']}|{records[1]['race']}) "
-              f"({records[1]['lagged']} WPM Lagged) - {records[1]['date']}",
-        inline=False
-    )
-
-    embed.add_field(
-        name=records[2]['record'],
-        value=f"{get_flag(records[2]['username'])}{records[2]['username']} - "
-              f"[{records[2]['adjusted']} WPM]"
-              f"(https://data.typeracer.com/pit/result?id=|tr:{records[2]['username']}|{records[2]['race']}) - "
-              f"{records[2]['date']}",
-        inline=False
-    )
-    embed.add_field(
-        name=records[3]['record'],
-        value=f"{get_flag(records[3]['username'])}{records[3]['username']} - "
-              f"[{records[3]['unlagged']} WPM]({records[3]['link']}) "
-              f"({records[3]['lagged']} WPM Lagged) - {records[3]['date']}",
-        inline=False
-    )
-
-    embed.add_field(
-        name=records[4]['record'],
-        value=f"{get_flag(records[4]['username'])}{records[4]['username']} - "
-              f"[{records[4]['unlagged']} WPM]({records[4]['link']}) "
-              f"({records[4]['lagged']} WPM Lagged) - {records[4]['date']}",
-        inline=False
-    )
+    for record in records:
+        title = record["record"]
+        username = record["username"]
+        flag = get_flag(username)
+        wpm = record["wpm"]
+        date = record["date"]
+        link = (
+            urls.replay(username, record["race_number"])
+            if record.get("race_number", None)
+            else record["link"]
+        )
+        embed.add_field(
+            name=title,
+            value=f"{flag}{username} - [{wpm} WPM]({link}) - {date}",
+            inline=False,
+        )
 
     return embed
 
@@ -228,13 +202,13 @@ def race_records():
         user = most_races[i]
         username = user["username"]
         flag = get_flag(username)
-        most_races_str += f"{medal} {flag}{user['username']} - {user['races']:,}\n"
+        most_races_str += f"{medal} {flag}{username} - {user['races']:,}\n"
 
         user = most_daily_races[i]
         username = user["username"]
         flag = get_flag(username)
         most_daily_races_str += (
-            f"{medal} {flag}{user['username']} - "
+            f"{medal} {flag}{username} - "
             f"{user['daily_races']:,.2f} ({user['races']:,} races "
             f"over {user['days']:,} days)\n"
         )
@@ -242,13 +216,13 @@ def race_records():
         user = most_characters[i]
         username = user["username"]
         flag = get_flag(username)
-        most_characters_str += f"{medal} {flag}{user['username']} - {user['characters']:,}\n"
+        most_characters_str += f"{medal} {flag}{username} - {user['characters']:,}\n"
 
         user = most_time[i]
         username = user["username"]
         flag = get_flag(username)
         most_time_str += (
-            f"{medal} {flag}{user['username']} - "
+            f"{medal} {flag}{username} - "
             f"{strings.format_duration_short(user['seconds'])}\n"
         )
 
@@ -277,13 +251,15 @@ def race_records():
     )
 
     for record in records:
+        username = record["username"]
+        flag = get_flag(username)
         record_string = (
-            f"{get_flag(record['username'])}{record['username']} - "
+            f"{flag}{username} - "
             f"[{record['races']:,}]({record['link']}) - {record['date']}"
         )
 
         embed.add_field(
-            name=record['record'],
+            name=record["record"],
             value=record_string,
             inline=False,
         )
@@ -310,13 +286,13 @@ def point_records():
         user = most_points[i]
         username = user["username"]
         flag = get_flag(username)
-        most_points_str += f"{medal} {flag}{user['username']} - {user['points_total']:,.0f}\n"
+        most_points_str += f"{medal} {flag}{username} - {user['points_total']:,.0f}\n"
 
         user = most_daily_points[i]
         username = user["username"]
         flag = get_flag(username)
         most_daily_points_str += (
-            f"{medal} {flag}{user['username']} - "
+            f"{medal} {flag}{username} - "
             f"{user['daily_points']:,.0f} ({user['points_total']:,.0f} points "
             f"over {user['days']:,} days)\n"
         )
@@ -334,13 +310,15 @@ def point_records():
     )
 
     for record in records:
+        username = record["username"]
+        flag = get_flag(username)
         record_string = (
-            f"{get_flag(record['username'])}{record['username']} - "
+            f"{flag}{username} - "
             f"[{record['points']:,}]({record['link']}) - {record['date']}"
         )
 
         embed.add_field(
-            name=record['record'],
+            name=record["record"],
             value=record_string,
             inline=False,
         )
@@ -359,13 +337,15 @@ def speedrun_records():
     )
 
     for record in records:
+        username = record["username"]
+        flag = get_flag(username)
         record_string = (
-            f"{get_flag(record['username'])}{record['username']} - "
+            f"{flag}{username} - "
             f"[{record['time']}]({record['link']}) - {record['date']}"
         )
 
         embed.add_field(
-            name=record['record'],
+            name=record["record"],
             value=record_string,
             inline=False,
         )
@@ -396,7 +376,7 @@ async def text_records():
         username = user["username"]
         flag = get_flag(username)
         text_bests_str += (
-            f"{medal} {flag}{user['username']} - {user['text_best_average']:,.2f} WPM "
+            f"{medal} {flag}{username} - {user['text_best_average']:,.2f} WPM "
             f"({user['texts_typed']:,} texts typed)\n"
         )
 
@@ -404,7 +384,7 @@ async def text_records():
         username = user["username"]
         flag = get_flag(username)
         total_text_wpm_str += (
-            f"{medal} {flag}{user['username']} - {user['text_wpm_total']:,.0f} WPM "
+            f"{medal} {flag}{username} - {user['text_wpm_total']:,.0f} WPM "
             f"({user['texts_typed']:,} texts typed)\n"
         )
 
@@ -412,8 +392,8 @@ async def text_records():
         username = user["username"]
         flag = get_flag(username)
         max_quote_str += (
-            f"{medal} {flag}{user['username']} - [{user['max_quote_times']:,} times]"
-            f"(https://typeracerdata.com/text.races?username=charlieog&text={user['max_quote_id']})\n"
+            f"{medal} {flag}{username} - [{user['max_quote_times']:,} times]"
+            f"({urls.trdata_text_races(username, user['max_quote_id'])})\n"
         )
 
     max_texts_typed = most_texts[0]["texts_typed"]
@@ -425,7 +405,7 @@ async def text_records():
         user = most_texts[i]
         username = user["username"]
         flag = get_flag(username)
-        most_texts_str += f"{i + 1}. {flag}{user['username']}\n"
+        most_texts_str += f"{i + 1}. {flag}{username}\n"
 
     embed.add_field(
         name=f"Text Best WPM (Min. {min_texts:,} Texts Typed)",
@@ -468,7 +448,7 @@ def award_records():
         username = user["username"]
         flag = get_flag(username)
         most_awards_str += (
-            f"{medal} {flag}{user['username']} - {user['awards_total']:,} - "
+            f"{medal} {flag}{username} - {user['awards_total']:,} - "
             f":first_place: x{user['awards_first']:,} :second_place: x{user['awards_second']:,} "
             f":third_place: x{user['awards_third']:,}\n"
         )
@@ -492,7 +472,7 @@ def get_score_string(score):
 
     score_string = (
         f"{rank} {get_flag(username)}{username} - [{adjusted:.3f} WPM]"
-        f"(https://data.typeracer.com/pit/result?id=|tr:{username}|{race_number}) - "
+        f"({urls.replay(username, race_number)}) - "
         f"{date}"
     )
 

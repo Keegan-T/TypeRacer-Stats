@@ -2,8 +2,8 @@ import time
 
 from database import db
 from utils import strings
-from utils.stats import get_text_stats
 from utils.logging import log
+from utils.stats import get_text_stats
 
 
 def table_name(universe):
@@ -315,25 +315,6 @@ def get_text_bests(username, race_stats=False, universe="play"):
     filtered_tb = [text for text in text_bests if text[0] not in disabled_text_ids]
 
     return filtered_tb
-
-
-def get_profile_picture_link(username):
-    user = db.fetch(
-        """
-            SELECT has_pic, country
-            FROM users
-            WHERE username = ?
-        """,
-        [username]
-    )
-
-    info = user[0]
-    if info['has_pic']:
-        return f"https://data.typeracer.com/misc/pic?uid=tr:{username}"
-    elif info['country']:
-        return f"https://flagsapi.com/{info['country'].upper()}/flat/64.png"
-    else:
-        return "https://i.imgur.com/3fot7xB.png"
 
 
 def get_unraced_text_ids(username, universe):

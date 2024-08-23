@@ -6,7 +6,7 @@ from utils import urls
 
 
 def get_quote(text_id):
-    url = f"https://data.typeracer.com/pit/text_info?id={text_id}"
+    url = urls.text_info(text_id)
     html = requests.get(url).text
     if "Text not found." in html:
         return None
@@ -43,7 +43,7 @@ async def get_top_10_user_stats(session, text_id):
 
 
 def get_text_list(universe):
-    url = f"https://typeracerdata.com/texts?sort=id&texts=full&universe={universe}"
+    url = urls.trdata_text_list(universe)
     html = requests.get(url).text
     soup = BeautifulSoup(html, "html.parser")
     text_list = []
@@ -68,10 +68,10 @@ def get_text_list(universe):
 
 
 def get_ghost(text_id, universe):
-    url = f"https://typeracerdata.com/text?id={text_id}&universe={universe}"
+    url = urls.trdata_text(text_id, universe)
     html = requests.get(url).text
-
     soup = BeautifulSoup(html, "html.parser")
+
     table = soup.find("table", class_="profile")
     rows = table.find_all("tr")
     columns = rows[1].find_all("td")

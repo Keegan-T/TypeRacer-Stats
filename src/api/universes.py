@@ -6,7 +6,6 @@ def get_universe_list():
     url = "https://typeracerdata.com/universes"
 
     html = requests.get(url).text
-
     soup = BeautifulSoup(html, "html.parser")
 
     table = soup.find("table", class_="stats").find("table", class_="stats")

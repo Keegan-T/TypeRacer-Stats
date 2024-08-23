@@ -130,16 +130,17 @@ async def run(ctx, user, element, color):
 
 
 async def view(ctx, user):
+    user_colors = user["colors"]
     description = (
         f"<@{user['id']}>\n\n"
-        f"**Embed:** #{hex(user['colors']['embed'])[2:]}\n"
-        f"**Axis:** {user['colors']['axis']}\n"
-        f"**Background:** {user['colors']['background']}\n"
-        f"**Graph Background:** {user['colors']['graphbackground']}\n"
-        f"**Grid:** {user['colors']['grid']}\n"
-        f"**Line:** {user['colors']['line']}\n"
-        f"**Raw Speed:** {user['colors']['raw']}\n"
-        f"**Text:** {user['colors']['text']}"
+        f"**Embed:** #{hex(user_colors['embed'])[2:]}\n"
+        f"**Axis:** {user_colors['axis']}\n"
+        f"**Background:** {user_colors['background']}\n"
+        f"**Graph Background:** {user_colors['graphbackground']}\n"
+        f"**Grid:** {user_colors['grid']}\n"
+        f"**Line:** {user_colors['line']}\n"
+        f"**Raw Speed:** {user_colors['raw']}\n"
+        f"**Text:** {user_colors['text']}"
     )
 
     embed = Embed(

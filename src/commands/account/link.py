@@ -5,7 +5,7 @@ from api.users import get_stats
 from commands.basic.stats import get_args
 from config import prefix
 from database.bot_users import get_user, update_username
-from utils import errors, embeds
+from utils import errors, embeds, urls
 
 command = {
     "name": "link",
@@ -41,7 +41,7 @@ async def run(ctx, user, username):
 
     description = (
         f"<@{ctx.author.id}> has been linked to [{username}]"
-        f"(https://data.typeracer.com/pit/profile?user={username})\n\n"
+        f"{urls.profile(username)}\n\n"
     )
 
     if user["username"] is None:

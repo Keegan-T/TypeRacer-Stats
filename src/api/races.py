@@ -7,15 +7,12 @@ from bs4 import BeautifulSoup
 from dateutil import parser
 
 import api.bulk as bulk
-from utils import logs
+from utils import logs, urls
 from utils.stats import calculate_points
 
 
 async def get_races(username, start_time, end_time, races_per_page, universe="play"):
-    url = (
-        f"https://data.typeracer.com/games?playerId=tr:{username}&startDate={start_time}"
-        f"&endDate={end_time}&n={races_per_page}&universe={universe}"
-    )
+    url = urls.games(username, start_time, end_time, races_per_page, universe)
 
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
@@ -36,7 +33,7 @@ async def get_race(username, race_number, get_raw=False, get_opponents=False, un
 
 
 async def get_race_html(username, race_number, universe="play"):
-    url = f"https://data.typeracer.com/pit/result?id={universe}|tr:{username}|{race_number}&allowDisqualified=true"
+    url = urls.replay(username, race_number, universe, dq=True)
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             html = await response.text()
@@ -173,14 +170,10 @@ async def get_race_details(html, get_raw=False, get_opponents=False, universe="p
 
 
 def find_race(username, race_number, timestamp, universe="play"):
-    url = (f"https://data.typeracer.com/games?playerId=tr:{username}"
-           f"&n=20&startDate={timestamp - 5}&endDate={timestamp + 5}&universe={universe}")
+    url = urls.games(username, timestamp - 5, timestamp + 5, 20, universe)
     response = requests.get(url)
     races = json.loads(response.text)
-    for race in races:
-        if race["gn"] == race_number:
-            return race
-    return None
+    return next((race for race in races if race["gn"] == race_number), None)
 
 
 async def get_match(username, race_number, universe="play"):

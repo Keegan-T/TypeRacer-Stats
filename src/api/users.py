@@ -6,7 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 from dateutil import parser
 
-from utils import dates
+from utils import dates, urls
 
 
 def get_stats(username=None, stats=None, universe="play"):
@@ -14,7 +14,7 @@ def get_stats(username=None, stats=None, universe="play"):
         api_data = stats
     else:
         username = urllib.parse.quote(username).lower()
-        url = f"https://data.typeracer.com/users?id=tr:{username}&universe={universe}"
+        url = urls.stats(username, universe)
         response = requests.get(url)
 
         if response.status_code != 200:
@@ -51,7 +51,7 @@ def get_stats(username=None, stats=None, universe="play"):
 
 
 async def get_joined(username):
-    url = f"https://data.typeracer.com/pit/profile?user={username}"
+    url = urls.profile(username)
 
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:

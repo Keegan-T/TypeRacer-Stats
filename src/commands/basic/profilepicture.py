@@ -3,7 +3,7 @@ from discord.ext import commands
 from api.users import get_stats
 from commands.basic.stats import get_args
 from database.bot_users import get_user
-from utils import errors, embeds
+from utils import errors, embeds, urls
 
 command = {
     "name": "profilepicture",
@@ -35,7 +35,7 @@ async def run(ctx, username):
     if not stats:
         return await ctx.send(embed=errors.invalid_username())
 
-    await ctx.send(content=f"https://data.typeracer.com/misc/pic?uid=tr:{username}&refresh=1")
+    await ctx.send(content=f"{urls.profile_picture(username)}&refresh=1")
 
 
 async def setup(bot):

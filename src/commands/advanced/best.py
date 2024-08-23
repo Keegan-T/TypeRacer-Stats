@@ -63,15 +63,6 @@ def get_args(user, args, info):
     return username, category, text_id
 
 
-"""
-universe = user["universe"]
-, universe
-, universe=universe
-embeds.add_profile(embed, stats, universe)
-embeds.add_universe(embed, universe)
-"""
-
-
 async def run(ctx, user, username, category, text_id, reverse=True):
     universe = user["universe"]
     stats = users.get_user(username, universe)
@@ -80,6 +71,7 @@ async def run(ctx, user, username, category, text_id, reverse=True):
 
     text_list = texts.get_texts(as_dictionary=True, universe=universe)
     limit = 10
+
     if text_id is not None:
         text_id = int(text_id)
         if text_id not in text_list:
@@ -99,8 +91,11 @@ async def run(ctx, user, username, category, text_id, reverse=True):
         if limit == 0:
             description = strings.text_description(text, universe)
             embed.title = f"Top 10 {'Best' if reverse else 'Worst'} Races"
-            embed.description = (description + "\n\nUser has no races on this text\n"
-                                               f"[Race this text]({text['ghost']})")
+            embed.description = (
+                f"{description}\n\n"
+                f"User has no races on this text\n"
+                f"[Race this text]({text['ghost']})"
+            )
             return await ctx.send(embed=embed)
 
         top = ""

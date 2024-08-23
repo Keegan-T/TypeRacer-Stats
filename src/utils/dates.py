@@ -19,6 +19,22 @@ def floor_month(date):
 def floor_year(date):
     return date.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
 
+def get_start_end(date, period):
+    if period == "week":
+        start = floor_week(date)
+        end = start + relativedelta(weeks=1)
+    elif period == "month":
+        start = floor_month(date)
+        end = start + relativedelta(months=1)
+    elif period == "year":
+        start = floor_year(date)
+        end = start + relativedelta(years=1)
+    else:
+        start = floor_day(date)
+        end = start + relativedelta(days=1)
+
+    return start, end
+
 
 def now():
     return datetime.now(timezone.utc)

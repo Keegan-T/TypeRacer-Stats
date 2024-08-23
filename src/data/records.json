@@ -3,39 +3,35 @@
     {
       "record": "Fastest Race (Adjusted Speed)",
       "username": "taran",
-      "lagged": 409.80,
-      "adjusted": 421.053,
+      "wpm": 421.053,
       "date": "4/19/2024",
-      "race": 1506
+      "race_number": 1506
     },
     {
       "record": "Fastest Race (Maintrack) (Unlagged Speed)",
       "username": "mythicalrocket",
-      "lagged": 281.69,
-      "unlagged": 299.57,
+      "wpm": 299.57,
       "date": "7/16/2023",
-      "race": 10415
+      "race_number": 10415
     },
     {
       "record": "Fastest Race (Maintrack) (Adjusted Speed)",
       "username": "joshua728",
-      "adjusted": 317.443,
+      "wpm": 317.443,
       "date": "7/3/2023",
-      "race": 26277
+      "race_number": 26277
     },
     {
-      "record": "Best Last 10 (Unlagged)",
+      "record": "Best Last 10 (Unlagged Speed)",
       "username": "taran127",
-      "lagged": 378.98,
-      "unlagged": 394.16,
+      "wpm": 394.16,
       "date": "6/7/2020",
       "link": "https://data.typeracer.com/pit/race_history?user=taran127&startDate=2020-06-08&n=10"
     },
     {
-      "record": "Best Last 10 (Nonquit Maintrack) (Unlagged)",
+      "record": "Best Last 10 Non-Quit Maintrack (Unlagged Speed)",
       "username": "joshua728",
-      "lagged": 227.02,
-      "unlagged": 230.00,
+      "wpm": 230.00,
       "date": "8/8/2023",
       "link": "https://data.typeracer.com/pit/race_history?user=joshua728&universe=play&n=10&cursor=ClgKFgoJdGltZXN0YW1wEgkI6PW55I3MgAMSOmoTc350eXBlcmFjZXJkYXRhLWhyZHIjCxIKR2FtZVJlc3VsdCITX3RyOmpvc2h1YTcyOF8yNjU2MQwYACAB&prevCursor=ClgKFgoJdGltZXN0YW1wEgkI4IXKm4_MgAMSOmoTc350eXBlcmFjZXJkYXRhLWhyZHIjCxIKR2FtZVJlc3VsdCITX3RyOmpvc2h1YTcyOF8yNjU3MQwYACAB&startDate=2023-08-09"
     }
