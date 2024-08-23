@@ -129,3 +129,7 @@
 
 7/25/2024
 - Added a limit of 20 displayed scores in -checksaves
+
+8/23/2024
+- Added auto importing to -improvement
+- Added best race WPM and sorting by category to -textsover/under

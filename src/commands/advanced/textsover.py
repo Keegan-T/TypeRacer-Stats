@@ -58,21 +58,38 @@ async def run(ctx, user, username, threshold, category, over=True, random=False)
     texts_typed = stats["texts_typed"]
     text_list = texts.get_texts(as_dictionary=True, universe=universe)
 
+    text_bests = users.get_text_bests(username, race_stats=True, universe=universe)
+    text_bests_dict = {}
+    for text in text_bests:
+        text_bests_dict[text["text_id"]] = text
+
+    final = []
+
     if over:
         race_list = users.get_texts_over(username, threshold, category, universe)
-
     else:
         race_list = users.get_texts_under(username, threshold, category, universe)
 
+    for text in race_list:
+        text_id = text["text_id"]
+        text = {**text, **text_bests_dict[text_id]}
+        final.append(text)
+
+    race_list = final
+
     if random:
         shuffle(race_list)
+    else:
+        race_list.sort(key=lambda x: x[category], reverse=True)
 
     description = ""
     for race in race_list[:10]:
         text_id = race["text_id"]
         description += (
-            f"\n\n[#{text_id}]({urls.trdata_text(text_id, universe)}) - **{race['times']:,} time"
-            f"{'s' * (race['times'] != 1)}** - [Ghost]({text_list[text_id]['ghost']})\n"
+            f"\n\n[#{text_id}]({urls.trdata_text(text_id, universe)}) - "
+            f"[{race['wpm']:,.2f} WPM]({urls.replay(username, race['number'])}) - "
+            f"**{race['times']:,} time{'s' * (race['times'] != 1)}** - "
+            f"[Ghost]({text_list[text_id]['ghost']})\n"
             f'"{strings.truncate_clean(text_list[text_id]["quote"], 60)}"'
         )
 

@@ -5,7 +5,9 @@ from discord.ext import commands
 
 import database.races as races
 import database.users as users
+from api.users import get_stats
 from commands.advanced.races import get_args
+from commands.basic.download import run as download
 from config import prefix
 from database.bot_users import get_user
 from graphs import improvement_graph
@@ -59,8 +61,11 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         ctx.command.reset_cooldown(ctx)
         return await ctx.send(embed=errors.import_required(username, universe))
 
+    api_stats = get_stats(username, universe=universe)
+    await download(stats=api_stats, universe=universe)
+
     if start_number and not end_number:
-        end_number = stats["races"]
+        end_number = api_stats["races"]
 
     if start_date and not end_date:
         end_date = datetime.now(timezone.utc)
@@ -73,7 +78,7 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         race_list = await races.get_races(username, columns=columns, universe=universe)
 
     elif start_date is None:
-        end_number = min(end_number, stats["races"])
+        end_number = min(end_number, api_stats["races"])
         timeframe = f" {start_number:,} - {end_number:,}"
         title += f" - Races{timeframe}"
         race_list = await races.get_races(
