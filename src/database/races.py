@@ -53,20 +53,38 @@ async def get_races(username, columns="*", start_time=None, end_time=None, start
         columns = ",".join([c for c in columns])
     order = 'DESC' if reverse else 'ASC'
 
-    races = await db.fetch_async(f"""
-        SELECT {columns} FROM {table}
-        INDEXED BY idx_{table}_username
-        {('JOIN ' + texts_table + ' ON ' + texts_table + '.id = ' + table + '.text_id') * with_texts}
-        WHERE username = ?
-        {f'AND number >= {start_number}' if start_number else ''}
-        {f'AND number <= {end_number}' if end_number else ''}
-        {f'AND timestamp >= {start_time}' if start_time else ''}
-        {f'AND timestamp < {end_time}' if end_time else ''}
-        {f'ORDER BY {order_by} {order}' if order_by else ''}
-        {f'LIMIT {limit}' if limit else ''}
-    """, [username])
+    batch_size = 100_000
+    offset = 0
 
-    return races
+    if limit:
+        limit_string = f"LIMIT {limit}"
+    else:
+        limit_string = f"LIMIT {batch_size} OFFSET {offset}"
+
+    race_list = []
+    while True:
+        batch_races = await db.fetch_async(f"""
+            SELECT {columns} FROM {table}
+            INDEXED BY idx_{table}_username
+            {('JOIN ' + texts_table + ' ON ' + texts_table + '.id = ' + table + '.text_id') * with_texts}
+            WHERE username = ?
+            {f'AND number >= {start_number}' if start_number else ''}
+            {f'AND number <= {end_number}' if end_number else ''}
+            {f'AND timestamp >= {start_time}' if start_time else ''}
+            {f'AND timestamp < {end_time}' if end_time else ''}
+            {f'ORDER BY {order_by} {order}' if order_by else ''}
+            {limit_string}
+        """, [username])
+
+        race_list += batch_races
+
+        if limit or not batch_races:
+            break
+
+        offset += batch_size
+        limit_string = f"LIMIT {batch_size} OFFSET {offset}"
+
+    return race_list
 
 
 def get_race(username, number, universe):
