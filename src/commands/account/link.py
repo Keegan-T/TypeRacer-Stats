@@ -41,7 +41,7 @@ async def run(ctx, user, username):
 
     description = (
         f"<@{ctx.author.id}> has been linked to [{username}]"
-        f"{urls.profile(username)}\n\n"
+        f"({urls.profile(username)})\n\n"
     )
 
     if user["username"] is None:
