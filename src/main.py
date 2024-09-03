@@ -6,7 +6,7 @@ import discord
 from discord.ext import commands, tasks
 
 from commands.checks import ban_check
-from config import prefix, bot_token, staging, welcome_message, legacy_bot_id
+from config import prefix, bot_token, staging, welcome_message, legacy_bot_id, bot_owner
 from database import records
 from database.bot_users import update_commands
 from database.welcomed import get_welcomed, add_welcomed
@@ -75,6 +75,11 @@ async def on_message(message):
 async def on_command_completion(ctx):
     if not staging:
         update_commands(ctx.author.id, ctx.command.name)
+
+
+@bot.event
+async def on_guild_join(guild):
+    log(f"<@{bot_owner}>\nTypeRacer Stats joined a new server: {guild.name} ({guild.id})")
 
 
 @tasks.loop(minutes=1)
