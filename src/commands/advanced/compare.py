@@ -4,10 +4,11 @@ from discord.ext import commands
 from database.bot_users import get_user
 from database.users import get_text_bests
 from utils import errors, colors, urls, strings, embeds
+from random import randint
 
 command = {
     "name": "compare",
-    "aliases": ["vs"],
+    "aliases": ["vs", "vs*"],
     "description": "Displays the top 10 races for each user sorted by text best WPM difference",
     "parameters": "[username_1] [username_2]",
     "usages": ["compare keegant poem"],
@@ -78,7 +79,7 @@ async def run(ctx, user, username1, username2):
     if not comparison:
         return await ctx.send(embed=no_common_texts(universe))
 
-    comparison = sorted(comparison.items(), key=lambda x: x[1][2], reverse=True)
+    comparison = sorted(comparison.items(), key=lambda x: x[1][2] if "*" not in ctx.invoked_with else randint(), reverse=True)
 
     stats1 = f"**{strings.escape_discord_format(username1)}** (+{user1_better:,} texts)\n"
     stats2 = f"**{strings.escape_discord_format(username2)}** (+{user2_better:,} texts)\n"
