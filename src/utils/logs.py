@@ -4,7 +4,6 @@ import re
 def split_log(log):
     escapes = "".join([chr(char) for char in range(1, 32)])
     log = log.encode().decode("unicode-escape").translate(escapes)
-    log = log
 
     quote = ""
     delays = []
@@ -13,7 +12,7 @@ def split_log(log):
     i = 0
     while i < len(log):
         char = log[i]
-        if char.isdigit():
+        if char.isdigit() or (char == "-" and log[i - 1] != "\t"):
             current_num += char
         else:
             if char == "\t":
@@ -80,6 +79,21 @@ def get_raw_speeds(typing_log):
             raw_times.append(action[1])
         else:
             raw_times.pop()
+
+    if raw_times[0] == 0: # To prevent zero starts
+        for i in range(1, len(raw_times)):
+            if raw_times[i] > 0:
+                raw_times.insert(0, raw_times.pop(i))
+                break
+
+    for i in range(len(raw_times)):  # To prevent negative raw splits
+        try:
+            unlagged_wpm = (i + 1) / sum(times[:i + 1])
+            raw_wpm = (i + 1) / sum(raw_times[:i + 1])
+        except ZeroDivisionError:
+            continue
+        if raw_wpm < unlagged_wpm:
+            raw_times[i] = times[i]
 
     return {
         "raw_start": raw_times[0],
