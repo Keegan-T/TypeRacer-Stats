@@ -80,19 +80,17 @@ def get_raw_speeds(typing_log):
         else:
             raw_times.pop()
 
-    if raw_times[0] == 0: # To prevent zero starts
+    while raw_times[-1] == 0: # Removing trailing delays
+        raw_times.pop()
+
+    if raw_times[0] == 0: # Preventing zero starts
         for i in range(1, len(raw_times)):
             if raw_times[i] > 0:
                 raw_times.insert(0, raw_times.pop(i))
                 break
 
-    for i in range(len(raw_times)):  # To prevent negative raw splits
-        try:
-            unlagged_wpm = (i + 1) / sum(times[:i + 1])
-            raw_wpm = (i + 1) / sum(raw_times[:i + 1])
-        except ZeroDivisionError:
-            continue
-        if raw_wpm < unlagged_wpm:
+    for i in range(len(raw_times)): # Taking the fastest time per character
+        if raw_times[i] > times[i]:
             raw_times[i] = times[i]
 
     return {
