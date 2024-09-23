@@ -133,3 +133,7 @@
 8/23/2024
 - Added auto importing to -improvement
 - Added best race WPM and sorting by category to -textsover/under
+
+9/23/2024
+- Added -mistakes
+- Raw speed now always takes the fastest character

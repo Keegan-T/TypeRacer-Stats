@@ -1,10 +1,14 @@
 import re
 
 
-def split_log(log):
+def escape_characters(string):
     escapes = "".join([chr(char) for char in range(1, 32)])
-    log = log.encode().decode("unicode-escape").translate(escapes)
 
+    return string.encode().decode("unicode-escape").translate(escapes)
+
+
+def split_log(log):
+    log = escape_characters(log)
     quote = ""
     delays = []
 
@@ -57,28 +61,27 @@ def get_log_details(log, multiplier=12000):
 
 
 def get_raw_speeds(typing_log):
-    escapes = "".join([chr(char) for char in range(1, 32)])
-    typing_log = typing_log.encode().decode("unicode-escape").translate(escapes)
-    typing_log = re.sub("\\t\d", "a", typing_log).split("|", 1)
-    times = [int(c) for c in re.findall(r"\d+", typing_log[0])][2:]
+    typing_log = escape_characters(typing_log)
+    typing_log = re.sub(r"\t\d", "a", typing_log).split("|", 1)
+    times = [int(c) for c in re.findall(r"-?\d+", typing_log[0])][2:]
+    raw_times = []
 
-    actions = []
-    for keystroke in re.findall("\d+,(?:\d+[\+\-$].?)+,", typing_log[1]):
-        chars = re.findall("(?:\d+[\+\-$].?)", keystroke)
-        if chars[0][-2] == "$": chars = chars[1:] + ["0-k", chars[0]]
+    for keystroke in re.findall("\d+,(?:\d+[+\-$].?)+,", typing_log[1]):
+        delay = int(keystroke.split(",")[0])
+
+        chars = []
+        for i, char in enumerate(re.findall("(?:\d+[+\-$].?)", keystroke)):
+            if char[-2] == "$":
+                chars.append("0-k")
+            chars.append(char)
 
         for i, char in enumerate(chars):
-            if i > 0:
-                actions.append([char[-2], 0])
+            if i == 1:
+                delay = 0
+            if char[-2] == "+" or char[-2] == "$":
+                raw_times.append(delay)
             else:
-                actions.append([char[-2], int(keystroke.split(",")[0])])
-
-    raw_times = []
-    for action in actions:
-        if action[0] == "+" or action[0] == "$":
-            raw_times.append(action[1])
-        else:
-            raw_times.pop()
+                raw_times.pop()
 
     while raw_times[-1] == 0: # Removing trailing delays
         raw_times.pop()
@@ -88,7 +91,6 @@ def get_raw_speeds(typing_log):
             if raw_times[i] > 0:
                 raw_times.insert(0, raw_times.pop(i))
                 break
-
     for i in range(len(raw_times)): # Taking the fastest time per character
         if raw_times[i] > times[i]:
             raw_times[i] = times[i]
@@ -144,3 +146,57 @@ def get_adjusted_wpm_over_keystrokes(delays):
             i += 1
 
     return average_wpm, instant_chars
+
+def get_typos(quote, action_data):
+    action_data = escape_characters(action_data)
+    action_data = re.sub(r"\t\d", "a", action_data)
+    actions = re.findall(r"\d+,(?:\d+[+\-$].?)+,", action_data)
+    action_list = [action.split(",", 1)[1] for action in actions]
+
+    typos = {}
+    quote_words = [word + " " for word in quote.split(" ")]
+    quote_words[-1] = quote_words[-1][:-1]
+
+    current_word_index = 0
+    completed_words = []
+    text_box = []
+
+    for action in action_list:
+        sub_list = re.findall(r"(\d+[+\-$].)", action)
+
+        for sub_action in sub_list:
+            operator = sub_action[-2]
+            index, char = int(sub_action[:-2]), sub_action[-1]
+
+            if operator == "+":
+                text_box.insert(index, char)
+            elif operator == "$":
+                text_box[index] = char
+            else:
+                text_box.pop(index)
+
+            current_word = quote_words[current_word_index]
+            text_string = "".join(text_box)
+
+            if text_string[:len(current_word)] != current_word[:len(text_string)]:
+                if current_word_index not in typos:
+                    typo_index = len("".join(completed_words) + "".join(text_box)) - 1
+                    typos[current_word_index] = f"{current_word[:-1]},{typo_index}"
+
+        while "".join(text_box).startswith(quote_words[current_word_index]):
+            completed_words.append(quote_words[current_word_index])
+            current_word_index += 1
+            text_box = list("".join(text_box)[len(quote_words[current_word_index - 1]):])
+
+            if current_word_index >= len(quote_words):
+                break
+
+        if "".join(completed_words) == quote:
+            break
+
+    typo_list = []
+    for typo in typos.values():
+        word, index = typo.rsplit(",", 1)
+        typo_list.append([int(index), word])
+
+    return typo_list

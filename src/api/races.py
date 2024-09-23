@@ -26,10 +26,10 @@ async def get_races(username, start_time, end_time, races_per_page, universe="pl
     return data
 
 
-async def get_race(username, race_number, get_raw=False, get_opponents=False, universe="play"):
+async def get_race(username, race_number, get_raw=False, get_opponents=False, universe="play", get_typos=False):
     html = await get_race_html(username, race_number, universe)
 
-    return await get_race_details(html, get_raw, get_opponents, universe)
+    return await get_race_details(html, get_raw, get_opponents, universe, get_typos)
 
 
 async def get_race_html(username, race_number, universe="play"):
@@ -45,7 +45,7 @@ async def get_race_html_bulk(urls):
     return await bulk.fetch(urls)
 
 
-async def get_race_details(html, get_raw=False, get_opponents=False, universe="play"):
+async def get_race_details(html, get_raw=False, get_opponents=False, universe="play", get_typos=False):
     soup = BeautifulSoup(html, "html.parser")
     details = {}
 
@@ -98,7 +98,8 @@ async def get_race_details(html, get_raw=False, get_opponents=False, universe="p
         return details
 
     universe_multiplier = get_universe_multiplier(universe)
-    delay_data = ",".join(",".join(typing_log.split("|")[0:quote.count("|") + 1]).split(",")[3:])
+    first_half, action_data = typing_log.split("|")[0:quote.count("|") + 2]
+    delay_data = ",".join(first_half.split(",")[3:])
     log_details = logs.get_log_details(delay_data, universe_multiplier)
     for key, value in log_details.items():
         details[key] = value
@@ -119,6 +120,10 @@ async def get_race_details(html, get_raw=False, get_opponents=False, universe="p
     details["wpm_over_keystrokes"] = wpm_over_keystrokes
     details["wpm_adjusted_over_keystrokes"] = wpm_adjusted_over_keystrokes
     details["instant_chars"] = instant_chars
+
+    # Getting typos
+    if get_typos:
+        details["typos"] = logs.get_typos(log_details["quote"], action_data)
 
     # Calculating raw speeds
     if get_raw:

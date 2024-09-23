@@ -3,7 +3,7 @@ import numpy as np
 from graphs.core import plt, color_graph
 
 
-def render(user, rankings, title, y_label, file_name, limit_y=True):
+def render(user, rankings, title, y_label, file_name, limit_y=True, typos=[]):
     ax = plt.subplots()[1]
     caller_index = 0
     starts = []
@@ -41,6 +41,14 @@ def render(user, rankings, title, y_label, file_name, limit_y=True):
     if remaining and limit_y:
         if max(starts) > max(remaining):
             ax.set_ylim(top=1.2 * max(remaining))
+
+    if len(typos) > 0:
+        typo_count = 1
+        for index, word in typos:
+            wpm = rankings[0]["average_wpm"][max(0, index - 1)]
+            ax.plot(index, wpm, marker="x", color="red", zorder=999, markersize=7,
+                    markeredgewidth=1.5, label=f"{typo_count}. {word}")
+            typo_count += 1
 
     ax.set_xlabel("Keystrokes")
     ax.set_ylabel(y_label)
