@@ -13,7 +13,7 @@ from utils import errors, embeds, strings, urls, colors
 
 command = {
     "name": "mistakes",
-    "aliases": ["typos", "ty"],
+    "aliases": ["typos", "ty", "x"],
     "description": "Displays the typos on a graph for a user's race\n"
                    f"`{prefix}mistakes [username] <-n>` will return real speeds for n races ago\n",
     "parameters": "[username] <race_number>",
