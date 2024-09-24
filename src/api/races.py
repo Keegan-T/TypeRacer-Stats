@@ -127,7 +127,7 @@ async def get_race_details(html, get_raw=False, get_opponents=False, universe="p
 
     # Calculating raw speeds
     if get_raw:
-        raw_speeds = logs.get_raw_speeds(typing_log)
+        raw_speeds = logs.get_raw_speeds(typing_log, delays)
         duration = details["ms"]
         raw_duration = raw_speeds["raw_duration"]
         correction = duration - raw_duration

@@ -60,10 +60,9 @@ def get_log_details(log, multiplier=12000):
     return details
 
 
-def get_raw_speeds(typing_log):
+def get_raw_speeds(typing_log, times):
     typing_log = escape_characters(typing_log)
     typing_log = re.sub(r"\t\d", "a", typing_log).split("|", 1)
-    times = [int(c) for c in re.findall(r"-?\d+", typing_log[0])][2:]
     raw_times = []
 
     for keystroke in re.findall("\d+,(?:\d+[+\-$].?)+,", typing_log[1]):
