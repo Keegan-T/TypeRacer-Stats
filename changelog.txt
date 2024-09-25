@@ -137,3 +137,6 @@
 9/23/2024
 - Added -mistakes
 - Raw speed now always takes the fastest character
+
+9/25/2024
+- Added -awardsgraph (sub-command of -awards)

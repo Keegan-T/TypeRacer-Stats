@@ -1,15 +1,18 @@
-from discord import Embed
+from discord import Embed, File
 from discord.ext import commands
 
 import database.competition_results as competition_results
 from api.users import get_stats
 from commands.basic.stats import get_args
 from database.bot_users import get_user
+from graphs import awards_graph
+from graphs.core import remove_file
 from utils import errors, embeds
 
+graph_commands = ["awardsgraph", "medalsgraph", "awg", "mdg"]
 command = {
     "name": "awards",
-    "aliases": ["medals", "aw"],
+    "aliases": ["medals", "aw"] + graph_commands,
     "description": "Displays a breakdown of a user's competition awards",
     "parameters": "[username]",
     "usages": ["awards keegant"],
@@ -30,10 +33,10 @@ class Awards(commands.Cog):
             return await ctx.send(embed=result)
 
         username = result
-        await run(ctx, user, username)
+        await run(ctx, user, username, ctx.invoked_with in graph_commands)
 
 
-async def run(ctx, user, username):
+async def run(ctx, user, username, show_graph):
     stats = get_stats(username)
     if not stats:
         return await ctx.send(embed=errors.invalid_username())
@@ -66,7 +69,18 @@ async def run(ctx, user, username):
         if count > 0:
             embed.add_field(name=f":{ranks[i]}_place: x{count}", value=field_strings[i])
 
-    await ctx.send(embed=embed)
+    if not show_graph:
+        return await ctx.send(embed=embed)
+
+    file_name = f"awards_{username}.png"
+    await awards_graph.render(user, username, file_name)
+
+    embed.set_image(url=f"attachment://{file_name}")
+    file = File(file_name, filename=file_name)
+
+    await ctx.send(embed=embed, file=file)
+
+    remove_file(file_name)
 
 
 async def setup(bot):
