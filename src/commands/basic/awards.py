@@ -4,18 +4,20 @@ from discord.ext import commands
 import database.competition_results as competition_results
 from api.users import get_stats
 from commands.basic.stats import get_args
+from config import prefix
 from database.bot_users import get_user
 from graphs import awards_graph
 from graphs.core import remove_file
 from utils import errors, embeds
 
-graph_commands = ["awardsgraph", "medalsgraph", "awg", "mdg"]
+graph_commands = ["awardsgraph", "medalsgraph", "awg"]
 command = {
     "name": "awards",
     "aliases": ["medals", "aw"] + graph_commands,
-    "description": "Displays a breakdown of a user's competition awards",
+    "description": "Displays a breakdown of a user's competition awards\n"
+                   f"Use `{prefix}awardsgraph` to display a graph of awards",
     "parameters": "[username]",
-    "usages": ["awards keegant"],
+    "usages": ["awards keegant", "awardsgraph keegant"],
     "multiverse": False,
 }
 
