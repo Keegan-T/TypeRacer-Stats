@@ -1,14 +1,17 @@
 from discord import Embed
 from discord.ext import commands
 
+from config import prefix
 from database.bot_users import get_user
 from database.users import get_text_bests
 from utils import errors, colors, urls, strings, embeds
+from random import shuffle
 
 command = {
     "name": "compare",
-    "aliases": ["vs"],
-    "description": "Displays the top 10 races for each user sorted by text best WPM difference",
+    "aliases": ["vs", "v", "vr"],
+    "description": "Displays the top 10 races for each user sorted by text best WPM difference\n"
+                   f"Use `{prefix}vr` to randomize the results",
     "parameters": "[username_1] [username_2]",
     "usages": ["compare keegant poem"],
 }
@@ -27,7 +30,7 @@ class Compare(commands.Cog):
             return await ctx.send(embed=result)
 
         username1, username2 = result
-        await run(ctx, user, username1, username2)
+        await run(ctx, user, username1, username2, ctx.invoked_with == "vr")
 
 
 def get_args(user, args, info):
@@ -36,7 +39,7 @@ def get_args(user, args, info):
     return strings.parse_command(user, params, args, info)
 
 
-async def run(ctx, user, username1, username2):
+async def run(ctx, user, username1, username2, random):
     if username1 == username2:
         return await ctx.send(embed=same_username())
 
@@ -79,6 +82,13 @@ async def run(ctx, user, username1, username2):
         return await ctx.send(embed=no_common_texts(universe))
 
     comparison = sorted(comparison.items(), key=lambda x: x[1][2], reverse=True)
+    if random:
+        positive = [x for x in comparison if x[1][2] >= 0]
+        negative = [x for x in comparison if x[1][2] < 0]
+        shuffle(positive)
+        shuffle(negative)
+        comparison = positive + negative
+
 
     stats1 = f"**{strings.escape_discord_format(username1)}** (+{user1_better:,} texts)\n"
     stats2 = f"**{strings.escape_discord_format(username2)}** (+{user2_better:,} texts)\n"
@@ -108,7 +118,7 @@ async def run(ctx, user, username1, username2):
     description = stats1 + "\n" + stats2
 
     embed = Embed(
-        title="Text Best Comparison",
+        title=f"Text Best Comparison{' (Randomized)' * random}",
         color=user["colors"]["embed"],
         description=description,
         url=urls.trdata_compare(username1, username2, universe),

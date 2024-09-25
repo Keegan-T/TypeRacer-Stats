@@ -140,3 +140,4 @@
 
 9/25/2024
 - Added -awardsgraph (sub-command of -awards)
+- Added -vr (Randomized -vs)
