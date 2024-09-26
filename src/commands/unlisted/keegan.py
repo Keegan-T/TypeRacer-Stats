@@ -3,7 +3,7 @@ from discord.ext import commands
 
 from config import bot_owner, root_dir
 
-message_path = root_dir + "\\src\\data\\message.txt"
+message_path = root_dir + "/src/data/message.txt"
 command = {
     "name": "keegan",
     "aliases": ["keegant", "kegnat", "kt"],
