@@ -45,6 +45,9 @@ class RaceLine(commands.Cog):
                 return await ctx.send(embed=result)
 
             usernames, start_date, end_date = result
+            if len(usernames) > 10:
+                return await ctx.send(embed=too_many_usernames())
+
             await run(ctx, user, usernames, start_date, end_date)
 
 
