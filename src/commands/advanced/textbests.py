@@ -84,7 +84,7 @@ async def run(ctx, user, username, sort, n):
     if era_string:
         text_bests = await users.get_text_bests_time_travel(username, universe, user, race_stats=True)
     else:
-        text_bests = users.get_text_bests(username, universe=universe)
+        text_bests = users.get_text_bests(username, universe=universe, race_stats=True)
 
     if len(text_bests) == 0:
         return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
