@@ -122,8 +122,15 @@ async def help_command(ctx, user, command_info):
             inline=False
         )
 
+    footer_text = ""
     if "multiverse" in command_info:
-        embed.set_footer(text="This command does not work in the multiverse")
+        footer_text += "This command does not work in the multiverse"
+
+    if "temporal" in command_info:
+        footer_text += "\nThis command cannot be manipulated by time"
+
+    if footer_text:
+        embed.set_footer(text=footer_text)
 
     await ctx.send(embed=embed)
 

@@ -1,5 +1,5 @@
 import math
-from datetime import datetime
+from datetime import datetime, timezone
 
 from dateutil.relativedelta import relativedelta
 from discord import Embed
@@ -62,15 +62,19 @@ async def run(ctx, user, username, time_period, sort):
     db_stats = users.get_user(username, universe)
     if not db_stats:
         return await ctx.send(embed=errors.import_required(username, universe))
+    era_string = strings.get_era_string(user)
 
     api_stats = get_stats(username, universe=universe)
     await download(stats=api_stats, universe=universe)
+    if era_string:
+        api_stats = await users.time_travel_stats(api_stats, user)
 
     if time_period == "races":
         columns = ["number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
         race_list = await races.get_races(
             username, columns=columns, order_by="timestamp",
-            limit=20, reverse=True, universe=universe
+            limit=20, reverse=True, universe=universe,
+            start_date=user["start_date"], end_date=user["end_date"]
         )
 
         title = "Race History"
@@ -88,7 +92,7 @@ async def run(ctx, user, username, time_period, sort):
             sort_title = "WPM"
         title = f"Race History - {time_period.title()}s (By {sort_title})"
         description = ""
-        history = await get_history(username, time_period, sort, universe)
+        history = await get_history(username, time_period, sort, universe, user["start_date"], user["end_date"])
         for period in history[:10]:
             description += (
                 f"**{period[1]}**\n{period[3]:,.0f} pts / {period[2]:,} races - "
@@ -103,13 +107,15 @@ async def run(ctx, user, username, time_period, sort):
     embeds.add_profile(embed, api_stats, universe)
     embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed)
+    await ctx.send(embed=embed, content=era_string)
 
 
-async def get_history(username, category, sort, universe):
+async def get_history(username, category, sort, universe, start_date, end_date):
     sort_key = {"points": 3, "races": 2, "time": 5, "wpm": 4}.get(sort, 0)
     columns = ["text_id", "wpm", "points", "timestamp"]
-    race_list = await races.get_races(username, columns=columns, universe=universe)
+    race_list = await races.get_races(
+        username, columns=columns, universe=universe, start_date=start_date, end_date=end_date
+    )
     race_list.sort(key=lambda x: x[3])
     text_list = texts.get_texts(as_dictionary=True, include_disabled=True, universe=universe)
     history = []
@@ -120,16 +126,16 @@ async def get_history(username, category, sort, universe):
 
         if len(history) == 0 or timestamp > history[-1][1]:
             if category == "day":
-                start = dates.floor_day(datetime.utcfromtimestamp(timestamp))
+                start = dates.floor_day(datetime.fromtimestamp(timestamp, tz=timezone.utc))
                 end = start.timestamp() + 86400
             elif category == "week":
-                start = dates.floor_week(datetime.utcfromtimestamp(timestamp))
+                start = dates.floor_week(datetime.fromtimestamp(timestamp, tz=timezone.utc))
                 end = start.timestamp() + 86400 * 7
             elif category == "month":
-                start = dates.floor_month(datetime.utcfromtimestamp(timestamp))
+                start = dates.floor_month(datetime.fromtimestamp(timestamp, tz=timezone.utc))
                 end = (start + relativedelta(months=1)).timestamp()
             else:
-                start = dates.floor_year(datetime.utcfromtimestamp(timestamp))
+                start = dates.floor_year(datetime.fromtimestamp(timestamp, tz=timezone.utc))
                 end = (start + relativedelta(years=1)).timestamp()
 
             history.append([
@@ -144,8 +150,8 @@ async def get_history(username, category, sort, universe):
             history[-1][5] += seconds
 
     for stats in history:
-        start = datetime.utcfromtimestamp(stats[0])
-        end = datetime.utcfromtimestamp(stats[1])
+        start = datetime.fromtimestamp(stats[0], tz=timezone.utc)
+        end = datetime.fromtimestamp(stats[1], tz=timezone.utc)
         if category == "day":
             stats[1] = strings.get_display_date(start)
         elif category == "week":

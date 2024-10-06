@@ -79,7 +79,7 @@ def no_races(universe="play"):
     return embed
 
 
-def no_races_in_range(universe="play"):
+def no_races_in_range(universe):
     embed = Embed(
         title="No Races Found",
         description="User has no races in this range",
@@ -90,7 +90,7 @@ def no_races_in_range(universe="play"):
     return embed
 
 
-def import_required(username, universe="play"):
+def import_required(username, universe="play", time_travel=False):
     username = username.replace("`", "")
     embed = Embed(
         title="Import Required",
@@ -98,6 +98,9 @@ def import_required(username, universe="play"):
         color=error,
     )
     embeds.add_universe(embed, universe)
+
+    if time_travel:
+        embed.description += "\nwhile time travelling"
 
     return embed
 

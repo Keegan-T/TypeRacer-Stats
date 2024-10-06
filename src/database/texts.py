@@ -236,3 +236,9 @@ def universe_exists(universe):
             return False
 
     return True
+
+
+def filter_disabled_texts(text_list):
+    disabled_text_ids = get_disabled_text_ids()
+
+    return [text for text in text_list if text["text_id"] not in disabled_text_ids]

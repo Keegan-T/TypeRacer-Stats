@@ -8,7 +8,7 @@ from config import prefix
 from database.bot_users import get_user
 from graphs import awards_graph
 from graphs.core import remove_file
-from utils import errors, embeds
+from utils import errors, embeds, strings
 
 graph_commands = ["awardsgraph", "medalsgraph", "awg"]
 command = {
@@ -42,8 +42,9 @@ async def run(ctx, user, username, show_graph):
     stats = get_stats(username)
     if not stats:
         return await ctx.send(embed=errors.invalid_username())
+    era_string = strings.get_era_string(user)
 
-    awards = await competition_results.get_awards(username)
+    awards = await competition_results.get_awards(username, user["start_date"], user["end_date"])
     total = awards["total"]
 
     embed = Embed(title=f"Awards ({total:,})", color=user["colors"]["embed"])
@@ -72,7 +73,7 @@ async def run(ctx, user, username, show_graph):
             embed.add_field(name=f":{ranks[i]}_place: x{count}", value=field_strings[i])
 
     if not show_graph:
-        return await ctx.send(embed=embed)
+        return await ctx.send(embed=embed, content=era_string)
 
     file_name = f"awards_{username}.png"
     await awards_graph.render(user, username, file_name)
@@ -80,7 +81,7 @@ async def run(ctx, user, username, show_graph):
     embed.set_image(url=f"attachment://{file_name}")
     file = File(file_name, filename=file_name)
 
-    await ctx.send(embed=embed, file=file)
+    await ctx.send(embed=embed, file=file, content=era_string)
 
     remove_file(file_name)
 

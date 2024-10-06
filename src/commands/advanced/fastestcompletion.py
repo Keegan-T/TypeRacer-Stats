@@ -55,14 +55,20 @@ async def run(ctx, user, username, number, category):
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
 
+    era_string = strings.get_era_string(user)
+    if era_string:
+        stats = await users.time_travel_stats(stats, user)
+
     if (category == "races" and number > stats["races"]) or number > stats["points"]:
-        return await ctx.send(embed=no_milestone(category, universe))
+        return await ctx.send(embed=no_milestone(category, universe), content=era_string)
 
     if category == "races":
         number = round(number)
 
     columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
-    race_list = await races.get_races(username, columns=columns, universe=universe)
+    race_list = await races.get_races(
+        username, columns=columns, universe=universe, start_date=user["start_date"], end_date=user["end_date"]
+    )
     race_list.sort(key=lambda x: x[7])
     fastest = float("inf")
     race_range = []
@@ -121,7 +127,7 @@ async def run(ctx, user, username, number, category):
     add_stats(embed, username, completion_races, start_time, end_time, universe=universe)
     embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed)
+    await ctx.send(embed=embed, content=era_string)
 
 
 def no_milestone(category, universe):

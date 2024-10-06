@@ -1,11 +1,13 @@
+from random import shuffle
+
 from discord import Embed
 from discord.ext import commands
 
 from config import prefix
+from database import users
 from database.bot_users import get_user
 from database.users import get_text_bests
 from utils import errors, colors, urls, strings, embeds
-from random import shuffle
 
 command = {
     "name": "compare",
@@ -49,13 +51,19 @@ async def run(ctx, user, username1, username2, random):
 
     universe = user["universe"]
 
-    text_bests1 = get_text_bests(username1, race_stats=True, universe=universe)
-    if not text_bests1:
-        return await ctx.send(embed=errors.import_required(username1, universe))
+    era_string = strings.get_era_string(user)
+    if era_string:
+        text_bests1 = await users.get_text_bests_time_travel(username1, universe, user, race_stats=True)
+        text_bests2 = await users.get_text_bests_time_travel(username2, universe, user, race_stats=True)
 
-    text_bests2 = get_text_bests(username2, race_stats=True, universe=universe)
-    if not text_bests2:
-        return await ctx.send(embed=errors.import_required(username2, universe))
+    else:
+        text_bests1 = get_text_bests(username1, race_stats=True, universe=universe)
+        if not text_bests1:
+            return await ctx.send(embed=errors.import_required(username1, universe))
+
+        text_bests2 = get_text_bests(username2, race_stats=True, universe=universe)
+        if not text_bests2:
+            return await ctx.send(embed=errors.import_required(username2, universe))
 
     tb_dict1 = {text[0]: text[1:] for text in text_bests1}
     tb_dict2 = {text[0]: text[1:] for text in text_bests2}
@@ -79,7 +87,7 @@ async def run(ctx, user, username1, username2, random):
             comparison[text_id] = (tb_dict1[text_id], tb_dict2[text_id], gap)
 
     if not comparison:
-        return await ctx.send(embed=no_common_texts(universe))
+        return await ctx.send(embed=no_common_texts(universe), content=era_string)
 
     comparison = sorted(comparison.items(), key=lambda x: x[1][2], reverse=True)
     if random:
@@ -88,7 +96,6 @@ async def run(ctx, user, username1, username2, random):
         shuffle(positive)
         shuffle(negative)
         comparison = positive + negative
-
 
     stats1 = f"**{strings.escape_discord_format(username1)}** (+{user1_better:,} texts)\n"
     stats2 = f"**{strings.escape_discord_format(username2)}** (+{user2_better:,} texts)\n"
@@ -125,7 +132,7 @@ async def run(ctx, user, username1, username2, random):
     )
     embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed)
+    await ctx.send(embed=embed, content=era_string)
 
 
 def same_username():

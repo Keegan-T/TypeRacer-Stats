@@ -57,27 +57,38 @@ async def run(ctx, user, username, category):
     stats = users.get_user(username, universe)
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
+    era_string = strings.get_era_string(user)
 
     category_title = "WPM"
     suffix = " WPM"
 
     if category == "wpm":
-        race_list = await races.get_races(username, columns=["wpm"], universe=universe)
+        race_list = await races.get_races(
+            username, columns=["wpm"], universe=universe, start_date=user["start_date"], end_date=user["end_date"]
+        )
         values = [race[0] for race in race_list]
 
     elif category == "textbests":
-        race_list = users.get_text_bests(username, universe=universe)
+        if era_string:
+            race_list = await users.get_text_bests_time_travel(username, universe, user)
+        else:
+            race_list = users.get_text_bests(username, universe=universe)
         values = [race[1] for race in race_list]
         category_title = "Text Bests"
 
     else:
-        race_list = await races.get_races(username, columns=["accuracy"], universe=universe)
+        race_list = await races.get_races(
+            username, columns=["accuracy"], universe=universe, start_date=user["start_date"], end_date=user["end_date"]
+        )
         values = [int(race[0] * 100) for race in race_list if race[0] > 0]
         category_title = "Accuracy"
         suffix = "%"
 
+    if len(race_list) == 0:
+        return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
+
     if not values:
-        return await ctx.send(embed=missing_info())
+        return await ctx.send(embed=missing_info(), content=era_string)
 
     value_array = np.array(values)
     mean = np.mean(values)
@@ -114,7 +125,7 @@ async def run(ctx, user, username, category):
         )
     embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed, file=file)
+    await ctx.send(embed=embed, file=file, content=era_string)
 
     remove_file(file_name)
 

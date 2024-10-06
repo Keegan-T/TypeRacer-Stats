@@ -16,6 +16,7 @@ command = {
         "date": "this month"
     },
     "usages": ["month keegant 2021-01"],
+    "temporal": False,
 }
 
 

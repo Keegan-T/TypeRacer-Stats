@@ -16,6 +16,7 @@ command = {
         "date": "this week"
     },
     "usages": ["week keegant 2021-01-07"],
+    "temporal": False,
 }
 
 

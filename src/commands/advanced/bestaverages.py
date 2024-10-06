@@ -47,13 +47,20 @@ async def run(ctx, user, username, n):
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
 
+    era_string = strings.get_era_string(user)
+    if era_string:
+        stats = await users.time_travel_stats(stats, user)
+
     if n < 1:
         return await ctx.send(embed=errors.greater_than(0))
 
     if n > stats["races"]:
-        return await ctx.send(embed=not_enough_races())
+        return await ctx.send(embed=not_enough_races(), content=era_string)
 
-    race_list = await races.get_races(username, columns=["wpm", "number", "timestamp"], universe=universe)
+    race_list = await races.get_races(
+        username, columns=["wpm", "number", "timestamp"], universe=universe,
+        start_date=user["start_date"], end_date=user["end_date"]
+    )
     race_list.sort(key=lambda x: x[2])
     description = ""
 
@@ -91,7 +98,7 @@ async def run(ctx, user, username, n):
     embeds.add_profile(embed, stats, universe)
     embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed)
+    await ctx.send(embed=embed, content=era_string)
 
 
 def not_enough_races():

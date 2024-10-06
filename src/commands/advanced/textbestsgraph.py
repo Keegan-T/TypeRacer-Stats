@@ -55,6 +55,7 @@ async def run(ctx, user, username, category):
     stats = users.get_user(username, universe)
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
+    era_string = strings.get_era_string(user)
 
     x = []
     y = []
@@ -64,7 +65,12 @@ async def run(ctx, user, username, category):
     wpm_count = 0
 
     columns = ["number", "wpm", "text_id", "timestamp"]
-    race_list = await races.get_races(username, columns=columns, universe=universe)
+    race_list = await races.get_races(
+        username, columns=columns, universe=universe,
+        start_date=user["start_date"], end_date=user["end_date"]
+    )
+    if not race_list:
+        return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
     race_list.sort(key=lambda r: r[0])
 
     for race in race_list:
@@ -116,7 +122,7 @@ async def run(ctx, user, username, category):
     embed.set_image(url=f"attachment://{file_name}")
     file = File(file_name, filename=file_name)
 
-    await ctx.send(embed=embed, file=file)
+    await ctx.send(embed=embed, file=file, content=era_string)
 
     remove_file(file_name)
 

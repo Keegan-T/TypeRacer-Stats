@@ -15,7 +15,7 @@ class Changelog(commands.Cog):
 
     @commands.command(aliases=command["aliases"])
     async def changelog(self, ctx):
-        with open(changelog_path, "r") as file:
+        with open(changelog_path, "r", encoding="utf-8") as file:
             change_list = "".join(file.readlines()).split("\n\n")
 
         description = "\n\n".join([change for change in change_list[::-1][:5]])

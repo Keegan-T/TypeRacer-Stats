@@ -24,6 +24,7 @@ command = {
         "missingtens poke1 random"
     ],
     "multiverse": False,
+    "temporal": False,
 }
 
 

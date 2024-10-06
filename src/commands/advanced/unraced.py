@@ -15,6 +15,7 @@ command = {
     "description": "Displays 5 texts a user has not yet raced",
     "parameters": "[username]",
     "usages": ["unraced keegant"],
+    "temporal": False,
 }
 
 

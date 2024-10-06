@@ -116,61 +116,63 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
     stats = users.get_user(username, universe)
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
+    era_string = strings.get_era_string(user)
+    if era_string:
+        stats = await users.time_travel_stats(stats, user)
 
     if start_number and not end_number:
         end_number = stats["races"]
 
     if start_date and not end_date:
-        end_date = datetime.now(timezone.utc)
+        end_date = dates.now()
+
+    start_date, end_date = dates.time_travel_dates(user, start_date, end_date)
+    user_start, user_end = user["start_date"], user["end_date"]
 
     title = "Race Stats - "
     columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
     if start_date is None and start_number is None:
         title += "All-Time"
         start = stats["joined"]
-        end = datetime.now(timezone.utc).timestamp()
+        end = dates.now().timestamp()
+        if user_start: start = max(start, user_start)
+        if user_end: end = min(end, user_end)
         race_list = await races.get_races(username, columns, start, end, universe=universe)
-        if not race_list:
-            return await ctx.send(embed=errors.no_races_in_range(universe))
 
     elif start_date is None:
         end_number = min(end_number, stats["races"])
         title += f"Races {start_number:,} - {end_number:,}"
         race_list = await races.get_races(
             username, columns, start_number=start_number,
-            end_number=end_number, universe=universe
+            end_number=end_number, universe=universe,
+            start_date=user_start, end_date=user_end
         )
-        if not race_list:
-            return await ctx.send(embed=errors.no_races_in_range(universe))
-        start = race_list[0][7]
-        end = race_list[-1][7] + 0.01
+        if race_list:
+            start = race_list[0][7]
+            end = race_list[-1][7] + 0.01
 
     else:
         start = start_date.timestamp()
         if start < stats["joined"]:
             start = stats["joined"]
-            start_date = datetime.utcfromtimestamp(stats["joined"])
+            start_date = datetime.fromtimestamp(stats["joined"], tz=timezone.utc)
         end = end_date.timestamp()
         title += strings.get_display_date_range(start_date, end_date)
         race_list = await races.get_races(
             username, columns, start_date.timestamp(),
             end_date.timestamp(), universe=universe
         )
-        if not race_list:
-            return await ctx.send(embed=errors.no_races_in_range(universe))
 
+    if not race_list:
+        return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
     race_list.sort(key=lambda x: x[7])
 
     embed = Embed(title=title, color=user["colors"]["embed"])
-    if len(race_list) == 0:
-        embed.description = "No races completed"
-        return await ctx.send(embed=embed)
-
     embeds.add_profile(embed, stats, universe)
     add_stats(embed, username, race_list, start, end, universe=universe)
     embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed)
+    await ctx.send(embed=embed, content=era_string)
 
 
 def add_stats(embed, username, race_list, start, end, mini=False, universe="play"):

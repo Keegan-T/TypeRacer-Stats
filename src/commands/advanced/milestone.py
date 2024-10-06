@@ -59,6 +59,7 @@ async def run(ctx, user, username, milestone, category):
     stats = users.get_user(username, universe)
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
+    era_string = strings.get_era_string(user)
 
     category_title = "WPM"
     if category != "wpm":
@@ -68,10 +69,12 @@ async def run(ctx, user, username, milestone, category):
     embeds.add_profile(embed, stats, universe)
     embeds.add_universe(embed, universe)
 
-    milestone_number = users.get_milestone_number(username, milestone, category, universe)
+    milestone_number = users.get_milestone_number(
+        username, milestone, category, universe, user["start_date"], user["end_date"]
+    )
     if not milestone_number:
         embed.description = "User has not achieved this milestone"
-        return await ctx.send(embed=embed)
+        return await ctx.send(embed=embed, content=era_string)
 
     embed.title += f" - Race #{milestone_number:,}"
     embed.url = urls.replay(username, milestone_number, universe)
@@ -85,7 +88,7 @@ async def run(ctx, user, username, milestone, category):
 
     add_stats(embed, race_info, universe)
 
-    await ctx.send(embed=embed)
+    await ctx.send(embed=embed, content=era_string)
 
     recent.text_id = race_info["text_id"]
 

@@ -1,10 +1,11 @@
 import time
 
 from database import db
-from database.texts import get_disabled_text_ids
+from database.texts import filter_disabled_texts, get_disabled_text_ids
 from utils import strings
 from utils.logging import log
-from utils.stats import get_text_stats
+from utils.stats import get_text_stats, calculate_text_bests
+from utils.strings import get_date_query_string
 
 
 def table_name(universe):
@@ -83,6 +84,52 @@ def get_user(username, universe="play"):
     elif user[0]["races"] == 0 or not user[0]["last_updated"]:
         return None
     return user[0]
+
+
+async def time_travel_stats(stats, user):
+    from database.races import get_races
+    stats = dict(stats)
+    username = stats["username"]
+    universe = user["universe"]
+    start_date = user["start_date"]
+    end_date = user["end_date"]
+    columns = ["*"]
+    race_list = await get_races(username, columns, start_date, end_date, universe=universe)
+    text_bests = calculate_text_bests(race_list)
+
+    if not race_list:
+        races = 0
+    else:
+        numbers = [race["number"] for race in race_list]
+        races = max(numbers) - min(numbers) + 1
+    points = 0
+    wins = 0
+    total_wpm = 0
+    best_wpm = 0
+    for race in race_list:
+        points += race["points"]
+        wins += 1 if (race["rank"] == 1 and race["racers"] > 1) else 0
+        total_wpm += race["wpm"]
+        best_wpm = max(race["wpm"], best_wpm)
+
+    try:
+        average_wpm = total_wpm / len(race_list)
+    except ZeroDivisionError:
+        average_wpm = 0
+
+    stats["races"] = races
+    stats["points"] = points
+    stats["wins"] = wins
+    stats["wpm_average"] = average_wpm
+    stats["wpm_best"] = best_wpm
+    stats["text_wpm_total"] = sum([text["wpm"] for text in text_bests])
+    stats["texts_typed"] = len(text_bests)
+    if not text_bests:
+        stats["text_best_average"] = 0
+    else:
+        stats["text_best_average"] = stats["text_wpm_total"] / stats["texts_typed"]
+
+    return stats
 
 
 def get_most(column, limit):
@@ -303,10 +350,23 @@ def get_text_bests(username, race_stats=False, universe="play"):
             ORDER BY wpm DESC
         """, [username])
 
-    disabled_text_ids = get_disabled_text_ids()
-    filtered_tb = [text for text in text_bests if text[0] not in disabled_text_ids]
+    return filter_disabled_texts(text_bests)
 
-    return filtered_tb
+
+async def get_text_bests_time_travel(username, universe, user, race_stats=False):
+    from database.races import get_races
+
+    start_date = user["start_date"]
+    end_date = user["end_date"]
+
+    columns = ["text_id", "wpm", "number", "timestamp", "accuracy", "points"]
+    if not race_stats:
+        columns = columns[:2]
+
+    race_list = await get_races(username, columns, start_date, end_date, universe=universe)
+    text_bests = calculate_text_bests(race_list)
+
+    return text_bests
 
 
 def get_unraced_text_ids(username, universe):
@@ -326,47 +386,50 @@ def get_unraced_text_ids(username, universe):
     return unraced
 
 
-def count_races_over(username, category, threshold, over, universe):
+def count_races_over(username, category, threshold, over, universe, start_date=None, end_date=None):
     table = races_table_name(universe)
+
     times = db.fetch(f"""
         SELECT COUNT(*) FROM {table}
         INDEXED BY idx_{table}_username
         WHERE username = ?
+        {get_date_query_string(start_date, end_date)}
         AND {category} {'>=' if over else '<'} {threshold}
     """, [username])[0][0]
 
     return times
 
 
-def get_texts_over(username, threshold, category, universe):
+def get_texts_over(username, threshold, category, universe, start_date=None, end_date=None):
     table = races_table_name(universe)
     threshold_string = f"HAVING TIMES >= {threshold}"
     category_string = f"AND {category} >= {threshold}"
+
     texts = db.fetch(f"""
         SELECT text_id, COUNT(text_id) AS times
         FROM {table}
         INDEXED BY idx_{table}_username_text_id_wpm
         WHERE username = ?
-        {category_string if category != 'times' else ''} 
+        {category_string if category != 'times' else ''}
+        {get_date_query_string(start_date, end_date)}
         GROUP BY text_id
         {threshold_string if category == 'times' else ''}
         ORDER BY times DESC
     """, [username])
 
-    disabled_text_ids = get_disabled_text_ids()
-    filtered_texts = [text for text in texts if text[0] not in disabled_text_ids]
-
-    return filtered_texts
+    return filter_disabled_texts(texts)
 
 
-def get_texts_under(username, threshold, category, universe):
+def get_texts_under(username, threshold, category, universe, start_date=None, end_date=None):
     table = races_table_name(universe)
+
     if category == "times":
         texts = db.fetch(f"""
             SELECT text_id, COUNT(text_id) AS times
             FROM {table}
             INDEXED BY idx_{table}_username_text_id
             WHERE username = ?
+            {get_date_query_string(start_date, end_date)}
             GROUP BY text_id
             HAVING times < {threshold}
             ORDER BY times DESC
@@ -378,11 +441,13 @@ def get_texts_under(username, threshold, category, universe):
             FROM {table}
             INDEXED BY idx_{table}_username_text_id
             WHERE username = ?
+            {get_date_query_string(start_date, end_date)}
             AND text_id IN (
                 SELECT text_id
                 FROM {table}
                 INDEXED BY idx_{table}_username_text_id{'_wpm' * (category == 'wpm')}
                 WHERE username = ?
+                {get_date_query_string(start_date, end_date)}
                 GROUP BY text_id
                 HAVING MAX({category}) < {threshold}
             )
@@ -390,18 +455,17 @@ def get_texts_under(username, threshold, category, universe):
             ORDER BY times DESC
         """, [username, username])
 
-    disabled_text_ids = get_disabled_text_ids()
-    filtered_texts = [text for text in texts if text[0] not in disabled_text_ids]
-
-    return filtered_texts
+    return filter_disabled_texts(texts)
 
 
-def get_milestone_number(username, milestone, category, universe):
+def get_milestone_number(username, milestone, category, universe, start_date=None, end_date=None):
     table = races_table_name(universe)
+
     if category == "races":
         race = db.fetch(f"""
             SELECT number FROM {table}
             WHERE id = ?
+            {get_date_query_string(start_date, end_date)}
         """, [strings.race_id(username, milestone)])
         if not race:
             return None
@@ -413,6 +477,7 @@ def get_milestone_number(username, milestone, category, universe):
             INDEXED BY idx_{table}_username
             WHERE username = ?
             AND wpm >= ?
+            {get_date_query_string(start_date, end_date)}
             ORDER BY timestamp ASC
             LIMIT 1
         """, [username, milestone])
@@ -426,6 +491,7 @@ def get_milestone_number(username, milestone, category, universe):
             FROM {table}
             INDEXED BY idx_{table}_username
             WHERE username = ?
+            {get_date_query_string(start_date, end_date)}
             ORDER BY timestamp ASC
         """, [username])
 
@@ -444,6 +510,7 @@ def get_milestone_number(username, milestone, category, universe):
             FROM {table}
             INDEXED BY idx_{table}_username
             WHERE username = ?
+            {get_date_query_string(start_date, end_date)}
             ORDER BY timestamp ASC
         """, [username])
         for race in races:
@@ -495,14 +562,7 @@ def get_texts_typed(username):
         WHERE username = ?
     """, [username])
 
-    disabled_text_ids = get_disabled_text_ids()
-
-    filtered_texts_typed = []
-    for text in texts_typed:
-        if text[0] not in disabled_text_ids:
-            filtered_texts_typed.append(text[0])
-
-    return len(filtered_texts_typed)
+    return len(filter_disabled_texts(texts_typed))
 
 
 def get_database_stats():

@@ -1,10 +1,9 @@
-from datetime import datetime, timezone
-
 from discord import Embed, File
 from discord.ext import commands
 
 import database.races as races
 import database.users as users
+import utils.stats
 from api.users import get_stats
 from commands.advanced.races import get_args
 from commands.basic.download import run as download
@@ -12,7 +11,7 @@ from config import prefix
 from database.bot_users import get_user
 from graphs import improvement_graph
 from graphs.core import remove_file
-from utils import errors, strings, embeds
+from utils import errors, strings, embeds, dates
 
 command = {
     "name": "improvement",
@@ -60,15 +59,20 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
     if not stats:
         ctx.command.reset_cooldown(ctx)
         return await ctx.send(embed=errors.import_required(username, universe))
+    era_string = strings.get_era_string(user)
 
     api_stats = get_stats(username, universe=universe)
     await download(stats=api_stats, universe=universe)
+    if era_string:
+        api_stats = await users.time_travel_stats(api_stats, user)
 
     if start_number and not end_number:
         end_number = api_stats["races"]
 
     if start_date and not end_date:
-        end_date = datetime.now(timezone.utc)
+        end_date = dates.now()
+
+    start_date, end_date = dates.time_travel_dates(user, start_date, end_date)
 
     title = "WPM Improvement"
     columns = ["wpm", "timestamp"]
@@ -90,12 +94,15 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         timeframe = f" ({strings.get_display_date_range(start_date, end_date)})"
         title += f" - {strings.get_display_date_range(start_date, end_date)}"
         race_list = await races.get_races(
-            username, columns=columns, start_time=start_date.timestamp(),
-            end_time=end_date.timestamp(), universe=universe
+            username, columns=columns, start_date=start_date.timestamp(),
+            end_date=end_date.timestamp(), universe=universe
         )
 
+    if era_string:
+        race_list = utils.stats.time_travel_races(race_list, user)
+
     if len(race_list) == 0:
-        return await ctx.send(embed=errors.no_races_in_range(universe))
+        return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
 
     race_list.sort(key=lambda x: x[1])
     wpm = []
@@ -146,7 +153,7 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
     embed.set_image(url=f"attachment://{file_name}")
     file = File(file_name, filename=file_name)
 
-    await ctx.send(embed=embed, file=file)
+    await ctx.send(embed=embed, file=file, content=era_string)
 
     remove_file(file_name)
 

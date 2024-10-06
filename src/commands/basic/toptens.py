@@ -17,6 +17,7 @@ command = {
     "parameters": "[username]",
     "usages": ["toptens joshua728"],
     "multiverse": False,
+    "temporal": False,
 }
 
 

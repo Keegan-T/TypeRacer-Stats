@@ -61,9 +61,12 @@ async def run(ctx, user, username, text_id=None, race_number=None):
     db_stats = users.get_user(username, universe)
     if not db_stats:
         return await ctx.send(embed=errors.import_required(username, universe))
+    era_string = strings.get_era_string(user)
 
     api_stats = get_stats(username, universe=universe)
     await download(stats=api_stats, universe=universe)
+    if era_string:
+        api_stats = await users.time_travel_stats(api_stats, user)
 
     graph = ctx.invoked_with in ["textgraph", "tg", "racetextgraph", "rtg"]
 
@@ -95,7 +98,9 @@ async def run(ctx, user, username, text_id=None, race_number=None):
 
     description = strings.text_description(dict(text), universe)
 
-    race_list = races.get_text_races(username, text_id, universe)
+    race_list = races.get_text_races(
+        username, text_id, universe, start_date=user["start_date"], end_date=user["end_date"]
+    )
     if not race_list:
         embed.description = (
             f"{description}\n\nUser has no races on this text\n"
@@ -103,7 +108,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
         )
         embed.color = color
         recent.text_id = text_id
-        return await ctx.send(embed=embed)
+        return await ctx.send(embed=embed, content=era_string)
 
     times_typed = len(race_list)
     wpm = [race["wpm"] for race in race_list]
@@ -170,44 +175,50 @@ async def run(ctx, user, username, text_id=None, race_number=None):
         embed.set_image(url=f"attachment://{file_name}")
         file = File(file_name, filename=file_name)
 
-        await ctx.send(embed=embed, file=file)
+        await ctx.send(embed=embed, file=file, content=era_string)
 
         remove_file(file_name)
 
     else:
-        await ctx.send(embed=embed)
+        await ctx.send(embed=embed, content=era_string)
 
     recent.text_id = text_id
 
-    if universe != "play":
+    if universe != "play" or user["end_date"]:
         return
 
     await top_tens.update_results(text_id)
     top_10 = top_tens.get_top_10(text_id)
     top_10_score = next((score for score in top_10 if score["id"] == recent_race["id"]), None)
 
-    if top_10_score:
-        description = ""
-        position = 0
-        for i, race in enumerate(top_10):
-            bold = ""
-            if race["id"] == recent_race["id"]:
-                bold = "**"
-                position = i + 1
-            username = race["username"]
-            description += (
-                f"{bold}{strings.rank(i + 1)} {strings.escape_discord_format(username)} - [{race['wpm']:,.2f} WPM]"
-                f"({urls.replay(username, race['number'])}){bold} - "
-                f"{strings.discord_timestamp(race['timestamp'])}\n"
-            )
+    if not top_10_score:
+        return
 
-        embed = Embed(
-            title=f"Top {position} Score! :tada:",
-            description=description,
-            color=colors.success,
+    description = ""
+    title = ""
+    position = 0
+    for i, race in enumerate(top_10):
+        style = ""
+        if race["id"] == recent_race["id"]:
+            style = "**"
+            if position == 0:
+                title = "Top Score! :trophy:"
+            else:
+                title = f"Top {i + 1} Score! :tada:"
+        username = race["username"]
+        description += (
+            f"{strings.rank(i + 1)} {style}{strings.escape_discord_format(username)} - [{race['wpm']:,.2f} WPM]"
+            f"({urls.replay(username, race['number'])}){style} - "
+            f"{strings.discord_timestamp(race['timestamp'])}\n"
         )
 
-        await ctx.send(embed=embed)
+    embed = Embed(
+        title=title,
+        description=description,
+        color=colors.success,
+    )
+
+    await ctx.send(embed=embed)
 
 
 async def setup(bot):

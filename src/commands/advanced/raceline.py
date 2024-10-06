@@ -100,8 +100,8 @@ async def get_lines(usernames, start_date, end_date, column="number", universe="
     disabled_text_ids = get_disabled_text_ids()
     for username in usernames:
         race_list = await races.get_races(
-            username, columns=columns, start_time=start_date.timestamp(),
-            end_time=end_date.timestamp(), universe=universe)
+            username, columns=columns, start_date=start_date.timestamp(),
+            end_date=end_date.timestamp(), universe=universe)
         race_list.sort(key=lambda r: r[1])
         if len(race_list) < 2:
             continue
@@ -152,10 +152,13 @@ async def get_lines(usernames, start_date, end_date, column="number", universe="
 
 async def run(ctx, user, usernames, start_date, end_date, column="number"):
     universe = user["universe"]
+    era_string = strings.get_era_string(user)
+    start_date, end_date = dates.time_travel_dates(user, start_date, end_date)
+
     lines = await get_lines(usernames, start_date, end_date, column, universe=universe)
 
     if not lines:
-        return await ctx.send(embed=no_data(universe))
+        return await ctx.send(embed=no_data(universe), content=era_string)
 
     kind = "Races"
     if column == "points":
@@ -181,7 +184,7 @@ async def run(ctx, user, usernames, start_date, end_date, column="number"):
     line_graph.render(user, lines, title, "Date", kind, file_name)
 
     file = File(file_name, filename=file_name)
-    await ctx.send(file=file)
+    await ctx.send(file=file, content=era_string)
 
     remove_file(file_name)
 

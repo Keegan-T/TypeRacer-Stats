@@ -5,7 +5,7 @@ import database.races as races
 import database.users as users
 from commands.basic.stats import get_args
 from database.bot_users import get_user
-from utils import errors, urls, embeds
+from utils import errors, urls, embeds, strings
 
 command = {
     "name": "positionstats",
@@ -37,9 +37,14 @@ async def run(ctx, user, username):
     stats = users.get_user(username, universe)
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
+    era_string = strings.get_era_string(user)
 
-    columns = ["number", "rank", "racers"]
-    race_list = await races.get_races(username, columns=columns, universe=universe)
+    race_list = await races.get_races(
+        username, columns=["number", "rank", "racers"], universe=universe,
+        start_date=user["start_date"], end_date=user["end_date"]
+    )
+    if not race_list:
+        return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
     race_list.sort(key=lambda x: x[0])
 
     result_dict = {}
@@ -120,7 +125,7 @@ async def run(ctx, user, username):
     embeds.add_profile(embed, stats, universe)
     embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed)
+    await ctx.send(embed=embed, content=era_string)
 
 
 async def setup(bot):

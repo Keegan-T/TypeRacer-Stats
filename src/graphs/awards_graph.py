@@ -9,7 +9,7 @@ from utils import dates
 
 async def render(user, username, file_name):
     medal_list = []
-    competitions = list(await get_competitions())
+    competitions = list(await get_competitions(user["start_date"], user["end_date"]))
     competitions.sort(key=lambda x: x["end_time"])
 
     for competition in competitions:

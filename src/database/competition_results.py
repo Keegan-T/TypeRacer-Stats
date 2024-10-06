@@ -3,9 +3,15 @@ import copy
 from database import db
 
 
-async def get_competitions():
-    results = await db.fetch_async("""
+async def get_competitions(start_date=None, end_date=None):
+    start_string = f"AND start_time >= {start_date}" if start_date else ""
+    end_string = f"AND end_time < {end_date}" if end_date else ""
+
+    results = await db.fetch_async(f"""
         SELECT * FROM competition_results
+        WHERE 1
+        {start_string}
+        {end_string}
     """)
 
     competitions = {}
@@ -69,7 +75,7 @@ def add_results(competition):
         ])
 
 
-async def get_awards(username=None):
+async def get_awards(username=None, start_date=None, end_date=None):
     awards = {}
     ranks = ["first", "second", "third"]
 
@@ -81,17 +87,17 @@ async def get_awards(username=None):
         "total": 0
     }
 
-    competitions = await get_competitions()
+    competitions = await get_competitions(start_date, end_date)
     for competition in competitions:
         kind = competition["type"]
         competitors = competition["competitors"]
         podium = sorted(competitors, key=lambda x: x["points"], reverse=True)[:3]
         for position, competitor in enumerate(podium):
-            user = competitor['username']
+            user = competitor["username"]
             if user not in awards:
                 awards[user] = copy.deepcopy(award_dict)
             awards[user][kind][ranks[position]] += 1
-            awards[user]['total'] += 1
+            awards[user]["total"] += 1
 
     if username:
         if username in awards:

@@ -2,6 +2,7 @@ from discord import Embed, File
 from discord.ext import commands
 
 from commands.advanced.compare import get_args, no_common_texts, same_username
+from database import users
 from database.bot_users import get_user
 from database.users import get_text_bests
 from graphs import compare_graph
@@ -10,7 +11,7 @@ from utils import errors, urls, strings, embeds
 
 command = {
     "name": "comparegraph",
-    "aliases": ["cg", "vsg"],
+    "aliases": ["cg", "vsg", "vg"],
     "description": "Displays histograms comparing two user's text best WPM differences",
     "parameters": "[username_1] [username_2]",
     "usages": ["comparegraph keegant hospitalforsouls2"],
@@ -42,13 +43,20 @@ async def run(ctx, user, username1, username2):
         username1 = user["username"]
 
     universe = user["universe"]
-    text_bests1 = get_text_bests(username1, race_stats=True, universe=universe)
-    if not text_bests1:
-        return await ctx.send(embed=errors.import_required(username1, universe))
+    era_string = strings.get_era_string(user)
 
-    text_bests2 = get_text_bests(username2, race_stats=True, universe=universe)
-    if not text_bests2:
-        return await ctx.send(embed=errors.import_required(username2, universe))
+    if era_string:
+        text_bests1 = await users.get_text_bests_time_travel(username1, universe, user)
+        text_bests2 = await users.get_text_bests_time_travel(username2, universe, user)
+
+    else:
+        text_bests1 = get_text_bests(username1, race_stats=True, universe=universe)
+        if not text_bests1:
+            return await ctx.send(embed=errors.import_required(username1, universe))
+
+        text_bests2 = get_text_bests(username2, race_stats=True, universe=universe)
+        if not text_bests2:
+            return await ctx.send(embed=errors.import_required(username2, universe))
 
     tb_dict = {text[0]: text[1] for text in text_bests1}
 
@@ -80,7 +88,7 @@ async def run(ctx, user, username1, username2):
 
     if not data1:
         if not data2:
-            return await ctx.send(embed=no_common_texts(universe))
+            return await ctx.send(embed=no_common_texts(universe), content=era_string)
         data1, data2 = data2, data1
         username1, username2 = username2, username1
         max_gap1, max_gap2 = max_gap2, max_gap1
@@ -137,7 +145,7 @@ async def run(ctx, user, username1, username2):
     embed.set_image(url=f"attachment://{file_name}")
     file = File(file_name, filename=file_name)
 
-    await ctx.send(embed=embed, file=file)
+    await ctx.send(embed=embed, file=file, content=era_string)
 
     remove_file(file_name)
 

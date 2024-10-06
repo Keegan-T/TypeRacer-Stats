@@ -51,12 +51,20 @@ async def run(ctx, user, username, threshold, category, over=True):
     stats = users.get_user(username, universe)
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
+    era_string = strings.get_era_string(user)
+    if era_string:
+        stats = await users.time_travel_stats(stats, user)
+
+    if stats["races"] == 0:
+        return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
 
     category_title = "WPM"
     if category != "wpm":
         category_title = category.title()
 
-    times = users.count_races_over(username, category, threshold, over, universe)
+    times = users.count_races_over(
+        username, category, threshold, over, universe, user["start_date"], user["end_date"]
+    )
     percent = (times / stats["races"]) * 100
     description = (
         f"**{times:,}** of **{stats['races']:,}** races are "
@@ -72,7 +80,7 @@ async def run(ctx, user, username, threshold, category, over=True):
     embeds.add_profile(embed, stats, universe)
     embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed)
+    await ctx.send(embed=embed, content=era_string)
 
 
 async def setup(bot):

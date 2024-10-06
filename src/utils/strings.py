@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from dateutil import parser
 
 import commands.recent as recent
-from utils import errors, urls
+from utils import errors, urls, dates
 
 category_aliases = [
     ["races", "r"],
@@ -53,13 +53,13 @@ rank_emojis = [
     ":first_place:",
     ":second_place:",
     ":third_place:",
-    "<:4_trs:1219161348253159444>",
-    "<:5_trs:1219161347082944563>",
-    "<:6_trs:1219163724531892224>",
-    "<:7_trs:1219163723650826260>",
-    "<:8_trs:1219163721704931370>",
-    "<:9_trs:1219163722455453707>",
-    "<:10_trs:1219163725223694336>",
+    "<:4th:1219161348253159444>",
+    "<:5th:1219161347082944563>",
+    "<:6th:1219163724531892224>",
+    "<:7th:1219163723650826260>",
+    "<:8th:1219163721704931370>",
+    "<:9th:1219163722455453707>",
+    "<:10th:1219163725223694336>",
 ]
 
 
@@ -129,7 +129,10 @@ def parse_command(user, params, args, command):
                 return_args.append(datetime.now(timezone.utc))
             else:
                 try:
-                    date = parser.parse(args[i])
+                    if args[i] == "now":
+                        date = dates.now()
+                    else:
+                        date = parser.parse(args[i])
                     return_args.append(date)
                 except ValueError:
                     return errors.invalid_date()
@@ -213,6 +216,28 @@ def get_display_date_range(start, end):
             display_string = temp_string[::-1]
 
     return display_string
+
+
+def get_time_travel_date_range_string(start_date, end_date):
+    if not end_date:
+        return f"{get_display_date(start_date)} - Present"
+    elif start_date:
+        return get_display_date_range(start_date, end_date)
+    else:
+        return f"Past - {get_display_date(end_date)}"
+
+
+def get_era_string(user):
+    start_date = user["start_date"]
+    end_date = user["end_date"]
+    if not start_date and not end_date:
+        return ""
+    if start_date:
+        start_date = datetime.fromtimestamp(start_date, tz=timezone.utc)
+    if end_date:
+        end_date = datetime.fromtimestamp(end_date, tz=timezone.utc)
+
+    return f"-# <:galaxy:1292423577345196176> {get_time_travel_date_range_string(start_date, end_date)}"
 
 
 # Formats seconds into: XXd XXh XXm XXs
@@ -424,3 +449,9 @@ def get_segments(text, n=None):
         full_words[1] = f"{words_1[-1]} {words_2[0]} "
 
     return full_words
+
+def get_date_query_string(start_date, end_date):
+    start_string = f"AND timestamp >= {start_date}" if start_date else ""
+    end_string = f"AND timestamp < {end_date}" if end_date else ""
+
+    return start_string + end_string

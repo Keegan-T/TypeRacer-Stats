@@ -68,6 +68,7 @@ async def run(ctx, user, username, category, text_id, reverse=True):
     stats = users.get_user(username, universe)
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
+    era_string = strings.get_era_string(user)
 
     text_list = texts.get_texts(as_dictionary=True, universe=universe)
     limit = 10
@@ -78,7 +79,7 @@ async def run(ctx, user, username, category, text_id, reverse=True):
             return await ctx.send(embed=errors.unknown_text(universe))
         text = text_list[text_id]
         text["text_id"] = text_id
-        race_list = races.get_text_races(username, text_id, universe)
+        race_list = races.get_text_races(username, text_id, universe, user["start_date"], user["end_date"])
         race_list.sort(key=lambda x: x["wpm"], reverse=reverse)
         race_list = race_list[:limit]
         limit = len(race_list)
@@ -96,7 +97,7 @@ async def run(ctx, user, username, category, text_id, reverse=True):
                 f"User has no races on this text\n"
                 f"[Race this text]({text['ghost']})"
             )
-            return await ctx.send(embed=embed)
+            return await ctx.send(embed=embed, content=era_string)
 
         top = ""
         average = 0
@@ -126,8 +127,11 @@ async def run(ctx, user, username, category, text_id, reverse=True):
     else:
         race_list = await races.get_races(
             username, with_texts=True, order_by=category,
-            reverse=reverse, limit=limit, universe=universe
+            reverse=reverse, limit=limit, universe=universe,
+            start_date=user["start_date"], end_date=user["end_date"]
         )
+        if not race_list:
+            return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
         limit = len(race_list)
         top = ""
         average = 0
@@ -162,7 +166,7 @@ async def run(ctx, user, username, category, text_id, reverse=True):
     embeds.add_profile(embed, stats, universe)
     embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed)
+    await ctx.send(embed=embed, content=era_string)
 
 
 async def setup(bot):

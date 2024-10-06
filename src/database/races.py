@@ -2,8 +2,9 @@ import database.modified_races as modified_races
 from database import db
 from database.users import correct_best_wpm
 from utils import strings
-from utils.stats import calculate_points
 from utils.logging import log
+from utils.stats import calculate_points
+
 
 def table_name(universe):
     table = "races"
@@ -44,7 +45,7 @@ def add_races(races, universe):
     """, races)
 
 
-async def get_races(username, columns="*", start_time=None, end_time=None, start_number=None, end_number=None,
+async def get_races(username, columns="*", start_date=None, end_date=None, start_number=None, end_number=None,
                     with_texts=False, order_by=None, reverse=False, limit=None, universe="play"):
     from database.texts import table_name as texts_table_name
     table = table_name(universe)
@@ -70,8 +71,8 @@ async def get_races(username, columns="*", start_time=None, end_time=None, start
             WHERE username = ?
             {f'AND number >= {start_number}' if start_number else ''}
             {f'AND number <= {end_number}' if end_number else ''}
-            {f'AND timestamp >= {start_time}' if start_time else ''}
-            {f'AND timestamp < {end_time}' if end_time else ''}
+            {f'AND timestamp >= {start_date}' if start_date else ''}
+            {f'AND timestamp < {end_date}' if end_date else ''}
             {f'ORDER BY {order_by} {order}' if order_by else ''}
             {limit_string}
         """, [username])
@@ -100,13 +101,15 @@ def get_race(username, number, universe):
     return race[0]
 
 
-def get_text_races(username, text_id, universe):
+def get_text_races(username, text_id, universe, start_date=None, end_date=None):
     table = table_name(universe)
     races = db.fetch(f"""
         SELECT * FROM {table}
         INDEXED BY idx_{table}_username_text_id
         WHERE username = ?
         AND text_id = ?
+        {f'AND timestamp >= {start_date}' if start_date else ''}
+        {f'AND timestamp < {end_date}' if end_date else ''}
         ORDER BY timestamp ASC
     """, [username, text_id])
 

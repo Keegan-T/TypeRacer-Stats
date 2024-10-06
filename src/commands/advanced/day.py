@@ -26,6 +26,7 @@ command = {
         "date": "today"
     },
     "usages": ["day keegant 2021-01-01"],
+    "temporal": False,
 }
 
 

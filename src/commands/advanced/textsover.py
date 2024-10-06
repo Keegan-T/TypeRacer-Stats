@@ -54,21 +54,32 @@ async def run(ctx, user, username, threshold, category, over=True, random=False)
     stats = users.get_user(username, universe)
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
+    era_string = strings.get_era_string(user)
+    if era_string:
+        stats = await users.time_travel_stats(stats, user)
 
     texts_typed = stats["texts_typed"]
     text_list = texts.get_texts(as_dictionary=True, universe=universe)
 
-    text_bests = users.get_text_bests(username, race_stats=True, universe=universe)
-    text_bests_dict = {}
-    for text in text_bests:
-        text_bests_dict[text["text_id"]] = text
+    if era_string:
+        text_bests = await users.get_text_bests_time_travel(username, universe, user, race_stats=True)
+    else:
+        text_bests = users.get_text_bests(username, race_stats=True, universe=universe)
 
+    if len(text_bests) == 0:
+        return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
+
+    text_bests_dict = {text["text_id"]: text for text in text_bests}
     final = []
 
     if over:
-        race_list = users.get_texts_over(username, threshold, category, universe)
+        race_list = users.get_texts_over(
+            username, threshold, category, universe, start_date=user["start_date"], end_date=user["end_date"]
+        )
     else:
-        race_list = users.get_texts_under(username, threshold, category, universe)
+        race_list = users.get_texts_under(
+            username, threshold, category, universe, start_date=user["start_date"], end_date=user["end_date"]
+        )
 
     for text in race_list:
         text_id = text["text_id"]
@@ -119,7 +130,7 @@ async def run(ctx, user, username, threshold, category, over=True, random=False)
     embeds.add_profile(embed, stats, universe)
     embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed)
+    await ctx.send(embed=embed, content=era_string)
 
 
 async def setup(bot):

@@ -6,7 +6,7 @@ from discord.ext import commands
 import database.users as users
 from api.users import get_stats, get_joined
 from database.bot_users import get_user
-from utils import errors, embeds, strings
+from utils import errors, embeds, strings, dates
 
 command = {
     "name": "stats",
@@ -48,6 +48,7 @@ def get_args(user, args, info):
 
 async def run(ctx, user, username):
     universe = user["universe"]
+    era_string = strings.get_era_string(user)
     stats = get_stats(username, universe=universe)
     if not stats:
         return await ctx.send(embed=errors.invalid_username())
@@ -66,30 +67,35 @@ async def run(ctx, user, username):
         if not joined:
             return await ctx.send(embed=errors.invalid_username())
 
+    if era_string:
+        if not db_stats:
+            return await ctx.send(embed=errors.import_required(username, universe, time_travel=True))
+        stats = await users.time_travel_stats(stats, user)
+
     join_date = datetime.fromtimestamp(joined, tz=timezone.utc)
-    today = datetime.now(tz=timezone.utc)
+    now = dates.now()
 
     anniversary = ""
-    if join_date.month == today.month and join_date.day == today.day:
+    if join_date.month == now.month and join_date.day == now.day:
         anniversary = " :birthday:"
 
-    embed = Embed(color=user['colors']["embed"])
+    embed = Embed(color=user["colors"]["embed"])
 
     general_string = (
         f"{'**Name: **' + stats['display_name'] if stats['display_name'] else ''}\n"
-        f"**Joined:** {datetime.fromtimestamp(joined, tz=timezone.utc).strftime('%b. %d, %Y')}{anniversary}\n"
+        f"**Joined:** {join_date.strftime('%b. %d, %Y')}{anniversary}\n"
         f"**Membership:** {'Premium' if stats['premium'] else 'Basic'}"
     )
     if stats["disqualified"]:
         general_string += "\n**Status:** Banned"
 
     stats_string = (
-        f"**Races:** {stats['races']:,}\n"
-        f"**Wins:** {stats['wins']:,}\n"
-        f"**Points:** {stats['points']:,.0f}\n"
-        f"**Average:** {stats['wpm_average']:,.2f} WPM\n"
-        f"**Best:** {stats['wpm_best']:,.2f} WPM\n"
-        f"**Captcha Speed:** {stats['wpm_verified']:,.2f} WPM"
+            f"**Races:** {stats['races']:,}\n"
+            f"**Wins:** {stats['wins']:,}\n"
+            f"**Points:** {stats['points']:,.0f}\n"
+            f"**Average:** {stats['wpm_average']:,.2f} WPM\n"
+            f"**Best:** {stats['wpm_best']:,.2f} WPM\n" +
+            f"**Captcha Speed:** {stats['wpm_verified']:,.2f} WPM" * (not era_string)
     )
 
     embed.add_field(name="General", value=general_string, inline=False)
@@ -98,4 +104,4 @@ async def run(ctx, user, username):
     embeds.add_profile(embed, stats)
     embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed)
+    await ctx.send(embed=embed, content=era_string)

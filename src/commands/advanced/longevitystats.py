@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from dateutil.relativedelta import relativedelta
 from discord import Embed
@@ -57,8 +57,9 @@ async def run(ctx, user, username, n, time_period):
     stats = users.get_user(username, universe)
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
+    era_string = strings.get_era_string(user)
 
-    all_history = await get_history(username, time_period, universe)
+    all_history = await get_history(username, time_period, universe, user["start_date"], user["end_date"])
     history = [period for period in all_history if period[2] >= n]
     over = len(history)
 
@@ -117,11 +118,13 @@ async def run(ctx, user, username, n, time_period):
     embeds.add_profile(embed, stats, universe)
     embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed)
+    await ctx.send(embed=embed, content=era_string)
 
 
-async def get_history(username, kind, universe):
-    race_list = await races.get_races(username, columns=["timestamp"], universe=universe)
+async def get_history(username, kind, universe, start_date, end_date):
+    race_list = await races.get_races(
+        username, columns=["timestamp"], universe=universe, start_date=start_date, end_date=end_date
+    )
     race_list.sort(key=lambda x: x[0])
 
     history = []
@@ -130,16 +133,16 @@ async def get_history(username, kind, universe):
 
         if len(history) == 0 or timestamp > history[-1][1]:
             if kind == "day":
-                start = dates.floor_day(datetime.utcfromtimestamp(timestamp))
+                start = dates.floor_day(datetime.fromtimestamp(timestamp, tz=timezone.utc))
                 end = start.timestamp() + 86400
             elif kind == "week":
-                start = dates.floor_week(datetime.utcfromtimestamp(timestamp))
+                start = dates.floor_week(datetime.fromtimestamp(timestamp, tz=timezone.utc))
                 end = start.timestamp() + 86400 * 7
             elif kind == "month":
-                start = dates.floor_month(datetime.utcfromtimestamp(timestamp))
+                start = dates.floor_month(datetime.fromtimestamp(timestamp, tz=timezone.utc))
                 end = (start + relativedelta(months=1)).timestamp()
             else:
-                start = dates.floor_year(datetime.utcfromtimestamp(timestamp))
+                start = dates.floor_year(datetime.fromtimestamp(timestamp, tz=timezone.utc))
                 end = (start + relativedelta(years=1)).timestamp()
 
             history.append([start.timestamp(), end, 1])
@@ -151,8 +154,8 @@ async def get_history(username, kind, universe):
 
 
 def get_streak_string(start, end, kind):
-    streak_start = datetime.utcfromtimestamp(start)
-    streak_end = datetime.utcfromtimestamp(end)
+    streak_start = datetime.fromtimestamp(start, tz=timezone.utc)
+    streak_end = datetime.fromtimestamp(end, tz=timezone.utc)
     streak_1 = streak_start == streak_end
 
     if kind == "day":

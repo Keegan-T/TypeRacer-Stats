@@ -21,6 +21,7 @@ command = {
         "text_id": 3621293,
     },
     "usages": ["checksaves keegant 3810446"],
+    "temporal": False,
 }
 
 

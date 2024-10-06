@@ -53,9 +53,14 @@ async def run(ctx, user, username, kind, seconds):
     stats = users.get_user(username, universe)
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
+    era_string = strings.get_era_string(user)
 
     columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
-    race_list = await races.get_races(username, columns=columns, universe=universe)
+    race_list = await races.get_races(
+        username, columns=columns, universe=universe, start_date=user["start_date"], end_date=user["end_date"]
+    )
+    if not race_list:
+        return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
     race_list.sort(key=lambda x: x[7])
     race_range = [0, 0]
     start_race = 0
@@ -121,7 +126,7 @@ async def run(ctx, user, username, kind, seconds):
     add_stats(embed, username, session_races, start_time, end_time, universe=universe)
     embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed)
+    await ctx.send(embed=embed, content=era_string)
 
 
 async def setup(bot):

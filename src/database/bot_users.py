@@ -139,3 +139,18 @@ def update_commands(user_id, command):
         SET commands = ?
         WHERE id = ?
     """, [json.dumps(user_commands), user_id])
+
+
+def update_date_range(user_id, start_date, end_date):
+    start_time = None
+    if start_date:
+        start_time = start_date.timestamp()
+    end_time = None
+    if end_date:
+        end_time = end_date.timestamp()
+
+    db.run("""
+        UPDATE USERS
+        SET start_date = ?, end_date = ?
+        WHERE id = ?
+    """, [start_time, end_time, user_id])

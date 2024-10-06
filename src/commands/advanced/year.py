@@ -16,6 +16,7 @@ command = {
         "date": "this year"
     },
     "usages": ["year keegant 2021"],
+    "temporal": False,
 }
 
 

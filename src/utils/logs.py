@@ -90,6 +90,7 @@ def get_raw_speeds(typing_log, times):
             if raw_times[i] > 0:
                 raw_times.insert(0, raw_times.pop(i))
                 break
+
     for i in range(len(raw_times)): # Taking the fastest time per character
         if raw_times[i] > times[i]:
             raw_times[i] = times[i]

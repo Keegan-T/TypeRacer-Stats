@@ -7,7 +7,7 @@ import database.texts as texts
 import database.users as users
 from commands.basic.stats import get_args
 from database.bot_users import get_user
-from utils import errors, embeds
+from utils import errors, embeds, strings
 
 command = {
     "name": "textbestdistribution",
@@ -39,9 +39,19 @@ async def run(ctx, user, username):
     stats = users.get_user(username, universe)
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
+    era_string = strings.get_era_string(user)
+    if era_string:
+        stats = await users.time_travel_stats(stats, user)
 
     text_list = texts.get_texts(include_disabled=False, universe=universe)
-    text_bests = users.get_text_bests(username, universe=universe)
+
+    if era_string:
+        text_bests = await users.get_text_bests_time_travel(username, universe, user)
+    else:
+        text_bests = users.get_text_bests(username, universe=universe)
+
+    if len(text_bests) == 0:
+        return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
 
     top_bracket = int(10 * (math.floor(text_bests[0]["wpm"] / 10)))
     bottom_bracket = int(10 * (math.floor(text_bests[-1]["wpm"] / 10)))
@@ -109,7 +119,7 @@ async def run(ctx, user, username):
     embeds.add_profile(embed, stats, universe)
     embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed)
+    await ctx.send(embed=embed, content=era_string)
 
 
 async def setup(bot):
