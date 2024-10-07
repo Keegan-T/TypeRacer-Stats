@@ -16,7 +16,6 @@ from api.texts import get_quote
 from api.users import get_stats, get_joined
 from commands.basic.stats import get_args
 from commands.locks import import_lock
-from config import bot_admins
 from database.bot_users import get_user
 from utils import errors, colors, urls, strings, embeds
 from utils.logging import log
@@ -55,7 +54,7 @@ class Download(commands.Cog):
             await run(username, ctx=ctx, bot_user=user, universe=universe)
 
 
-async def run(username=None, stats=None, ctx=None, bot_user=None, universe="play", override=False):
+async def run(username=None, stats=None, ctx=None, bot_user=None, universe="play"):
     invoked = True if ctx else False
 
     if not stats:
@@ -107,11 +106,6 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, universe="play
         stats["retroactive_points"] = 0
         stats["seconds"] = 0
         stats["characters"] = 0
-
-    if races_left > 10_000 and (invoked and ctx.author.id not in bot_admins) and not override:
-        if invoked:
-            await too_many_races(ctx, bot_user, username, races_left, universe)
-        return
 
     new_races = races_left > 0
     if new_races:
@@ -231,20 +225,6 @@ async def no_new_races(ctx, user, username, universe):
     embed = Embed(
         title=f"Import Request",
         description=f"No new races to import for {username}",
-        color=user["colors"]["embed"],
-    )
-    embeds.add_universe(embed, universe)
-
-    await ctx.send(embed=embed)
-
-
-async def too_many_races(ctx, user, username, races_left, universe):
-    username = strings.escape_discord_format(username)
-    embed = Embed(
-        title=f"Import Request Rejected",
-        description=f"{races_left:,} new races to import for {username}\n"
-                    f"Users may only import up to 10,000 races at once\n"
-                    f"Have a bot admin run the command",
         color=user["colors"]["embed"],
     )
     embeds.add_universe(embed, universe)

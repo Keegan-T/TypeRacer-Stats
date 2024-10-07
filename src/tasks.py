@@ -135,7 +135,7 @@ async def import_top_ten_users():
         if stats is None:
             continue
         async with import_lock:
-            await download(stats=stats, override=True)
+            await download(stats=stats)
 
 
 async def update_top_tens():
