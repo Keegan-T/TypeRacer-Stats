@@ -6,6 +6,7 @@ import database.text_results as top_tens
 import database.texts as texts
 import database.users as users
 from config import prefix
+from database.alts import get_alts
 from database.bot_users import get_user
 from utils import errors, urls, strings
 
@@ -125,9 +126,22 @@ async def run(ctx, user, category, text_id=None):
 
     elif category == "wpm":
         title = "Best WPM"
-        leaderboard = users.get_most("wpm_best", limit)
+        leaderboard = users.get_most("wpm_best", limit * 2)
+        alts = get_alts()
+        filtered_leaderboard = []
+        unique_usernames = set()
+
         for leader in leaderboard:
+            username = leader["username"]
+            if username in alts and any(alt in unique_usernames for alt in alts[username]):
+                continue
+            unique_usernames.add(username)
+            filtered_leaderboard.append(leader)
             leaders.append(f"{leader['wpm_best']:,.2f} WPM")
+            if len(filtered_leaderboard) == limit:
+                break
+
+        leaderboard = filtered_leaderboard
 
     elif category == "racetime":
         title = "Race Time"
