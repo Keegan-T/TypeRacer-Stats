@@ -2,6 +2,7 @@ from discord import Embed
 from discord.ext import commands
 
 from api.users import get_stats
+from commands.basic.download import run as download
 from commands.basic.stats import get_args
 from config import prefix
 from database.bot_users import get_user, update_username
@@ -34,20 +35,22 @@ class Link(commands.Cog):
 
 
 async def run(ctx, user, username):
-    if not get_stats(username):
+    stats = get_stats(username)
+    if not stats:
         return await ctx.send(embed=errors.invalid_username())
 
     update_username(ctx.author.id, username)
+    new_user = user["username"] is None
 
     description = (
         f"<@{ctx.author.id}> has been linked to [{username}]"
         f"({urls.profile(username)})\n\n"
     )
 
-    if user["username"] is None:
+    if new_user:
         description += (
-            f"For commands that require extra parameters,\n"
-            f"you can use \"me\" in the place of your username.\n"
+            f"You no longer need to type your username after commands.\n"
+            "You can also use \"me\" in the place of your username.\n"
             f"Example: `{prefix}improvement me day`"
         )
 
@@ -58,6 +61,9 @@ async def run(ctx, user, username):
     )
 
     await ctx.send(embed=embed)
+
+    if new_user:
+        await download(stats=stats)
 
 
 async def setup(bot):
