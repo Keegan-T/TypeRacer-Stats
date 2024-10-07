@@ -196,12 +196,11 @@ async def run(ctx, user, username, text_id=None, race_number=None):
 
     description = ""
     title = ""
-    position = 0
     for i, race in enumerate(top_10):
         style = ""
         if race["id"] == recent_race["id"]:
             style = "**"
-            if position == 0:
+            if i == 0:
                 title = "Top Score! :trophy:"
             else:
                 title = f"Top {i + 1} Score! :tada:"
