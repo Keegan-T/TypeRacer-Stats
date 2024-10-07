@@ -86,10 +86,10 @@ def add_user(id):
 
     db.run("""
         INSERT INTO users
-        VALUES (?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     """, [
         user["id"], user["username"], user["universe"],
-        json.dumps(user["colors"]), "{}",
+        json.dumps(user["colors"]), "{}", None, None
     ])
 
     return user
