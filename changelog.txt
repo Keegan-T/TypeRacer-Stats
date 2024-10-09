@@ -144,3 +144,6 @@
 
 10/6/2024
 - Added -timetravel
+
+10/9/2024
+- Added -define
