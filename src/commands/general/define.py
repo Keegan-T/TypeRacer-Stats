@@ -47,7 +47,7 @@ async def run(ctx, user, word):
         description += "\n"
 
     embed = Embed(
-        title=word.title() + " - Definition",
+        title=word.capitalize() + " - Definition",
         description=description,
         color=user["colors"]["embed"],
     )
