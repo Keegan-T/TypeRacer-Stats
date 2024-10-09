@@ -37,9 +37,6 @@ class FastestCompletion(commands.Cog):
         if embeds.is_embed(result):
             return await ctx.send(embed=result)
 
-        if big_lock.locked():
-            return await ctx.send(embed=errors.large_query_in_progress())
-
         username, number, category = result
         await run(ctx, user, username, number, category)
 
@@ -60,6 +57,8 @@ async def run(ctx, user, username, number, category):
         return await ctx.send(embed=errors.import_required(username, universe))
 
     if stats["races"] > 100_000:
+        if big_lock.locked():
+            return await ctx.send(embed=errors.large_query_in_progress())
         await big_lock.acquire()
 
     era_string = strings.get_era_string(user)

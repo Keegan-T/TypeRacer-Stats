@@ -49,9 +49,6 @@ class Improvement(commands.Cog):
             self.improvement.reset_cooldown(ctx)
             return await ctx.send(embed=result)
 
-        if big_lock.locked():
-            return await ctx.send(embed=errors.large_query_in_progress())
-
         username, start_date, end_date, start_number, end_number = result
         time = ctx.invoked_with in ["timeimprovement", "timp"]
         await run(ctx, user, username, start_date, end_date, start_number, end_number, time)
@@ -65,6 +62,8 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         return await ctx.send(embed=errors.import_required(username, universe))
 
     if stats["races"] > 100_000:
+        if big_lock.locked():
+            return await ctx.send(embed=errors.large_query_in_progress())
         await big_lock.acquire()
 
     era_string = strings.get_era_string(user)
