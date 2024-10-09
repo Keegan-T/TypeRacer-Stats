@@ -4,6 +4,7 @@ from discord.ext import commands
 import database.races as races
 import database.users as users
 from commands.advanced.races import add_stats
+from commands.locks import big_lock
 from database.bot_users import get_user
 from utils import errors, colors, strings, embeds
 
@@ -36,6 +37,9 @@ class FastestCompletion(commands.Cog):
         if embeds.is_embed(result):
             return await ctx.send(embed=result)
 
+        if big_lock.locked():
+            return await ctx.send(embed=errors.large_query_in_progress())
+
         username, number, category = result
         await run(ctx, user, username, number, category)
 
@@ -54,6 +58,9 @@ async def run(ctx, user, username, number, category):
     stats = users.get_user(username, universe)
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
+
+    if stats["races"] > 100_000:
+        await big_lock.acquire()
 
     era_string = strings.get_era_string(user)
     if era_string:
@@ -128,6 +135,9 @@ async def run(ctx, user, username, number, category):
     embeds.add_universe(embed, universe)
 
     await ctx.send(embed=embed, content=era_string)
+
+    if big_lock.locked():
+        big_lock.release()
 
 
 def no_milestone(category, universe):

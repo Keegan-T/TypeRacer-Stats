@@ -2,7 +2,7 @@ from discord import Embed
 
 from config import prefix
 from utils import strings, embeds
-from utils.colors import error
+from utils.colors import error, warning
 
 
 def missing_argument(info):
@@ -189,4 +189,13 @@ def unexpected_error():
         title="Unexpected Error",
         description=f"An unexpected error occured",
         color=error,
+    )
+
+
+def large_query_in_progress():
+    return Embed(
+        title="Large Query In Progress",
+        description="A recent command has queried a large number of races\n"
+                    "Please wait until the command has finished",
+        color=warning,
     )

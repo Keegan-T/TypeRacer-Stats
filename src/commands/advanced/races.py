@@ -7,9 +7,9 @@ from discord.ext import commands
 import database.races as races
 import database.texts as texts
 import database.users as users
+from commands.locks import big_lock
 from database.bot_users import get_user
 from utils import errors, colors, urls, strings, dates, embeds
-from utils.stats import calculate_seconds
 
 command = {
     "name": "races",
@@ -41,6 +41,9 @@ class Races(commands.Cog):
         result = get_args(user, args, command)
         if embeds.is_embed(result):
             return await ctx.send(embed=result)
+
+        if big_lock.locked():
+            return await ctx.send(embed=errors.large_query_in_progress())
 
         username, start_date, end_date, start_number, end_number = result
         await run(ctx, user, username, start_date, end_date, start_number, end_number)
@@ -116,6 +119,10 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
     stats = users.get_user(username, universe)
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
+
+    if stats["races"] > 100_000:
+        await big_lock.acquire()
+
     era_string = strings.get_era_string(user)
     if era_string:
         stats = await users.time_travel_stats(stats, user)
@@ -174,6 +181,9 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
 
     await ctx.send(embed=embed, content=era_string)
 
+    if big_lock.locked():
+        big_lock.release()
+
 
 def add_stats(embed, username, race_list, start, end, mini=False, universe="play"):
     end = min(end, datetime.now(timezone.utc).timestamp())
@@ -190,8 +200,10 @@ def add_stats(embed, username, race_list, start, end, mini=False, universe="play
     characters = 0
     seconds = 0
     unique_texts = set()
-    best_race = {"wpm": 0}
-    worst_race = {"wpm": 7200000}
+    best_race = {}
+    worst_race = {}
+    best_race_wpm = 0
+    worst_race_wpm = 72000000
     first_race = race_list[0]
     last_race = race_list[-1]
     race_difference = last_race[1] - first_race[1] + 1
@@ -199,14 +211,27 @@ def add_stats(embed, username, race_list, start, end, mini=False, universe="play
     days = dates.count_unique_dates(start, end - 0.001)
     longest_break = {"time": 0, "start_race": {}, "end_race": {}}
 
+    previous_race = race_list[0]
     for i, race in enumerate(race_list):
         if race[6] > 1 and race[5] == 1:
             wins += 1
+
         points += race[4]
         wpm = race[2]
         total_wpm += wpm
         total_accuracy += race[3]
-        quote = text_list[race[0]]["quote"]
+
+        text_id = race[0]
+        text = text_list[text_id]
+        quote = text["quote"]
+
+        if "words" not in text:
+            text["words"] = len(quote.split(" "))
+        if "chars" not in text:
+            text["chars"] = len(quote)
+
+        words += text["words"]
+        characters += text["chars"]
 
         current_last_10 += wpm
         if i >= 9:
@@ -214,15 +239,16 @@ def add_stats(embed, username, race_list, start, end, mini=False, universe="play
                 best_last_10 = current_last_10
             current_last_10 -= race_list[i - 9][2]
 
-        words += len(quote.split(" "))
-        characters += len(quote)
-        seconds += calculate_seconds(quote, wpm)
-        unique_texts.add(race[0])
-        if wpm > best_race["wpm"]:
+        seconds += 0 if wpm == 0 else (text["chars"] * 12) / wpm
+        unique_texts.add(text_id)
+
+        if wpm > best_race_wpm:
+            best_race_wpm = wpm
             best_race = race
-        if wpm < worst_race["wpm"]:
+        if wpm < worst_race_wpm:
+            worst_race_wpm = wpm
             worst_race = race
-        previous_race = race_list[i - 1]
+
         break_time = race[7] - previous_race[7]
         if break_time > longest_break["time"]:
             longest_break = {
@@ -230,6 +256,8 @@ def add_stats(embed, username, race_list, start, end, mini=False, universe="play
                 "start_race": {"timestamp": previous_race[7], "number": previous_race[1]},
                 "end_race": {"timestamp": race[7], "number": race[1]},
             }
+
+        previous_race = race
 
     average_wpm = total_wpm / race_count
     accuracy_percent = (total_accuracy / race_count) * 100

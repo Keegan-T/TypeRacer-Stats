@@ -7,6 +7,7 @@ import utils.stats
 from api.users import get_stats
 from commands.advanced.races import get_args
 from commands.basic.download import run as download
+from commands.locks import big_lock
 from config import prefix
 from database.bot_users import get_user
 from graphs import improvement_graph
@@ -48,6 +49,9 @@ class Improvement(commands.Cog):
             self.improvement.reset_cooldown(ctx)
             return await ctx.send(embed=result)
 
+        if big_lock.locked():
+            return await ctx.send(embed=errors.large_query_in_progress())
+
         username, start_date, end_date, start_number, end_number = result
         time = ctx.invoked_with in ["timeimprovement", "timp"]
         await run(ctx, user, username, start_date, end_date, start_number, end_number, time)
@@ -59,6 +63,10 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
     if not stats:
         ctx.command.reset_cooldown(ctx)
         return await ctx.send(embed=errors.import_required(username, universe))
+
+    if stats["races"] > 100_000:
+        await big_lock.acquire()
+
     era_string = strings.get_era_string(user)
 
     api_stats = get_stats(username, universe=universe)
@@ -154,6 +162,9 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
     file = File(file_name, filename=file_name)
 
     await ctx.send(embed=embed, file=file, content=era_string)
+
+    if big_lock.locked():
+        big_lock.release()
 
     remove_file(file_name)
 
