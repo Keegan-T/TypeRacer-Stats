@@ -20,6 +20,7 @@ command = {
     "parameters": "[category]",
     "usages": [f"leaderboard {category}" for category in categories],
     "multiverse": False,
+    "temporal": False,
 }
 
 

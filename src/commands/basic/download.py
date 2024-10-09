@@ -25,8 +25,7 @@ command = {
     "name": "download",
     "aliases": ["getdata", "import", "dl", "gd", "i"],
     "description": "Downloads a given user's complete race history\n"
-                   "May take several minutes\n"
-                   "Capped at 10,000 races for non-admins",
+                   "May take several minutes",
     "parameters": "[username]",
     "usages": ["download keegant"],
 }

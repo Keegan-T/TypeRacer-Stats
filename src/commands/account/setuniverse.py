@@ -13,8 +13,7 @@ from utils.logging import log
 command = {
     "name": "setuniverse",
     "aliases": ["su"],
-    "description": "Sets the TypeRacer universe for your account to retrieve stats from\n"
-                   "Only some commands will work in the multiverse (none that require import)",
+    "description": "Sets the TypeRacer universe for your account to retrieve stats from\n",
     "parameters": "<universe>",
     "defaults": {
         "universe": "play",

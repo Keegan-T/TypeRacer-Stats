@@ -17,6 +17,7 @@ command = {
     },
     "parameters": "<text_id>",
     "usages": ["textleaderboard 3810446"],
+    "temporal": False,
 }
 
 
