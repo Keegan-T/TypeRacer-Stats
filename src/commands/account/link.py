@@ -62,8 +62,8 @@ async def run(ctx, user, username):
 
     await ctx.send(embed=embed)
 
-    if new_user:
-        await download(stats=stats)
+    if new_user and stats["races"] > 0:
+        await download(ctx=ctx, bot_user=user, stats=stats)
 
 
 async def setup(bot):
