@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 
 import discord
+import requests.exceptions
 from discord.ext import commands, tasks
 
 from commands.checks import ban_check
@@ -41,7 +42,7 @@ async def on_command_error(ctx, error):
         return await ctx.send(embed=errors.command_cooldown(datetime.now().timestamp() + error.retry_after))
 
     elif isinstance(error, commands.CommandInvokeError):
-        if isinstance(error.original, ConnectionError):
+        if isinstance(error.original, (ConnectionError, requests.exceptions.SSLError)):
             return await ctx.send(embed=errors.connection_error())
 
     log_message = get_log_message(ctx.message)
