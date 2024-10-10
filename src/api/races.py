@@ -6,20 +6,21 @@ import requests
 from bs4 import BeautifulSoup
 from dateutil import parser
 
-import api.bulk as bulk
+from api.bulk import get_random_user_agent
 from utils import logs, urls
 from utils.stats import calculate_points
 
 
 async def get_races(username, start_time, end_time, races_per_page, universe="play"):
     url = urls.games(username, start_time, end_time, races_per_page, universe)
+    headers = {"User-Agent": get_random_user_agent()}
 
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(headers=headers) as session:
         async with session.get(url) as response:
             if response.status == 404:
                 return []
             elif response.status != 200:
-                return -1
+                raise ConnectionError
 
             data = await response.json(content_type="text/html")
 
@@ -34,7 +35,8 @@ async def get_race(username, race_number, get_raw=False, get_opponents=False, un
 
 async def get_race_html(username, race_number, universe="play"):
     url = urls.replay(username, race_number, universe, dq=True)
-    async with aiohttp.ClientSession() as session:
+    headers = {"User-Agent": bulk.get_random_user_agent()}
+    async with aiohttp.ClientSession(headers=headers) as session:
         async with session.get(url) as response:
             html = await response.text()
 

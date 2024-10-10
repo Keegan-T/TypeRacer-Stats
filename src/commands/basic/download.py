@@ -128,10 +128,7 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, universe="play
 
         race_data = await get_races(username, start_time, end_time, 1000, universe=universe)
 
-        if race_data == -1:  # Request failed
-            raise ValueError
-
-        elif not race_data:  # No more races to download
+        if not race_data:  # No more races to download
             break
 
         for race in race_data:

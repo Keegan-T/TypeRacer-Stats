@@ -6,6 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 from dateutil import parser
 
+from api.bulk import get_random_user_agent
 from utils import dates, urls
 
 
@@ -18,7 +19,7 @@ def get_stats(username=None, stats=None, universe="play"):
         response = requests.get(url)
 
         if response.status_code != 200:
-            return None
+            raise ConnectionError
 
         api_data = json.loads(response.text)
 
@@ -52,8 +53,9 @@ def get_stats(username=None, stats=None, universe="play"):
 
 async def get_joined(username):
     url = urls.profile(username)
+    headers = {"User-Agent": get_random_user_agent()}
 
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(headers=headers) as session:
         async with session.get(url) as response:
             html = await response.text()
 

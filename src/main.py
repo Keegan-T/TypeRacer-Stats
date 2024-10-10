@@ -40,6 +40,10 @@ async def on_command_error(ctx, error):
     elif isinstance(error, commands.CommandOnCooldown):
         return await ctx.send(embed=errors.command_cooldown(datetime.now().timestamp() + error.retry_after))
 
+    elif isinstance(error, commands.CommandInvokeError):
+        if isinstance(error.original, ConnectionError):
+            return await ctx.send(embed=errors.connection_error())
+
     log_message = get_log_message(ctx.message)
     log_error(log_message, error)
 

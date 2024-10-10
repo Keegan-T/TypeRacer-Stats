@@ -3,12 +3,14 @@ import re
 import aiohttp
 from bs4 import BeautifulSoup
 
+from api.bulk import get_random_user_agent
 from utils import urls, dates
 
 
 async def get_competition_info(date, period, sort="points", results_per_page=20, universe="play"):
     url = urls.competition(date, period, sort, results_per_page, universe)
-    async with aiohttp.ClientSession() as session:
+    headers = {"User-Agent": get_random_user_agent()}
+    async with aiohttp.ClientSession(headers=headers) as session:
         async with session.get(url) as response:
             if response.status != 200:
                 return None

@@ -199,3 +199,11 @@ def large_query_in_progress():
                     "Please wait until the command has finished",
         color=warning,
     )
+
+def connection_error():
+    return Embed(
+        title="Connection Error",
+        description="Failed to connect to the the TypeRacer servers\n"
+                    "Please try again later",
+        color=error,
+    )

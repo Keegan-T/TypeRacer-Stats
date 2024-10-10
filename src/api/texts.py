@@ -2,6 +2,7 @@ import aiohttp
 import requests
 from bs4 import BeautifulSoup
 
+from api.bulk import get_random_user_agent
 from utils import urls
 
 
@@ -21,7 +22,8 @@ def get_quote(text_id):
 
 async def get_top_10(text_id, universe="play"):
     url = urls.top_10(text_id, universe)
-    async with aiohttp.ClientSession() as session:
+    headers = {"User-Agent": get_random_user_agent()}
+    async with aiohttp.ClientSession(headers=headers) as session:
         async with session.get(url) as response:
             data = await response.json(content_type="text/html")
 
