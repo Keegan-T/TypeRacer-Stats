@@ -6,14 +6,14 @@ import requests
 from bs4 import BeautifulSoup
 from dateutil import parser
 
-from api.bulk import get_random_user_agent
+import api.bulk as bulk
 from utils import logs, urls
 from utils.stats import calculate_points
 
 
 async def get_races(username, start_time, end_time, races_per_page, universe="play"):
     url = urls.games(username, start_time, end_time, races_per_page, universe)
-    headers = {"User-Agent": get_random_user_agent()}
+    headers = {"User-Agent": bulk.get_random_user_agent()}
 
     async with aiohttp.ClientSession(headers=headers) as session:
         async with session.get(url) as response:
