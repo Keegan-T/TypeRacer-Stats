@@ -3,9 +3,9 @@ import os
 from datetime import datetime
 
 import discord
-import requests.exceptions
 from aiohttp import ClientConnectionError
 from discord.ext import commands, tasks
+from requests.exceptions import SSLError
 
 from commands.checks import ban_check
 from config import prefix, bot_token, staging, welcome_message, legacy_bot_id, bot_owner
@@ -43,7 +43,7 @@ async def on_command_error(ctx, error):
         return await ctx.send(embed=errors.command_cooldown(datetime.now().timestamp() + error.retry_after))
 
     elif isinstance(error, commands.CommandInvokeError):
-        if isinstance(error.original, (ConnectionError, ClientConnectionError, requests.exceptions.SSLError)):
+        if isinstance(error.original, (ConnectionError, ClientConnectionError, SSLError)):
             return await ctx.send(embed=errors.connection_error())
 
     log_message = get_log_message(ctx.message)
