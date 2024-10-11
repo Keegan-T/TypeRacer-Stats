@@ -4,6 +4,7 @@ from discord.ext import commands
 from api.users import get_stats
 from commands.basic.download import run as download
 from commands.basic.stats import get_args
+from commands.locks import import_lock
 from config import prefix
 from database.bot_users import get_user, update_username
 from utils import errors, embeds, urls
@@ -63,7 +64,8 @@ async def run(ctx, user, username):
     await ctx.send(embed=embed)
 
     if new_user and stats["races"] > 0:
-        await download(ctx=ctx, bot_user=user, stats=stats)
+        async with import_lock:
+            await download(ctx=ctx, bot_user=user, stats=stats)
 
 
 async def setup(bot):
