@@ -102,7 +102,10 @@ async def run(ctx, user, username, best):
 
         for i, number in enumerate(top_10_counts):
             number = i + 1
-            top_10_counts_string += f"**{strings.get_display_number(number)}:** {top_10_counts[i]:,}\n"
+            count = top_10_counts[i]
+            if count == 0:
+                continue
+            top_10_counts_string += f"**{strings.get_display_number(number)}:** {count:,}\n"
             top_10_cumulative_string += f"**Top {number}:**. {sum(top_10_counts[:i + 1]):,} \n"
 
         embed.add_field(name="Position Counts", value=top_10_counts_string)
