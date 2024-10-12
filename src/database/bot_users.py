@@ -3,6 +3,7 @@ import json
 from discord.ext import commands
 
 import database.user_db as db
+from utils import dates
 from utils.colors import default_colors
 
 
@@ -82,14 +83,17 @@ def add_user(id):
         "universe": "play",
         "colors": default_colors,
         "commands": {},
+        "start_date": None,
+        "end_date": None,
+        "joined": round(dates.now().timestamp()),
     }
 
     db.run("""
         INSERT INTO users
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """, [
-        user["id"], user["username"], user["universe"],
-        json.dumps(user["colors"]), "{}", None, None
+        user["id"], user["username"], user["universe"], json.dumps(user["colors"]),
+        "{}", user["start_date"], user["end_date"], user["joined"]
     ])
 
     return user
