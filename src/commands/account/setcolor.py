@@ -52,11 +52,11 @@ class SetColor(commands.Cog):
     async def setcolor(self, ctx, *args):
         user = get_user(ctx)
 
-        try:
-            element, color = await get_args(ctx, user, args)
-        except ValueError:
+        result = await get_args(ctx, user, args)
+        if not result:
             return
 
+        element, color = result
         await run(ctx, user, element, color)
 
 
@@ -64,26 +64,29 @@ async def get_args(ctx, user, args):
     if not args:
         user["discord_id"] = str(ctx.author.id)
         await view(ctx, user)
-        raise ValueError
+        return None
 
     if args[0] == "reset":
         await reset(ctx, user)
-        raise ValueError
+        return None
 
     discord_id = strings.get_discord_id(args[0])
     if discord_id:
-        user = get_user(discord_id)
-        await view(ctx, user)
-        raise ValueError
+        user = get_user(discord_id, auto_add=False)
+        if not user:
+            await ctx.send(embed=errors.unknown_user(discord_id))
+        else:
+            await view(ctx, user)
+        return None
 
     if len(args) < 2:
         await ctx.send(embed=errors.missing_argument(command))
-        raise ValueError
+        return None
 
     element = strings.get_category(elements, args[0])
     if not element:
         await ctx.send(embed=errors.invalid_choice("element", elements.keys()))
-        raise ValueError
+        return None
 
     color = colors.parse_color(args[1])
     if color is None:
@@ -91,12 +94,12 @@ async def get_args(ctx, user, args):
             color = args[1]
             if color == "keegant" and ctx.author.id != bot_owner:
                 await ctx.send(embed=not_worthy())
-                raise ValueError
+                return None
         elif element == "grid" and args[1] == "off":
             color = "off"
         else:
             await ctx.send(embed=invalid_color())
-            raise ValueError
+            return None
 
     return element, color
 

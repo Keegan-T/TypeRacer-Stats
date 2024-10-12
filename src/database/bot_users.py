@@ -13,7 +13,7 @@ def get_users():
     return users
 
 
-def get_user(ctx):
+def get_user(ctx, auto_add=True):
     if isinstance(ctx, commands.Context):
         user_id = str(ctx.author.id)
     else:
@@ -25,7 +25,9 @@ def get_user(ctx):
     """, [user_id])
 
     if not user:
-        return add_user(user_id)
+        if auto_add:
+            return add_user(user_id)
+        return None
 
     user = dict(user[0])
     user["colors"] = json.loads(user["colors"])

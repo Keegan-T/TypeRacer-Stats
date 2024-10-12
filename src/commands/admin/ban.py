@@ -5,7 +5,7 @@ from commands.checks import admin_check
 from config import bot_owner
 from database.banned import get_banned, ban, unban
 from database.bot_users import get_user
-from utils import errors, colors
+from utils import errors, colors, strings
 
 command = {
     "name": "ban",
@@ -28,12 +28,9 @@ class Ban(commands.Cog):
         if not args:
             return await ctx.send(embed=errors.missing_argument(command))
 
-        user_id = args[0].translate(args[0].maketrans("", "", "<@>"))
-
-        try:
-            await self.bot.fetch_user(user_id)
-        except:
-            return await ctx.send(embed=Embed(title="Unknown User", color=colors.error))
+        user_id = strings.get_discord_id(args[0])
+        if not user_id:
+            return await ctx.send(embed=Embed(title="Invalid User", color=colors.error))
 
         await run(ctx, user, str(user_id))
 

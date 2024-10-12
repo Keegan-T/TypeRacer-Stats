@@ -200,10 +200,19 @@ def large_query_in_progress():
         color=warning,
     )
 
+
 def connection_error():
     return Embed(
         title="Connection Error",
         description="Failed to connect to the the TypeRacer servers\n"
                     "Please try again later",
+        color=error,
+    )
+
+
+def unknown_user(user_id):
+    return Embed(
+        title="Unknown User",
+        description=f"<@{user_id}> has never used the bot before",
         color=error,
     )
