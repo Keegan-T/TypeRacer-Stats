@@ -147,3 +147,6 @@
 
 10/9/2024
 - Added -define
+
+10/12/2024
+- Added -whois
