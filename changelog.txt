@@ -150,3 +150,6 @@
 
 10/12/2024
 - Added -whois
+
+10/13/2024
+- Added -updatetens
