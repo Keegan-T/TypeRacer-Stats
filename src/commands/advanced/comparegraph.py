@@ -71,7 +71,7 @@ async def run(ctx, user, username1, username2):
     for text in text_bests2:
         if (wpm := tb_dict.get(text[0], -1)) > 0:
             difference = text[1] - wpm
-            if difference == 0:
+            if difference == 0 and (not wpm_match or wpm_match and wpm_match[1] < text[1]):
                 wpm_match = (text[0], text[1])
             elif difference < 0:
                 data1.append(-difference)

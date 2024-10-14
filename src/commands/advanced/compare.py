@@ -83,7 +83,8 @@ async def run(ctx, user, username1, username2, random):
             elif gap < 0:
                 user2_better += 1
             else:
-                wpm_match = (score1, score2)
+                if not wpm_match or wpm_match and wpm_match[0][0] < score1[0]:
+                    wpm_match = (score1, score2)
             comparison[text_id] = (tb_dict1[text_id], tb_dict2[text_id], gap)
 
     if not comparison:
