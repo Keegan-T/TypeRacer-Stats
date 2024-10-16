@@ -187,12 +187,17 @@ async def run(ctx, user, username, text_id=None, race_number=None):
     if universe != "play" or user["end_date"]:
         return
 
+    top_10 = top_tens.get_top_n(text_id)
+    existing_score = next((score for score in top_10 if score["username"] == username), None)
     await top_tens.update_results(text_id)
-    top_10 = top_tens.get_top_10(text_id)
-    top_10_score = next((score for score in top_10 if score["id"] == recent_race["id"]), None)
+    top_10 = top_tens.get_top_n(text_id, 11)
+    top_10_score = next((score for score in top_10[:10] if score["id"] == recent_race["id"]), None)
 
     if not top_10_score:
         return
+
+    if existing_score:
+        top_10 = top_10[:10]
 
     description = ""
     title = ""
@@ -204,10 +209,12 @@ async def run(ctx, user, username, text_id=None, race_number=None):
                 title = "Top Score! :trophy:"
             else:
                 title = f"Top {i + 1} Score! :tada:"
-        username = race["username"]
+        if i > 9:
+            style = "~~"
+        user = race["username"]
         description += (
-            f"{strings.rank(i + 1)} {style}{strings.escape_discord_format(username)} - [{race['wpm']:,.2f} WPM]"
-            f"({urls.replay(username, race['number'])}){style} - "
+            f"{strings.rank(i + 1)} {style}{strings.escape_discord_format(user)} - [{race['wpm']:,.2f} WPM]"
+            f"({urls.replay(user, race['number'])}){style} - "
             f"{strings.discord_timestamp(race['timestamp'])}\n"
         )
 

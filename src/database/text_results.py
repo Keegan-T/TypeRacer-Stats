@@ -48,7 +48,7 @@ def get_top_10s():
     return filtered_top_10s
 
 
-def get_top_10(text_id):
+def get_top_n(text_id, n=10):
     results = db.fetch("""
         SELECT * FROM text_results
         WHERE text_id = ?
@@ -67,7 +67,7 @@ def get_top_10(text_id):
         if existing_score:
             continue
         top_10.append(result)
-        if len(top_10) == 10:
+        if len(top_10) == n:
             break
 
     return top_10

@@ -60,6 +60,7 @@ rank_emojis = [
     "<:8th:1219163721704931370>",
     "<:9th:1219163722455453707>",
     "<:10th:1219163725223694336>",
+    "<:11th:1292341426557943878>",
 ]
 
 
@@ -369,7 +370,7 @@ def discord_timestamp(timestamp, style="R"):
 
 
 def rank(number):
-    if 1 <= number <= 10:
+    if 1 <= number <= 11:
         return rank_emojis[number - 1]
 
     return str(number)

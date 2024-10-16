@@ -88,7 +88,7 @@ async def run(ctx, user, text_id):
         return await ctx.send(embed=embed)
 
     await top_tens.update_results(text_id)
-    top_10 = top_tens.get_top_10(text_id)
+    top_10 = top_tens.get_top_n(text_id)
 
     for i, race in enumerate(top_10):
         username = race["username"]
