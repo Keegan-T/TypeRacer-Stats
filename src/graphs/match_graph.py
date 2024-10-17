@@ -40,7 +40,7 @@ def render(user, rankings, title, y_label, file_name, limit_y=True, typos=[]):
 
     if remaining and limit_y:
         if max(starts) > max(remaining):
-            max_wpm = max(remaining)
+            max_wpm = max(remaining) * 1.1
 
     padding = 0.1 * (max_wpm - min_wpm)
     ax.set_ylim(bottom=min_wpm - padding)
