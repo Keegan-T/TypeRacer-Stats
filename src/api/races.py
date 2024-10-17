@@ -100,7 +100,10 @@ async def get_race_details(html, get_raw=False, get_opponents=False, universe="p
         return details
 
     universe_multiplier = get_universe_multiplier(universe)
-    first_half, action_data = typing_log.split("|")[0:quote.count("|") + 2]
+    split_log = typing_log.split("|")
+    pipe_count = quote.count("|")
+    first_half = "|".join(split_log[0:pipe_count + 1])
+    action_data = "|".join(split_log[pipe_count + 1:])
     delay_data = ",".join(first_half.split(",")[3:])
     log_details = logs.get_log_details(delay_data, universe_multiplier)
     for key, value in log_details.items():
