@@ -8,7 +8,8 @@ def render(user, rankings, title, y_label, file_name, limit_y=True, typos=[]):
     caller_index = 0
     starts = []
     remaining = []
-    comparison = False
+    min_wpm = float("inf")
+    max_wpm = 0
 
     if "average_adjusted_wpm" in rankings[0]:
         racer = rankings[0]
@@ -16,6 +17,8 @@ def render(user, rankings, title, y_label, file_name, limit_y=True, typos=[]):
         average_wpm = racer["average_adjusted_wpm"][instant_chars:]
         keystrokes = np.arange(instant_chars + 1, len(average_wpm) + instant_chars + 1)
         ax.plot(keystrokes, average_wpm)
+        min_wpm = min(min_wpm, min(average_wpm))
+        max_wpm = max(max_wpm, max([wpm for wpm in average_wpm if wpm < float("inf")]))
         starts += average_wpm[:9]
         remaining += average_wpm[9:]
 
@@ -27,20 +30,21 @@ def render(user, rankings, title, y_label, file_name, limit_y=True, typos=[]):
             if racer_username in [caller, "Adjusted"]:
                 caller_index = i
                 zorder *= 10
-                if racer_username == "Adjusted":
-                    comparison = True
             average_wpm = racer["average_wpm"]
             keystrokes = np.arange(1, len(average_wpm) + 1)
             ax.plot(keystrokes, average_wpm, label=racer_username, zorder=zorder)
+            min_wpm = min(min_wpm, min(average_wpm))
+            max_wpm = max(max_wpm, max([wpm for wpm in average_wpm if wpm < float("inf")]))
             starts += average_wpm[:9]
             remaining += average_wpm[9:]
 
-        if not comparison:
-            ax.set_ylim(bottom=0)
-
     if remaining and limit_y:
         if max(starts) > max(remaining):
-            ax.set_ylim(top=1.2 * max(remaining))
+            max_wpm = max(remaining)
+
+    padding = 0.1 * (max_wpm - min_wpm)
+    ax.set_ylim(bottom=min_wpm - padding)
+    ax.set_ylim(top=max_wpm + padding)
 
     if len(typos) > 0:
         typo_count = 1
