@@ -6,7 +6,7 @@ def get_url_info(url):
     if not (result.netloc and result.scheme):
         return None
     try:
-        parts = url.replace("%7c", "|").split("|")
+        parts = url.replace("%7c", "|").replace("%7C", "|").split("|")
         universe = parts[-3].split("?id=")[1]
         if not universe:
             universe = "play"

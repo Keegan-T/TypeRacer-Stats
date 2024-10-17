@@ -9,7 +9,7 @@ from utils import strings
 
 command = {
     "name": "clubremove",
-    "aliases": ["cr"],
+    "aliases": ["cd"],
     "description": "Remove a user from the 300 WPM club",
     "parameters": "[username]",
     "usages": ["clubremove keegant"],
