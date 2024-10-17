@@ -25,8 +25,8 @@ command = {
     "parameters": "[username1|number1/link] [username2|number2/link]",
     "usages": [
         "compareraces keegant|100000 keegant|1003398",
-        "compareraces https://data.typeracer.com/pit/result?id=|tr:joshua728|31646 https://data.typeracer.com/pit/result?id=|tr:shazman|20167",
-        "compareraces me 3550141",
+        "compareraces me 3810446",
+        "compareraces zak389 3550141 arenasnow",
     ],
     "temporal": False,
 }
