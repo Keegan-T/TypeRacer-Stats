@@ -1,5 +1,3 @@
-import bisect
-
 from discord import Embed
 from discord.ext import commands
 
@@ -57,20 +55,22 @@ async def run(ctx, user, username):
     found_races = []
 
     for missing_number in missing_numbers:
-        pos = bisect.bisect_left(numbers, missing_number)
-        prev_race = race_list[pos - 1] if pos > 0 else None
-        next_race = race_list[pos] if pos < len(race_list) else None
-        start_time = prev_race["timestamp"] - 10 if prev_race else None
-        end_time = next_race["timestamp"] + 10 if next_race else None
-
-        if start_time and end_time:
-            race_range = await get_races(username, start_time, end_time, 10, user["universe"])
-            for race in race_range:
-                if race["gn"] in missing_numbers:
-                    found_races.append((
-                        strings.race_id(username, race["gn"]), username, race["tid"], race["gn"],
-                        race["wpm"], race["ac"], race["pts"], race["r"], race["np"], race["t"],
-                    ))
+        prev_race = next_race = None
+        for race in race_list:
+            if race["number"] < missing_number:
+                prev_race = race
+            elif race["number"] > missing_number:
+                next_race = race
+                break
+        start_time = prev_race["timestamp"] - 10
+        end_time = next_race["timestamp"] + 10
+        race_range = await get_races(username, start_time, end_time, 10, "play")
+        for race in race_range:
+            if race["gn"] == missing_number:
+                found_races.append((
+                    strings.race_id(username, race["gn"]), username, race["tid"], race["gn"],
+                    race["wpm"], race["ac"], race["pts"], race["r"], race["np"], race["t"],
+                ))
 
     if not found_races:
         return await ctx.send(embed=Embed(
