@@ -30,13 +30,12 @@ async def on_ready():
 
 @bot.event
 async def on_command_error(ctx, error):
+    print(error)
     if isinstance(error, (commands.CheckFailure, commands.CommandNotFound)):
         return
 
-    elif isinstance(error, commands.ExpectedClosingQuoteError):
-        return await ctx.send(embed=errors.closing_quote())
-
-    elif isinstance(error, commands.UnexpectedQuoteError):
+    elif isinstance(error, (commands.ExpectedClosingQuoteError, commands.UnexpectedQuoteError,
+                            commands.InvalidEndOfQuotedStringError)):
         return await ctx.send(embed=errors.unexpected_quote())
 
     elif isinstance(error, commands.CommandOnCooldown):
@@ -45,6 +44,8 @@ async def on_command_error(ctx, error):
     elif isinstance(error, commands.CommandInvokeError):
         if isinstance(error.original, (ConnectionError, ClientConnectionError, SSLError)):
             return await ctx.send(embed=errors.connection_error())
+        elif "Embed size exceeds maximum size" in str(error):
+            return await ctx.send(embed=errors.embed_limit_exceeded())
 
     log_message = get_log_message(ctx.message)
     log_error(log_message, error)

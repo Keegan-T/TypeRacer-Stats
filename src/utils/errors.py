@@ -36,14 +36,6 @@ def invalid_choice(param, choices):
     )
 
 
-def closing_quote():
-    return Embed(
-        title="Expected Closing Quote",
-        description="Command parameter is missing a closing quote",
-        color=error,
-    )
-
-
 def unexpected_quote():
     return Embed(
         title="Unxpected Quote",
@@ -214,5 +206,13 @@ def unknown_user(user_id):
     return Embed(
         title="Unknown User",
         description=f"<@{user_id}> has never used the bot before",
+        color=error,
+    )
+
+
+def embed_limit_exceeded():
+    return Embed(
+        title="Embed Limit Exceeded",
+        description="The maximum number of characters\nfor an embed has been exceeded",
         color=error,
     )
