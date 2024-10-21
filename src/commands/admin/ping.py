@@ -1,7 +1,7 @@
 from discord import Embed
 from discord.ext import commands
 
-from commands.checks import owner_check
+from commands.checks import admin_check
 
 command = {
     "name": "ping",
@@ -17,7 +17,7 @@ class Ping(commands.Cog):
         self.bot = bot
 
     @commands.command(aliases=command["aliases"])
-    @commands.check(owner_check)
+    @commands.check(admin_check)
     async def ping(self, ctx):
         await ctx.send(embed=Embed(
             description=f"Pong! :ping_pong: {round(self.bot.latency * 1000)}ms",

@@ -5,6 +5,7 @@ from discord.ext import commands
 
 from api.races import get_races
 from commands.basic.stats import get_args
+from commands.checks import owner_check
 from database import races
 from database.bot_users import get_user
 from utils import embeds, strings
@@ -23,6 +24,7 @@ class SkippedRaces(commands.Cog):
         self.bot = bot
 
     @commands.command(aliases=command["aliases"])
+    @commands.check(owner_check)
     async def skippedraces(self, ctx, *args):
         user = get_user(ctx)
 
