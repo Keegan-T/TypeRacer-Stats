@@ -25,7 +25,7 @@ class Support(commands.Cog):
 async def run(ctx, user):
     description = (
         "TypeRacer Stats is hosted out of pocket to provide 24/7 availability for the community.\n"
-        "One month of hosting costs $6.00 USD\n\n"
+        "One month of hosting costs $12.00 USD\n\n"
         f"[Click here to donate]({donate_link})\n"
         f"Thank you for your support! <:support:1220863071086575716>"
     )
