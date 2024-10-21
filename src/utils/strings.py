@@ -451,8 +451,26 @@ def get_segments(text, n=None):
 
     return full_words
 
+
 def get_date_query_string(start_date, end_date):
     start_string = f"AND timestamp >= {start_date}" if start_date else ""
     end_string = f"AND timestamp < {end_date}" if end_date else ""
 
     return start_string + end_string
+
+
+def format_expression(num):
+    if num == float("inf"):
+        return "∞"
+    elif num == int(num):
+        return f"{(int(num)):,}"
+    elif abs(num) >= 0.01:
+        return f"{num:,.2f}"
+    else:
+        formatted = f"{num:.100f}"
+        index = 3
+        for digit in formatted[2:]:
+            index += 1
+            if digit != "0":
+                break
+        return formatted[:index]

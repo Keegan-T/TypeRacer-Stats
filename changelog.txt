@@ -157,3 +157,6 @@
 10/16/2024
 - Added -compareraces
 - Added a display for 11th place as users enter top 10 in -text
+
+10/21/2024
+- Added -calculator
