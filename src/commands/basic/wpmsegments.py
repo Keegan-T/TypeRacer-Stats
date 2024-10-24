@@ -67,8 +67,14 @@ async def run(ctx, user, username, race_number, universe):
     for text in text_segments:
         segment_delays = delays[index:len(text) + index]
         segment_raw_delays = raw_delays[index:len(text) + index]
-        wpm = multiplier * len(text) / sum(segment_delays)
-        raw_wpm = multiplier * len(text) / sum(segment_raw_delays)
+        try:
+            wpm = multiplier * len(text) / sum(segment_delays)
+        except ZeroDivisionError:
+            wpm = float("inf")
+        try:
+            raw_wpm = multiplier * len(text) / sum(segment_raw_delays)
+        except ZeroDivisionError:
+            raw_wpm = float("inf")
         segments.append({
             "text": text,
             "wpm": wpm,

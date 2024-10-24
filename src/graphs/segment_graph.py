@@ -7,8 +7,17 @@ from graphs.core import plt, color_graph
 def render(user, segments, title, file_name):
     ax = plt.subplots()[1]
     x = [i + 1 for i in range(len(segments))]
-    y = [segment["wpm"] for segment in segments]
-    raw_y = [segment["raw_wpm"] for segment in segments]
+    y = []
+    raw_y = []
+    for segment in segments:
+        wpm = segment["wpm"]
+        raw_wpm = segment["raw_wpm"]
+        if wpm == float("inf"):
+            wpm = 0
+        if raw_wpm == float("inf"):
+            raw_wpm = 0
+        y.append(wpm)
+        raw_y.append(raw_wpm)
 
     color = user["colors"]["line"]
     if color in plt.colormaps():
