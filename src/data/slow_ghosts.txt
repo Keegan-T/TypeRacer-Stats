@@ -1272,7 +1272,7 @@
 3550358,pooffy,879
 3550359,joffrey,2782
 3550360,jonmag202,103
-3550361,jlachneydvorak,16
+3550361,my_name__jeff69420,16
 3550362,jahid098,24
 3550363,fricative,74
 3550364,ashique,456
@@ -1590,7 +1590,7 @@
 3550678,sharpenthesaw,4
 3550679,mymyw,65
 3550680,chandu970,548
-3550681,jlachneydvorak,49
+3550681,neyntp,89
 3550682,terlalu,351
 3550683,greygal,69
 3550684,kanokkorn,1042
@@ -1965,7 +1965,7 @@
 3620278,rickrae,353
 3620279,abu1,6
 3620280,raihan98,1
-3620281,jlachneydvorak,12
+3620281,slowmotion00,17
 3620282,greygal,56
 3620283,charmx,969
 3620284,esentur,9
@@ -2515,7 +2515,7 @@
 3622021,hamzashafqat,867
 3622022,kuupper,4
 3622028,taewoookang,16
-3622032,jlachneydvorak,48
+3622032,abbyamiesdad,2
 3622033,ladiva,1306
 3622035,somir,299
 3622038,aloys,2
@@ -3718,7 +3718,7 @@
 3641405,vompo,11
 3641406,pkrgtm,49
 3641407,jahid098,69
-3641408,jlachneydvorak,8
+3641408,20031123,98
 3641409,mostafijur,43
 3641410,debanna,221
 3641411,arshadali9292@yahoo.com,449
@@ -4460,7 +4460,7 @@
 3810792,mhe_2000,11
 3810793,jakir,152
 3810794,abdullah_foysal,9
-3810795,jlachneydvorak,4
+3810795,koppix,4
 3810796,neto126,155
 3810797,shajon,175
 3810798,jaijeetroy,222
@@ -4712,7 +4712,7 @@
 3811049,kadyrbekesirkeev,59
 3811050,k_____,6
 3811051,foland_eric,272
-3811055,jlachneydvorak,24
+3811055,quantum88,202
 3811056,irfanlopez,81
 3811057,vikiperle08,2225
 3811058,parteek,1421
@@ -4839,7 +4839,7 @@
 3811254,shubham10200,55
 3811255,notasmurf,140
 3811256,xxyungcashregisterxx,251
-3811257,jlachneydvorak,1
+3811257,20031123,17
 3811259,ibratm,193
 3811260,alianggie,17594
 3811263,auaster,1004
@@ -5036,7 +5036,7 @@
 3950023,pptppt,5
 3950024,solar56,2763
 3950025,gaus,81
-3950026,jlachneydvorak,260
+3950026,tiger_master200,17
 3950027,ketikboro,668
 3950028,chanathip_00m,91
 3950029,fongg,5
