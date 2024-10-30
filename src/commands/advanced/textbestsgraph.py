@@ -108,6 +108,9 @@ async def run(ctx, user, username, category):
         f"**Gain Until {next_milestone} Average:** {required_wpm_gain:,.0f} WPM"
     )
 
+    if category == "texts":
+        description += f"\n**Total Text Improvements:** {len(x):,}"
+
     embed = Embed(
         title=f"Text Best Progression",
         description=description,
