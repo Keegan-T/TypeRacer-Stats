@@ -317,7 +317,7 @@ async def delete_user(username):
     )
 
 
-def get_text_bests(username, race_stats=False, universe="play"):
+def get_text_bests(username, race_stats=False, universe="play", until=None):
     table = races_table_name(universe)
     if race_stats:
         text_bests = db.fetch(f"""
@@ -341,11 +341,17 @@ def get_text_bests(username, race_stats=False, universe="play"):
         """, [username, username])
 
     else:
+        index = f"idx_{table}_username"
+        if not until:
+            index += "_text_id_wpm"
+        timestamp_string = f"AND timestamp < {until}" if until else ""
+
         text_bests = db.fetch(f"""
             SELECT text_id, MAX(wpm) AS wpm
             FROM {table}
-            INDEXED BY idx_{table}_username_text_id_wpm
+            INDEXED BY {index}
             WHERE username = ?
+            {timestamp_string}
             GROUP BY text_id
             ORDER BY wpm DESC
         """, [username])

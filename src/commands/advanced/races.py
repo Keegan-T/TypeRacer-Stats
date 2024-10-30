@@ -198,6 +198,11 @@ def add_stats(embed, username, race_list, start, end, mini=False, universe="play
     words = 0
     characters = 0
     seconds = 0
+    text_improvements = 0
+    total_wpm_gain = 0
+    text_best_list = users.get_text_bests(username, until=race_list[0][7])
+    text_bests = {text_id: wpm for text_id, wpm in text_best_list}
+    disabled_text_ids = texts.get_disabled_text_ids()
     unique_texts = set()
     best_race = {}
     worst_race = {}
@@ -258,6 +263,20 @@ def add_stats(embed, username, race_list, start, end, mini=False, universe="play
 
         previous_race = race
 
+        if text_id in disabled_text_ids:
+            continue
+
+        best = text_bests.get(text_id)
+        if best is not None:
+            if wpm > best:
+                total_wpm_gain += (wpm - best)
+                text_improvements += 1
+                text_bests[text_id] = wpm
+        else:
+            text_improvements += 1
+            total_wpm_gain += wpm
+            text_bests[text_id] = wpm
+
     average_wpm = total_wpm / race_count
     accuracy_percent = (total_accuracy / race_count) * 100
     points_per_race = points / race_count
@@ -293,8 +312,15 @@ def add_stats(embed, username, race_list, start, end, mini=False, universe="play
         f"**Characters Typed:** {characters:,} ({characters_per_race:,.2f} chars/race)\n"
         f"**Race Time:** {strings.format_duration_short(seconds)} ({seconds_per_race:,.2f}s/race)\n"
         f"**Time Difference:** {strings.format_duration_short(seconds_elapsed)}\n"
-        f"**Unique Texts:** {text_count:,}\n\n"
+        f"**Unique Texts:** {text_count:,}\n"
     )
+
+    if total_wpm_gain > 0:
+        details += (
+            f"**Text Improvements:** {text_improvements:,} (+{total_wpm_gain:,.2f} WPM)\n"
+        )
+
+    details += "\n"
 
     other_stats = (
         f"**Race:** [#{first_race[1]:,}]({urls.replay(username, first_race[1], universe)}) - "
