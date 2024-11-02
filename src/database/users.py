@@ -240,6 +240,7 @@ def get_top_text_best(limit):
     top = db.fetch("""
         SELECT * FROM users
         WHERE texts_typed >= ?
+        AND disqualified = 0
         ORDER BY text_best_average DESC
         LIMIT ?
     """, [min_texts, limit])
