@@ -52,21 +52,26 @@ async def run(ctx, user, username):
     existing_numbers = set(numbers)
     missing_numbers = sorted(full_range - existing_numbers)
 
+    grouped_numbers = group_numbers(missing_numbers)
     found_races = []
 
-    for missing_number in missing_numbers:
+    for group in grouped_numbers:
+        first, last = group[0], group[-1]
         prev_race = next_race = None
+
         for race in race_list:
-            if race["number"] < missing_number:
+            if race["number"] < first:
                 prev_race = race
-            elif race["number"] > missing_number:
+            elif race["number"] > last:
                 next_race = race
                 break
+
         start_time = prev_race["timestamp"] - 10
         end_time = next_race["timestamp"] + 10
-        race_range = await get_races(username, start_time, end_time, 10, "play")
+
+        race_range = await get_races(username, start_time, end_time, last - first + 10, "play")
         for race in race_range:
-            if race["gn"] == missing_number:
+            if race["gn"] in group:
                 found_races.append((
                     strings.race_id(username, race["gn"]), username, race["tid"], race["gn"],
                     race["wpm"], race["ac"], race["pts"], race["r"], race["np"], race["t"],
@@ -81,13 +86,35 @@ async def run(ctx, user, username):
 
     races.add_races(found_races, user["universe"])
 
+    skipped_groups = []
+    for group in group_numbers([r[3] for r in found_races], proximity=1):
+        first, last = min(group), max(group)
+        if first == last:
+            skipped_groups.append(f"{first:,}")
+        else:
+            skipped_groups.append(f"{first:,}-{last:,}")
+
     embed = Embed(
-        title="Skipped Races Found",
-        description="Imported these missing races:\n" + ", ".join([f"{r[3]:,}" for r in found_races]),
+        title=f"{len(found_races):,} Skipped Races Found",
+        description="Imported these missing races:\n" + ", ".join(skipped_groups),
         color=user["colors"]["embed"],
     )
 
     await ctx.send(embed=embed)
+
+
+def group_numbers(numbers, proximity=20):
+    if not numbers:
+        return []
+
+    groups = [[numbers[0]]]
+    for i in range(1, len(numbers)):
+        if numbers[i] <= groups[-1][-1] + proximity:
+            groups[-1].append(numbers[i])
+        else:
+            groups.append([numbers[i]])
+
+    return groups
 
 
 async def setup(bot):
