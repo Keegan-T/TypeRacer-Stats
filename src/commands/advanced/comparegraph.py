@@ -122,17 +122,29 @@ async def run(ctx, user, username1, username2):
             f"{same_text}"
         )
 
+    texts1 = len(data1)
+    texts2 = len(data2)
+    gain1 = sum(data1)
+    gain2 = sum(data2)
+    average_gain1 = gain1 / texts1
+    if texts2 == 0:
+        average_gain2 = 0
+    else:
+        average_gain2 = gain2 / texts2
+
     stats1 = (
-        f"**Texts:** {len(data1):,}\n"
-        f"**Gain:** +{sum(data1):,.2f} WPM\n"
+        f"**Texts:** +{texts1:,}\n"
+        f"**Gain:** +{gain1:,.2f} WPM\n"
+        f"**Average Gain:** +{average_gain1:,.2f} WPM\n"
         f"**Biggest Gap:** +{max_gap1[1] - max_gap1[2]:,.2f} WPM\n"
         f"({max_gap1[1]} WPM vs. {max_gap1[2]} WPM)\n"
         f"{same_text}"
     )
 
     stats2 = (
-        f"**Texts:** {len(data2):,}\n"
-        f"**Gain:** +{sum(data2):,.2f} WPM\n"
+        f"**Texts:** +{texts2:,}\n"
+        f"**Gain:** +{gain2:,.2f} WPM\n"
+        f"**Average Gain:** +{average_gain2:,.2f} WPM\n"
         f"{gap2}"
     )
 
