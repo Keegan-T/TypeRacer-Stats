@@ -5,7 +5,6 @@ import aiohttp
 from dateutil.relativedelta import relativedelta
 
 import database.competition_results as competition_results
-import database.db as db
 import database.important_users as important_users
 import database.texts as texts
 import database.users as users
@@ -130,6 +129,8 @@ async def import_top_ten_users():
                     if username not in unique_users:
                         unique_users[username] = stats
 
+    await asyncio.sleep(300)
+
     for stats in unique_users.values():
         stats = get_stats(stats=stats)
         if stats is None:
@@ -137,30 +138,29 @@ async def import_top_ten_users():
         async with import_lock:
             await download(stats=stats)
 
+    return unique_users.keys()
+
 
 async def update_top_tens():
     import database.text_results as text_results
+    from database.users import get_text_bests
     from database.alts import get_alts
 
-    await import_top_ten_users()
-
+    user_list = await import_top_ten_users()
     alts = get_alts()
     banned = set(users.get_disqualified_users())
     top_10s = {}
 
-    limit = 100000
-    offset = 0
-    race_list = 1
+    log("Calculating top tens")
 
-    while race_list:
-        log("Fetching 100,000 races...")
-        race_list = await db.fetch_async("""
-            SELECT username, text_id, number, wpm, timestamp FROM races
-            LIMIT ?, ?
-        """, [offset, limit])
+    for user in user_list:
+        username = user["username"]
+        text_bests = get_text_bests(username, race_stats=True)
+        for race in text_bests:
+            text_id = race["text_id"]
+            wpm = race["wpm"]
+            race = (username, text_id, race["number"], wpm, race["timestamp"])
 
-        for race in race_list:
-            username, text_id, _, wpm, _ = race
             if username in banned:
                 continue
             if text_id not in top_10s:
@@ -179,7 +179,6 @@ async def update_top_tens():
             else:
                 top_10s[text_id].append(race)
                 top_10s[text_id] = sorted(top_10s[text_id], key=lambda x: x[3], reverse=True)[:10]
-        offset += limit
 
     results = []
 
@@ -188,11 +187,11 @@ async def update_top_tens():
         if int(text_id) in disabled_text_ids:
             continue
         for score in top_10:
-            username = score["username"]
-            number = score["number"]
+            username = score[0]
+            number = score[2]
             results.append((
-                strings.race_id(username, number), score["text_id"],
-                username, number, score["wpm"], score["timestamp"],
+                strings.race_id(username, number), score[1],
+                username, number, score[3], score[4],
             ))
 
     log(f"Adding {len(results)} results")
