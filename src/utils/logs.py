@@ -181,7 +181,10 @@ def get_typos(quote, action_data):
             if text_string[:len(current_word)] != current_word[:len(text_string)]:
                 if current_word_index not in typos:
                     typo_index = len("".join(completed_words) + "".join(text_box)) - 1
-                    typos[current_word_index] = f"{current_word[:-1]},{typo_index}"
+                    word = current_word
+                    if current_word[-1] == " ":
+                        word = word[:-1]
+                    typos[current_word_index] = f"{word},{typo_index}"
 
         while "".join(text_box).startswith(quote_words[current_word_index]):
             completed_words.append(quote_words[current_word_index])
