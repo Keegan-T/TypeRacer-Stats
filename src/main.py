@@ -1,6 +1,6 @@
 import asyncio
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 import discord
 from aiohttp import ClientConnectionError
@@ -91,7 +91,7 @@ async def on_guild_join(guild):
 
 @tasks.loop(minutes=1)
 async def loops():
-    if datetime.utcnow().hour == 4 and datetime.utcnow().minute == 0:
+    if datetime.now(tz=timezone.utc).hour == 4 and datetime.now(tz=timezone.utc).minute == 0:
         try:
             log("Importing competitions")
             await import_competitions()
@@ -102,7 +102,7 @@ async def loops():
             log(f"Updating records")
             await records.update(bot)
             log(f"Finished updating records")
-            if datetime.utcnow().day == 1:
+            if datetime.now(tz=timezone.utc).day == 1:
                 log(f"Updating top tens")
                 await update_top_tens()
                 log(f"Finished updating top tens")
