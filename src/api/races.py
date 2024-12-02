@@ -76,7 +76,10 @@ async def get_race_details(html, get_raw=False, get_opponents=False, universe="p
     # Scraping accuracy for higher precision
     accuracy_td = soup.find("td", string="Accuracy")
     accuracy_string = accuracy_td.find_next_sibling("td").get_text(strip=True)
-    accuracy = float(accuracy_string[:-1]) / 100
+    try:
+        accuracy = float(accuracy_string[:-1]) / 100
+    except ValueError:
+        accuracy = 0
     details["accuracy"] = accuracy
 
     # Getting details from API
