@@ -143,7 +143,10 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         end = dates.now().timestamp()
         if user_start: start = max(start, user_start)
         if user_end: end = min(end, user_end)
-        race_list = await races.get_races(username, columns, universe=universe)
+        race_list = await races.get_races(
+            username, columns, None if start == stats["joined"] else start,
+            None if end == dates.now().timestamp() else end, universe=universe
+        )
 
     elif start_date is None:
         end_number = min(end_number, stats["races"])
