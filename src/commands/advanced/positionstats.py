@@ -81,8 +81,8 @@ async def run(ctx, user, username):
         if rank > biggest_loss[1]:
             biggest_loss = (number, rank, racers)
 
-    if wins > 0 and win_streak[0] == 0:
-        win_streak = (race_count, 1, race_count)
+    if current_win_streak > 0:
+        win_streak = (current_win_streak, number - current_win_streak, number - 1)
 
     win_percent = (wins / race_count) * 100
     sorted_results = sorted(result_dict.items(), key=lambda x: x[1], reverse=True)
