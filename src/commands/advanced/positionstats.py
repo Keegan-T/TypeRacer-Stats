@@ -81,7 +81,7 @@ async def run(ctx, user, username):
         if rank > biggest_loss[1]:
             biggest_loss = (number, rank, racers)
 
-    if current_win_streak > 0:
+    if current_win_streak > 0 and current_win_streak > win_streak[0]:
         win_streak = (current_win_streak, number - current_win_streak, number - 1)
 
     win_percent = (wins / race_count) * 100
