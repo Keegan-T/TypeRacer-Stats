@@ -1,3 +1,4 @@
+from discord import DMChannel
 from discord.ext import commands
 
 from commands.checks import echo_check
@@ -19,7 +20,9 @@ class Echo(commands.Cog):
         if not args:
             return
 
-        await ctx.message.delete()
+        if not isinstance(ctx.channel, DMChannel):
+            await ctx.message.delete()
+
         await ctx.send(content=" ".join(args))
 
 
