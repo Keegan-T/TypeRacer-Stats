@@ -1,4 +1,6 @@
-from discord import Embed
+import json
+
+from discord import Embed, File
 from discord.ext import commands
 
 import database.text_results as top_tens
@@ -7,15 +9,21 @@ from api.users import get_stats
 from commands.basic.stats import get_args
 from config import prefix
 from database.bot_users import get_user
-from utils import errors, urls, strings, embeds
+from graphs.core import remove_file
+from utils import errors, urls, strings, embeds, dates
 
 command = {
     "name": "toptens",
     "aliases": ["top10s", "10s"],
     "description": "Displays the number of text top 10s a user appears in\n"
-                   f"`{prefix}top10s [username] best` will display a user's best top 10 performances",
+                   f"`{prefix}top10s [username] best` will display a user's best top 10 performances\n"
+                   f"`{prefix}top10s [username] export` will attach a file listing all of a user's top 10s",
     "parameters": "[username]",
-    "usages": ["toptens joshua728"],
+    "usages": [
+        "toptens joshua728"
+        "toptens keegant best"
+        "toptens flaneur export"
+    ],
     "multiverse": False,
     "temporal": False,
 }
@@ -34,9 +42,41 @@ class TopTens(commands.Cog):
             return await ctx.send(embed=result)
 
         username = result
-        best = len(args) > 1 and args[1] == "best"
+        best = False
+        if len(args) > 1:
+            if args[1] == "best":
+                best = True
+            elif args[1] == "export":
+                return await export(ctx, username)
 
         await run(ctx, user, username, best)
+
+
+async def export(ctx, username):
+    top_10s = top_tens.get_top_10s()
+    export_data = {
+        "timestamp": dates.now().timestamp(),
+        "1": [], "2": [], "3": [], "4": [], "5": [],
+        "6": [], "7": [], "8": [], "9": [], "10": [],
+        "missing": [],
+    }
+
+    for text_id, top_10 in top_10s.items():
+        usernames = [score["username"] for score in top_10]
+        try:
+            index = usernames.index(username)
+            export_data[str(index + 1)].append(text_id)
+        except ValueError:
+            export_data["missing"].append(text_id)
+
+    file_name = f"{username}_top_10s.json"
+    json_data = json.dumps(export_data)
+    with open(file_name, "w") as file:
+        file.write(json_data)
+
+    await ctx.send(file=File(file_name))
+
+    remove_file(file_name)
 
 
 async def run(ctx, user, username, best):

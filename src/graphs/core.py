@@ -163,5 +163,3 @@ def remove_file(file_name):
         os.remove(file_name)
     except (FileNotFoundError, PermissionError):
         return
-    except Exception:
-        raise Exception
