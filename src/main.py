@@ -30,7 +30,6 @@ async def on_ready():
 
 @bot.event
 async def on_command_error(ctx, error):
-    print(error)
     if isinstance(error, (commands.CheckFailure, commands.CommandNotFound)):
         return
 
@@ -46,6 +45,9 @@ async def on_command_error(ctx, error):
             return await ctx.send(embed=errors.connection_error())
         elif "Embed size exceeds maximum size" in str(error):
             return await ctx.send(embed=errors.embed_limit_exceeded())
+
+        if isinstance(error.original, discord.Forbidden):
+            return log(f"Failed to send a message in <#{ctx.channel.id}>. Missing permissions.")
 
     log_message = get_log_message(ctx.message)
     log_error(log_message, error)
