@@ -160,3 +160,18 @@
 
 10/21/2024
 - Added -calculator
+
+10/30/2024
+- Added text improvement count in -races and -textbestgraph texts
+
+11/2/2024
+- Removed banned users from -leaderboard textbests
+
+11/5/2024
+- Added average gain to -comparegraph
+
+1/24/2025
+- Added -toptens [username] export
+
+3/19/2025
+- Added -leaderboard toptens export

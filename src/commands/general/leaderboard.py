@@ -1,4 +1,6 @@
-from discord import Embed
+import json
+
+from discord import Embed, File
 from discord.ext import commands
 
 import database.competition_results as competition_results
@@ -8,7 +10,8 @@ import database.users as users
 from config import prefix
 from database.alts import get_alts
 from database.bot_users import get_user
-from utils import errors, urls, strings
+from graphs.core import remove_file
+from utils import errors, urls, strings, dates
 
 categories = ["races", "points", "awards", "textbests", "textstyped", "toptens",
               "textrepeats", "totaltextwpm", "wpm", "racetime", "characters"]
@@ -160,8 +163,34 @@ async def run(ctx, user, category, text_id=None):
         top = 10
         if category.isnumeric():
             top = int(category)
-        title = f"Top {top} Appearances"
+
         leaderboard, text_count = top_tens.get_top_n_counts(top)
+
+        if text_id == "export":
+            export_data = {
+                "timestamp": dates.now().timestamp(),
+                "total_texts": text_count,
+                "users": []
+            }
+
+            for i, leader in enumerate(leaderboard):
+                username, appearances = leader
+                export_data["users"].append({
+                    "username": username,
+                    "appearances": appearances,
+                })
+
+            file_name = f"top_{top}_appearances.json"
+            json_data = json.dumps(export_data)
+            with open(file_name, "w") as file:
+                file.write(json_data)
+
+            await ctx.send(file=File(file_name))
+
+            remove_file(file_name)
+            return
+
+        title = f"Top {top} Appearances"
 
         for i, leader in enumerate(leaderboard[:10]):
             rank = strings.rank(i + 1)
