@@ -41,7 +41,7 @@ async def run(ctx, user, username):
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
 
-    unraced = users.get_unraced_text_ids(username, universe)
+    unraced = users.get_unraced_texts(username, universe)
     text_count = texts.get_text_count(universe)
     unraced_count = len(unraced)
     raced_percent = ((text_count - unraced_count) / text_count) * 100

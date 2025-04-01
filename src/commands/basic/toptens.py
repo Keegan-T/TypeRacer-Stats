@@ -54,11 +54,12 @@ class TopTens(commands.Cog):
 
 async def export(ctx, username):
     top_10s = top_tens.get_top_10s()
+    unraced_text_ids = [text["id"] for text in users.get_unraced_texts(username)]
     export_data = {
         "timestamp": dates.now().timestamp(),
         "1": [], "2": [], "3": [], "4": [], "5": [],
         "6": [], "7": [], "8": [], "9": [], "10": [],
-        "missing": [],
+        "11+": [], "unraced": [],
     }
 
     for text_id, top_10 in top_10s.items():
@@ -67,7 +68,10 @@ async def export(ctx, username):
             index = usernames.index(username)
             export_data[str(index + 1)].append(text_id)
         except ValueError:
-            export_data["missing"].append(text_id)
+            if text_id in unraced_text_ids:
+                export_data["unraced"].append(text_id)
+            else:
+                export_data["11+"].append(text_id)
 
     file_name = f"{username}_top_10s.json"
     json_data = json.dumps(export_data)

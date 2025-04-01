@@ -376,7 +376,7 @@ async def get_text_bests_time_travel(username, universe, user, race_stats=False)
     return text_bests
 
 
-def get_unraced_text_ids(username, universe):
+def get_unraced_texts(username, universe="play"):
     from database.texts import get_texts
     table = races_table_name(universe)
     user_texts = db.fetch(f"""
