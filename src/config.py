@@ -45,7 +45,7 @@ supporters = [
 ]
 bot_id = 1213306973374644256
 legacy_bot_id = 742267194443956334
-typeracer_stats_channel_id = 1197837519090352168
+typeracer_stats_channel_id = 746460695670816798
 
 donate_link = "https://www.paypal.com/donate/?business=X9JW4MC3CLNAE&no_recurring=0&currency_code=USD&item_name=TypeRacer+Stats"
 root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
