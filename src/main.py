@@ -4,21 +4,24 @@ from datetime import datetime, timezone
 
 import discord
 from aiohttp import ClientConnectionError
+from discord import Embed
 from discord.ext import commands, tasks
 from requests.exceptions import SSLError
 
 from commands.checks import ban_check
-from config import prefix, bot_token, staging, welcome_message, legacy_bot_id, bot_owner
-from database import records
+from config import prefix, bot_token, staging, welcome_message, legacy_bot_id, bot_owner, typeracer_stats_channel_id
+from database import records, bot_users
 from database.bot_users import update_commands
 from database.welcomed import get_welcomed, add_welcomed
 from tasks import import_competitions, update_important_users, update_top_tens
-from utils import errors
+from utils import errors, colors
 from utils.logging import get_log_message, log, log_error
 
 bot = commands.Bot(command_prefix=prefix, case_insensitive=True, intents=discord.Intents.all())
 bot.remove_command("help")
 bot.add_check(ban_check)
+
+total_commands = sum(bot_users.get_total_commands().values())
 
 
 @bot.event
@@ -82,8 +85,21 @@ async def on_message(message):
 
 @bot.event
 async def on_command_completion(ctx):
+    global total_commands
     if not staging:
         update_commands(ctx.author.id, ctx.command.name)
+    total_commands += 1
+    if total_commands % 50_000 == 0:
+        await celeberate_milestone(ctx, total_commands)
+
+
+async def celeberate_milestone(ctx, milestone):
+    channel = bot.get_channel(typeracer_stats_channel_id)
+    await channel.send(embed=Embed(
+        title="Command Milestone! :tada:",
+        description=f"<@{ctx.author.id}> just ran the {milestone:,}th command!",
+        color=colors.success
+    ))
 
 
 @bot.event
