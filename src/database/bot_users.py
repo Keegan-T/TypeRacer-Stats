@@ -77,6 +77,17 @@ def get_commands(user_id):
 
     return user_commands
 
+def get_top_users():
+    users = db.fetch("SELECT id, commands FROM users")
+    top_users = []
+    for discord_id, commands in users:
+        total_commands = sum(json.loads(commands).values())
+        top_users.append((discord_id, total_commands))
+
+    top_users.sort(key=lambda x: x[1], reverse=True)
+
+    return top_users
+
 
 def add_user(id):
     user = {

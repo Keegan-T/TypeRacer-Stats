@@ -5,7 +5,7 @@ from discord import Embed
 from discord.ext import commands
 
 from config import prefix
-from database.bot_users import get_user, get_commands, get_all_commands, get_total_commands
+from database.bot_users import get_user, get_commands, get_all_commands, get_total_commands, get_top_users
 from utils import errors, colors, strings
 
 command = {
@@ -39,8 +39,8 @@ class CommandLeaderboard(commands.Cog):
             discord_id = strings.get_discord_id(args[0])
             if discord_id:
                 return await user_leaderboard(ctx, user, discord_id)
-            elif args[0] == "all":
-                return await user_leaderboard(ctx, user, "all")
+            elif args[0] in ["all", "users"]:
+                return await user_leaderboard(ctx, user, args[0])
 
             command_name = args[0]
             return await command_leaderboard(ctx, user, command_name)
@@ -91,23 +91,33 @@ async def command_leaderboard(ctx, user, name):
 
 
 async def user_leaderboard(ctx, user, discord_id):
-    if discord_id == "all":
-        command_usage = get_total_commands()
-        description = "**Overall**\n\n"
-    else:
-        command_usage = get_commands(discord_id)
-        if not command_usage:
-            return await ctx.send(embed=no_commands(discord_id))
-        description = f"<@{discord_id}>\n\n"
+    title = "Most Used Commands"
+    description = "**Overall**\n\n"
 
-    total_usages = sum([command[1] for command in command_usage.items()])
-    most_used_commands = sorted(command_usage.items(), key=lambda x: x[1], reverse=True)
-    for i, command_info in enumerate(most_used_commands[:10]):
-        name, usages = command_info
-        description += f"{i + 1}. {name} - {usages:,}\n"
+    if discord_id == "users":
+        title = "Top Command Users"
+        top_users = get_top_users()
+        total_usages = sum([users[1] for users in top_users])
+        for i, (discord_id, usages) in enumerate(top_users[:20]):
+            description += f"{i + 1}. <@{discord_id}> - {usages:,}\n"
+
+    else:
+        if discord_id == "all":
+            command_usage = get_total_commands()
+        else:
+            command_usage = get_commands(discord_id)
+            if not command_usage:
+                return await ctx.send(embed=no_commands(discord_id))
+            description = f"<@{discord_id}>\n\n"
+
+        total_usages = sum([command[1] for command in command_usage.items()])
+        most_used_commands = sorted(command_usage.items(), key=lambda x: x[1], reverse=True)
+        for i, command_info in enumerate(most_used_commands[:10]):
+            name, usages = command_info
+            description += f"{i + 1}. {name} - {usages:,}\n"
 
     embed = Embed(
-        title=f"Most Used Commands",
+        title=title,
         description=description,
         color=user["colors"]["embed"],
     )
