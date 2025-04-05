@@ -2,10 +2,10 @@
   "speed": [
     {
       "record": "Fastest Race (Adjusted Speed)",
-      "username": "taran",
-      "wpm": 421.053,
-      "date": "4/19/2024",
-      "race_number": 1506
+      "username": "helloimnotgood1",
+      "wpm": 418.994,
+      "date": "3/16/2025",
+      "race_number": 11101
     },
     {
       "record": "Fastest Race (Maintrack) (Unlagged Speed)",
@@ -23,10 +23,10 @@
     },
     {
       "record": "Best Last 10 (Unlagged Speed)",
-      "username": "taran127",
-      "wpm": 394.16,
-      "date": "6/7/2020",
-      "link": "https://data.typeracer.com/pit/race_history?user=taran127&startDate=2020-06-08&n=10"
+      "username": "xanderec",
+      "wpm": 404.74,
+      "date": "4/4/2025",
+      "link": "https://data.typeracer.com/pit/race_history?user=mysticalmonkey&n=10&startDate=2025-04-05"
     },
     {
       "record": "Best Last 10 Non-Quit Maintrack (Unlagged Speed)",
