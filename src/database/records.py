@@ -138,6 +138,8 @@ def get_club_scores():
     alts = get_alts()
     for score in scores:
         username = score["username"]
+        if "taran" in alts[username]:
+            continue
         if username in alts:
             existing_score = next((score for score in top_scores if score["username"] in alts[username]), None)
         else:
