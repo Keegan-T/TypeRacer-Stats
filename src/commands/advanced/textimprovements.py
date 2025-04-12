@@ -92,7 +92,7 @@ async def run(ctx, user, username, sort):
         replay1 = urls.replay(username, race1["number"], universe)
         replay2 = urls.replay(username, race2["number"], universe)
         description += (
-            f"[{race1['wpm']:,.2f}]({replay1}) ➜ [{race2['wpm']:,.2f}]({replay2}) (+{improvement:,.2f}) - "
+            f"[{race1['wpm']:,.2f}]({replay1}) ➜ [{race2['wpm']:,.2f}]({replay2}) (+{improvement:,.2f} WPM) - "
             f"[#{text_id}]({urls.trdata_text(text_id, universe)}) - "
             f"{strings.discord_timestamp(race2['timestamp'])}\n"
         )
