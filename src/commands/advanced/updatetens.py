@@ -5,9 +5,11 @@ import database.text_results as text_results
 import database.users as users
 from commands.basic.stats import get_args
 from commands.locks import tens_lock
+from config import bot_owner
 from database.alts import get_alts
 from database.bot_users import get_user
 from utils import errors, embeds, strings, colors
+from tasks import update_top_tens
 
 command = {
     "name": "updatetens",
@@ -39,7 +41,26 @@ class UpdateTens(commands.Cog):
         if embeds.is_embed(result):
             return await ctx.send(embed=result)
 
-        username = get_args(user, args, command)
+        username = result
+
+        if username == "all" and ctx.author.id == bot_owner:
+            async with tens_lock:
+                text_count = text_results.get_count()
+                await ctx.send(embed=Embed(
+                    title="Top Tens Update Request",
+                    description=f"Updating {text_count:,} top tens",
+                    color=user["colors"]["embed"],
+                ))
+
+                await update_top_tens()
+
+                await ctx.send(embed=Embed(
+                    title="Update Complete",
+                    description=f"Finished updating all top tens",
+                    color=user["colors"]["embed"],
+                ), content=f"<@{ctx.author.id}>")
+
+                return
 
         async with tens_lock:
             await run(ctx, user, username)
