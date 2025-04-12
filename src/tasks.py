@@ -131,12 +131,15 @@ async def import_top_ten_users():
 
     await asyncio.sleep(300)
 
-    for stats in unique_users.values():
+    log(f"Importing {len(unique_users):,} users")
+
+    for i, stats in enumerate(unique_users.values()):
         stats = get_stats(stats=stats)
         if stats is None:
             continue
         async with import_lock:
             await download(stats=stats)
+        await asyncio.sleep(1)
 
     return unique_users.keys()
 
@@ -153,8 +156,7 @@ async def update_top_tens():
 
     log("Calculating top tens")
 
-    for user in user_list:
-        username = user["username"]
+    for username in user_list:
         text_bests = get_text_bests(username, race_stats=True)
         for race in text_bests:
             text_id = race["text_id"]
