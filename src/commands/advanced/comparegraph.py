@@ -11,7 +11,7 @@ from utils import errors, urls, strings, embeds
 
 command = {
     "name": "comparegraph",
-    "aliases": ["cg", "vsg", "vg"],
+    "aliases": ["flaneur", "cg", "vsg", "vg"],
     "description": "Displays histograms comparing two user's text best WPM differences",
     "parameters": "[username_1] [username_2]",
     "usages": ["comparegraph keegant hospitalforsouls2"],
