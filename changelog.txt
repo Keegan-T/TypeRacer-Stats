@@ -178,3 +178,6 @@
 
 4/1/2025
 - Added -commandleaderboard users
+
+4/12/2025
+- Added -textimprovements
