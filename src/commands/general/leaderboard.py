@@ -137,8 +137,6 @@ async def run(ctx, user, category, text_id=None):
 
         for leader in leaderboard:
             username = leader["username"]
-            if "taran" in alts.get(username, []):
-                continue
             if username in alts and any(alt in unique_usernames for alt in alts[username]):
                 continue
             unique_usernames.add(username)
