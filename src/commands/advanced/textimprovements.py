@@ -2,6 +2,8 @@ from discord import Embed
 from discord.ext import commands
 
 import database.users as users
+from api.users import get_stats
+from commands.basic.download import run as download
 from database import races
 from database.bot_users import get_user
 from utils import errors, urls, strings, embeds
@@ -51,6 +53,9 @@ async def run(ctx, user, username, sort):
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
     era_string = strings.get_era_string(user)
+
+    api_stats = get_stats(username, universe=universe)
+    await download(stats=api_stats, universe=universe)
 
     race_list = await races.get_races(
         username, columns=["text_id", "number", "wpm", "timestamp"], universe=universe,
