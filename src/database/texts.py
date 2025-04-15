@@ -210,7 +210,7 @@ def disable_text(text_id):
 
     for username in outdated_users:
         username = str(username[0])
-        update_text_stats(username)
+        update_text_stats(username, "play")
 
 
 def get_text_repeat_leaderboard(text_id):
