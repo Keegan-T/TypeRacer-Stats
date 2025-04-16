@@ -5,6 +5,7 @@ import database.races as races
 import database.users as users
 from commands.advanced.races import add_stats
 from commands.locks import big_lock
+from database import texts
 from database.bot_users import get_user
 from utils import errors, colors, strings, embeds
 
@@ -71,6 +72,9 @@ async def run(ctx, user, username, number, category):
     if category == "races":
         number = round(number)
 
+    text_list = texts.get_texts()
+    text_lengths = {text["id"]: len(text["quote"]) for text in text_list}
+
     columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
     race_list = await races.get_races(
         username, columns=columns, universe=universe, start_date=user["start_date"], end_date=user["end_date"]
@@ -85,8 +89,9 @@ async def run(ctx, user, username, number, category):
         end_index = number
         while end_index < len(race_list):
             start_race = race_list[start_index]
+            start_time = start_race[7] - (text_lengths[start_race[0]] * 12) / start_race[2]
             end_race = race_list[end_index - 1]
-            difference = end_race[7] - start_race[7]
+            difference = end_race[7] - start_time
             if difference < fastest:
                 fastest = difference
                 race_range = [start_index, end_index]
@@ -108,8 +113,11 @@ async def run(ctx, user, username, number, category):
                 while total_points - race_list[start_index][4] >= number:
                     total_points -= race_list[start_index][4]
                     start_index += 1
-                if race_list[end_index][7] - race_list[start_index][7] < fastest:
-                    fastest = race_list[end_index][7] - race_list[start_index][7]
+                start_race = race_list[start_index]
+                start_time = start_race[7] - (text_lengths[start_race[0]] * 12) / start_race[2]
+                difference = race_list[end_index][7] - start_time
+                if difference < fastest:
+                    fastest = difference
                     race_range = [start_index, end_index + 1]
             if single:
                 race_range = [end_index, end_index + 1]
