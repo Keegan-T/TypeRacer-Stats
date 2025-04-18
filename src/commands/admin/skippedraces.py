@@ -2,11 +2,12 @@ from discord import Embed
 from discord.ext import commands
 
 from api.races import get_races
+from api.users import get_stats
 from commands.basic.stats import get_args
 from commands.checks import admin_check
 from database import races
 from database.bot_users import get_user
-from utils import embeds, strings
+from utils import embeds, strings, errors
 
 command = {
     "name": "skippedraces",
@@ -35,6 +36,10 @@ class SkippedRaces(commands.Cog):
 
 
 async def run(ctx, user, username):
+    stats = get_stats(username)
+    if not stats:
+        return await ctx.send(embed=errors.invalid_username())
+
     await ctx.send(embed=Embed(
         title="Checking Skipped Races",
         description=f"Scanning races for {strings.escape_discord_format(username)}",
