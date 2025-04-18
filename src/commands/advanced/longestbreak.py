@@ -22,7 +22,7 @@ class LongestBreak(commands.Cog):
         self.bot = bot
 
     @commands.command(aliases=command["aliases"])
-    async def commandname(self, ctx, *args):
+    async def longestbreak(self, ctx, *args):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
