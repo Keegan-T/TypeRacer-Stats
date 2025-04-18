@@ -181,3 +181,6 @@
 
 4/12/2025
 - Added -textimprovements
+
+4/18/2025
+- Added back -longestbreak
