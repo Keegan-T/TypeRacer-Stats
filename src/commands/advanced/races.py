@@ -338,7 +338,7 @@ def add_stats(embed, username, race_list, start, end, mini=False, universe="play
             f"<t:{int(last_race[7])}>\n"
             f"**Longest Break:** {strings.format_duration_short(longest_break['time'])}"
             f" (Starting on Race [#{longest_break['start_race']['number']:,}]"
-            f"({urls.replay(username, longest_break['start_race']['number'], universe)})\n"
+            f"({urls.replay(username, longest_break['start_race']['number'], universe)}))\n"
             f"<t:{int(longest_break['start_race']['timestamp'])}> - "
             f"<t:{int(longest_break['end_race']['timestamp'])}>"
         )
