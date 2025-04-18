@@ -8,9 +8,10 @@ from discord import Embed
 from discord.ext import commands, tasks
 from requests.exceptions import SSLError
 
+import records
 from commands.checks import ban_check
 from config import prefix, bot_token, staging, welcome_message, legacy_bot_id, bot_owner, typeracer_stats_channel_id
-from database import records, bot_users
+from database import bot_users
 from database.bot_users import update_commands
 from database.welcomed import get_welcomed, add_welcomed
 from tasks import import_competitions, update_important_users, update_top_tens
@@ -118,7 +119,7 @@ async def loops():
             await update_important_users()
             log("Finished updating important users")
             log(f"Updating records")
-            await records.update(bot)
+            await records.update_all(bot)
             log(f"Finished updating records")
             if datetime.now(tz=timezone.utc).day == 1:
                 log(f"Updating top tens")

@@ -5,21 +5,21 @@
       "username": "mysticalmonkey",
       "wpm": 424.612,
       "date": "4/7/2025",
-      "race_number": 316
+      "link": "https://data.typeracer.com/pit/result?id=%7Ctr:mysticalmonkey%7C316"
     },
     {
       "record": "Fastest Race (Maintrack) (Unlagged Speed)",
       "username": "mythicalrocket",
       "wpm": 299.57,
       "date": "7/16/2023",
-      "race_number": 10415
+      "link": "https://data.typeracer.com/pit/result?id=%7Ctr:mythicalrocket%7C10415"
     },
     {
       "record": "Fastest Race (Maintrack) (Adjusted Speed)",
       "username": "joshua728",
       "wpm": 317.443,
       "date": "7/3/2023",
-      "race_number": 26277
+      "link": "https://data.typeracer.com/pit/result?id=%7Ctr:joshua728%7C26277"
     },
     {
       "record": "Best Last 10 (Unlagged Speed)",
@@ -142,7 +142,7 @@
     {
       "record": "Fastest 10,000 Points",
       "username": "xanderec",
-      "time": "15:00:43.02",
+      "time": "15:43.02",
       "date": "3/18/2025",
       "link": "https://discord.com/channels/175964903033667585/746460695670816798/1351915533502644304"
     },

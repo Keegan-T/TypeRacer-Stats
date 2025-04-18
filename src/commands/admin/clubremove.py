@@ -3,8 +3,8 @@ from discord.ext import commands
 
 import database.races_300 as races_300
 from commands.checks import admin_check
-from database import records
 from database.bot_users import get_user
+from records import update_section
 from utils import strings
 
 command = {
@@ -12,7 +12,7 @@ command = {
     "aliases": ["cd"],
     "description": "Remove a user from the 300 WPM club",
     "parameters": "[username]",
-    "usages": ["clubremove keegant"],
+    "usages": ["clubremove taran127"],
 }
 
 
@@ -25,24 +25,24 @@ class ClubRemove(commands.Cog):
     async def clubremove(self, ctx, *args):
         user = get_user(ctx)
 
-        if not args:
-            return
-        username = args[0]
+        if args:
+            username = args[0]
 
-        await run(ctx, user, username)
-        await records.update_300_club(self.bot)
+            await ctx.send(embed=Embed(
+                title="Removing User",
+                description=f"Removing {strings.escape_discord_format(username)} from the 300 WPM club",
+                color=user["colors"]["embed"],
+            ))
 
+            races_300.delete_user_scores(username)
 
-async def run(ctx, user, username):
-    races_300.delete_user_scores(username)
+        await update_section(self.bot, "club")
 
-    embed = Embed(
-        title="User Removed",
-        description=f"Removed all {strings.escape_discord_format(username)} scores from the 300 WPM Club",
-        color=user["colors"]["embed"],
-    )
-
-    await ctx.send(embed=embed)
+        await ctx.send(embed=Embed(
+            title="Club Updated",
+            description=f"Records channel has been updated",
+            color=user["colors"]["embed"],
+        ))
 
 
 async def setup(bot):
