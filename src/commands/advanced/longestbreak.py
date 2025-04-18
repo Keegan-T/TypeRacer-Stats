@@ -40,7 +40,10 @@ async def run(ctx, user, username):
 
     era_string = strings.get_era_string(user)
 
-    race_list = await races.get_races(username, ["number", "timestamp"], universe=universe)
+    race_list = await races.get_races(
+        username, ["number", "timestamp"], universe=universe,
+        start_date = user["start_date"], end_date = user["end_date"]
+    )
     if not race_list:
         return await ctx.send(embed=errors.no_races(universe), content=era_string)
     race_list.sort(key=lambda x: x[1])
