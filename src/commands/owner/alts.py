@@ -45,7 +45,7 @@ async def add(ctx, user, main_username, alt_username):
 
     alt_list = alts.get_alts()
     group = alt_list[main_username]
-    description = f"Added {strings.escape_discord_format(alt_username)} to:\n" + ", ".join(group)
+    description = f"Added {alt_username} to:\n" + ", ".join(group)
 
     await send_embed(ctx, user, description)
 
@@ -61,7 +61,7 @@ async def remove(ctx, user, username):
 async def send_embed(ctx, user, description):
     embed = Embed(
         title="Alt Accounts",
-        description=description,
+        description=strings.escape_discord_format(description),
         color=user["colors"]["embed"],
     )
 
