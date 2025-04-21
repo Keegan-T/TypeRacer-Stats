@@ -1,7 +1,7 @@
 from discord import Embed
 from discord.ext import commands
 
-from config import bot_admins, supporters, bot_owner, bot_id, legacy_bot_id
+from config import bot_admins, supporters, bot_owner, bot_id
 from database.bot_users import get_user
 
 command = {
@@ -29,7 +29,7 @@ async def run(ctx, user):
     description = (
         f"<@{bot_id}> is an extensive <:typeracer_logo:1219587776308183060> [TypeRacer]"
         "(https://play.typeracer.com/) statistics bot designed to enhance the TypeRacer experience. "
-        f"It is a rewrite of the popular <@{legacy_bot_id}> by <@697048255254495312>, "
+        f"It is a rewrite of the original TypeRacerStats bot by <@697048255254495312>, "
         "providing a handful of new commands and features.\n[Click here]"
         "(https://keegan-t.github.io/TypeRacer-Stats-Changes/) to view a comprehensive list of changes.\n\n"
         f"Developed by <@{bot_owner}>, written in <:python_logo:1219588087383064647> Python.\n"

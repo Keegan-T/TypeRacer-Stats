@@ -10,7 +10,7 @@ from requests.exceptions import SSLError
 
 import records
 from commands.checks import ban_check
-from config import prefix, bot_token, staging, welcome_message, legacy_bot_id, bot_owner, typeracer_stats_channel_id
+from config import prefix, bot_token, staging, welcome_message, bot_owner, typeracer_stats_channel_id
 from database import bot_users
 from database.bot_users import update_commands
 from database.welcomed import get_welcomed, add_welcomed
@@ -67,9 +67,6 @@ async def on_message(message):
 
         if replied_message.author == bot.user:
             await message.reply(content=f"No need to reply to me anymore!")
-
-        elif replied_message.author.id == legacy_bot_id:
-            return
 
     if message.content.startswith(prefix) and not staging:
         log_message = get_log_message(message)
