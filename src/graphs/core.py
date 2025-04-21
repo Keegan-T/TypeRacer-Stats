@@ -1,6 +1,7 @@
 import os
 from datetime import datetime, timezone
 
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import rcParams
@@ -17,7 +18,7 @@ rcParams["font.family"] = "sans-serif"
 rcParams["font.sans-serif"] = ["Exo 2"]
 rcParams["font.size"] = 11
 cmap_keegant = LinearSegmentedColormap.from_list("keegant", ["#0094FF", "#FF00DC"])
-plt.register_cmap(name="keegant", cmap=cmap_keegant)
+matplotlib.colormaps.register(cmap_keegant)
 
 
 class LineHandler(HandlerLine2D):
@@ -89,7 +90,7 @@ def get_line_cmap(ax, line_index, user):
 
     line = ax.get_lines()[line_index]
     x, y = line.get_data()
-    ax.lines.pop(line_index)
+    ax.lines[line_index].remove()
 
     points = np.array([x, y]).T.reshape(-1, 1, 2)
     segments = np.concatenate([points[:-1], points[1:]], axis=1)
