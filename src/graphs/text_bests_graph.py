@@ -27,9 +27,10 @@ def render(user, username, x, y, category, file_name, universe):
         title += f"\nUniverse: {universe}"
     ax.set_title(title)
 
-    starts, remaining = y[:10], y[10:]
-    if max(starts) > max(remaining):
-        ax.set_ylim(top=1.02 * max(remaining))
+    if len(y) > 10:
+        starts, remaining = y[:10], y[10:]
+        if max(starts) > max(remaining):
+            ax.set_ylim(top=1.02 * max(remaining))
 
     color_graph(ax, user)
 
