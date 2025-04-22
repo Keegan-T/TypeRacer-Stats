@@ -155,7 +155,7 @@ async def delete_race(username, race_number):
     log(f"Deleting race {username}|{race_number}")
 
     db.run("""
-        INSERT INTO modified_races (id, username, number, wpm)
+        INSERT OR IGNORE INTO modified_races (id, username, number, wpm)
         SELECT id, username, number, wpm FROM races
         WHERE username = ?
         AND number = ?
