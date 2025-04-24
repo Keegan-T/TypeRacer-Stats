@@ -7,12 +7,12 @@ from discord.ext import commands
 import commands.locks as locks
 import database.races as races
 import database.users as users
-from commands.basic.realspeedaverage import command_in_use
 from database.bot_users import get_user
 from database.texts import get_disabled_text_ids
 from graphs import line_graph
 from graphs.core import remove_file
 from utils import errors, colors, strings, dates, embeds
+from utils.errors import command_in_use
 
 command = {
     "name": "raceline",

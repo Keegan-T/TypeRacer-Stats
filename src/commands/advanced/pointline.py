@@ -2,9 +2,9 @@ from discord.ext import commands
 
 import commands.locks as locks
 from commands.advanced.raceline import get_args, run
-from commands.basic.realspeedaverage import command_in_use
 from database.bot_users import get_user
 from utils import embeds
+from utils.errors import command_in_use
 
 command = {
     "name": "pointline",

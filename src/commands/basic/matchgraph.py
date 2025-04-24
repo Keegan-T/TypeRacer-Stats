@@ -5,13 +5,13 @@ import commands.recent as recent
 from api.races import get_match
 from api.users import get_stats
 from commands.basic.realspeed import get_args
-from commands.basic.realspeedaverage import command_in_use
 from commands.locks import match_lock
 from config import prefix
 from database.bot_users import get_user
 from graphs import match_graph
 from graphs.core import remove_file
 from utils import errors, urls, strings, embeds
+from utils.errors import command_in_use
 
 command = {
     "name": "matchgraph",

@@ -1,10 +1,11 @@
 from discord.ext import commands
 
 import commands.locks as locks
-from commands.basic.realspeedaverage import get_args, run, command_in_use
+from commands.basic.realspeedaverage import get_args, run
 from config import prefix
 from database.bot_users import get_user
 from utils import embeds
+from utils.errors import command_in_use
 
 command = {
     "name": "rawspeedaverage",

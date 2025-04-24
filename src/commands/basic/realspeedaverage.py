@@ -8,6 +8,7 @@ from commands.basic.realspeed import run as run_realspeed
 from config import prefix
 from database.bot_users import get_user
 from utils import errors, colors, urls, strings, embeds
+from utils.errors import command_in_use
 
 command = {
     "name": "realspeedaverage",
@@ -227,14 +228,6 @@ def max_range():
         title="Too Many Races",
         description="Can only check the average of up to 10 races at once",
         color=colors.error,
-    )
-
-
-def command_in_use():
-    return Embed(
-        title=f"Command In Use",
-        description=f"Please wait until the current usage has finished",
-        color=colors.warning,
     )
 
 

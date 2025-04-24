@@ -184,6 +184,14 @@ def unexpected_error():
     )
 
 
+def command_in_use():
+    return Embed(
+        title=f"Command In Use",
+        description=f"Please wait until the current usage has finished",
+        color=warning,
+    )
+
+
 def large_query_in_progress():
     return Embed(
         title="Large Query In Progress",
