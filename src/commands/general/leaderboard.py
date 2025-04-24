@@ -7,11 +7,13 @@ import database.competition_results as competition_results
 import database.text_results as top_tens
 import database.texts as texts
 import database.users as users
+from commands.locks import leaderboard_lock
 from config import prefix
 from database.alts import get_alts
 from database.bot_users import get_user
 from graphs.core import remove_file
 from utils import errors, urls, strings, dates
+from utils.errors import command_in_use
 
 categories = ["races", "points", "awards", "textbests", "textstyped", "toptens",
               "textrepeats", "totaltextwpm", "wpm", "racetime", "characters"]
@@ -33,25 +35,29 @@ class Leaderboard(commands.Cog):
 
     @commands.command(aliases=command["aliases"])
     async def leaderboard(self, ctx, *args):
-        user = get_user(ctx)
-        text_id = None
+        if leaderboard_lock.locked():
+            return await ctx.send(embed=command_in_use())
 
-        if not args:
-            return await ctx.send(embed=errors.missing_argument(command))
+        async with leaderboard_lock:
+            user = get_user(ctx)
+            text_id = None
 
-        category_string = args[0]
+            if not args:
+                return await ctx.send(embed=errors.missing_argument(command))
 
-        if category_string.isnumeric() and 1 <= int(category_string) <= 10:
-            category = category_string
-        else:
-            category = strings.get_category(categories, category_string)
-            if not category:
-                return await ctx.send(embed=errors.invalid_choice("category", categories))
+            category_string = args[0]
 
-        if len(args) > 1:
-            text_id = args[1]
+            if category_string.isnumeric() and 1 <= int(category_string) <= 10:
+                category = category_string
+            else:
+                category = strings.get_category(categories, category_string)
+                if not category:
+                    return await ctx.send(embed=errors.invalid_choice("category", categories))
 
-        await run(ctx, user, category, text_id)
+            if len(args) > 1:
+                text_id = args[1]
+
+            await run(ctx, user, category, text_id)
 
 
 async def run(ctx, user, category, text_id=None):

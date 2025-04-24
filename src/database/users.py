@@ -151,7 +151,6 @@ async def get_most_text_repeats(limit):
             FROM races
             INDEXED BY idx_races_username_text_id
             GROUP BY username, text_id
-            ORDER BY times_typed DESC
         ) AS subquery
         GROUP BY username
         ORDER BY max_times DESC
