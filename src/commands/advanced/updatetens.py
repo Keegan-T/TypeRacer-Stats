@@ -3,13 +3,15 @@ from discord.ext import commands
 
 import database.text_results as text_results
 import database.users as users
+from api.users import get_stats
+from commands.basic.download import run as download
 from commands.basic.stats import get_args
 from commands.locks import tens_lock
 from config import bot_owner
 from database.alts import get_alts
 from database.bot_users import get_user
-from utils import errors, embeds, strings, colors
 from tasks import update_top_tens
+from utils import errors, embeds, strings, colors
 
 command = {
     "name": "updatetens",
@@ -67,6 +69,16 @@ class UpdateTens(commands.Cog):
 
 
 async def run(ctx, user, username):
+    api_stats = get_stats(username)
+    if api_stats["disqualified"]:
+        await download(stats=api_stats)
+        text_results.delete_user_results(username)
+        return await ctx.send(embed=Embed(
+            title="Top Tens Update Request",
+            description=f"Deleted top tens for banned user {strings.escape_discord_format(username)}",
+            color=user["colors"]["embed"],
+        ))
+
     stats = users.get_user(username)
     if not stats:
         return await ctx.send(embed=errors.import_required(username))

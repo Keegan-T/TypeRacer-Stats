@@ -184,3 +184,6 @@
 
 4/18/2025
 - Added back -longestbreak
+
+4/26/2025
+- Added banned user detection for -updatetens
