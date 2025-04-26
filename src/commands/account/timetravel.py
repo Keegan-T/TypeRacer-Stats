@@ -109,7 +109,7 @@ async def run(ctx, user, start_date, end_date):
         title=random.choice(travel_messages) + "...",
         color=Color(random.randint(0, 0xFFFFFF))
     ))
-    await asyncio.sleep(1)
+    await asyncio.sleep(0.5)
 
     embed = Embed(
         title="Welcome to the Past!",
