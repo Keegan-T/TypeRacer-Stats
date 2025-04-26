@@ -127,15 +127,17 @@ def parse_command(user, params, args, command):
 
         elif param_name == "date":
             if missing:
-                return_args.append(datetime.now(timezone.utc))
+                return_args.append(dates.now())
             else:
                 try:
                     if args[i] == "now":
                         date = dates.now()
+                    elif args[i].isnumeric():
+                        date = datetime.fromtimestamp(int(args[i]), tz=timezone.utc)
                     else:
                         date = parser.parse(args[i])
                     return_args.append(date)
-                except ValueError:
+                except (ValueError, OverflowError):
                     return errors.invalid_date()
 
         elif param_name == "duration":
