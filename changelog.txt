@@ -187,3 +187,6 @@
 
 4/26/2025
 - Added banned user detection for -updatetens
+
+4/27/2025
+- Added -textperformances

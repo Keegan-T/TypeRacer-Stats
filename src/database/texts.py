@@ -3,6 +3,7 @@ import sqlite3
 from database import db
 from database.alts import get_alts
 from utils import urls
+from utils.text_difficulty import set_difficulties
 
 
 def table_name(universe):
@@ -19,7 +20,8 @@ def create_table(universe):
             id INTEGER PRIMARY KEY,
             quote TEXT,
             disabled INTEGER,
-            ghost TEXT
+            ghost TEXT,
+            difficulty REAL
         )    
     """)
 
@@ -27,7 +29,7 @@ def create_table(universe):
 def add_texts(text_list, universe):
     db.run_many(f"""
         INSERT OR IGNORE INTO {table_name(universe)}
-        VALUES (?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, NULL)
     """, text_list)
 
 
@@ -45,6 +47,7 @@ def get_texts(as_dictionary=False, include_disabled=True, universe="play"):
                 "quote": t["quote"],
                 "disabled": t["disabled"],
                 "ghost": t["ghost"],
+                "difficulty": t["difficulty"],
             } for t in texts
         }
 
@@ -242,3 +245,17 @@ def filter_disabled_texts(text_list):
     disabled_text_ids = get_disabled_text_ids()
 
     return [text for text in text_list if text["text_id"] not in disabled_text_ids]
+
+
+def update_text_difficulties(universe):
+    print(f"Updating text difficulties for {universe}... ")
+    table = table_name(universe)
+    text_list = get_texts(include_disabled=False, universe=universe)
+    if not text_list:
+        return
+    text_list = set_difficulties(text_list)
+    results = [(text["difficulty"], text["id"]) for text in text_list]
+
+    db.run_many(f"""
+        UPDATE {table} SET difficulty = ? WHERE id = ?
+    """, results)
