@@ -1,4 +1,3 @@
-from discord import Embed
 from discord.ext import commands
 
 import commands.recent as recent
@@ -58,7 +57,7 @@ def get_args(user, args, info):
 
     if "text_id" in params:
         text_id = category
-        category = None
+        category = "wpm"
 
     return username, category, text_id
 
@@ -70,103 +69,91 @@ async def run(ctx, user, username, category, text_id, reverse=True):
         return await ctx.send(embed=errors.import_required(username, universe))
     era_string = strings.get_era_string(user)
 
+    category_title = "WPM" if category == "wpm" else "Points"
+    sort_title = "Best" if reverse else "Worst"
+    title = f"{sort_title} Races"
+    header = ""
     text_list = texts.get_texts(as_dictionary=True, universe=universe)
-    limit = 10
 
     if text_id is not None:
-        text_id = int(text_id)
         if text_id not in text_list:
             return await ctx.send(embed=errors.unknown_text(universe))
+
         text = text_list[text_id]
         text["text_id"] = text_id
         race_list = races.get_text_races(username, text_id, universe, user["start_date"], user["end_date"])
         race_list.sort(key=lambda x: x["wpm"], reverse=reverse)
-        race_list = race_list[:limit]
-        limit = len(race_list)
-        embed = Embed()
-        embed.color = user["colors"]["embed"]
-        embeds.add_profile(embed, stats, universe)
-        embeds.add_universe(embed, universe)
+        race_list = race_list[:100]
         recent.text_id = text_id
 
-        if limit == 0:
-            description = strings.text_description(text, universe)
-            embed.title = f"Top 10 {'Best' if reverse else 'Worst'} Races"
-            embed.description = (
-                f"{description}\n\n"
+        if not race_list:
+            description = (
+                f"{strings.text_description(text, universe)}\n\n"
                 f"User has no races on this text\n"
                 f"[Race this text]({text['ghost']})"
             )
-            return await ctx.send(embed=embed, content=era_string)
-
-        top = ""
-        average = 0
-
-        for race in race_list:
-            score = f"{race['wpm']:,.2f} WPM"
-            average += race["wpm"]
-            top += (
-                f"[{score}]"
-                f"({urls.replay(username, race['number'], universe)})"
-                f" - Race #{race['number']:,} - "
-                f"<t:{int(race['timestamp'])}:R>\n"
+            message = embeds.Message(
+                ctx=ctx,
+                title=title,
+                descriptions=description,
+                user=user,
+                profile=stats,
+                universe=universe,
             )
 
-        average /= limit
-        average_score = f"{average:,.2f} WPM"
+            return await message.send()
 
-        top = (
-            f"{strings.text_description(text, universe)}\n\n"
-            f"**{'Best' if reverse else 'Worst'} {limit} Average:** {average_score}\n\n"
-            f"{top}"
-        )
+        def formatter(race):
+            return (
+                f"[{race['wpm']:,.2f} WPM]"
+                f"({urls.replay(username, race['number'], universe)})"
+                f" - Race #{race['number']:,} - "
+                f"{strings.discord_timestamp(race['timestamp'])}\n"
+            )
 
-        embed.title = f"Top {limit} {'Best' if reverse else 'Worst'} Races"
-        embed.description = top
+        header = strings.text_description(text, universe) + "\n\n"
 
     else:
         race_list = await races.get_races(
             username, with_texts=True, order_by=category,
-            reverse=reverse, limit=limit, universe=universe,
+            reverse=reverse, limit=100, universe=universe,
             start_date=user["start_date"], end_date=user["end_date"]
         )
         if not race_list:
             return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
-        limit = len(race_list)
-        top = ""
-        average = 0
 
-        for race in race_list:
+        def formatter(race):
             quote = strings.truncate_clean(race["quote"], 60)
             text_id = race["text_id"]
-            if category == "wpm":
-                score = f"{race['wpm']:,.2f} WPM"
-            else:
-                score = f"{race['points']:,.2f} points"
-            average += race[category]
-            top += (
-                f"[{score}]"
+            return (
+                f"[{race[category]:,.2f} {category_title}]"
                 f"({urls.replay(username, race['number'], universe)})"
                 f" - Race #{race['number']:,} - "
                 f"[Text #{text_id}]({urls.trdata_text(text_id, universe)}) - "
-                f"<t:{int(race['timestamp'])}:R>\n\"{quote}\"\n\n"
+                f"{strings.discord_timestamp(race['timestamp'])}\n\"{quote}\"\n\n"
             )
 
-        average /= limit
-        average_score = f"{average:,.2f} " + "WPM" if category == "wpm" else "points"
+        title += f" ({category_title})"
 
-        top = f"**{'Best' if reverse else 'Worst'} {limit} Average:** {average_score}\n\n" + top
+    descriptions = embeds.get_descriptions(race_list, formatter, pages=10, per_page=10)
+    limit = min(10, len(race_list))
+    top_10_average = sum([race[category] for race in race_list[:10]]) / limit
+    header += (
+        f"**{sort_title} {limit} Average:** "
+        f"{top_10_average:,.2f} {category_title}\n\n"
+    )
 
-        embed = Embed(
-            title=f"Top {limit} {'Best' if reverse else 'Worst'} Races ({'WPM' if category == 'wpm' else 'Points'})",
-            description=top,
-            color=user["colors"]["embed"],
-        )
+    message = embeds.Message(
+        ctx=ctx,
+        title=title,
+        descriptions=descriptions,
+        user=user,
+        header=header,
+        profile=stats,
+        universe=universe,
+    )
 
-    embeds.add_profile(embed, stats, universe)
-    embeds.add_universe(embed, universe)
-
-    await ctx.send(embed=embed, content=era_string)
+    await message.send()
 
 
 async def setup(bot):

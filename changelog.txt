@@ -190,3 +190,6 @@
 
 4/27/2025
 - Added -textperformances
+
+4/29/2025
+- Added pagination for -textperformances and -best

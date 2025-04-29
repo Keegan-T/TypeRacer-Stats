@@ -6,11 +6,13 @@ from utils import urls, strings
 
 
 class Message(View):
-    def __init__(self, ctx, title, descriptions, user, profile=None, universe=None, show_pfp=True):
+    def __init__(self, ctx, title, descriptions, user, header="", color=None, profile=None, universe=None, show_pfp=True):
         super().__init__(timeout=60)
         self.ctx = ctx
         self.era_string = strings.get_era_string(user)
 
+        if not color:
+            color = user["colors"]["embed"]
         if isinstance(descriptions, str):
             descriptions = [descriptions]
 
@@ -18,8 +20,8 @@ class Message(View):
         for i, description in enumerate(descriptions):
             embed = Embed(
                 title=title,
-                description=description,
-                color=user["colors"]["embed"],
+                description=header + description,
+                color=color,
             )
             if profile:
                 self.add_profile(embed, profile, show_pfp)
@@ -119,10 +121,12 @@ class Message(View):
             await interaction.response.edit_message(embed=self.embeds[self.page - 1], view=self)
 
     async def on_timeout(self):
-        await self.message.edit(view=None)
+        if self.pages > 1:
+            await self.message.edit(view=None)
 
 
 def get_descriptions(data_list, formatter, pages=10, per_page=10):
+    pages = min(pages, len(data_list) // per_page + 1)
     return ["".join([formatter(data) for data in data_list[i * per_page:(i + 1) * per_page]]) for i in range(pages)]
 
 
