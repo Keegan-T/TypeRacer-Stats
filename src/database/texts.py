@@ -259,3 +259,10 @@ def update_text_difficulties(universe):
     db.run_many(f"""
         UPDATE {table} SET difficulty = ? WHERE id = ?
     """, results)
+
+
+async def update_all_text_difficulties():
+    update_text_difficulties("play")
+    table_list = db.fetch("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'texts_%'")
+    for table in table_list:
+        update_text_difficulties("_".join(table["name"].split("_")[1:]))
