@@ -132,7 +132,7 @@ def parse_command(user, params, args, command):
                 try:
                     if args[i] == "now":
                         date = dates.now()
-                    elif args[i].isnumeric():
+                    elif args[i].isnumeric() and len(args[i]) > 4:
                         date = datetime.fromtimestamp(int(args[i]), tz=timezone.utc)
                     else:
                         date = parser.parse(args[i])
