@@ -116,6 +116,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
     recent_race = race_list[-1]
 
     stats_string = f"**Times Typed:** {times_typed:,}\n"
+    url = f"https://discord.com/channels/{ctx.guild.id}/{ctx.message.channel.id}"
 
     if times_typed > 1:
         best = max(race_list, key=lambda r: r["wpm"])
@@ -124,7 +125,10 @@ async def run(ctx, user, username, text_id=None, race_number=None):
         if recent_race["wpm"] > previous_best["wpm"]:
             description = (
                 f"**Recent Personal Best!** {recent_race['wpm']:,.2f} WPM (+"
-                f"{recent_race['wpm'] - previous_best['wpm']:,.2f} WPM)\n\n"
+                f"{recent_race['wpm'] - previous_best['wpm']:,.2f} WPM)\n"
+                f":small_blue_diamond: {recent_race['wpm'] ** 1.5 * text['difficulty'] ** 1.2:,.0f} Score! "
+                f"[(?)]({url} \"Score is a measure of performance on a quote, based on difficulty and WPM.\n"
+                f"Run -textperformances to see your best quotes!\")\n\n"
                 f"{description}"
             )
 
