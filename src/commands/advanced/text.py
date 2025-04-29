@@ -126,7 +126,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
             description = (
                 f"**Recent Personal Best!** {recent_race['wpm']:,.2f} WPM (+"
                 f"{recent_race['wpm'] - previous_best['wpm']:,.2f} WPM)\n"
-                f":small_blue_diamond: {recent_race['wpm'] ** 1.5 * text['difficulty'] ** 1.2:,.0f} Score!"
+                f":small_blue_diamond: {recent_race['wpm'] ** 1.5 * text['difficulty'] ** 1.2:,.0f} Score! "
                 f"[(?)]({url} \"Score is a measure of performance on a quote, based on difficulty and WPM.\n"
                 f"Run -textperformances to see your best quotes!\")\n\n"
                 f"{description}"
