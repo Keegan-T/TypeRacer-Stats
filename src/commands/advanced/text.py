@@ -116,7 +116,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
     recent_race = race_list[-1]
 
     stats_string = f"**Times Typed:** {times_typed:,}\n"
-    url = f"https://discord.com/channels/{ctx.guild.id}/{ctx.message.channel.id}"
+    url = f"https://discord.com/channels/175964903033667585/746460695670816798"
 
     if times_typed > 1:
         best = max(race_list, key=lambda r: r["wpm"])
