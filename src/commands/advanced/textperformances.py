@@ -134,27 +134,30 @@ async def run(ctx, user, username, sort):
     performance_list = get_performance_list(text_bests, universe)
     performance_list.sort(key=lambda x: x["performance"], reverse=sort == "best")
 
-    description = "**WPM - Difficulty Score**\n"
-    for text in performance_list[:10]:
+    def formatter(text):
         text_id = text["text_id"]
         quote = text["quote"]
         quote = strings.truncate_clean(quote, 60)
-        description += (
+        return (
             f"[{text['wpm']:,.2f} WPM]({urls.replay(username, text['number'], universe)}) - "
-            f"{text['rating']:,.2f}/10 - "
-            f"[Text #{text_id}]({urls.trdata_text(text_id, universe)}) - "
-            f'{strings.discord_timestamp(text["timestamp"])}\n"{quote}"\n\n'
+            f"{text['rating']:,.2f}/10 Difficulty - {text['performance']:,.0f} Score - "
+            f"{strings.discord_timestamp(text["timestamp"])}\n"
+            f"[Text #{text_id}]({urls.trdata_text(text_id, universe)}) - {len(text['quote'])} characters\n"
+            f'"{quote}"\n\n'
         )
 
-    embed = Embed(
-        title=f"{sort.title()} Text Performances",
-        description=description,
-        color=user["colors"]["embed"],
-    )
-    embeds.add_profile(embed, stats, universe)
-    embeds.add_universe(embed, universe)
+    descriptions = embeds.get_descriptions(performance_list, formatter, pages=20, per_page=5)
 
-    await ctx.send(embed=embed, content=era_string)
+    message = embeds.Message(
+        ctx=ctx,
+        title=f"{sort.title()} Text Performances",
+        descriptions=descriptions,
+        user=user,
+        profile=stats,
+        universe=universe,
+    )
+
+    await message.send()
 
 
 async def setup(bot):
