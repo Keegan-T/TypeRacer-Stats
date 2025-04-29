@@ -2,7 +2,7 @@ import math
 import re
 from collections import defaultdict
 
-shift_keys = "QWERTYUIOPASDFGHJKLZXCVBNM~!@#$%^&*()_+{}|:\"<>?"
+shift_keys = "~!@#$%^&*()_+QWERTYUIOP{}|ASDFGHJKL:\"ZXCVBNM<>?"
 
 
 def set_difficulties(text_list):
@@ -49,15 +49,31 @@ def set_difficulties(text_list):
         text["word_score"] = sum([word_ranks[word] for word in words]) / len(words) * short_factor
         text["bigram_score"] = sum([bigram_ranks[pair] for pair in pairs]) / len(pairs) * short_factor
 
-        no_spaces = quote.replace(" ", "")
-        shift_count = 0
-        for i in range(len(no_spaces) - 1):
-            if (no_spaces[i] in shift_keys) != (no_spaces[i + 1] in shift_keys):
-                shift_count += 1
-        text["shift_score"] = shift_count / length * short_factor
-
         text["repeat_score"] = sum(quote[i] == quote[i + 1] for i in range(length - 1)) / length * short_factor
         text["length_score"] = math.log2(length)
+
+        quote += " "
+        shift_weight = 0
+
+        i = 0
+        while i < len(quote) - 2:
+            c1, c2, c3 = quote[i:i + 3]
+            if c2 == " ":
+                if (c1 in shift_keys) != (c3 in shift_keys):
+                    shift_weight += 0.25
+                i += 1
+            else:
+                if (c1 in shift_keys) != (c2 in shift_keys):
+                    shift_weight += 1
+            i += 1
+
+        if quote[0] in shift_keys and quote[1] not in shift_keys:
+            if quote[1] == " ":
+                shift_weight -= 0.25
+            else:
+                shift_weight -= 1
+
+        text["shift_score"] = shift_weight / length * short_factor
 
     for key in ("word_score", "bigram_score", "shift_score", "repeat_score", "length_score"):
         max_val = max(text[key] for text in text_list)
@@ -67,9 +83,9 @@ def set_difficulties(text_list):
 
     for text in text_list:
         difficulty = (
-                text["word_score"] * 0.5
-                + text["bigram_score"] * 0.5
-                + text["shift_score"] * 0.3
+                text["word_score"] * 0.1
+                + text["bigram_score"] * 0.1
+                + text["shift_score"] * 0.4
                 + text["repeat_score"] * 0.2
                 + text["length_score"] * 0.7
         )
