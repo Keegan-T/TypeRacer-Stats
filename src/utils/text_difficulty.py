@@ -83,8 +83,8 @@ def set_difficulties(text_list):
 
     for text in text_list:
         difficulty = (
-                text["word_score"] * 0.1
-                + text["bigram_score"] * 0.1
+                text["word_score"] * 0.2
+                + text["bigram_score"] * 0.2
                 + text["shift_score"] * 0.4
                 + text["repeat_score"] * 0.2
                 + text["length_score"] * 0.7
