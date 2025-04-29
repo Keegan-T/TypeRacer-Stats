@@ -126,7 +126,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
             description = (
                 f"**Recent Personal Best!** {recent_race['wpm']:,.2f} WPM (+"
                 f"{recent_race['wpm'] - previous_best['wpm']:,.2f} WPM)\n"
-                f":small_blue_diamond: {recent_race['wpm'] ** 1.5 * text['difficulty'] ** 1.2:,.0f} Score! "
+                f":small_blue_diamond: {recent_race['wpm'] ** 1.5 * text['difficulty'] ** 1.2:,.0f} Score!"
                 f"[(?)]({url} \"Score is a measure of performance on a quote, based on difficulty and WPM.\n"
                 f"Run -textperformances to see your best quotes!\")\n\n"
                 f"{description}"
@@ -161,7 +161,11 @@ async def run(ctx, user, username, text_id=None, race_number=None):
 
     else:
         color = colors.success
-        description = f"**New Text!**\n\n" + description
+        description = (
+            f"**New Text!** +{recent_race['wpm']:,.2f} WPM\n"
+            f":small_blue_diamond: {recent_race['wpm'] ** 1.5 * text['difficulty'] ** 1.2:,.0f} Score!\n\n"
+            f"{description}"
+        )
         stats_string += (
             f"**Recent:** [{recent_race['wpm']:,.2f} WPM]"
             f"({urls.replay(username, recent_race['number'], universe)}) - "
