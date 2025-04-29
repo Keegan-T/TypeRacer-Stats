@@ -61,14 +61,7 @@ async def on_command_error(ctx, error):
 
 @bot.event
 async def on_message(message):
-    if message.reference and message.content.startswith(prefix):
-        replied_message_id = message.reference.message_id
-        replied_message = await message.channel.fetch_message(replied_message_id)
-
-        if replied_message.author == bot.user:
-            await message.reply(content=f"No need to reply to me anymore!")
-
-    if message.content.startswith(prefix) and not staging:
+    if not message.author.bot and not staging:
         log_message = get_log_message(message)
         log(log_message)
         user_id = message.author.id
