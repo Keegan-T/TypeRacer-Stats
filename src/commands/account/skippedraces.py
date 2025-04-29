@@ -5,6 +5,7 @@ from api.races import get_races
 from api.users import get_stats
 from commands.basic.stats import get_args
 from commands.checks import admin_check
+from commands.locks import skip_lock
 from database import races
 from database.bot_users import get_user
 from utils import embeds, strings, errors
@@ -23,8 +24,10 @@ class SkippedRaces(commands.Cog):
         self.bot = bot
 
     @commands.command(aliases=command["aliases"])
-    @commands.check(admin_check)
     async def skippedraces(self, ctx, *args):
+        if skip_lock.locked():
+            return await ctx.send(embed=errors.command_in_use())
+
         user = get_user(ctx)
 
         result = get_args(user, args, command)
@@ -32,7 +35,9 @@ class SkippedRaces(commands.Cog):
             return await ctx.send(embed=result)
 
         username = result
-        await run(ctx, user, username)
+
+        async with skip_lock:
+            await run(ctx, user, username)
 
 
 async def run(ctx, user, username):
