@@ -1,4 +1,3 @@
-from discord import Embed
 from discord.ext import commands
 
 from database import users, texts, text_results
@@ -54,26 +53,19 @@ def get_performance_list(text_bests, universe):
     max_difficulty = max(text["difficulty"] for text in text_list)
 
     for text in text_bests:
+        race = dict(text)
         text_id = text["text_id"]
         wpm = text["wpm"]
         quote = text_dict[text_id]["quote"]
         difficulty = difficulties[text_id]
         performance = wpm ** 1.5 * difficulty ** 1.2
         rating = ((difficulty - min_difficulty) / (max_difficulty - min_difficulty)) * 10
-        race = {
-            "text_id": text_id,
-            "wpm": wpm,
-            "number": text["number"],
-            "timestamp": text["timestamp"],
+        race.update({
             "quote": quote,
             "difficulty": difficulty,
             "performance": performance,
-            "rating": rating,
-        }
-        try:
-            race.update({"username": text["username"]})
-        except IndexError:
-            pass
+            "rating": rating
+        })
         performance_list.append(race)
 
     return performance_list
@@ -83,39 +75,36 @@ async def run_all(ctx, user, sort):
     text_bests = []
     top_10s = text_results.get_top_10s()
     for text_id, results in top_10s.items():
-        race = results[0]
-        text_bests.append({
-            "text_id": text_id,
-            "username": race[2],
-            "number": race[3],
-            "wpm": race[4],
-            "timestamp": race[5],
-        })
+        text_bests.append(dict(results[0]))
 
     performance_list = get_performance_list(text_bests, "play")
     performance_list.sort(key=lambda x: x["performance"], reverse=sort == "best")
 
-    description = ""
-    for text in performance_list[:10]:
+    def formatter(text):
         text_id = text["text_id"]
         quote = text["quote"]
         username = text["username"]
-        quote = strings.truncate_clean(quote, 60)
-        description += (
+        quote = strings.truncate_clean(quote, 150)
+        return (
             f"{strings.escape_discord_format(username)} - [{text['wpm']:,.2f} WPM]"
-            f"({urls.replay(text['username'], text['number'])}) - "
-            f"{text['rating']:,.2f}/10 Difficulty\n"
+            f"({urls.replay(username, text['number'])}) - "
+            f"{text['performance']:,.0f} Score - "
+            f"{strings.discord_timestamp(text["timestamp"])}\n"
             f"[Text #{text_id}]({urls.trdata_text(text_id)}) - "
-            f'{strings.discord_timestamp(text["timestamp"])}\n"{quote}"\n\n'
+            f"{text['rating']:,.2f}/10 Difficulty - {len(text['quote'])} characters\n"
+            f'"{quote}"\n\n'
         )
 
-    embed = Embed(
+    descriptions = embeds.get_descriptions(performance_list, formatter, pages=20, per_page=5)
+
+    message = embeds.Message(
+        ctx=ctx,
         title=f"{sort.title()} Text Performances (All Users)",
-        description=description,
-        color=user["colors"]["embed"],
+        descriptions=descriptions,
+        user=user,
     )
 
-    await ctx.send(embed=embed)
+    await message.send()
 
 
 async def run(ctx, user, username, sort):
@@ -125,11 +114,10 @@ async def run(ctx, user, username, sort):
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
 
-    era_string = strings.get_era_string(user)
-    if era_string:
-        text_bests = await users.get_text_bests_time_travel(username, universe, user, race_stats=True)
-    else:
+    if not user["start_date"] and not user["end_date"]:
         text_bests = users.get_text_bests(username, universe=universe, race_stats=True)
+    else:
+        text_bests = await users.get_text_bests_time_travel(username, universe, user, race_stats=True)
 
     performance_list = get_performance_list(text_bests, universe)
     performance_list.sort(key=lambda x: x["performance"], reverse=sort == "best")
@@ -137,12 +125,13 @@ async def run(ctx, user, username, sort):
     def formatter(text):
         text_id = text["text_id"]
         quote = text["quote"]
-        quote = strings.truncate_clean(quote, 60)
+        quote = strings.truncate_clean(quote, 120)
         return (
             f"[{text['wpm']:,.2f} WPM]({urls.replay(username, text['number'], universe)}) - "
-            f"{text['rating']:,.2f}/10 Difficulty - {text['performance']:,.0f} Score - "
+            f"{text['performance']:,.0f} Score - "
             f"{strings.discord_timestamp(text["timestamp"])}\n"
-            f"[Text #{text_id}]({urls.trdata_text(text_id, universe)}) - {len(text['quote'])} characters\n"
+            f"[Text #{text_id}]({urls.trdata_text(text_id, universe)}) - "
+            f"{text['rating']:,.2f}/10 Difficulty - {len(text['quote'])} characters\n"
             f'"{quote}"\n\n'
         )
 
