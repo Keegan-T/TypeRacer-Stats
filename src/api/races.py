@@ -190,43 +190,59 @@ def find_race(username, race_number, timestamp, universe="play"):
 
 
 async def get_match(username, race_number, universe="play"):
-    match = await get_race(username, race_number, get_opponents=True, universe=universe)
+    match = await get_race(username, race_number, get_opponents=True, universe=universe, get_raw=True)
 
     if not match or isinstance(match, int) or "unlagged" not in match:
         return None
 
-    rankings = [{
+    user = {
         "username": username,
         "race_number": race_number,
         "wpm": match["unlagged"],
         "accuracy": match["accuracy"],
         "start": match["start"],
         "average_wpm": match["wpm_over_keystrokes"],
+    }
+    rankings = [user]
+    raw_rankings = [{
+        **user,
+        "wpm": match["raw_unlagged"],
+        "average_wpm": match["raw_wpm_over_keystrokes"],
+        "correction": match["correction"] / match["ms"],
     }]
 
     if "opponents" in match:
         for opponent in match["opponents"][:9]:
             opp_username = opponent[0]
             opp_race_number = opponent[2]
-            opp_race_info = await get_race(opp_username, opp_race_number, universe=universe)
+            opp_race_info = await get_race(opp_username, opp_race_number, universe=universe, get_raw=True)
             if not opp_race_info or isinstance(opp_race_info, int):
                 continue
-            rankings.append({
+            user = {
                 "username": opp_username,
                 "race_number": opp_race_number,
                 "wpm": opp_race_info["unlagged"],
                 "accuracy": opp_race_info["accuracy"],
                 "start": opp_race_info["start"],
                 "average_wpm": opp_race_info["wpm_over_keystrokes"],
+            }
+            rankings.append(user)
+            raw_rankings.append({
+                **user,
+                "wpm": opp_race_info["raw_unlagged"],
+                "average_wpm": opp_race_info["raw_wpm_over_keystrokes"],
+                "correction": opp_race_info["correction"] / opp_race_info["ms"],
             })
 
-    rankings = sorted(rankings, key=lambda x: x["wpm"], reverse=True)
+    rankings.sort(key=lambda x: x["wpm"], reverse=True)
+    raw_rankings.sort(key=lambda x: x["wpm"], reverse=True)
 
     return {
         "quote": match["quote"],
         "text_id": match["text_id"],
         "timestamp": match["timestamp"],
         "rankings": rankings,
+        "raw_rankings": raw_rankings,
     }
 
 

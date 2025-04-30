@@ -23,7 +23,7 @@ class GraphPage(Page):
 
 
 class MessageView(View):
-    def __init__(self, ctx, user, pages, title=None, header="", color=None, profile=None, universe=None, show_pfp=True):
+    def __init__(self, ctx, user, pages, title=None, url=None, header="", color=None, profile=None, universe=None, show_pfp=True):
         super().__init__(timeout=60)
         self.ctx = ctx
         self.message = None
@@ -31,6 +31,7 @@ class MessageView(View):
         self.era_string = strings.get_era_string(user)
 
         self.title = title
+        self.url = url
         self.pages = pages if isinstance(pages, list) else [pages]
         self.header = header
         self.color = color if color else user["colors"]["embed"]
@@ -80,8 +81,8 @@ class MessageView(View):
 
 
 class Message(MessageView):
-    def __init__(self, ctx, user, pages, title=None, header="", color=None, profile=None, universe=None, show_pfp=True):
-        super().__init__(ctx, user, pages, title, header, color, profile, universe, show_pfp)
+    def __init__(self, ctx, user, pages, title=None, url=None, header="", color=None, profile=None, universe=None, show_pfp=True):
+        super().__init__(ctx, user, pages, title, url, header, color, profile, universe, show_pfp)
         self.page_count = len(self.pages)
 
         for i, page in enumerate(self.pages):
@@ -90,6 +91,7 @@ class Message(MessageView):
             embed = Embed(
                 title=title,
                 description=description,
+                url=self.url,
                 color=self.color,
             )
             if self.profile:
@@ -160,13 +162,13 @@ class Message(MessageView):
 
 
 class GraphMessage(MessageView):
-    def __init__(self, ctx, user, pages, title=None, header="", color=None, profile=None, universe=None, show_pfp=True):
-        super().__init__(ctx, user, pages, title, header, color, profile, universe, show_pfp)
+    def __init__(self, ctx, user, pages, title=None, url=None, header="", color=None, profile=None, universe=None, show_pfp=True):
+        super().__init__(ctx, user, pages, title, url, header, color, profile, universe, show_pfp)
         self.cache = {}
         self.graph_index = 0
 
         self.embeds = []
-        for i, page in enumerate(pages):
+        for i, page in enumerate(self.pages):
             if page.default:
                 self.graph_index = i
             title = page.title if page.title else self.title
@@ -174,6 +176,7 @@ class GraphMessage(MessageView):
             embed = Embed(
                 title=title,
                 description=description,
+                url=self.url,
                 color=self.color,
             )
             if self.profile:
@@ -183,7 +186,7 @@ class GraphMessage(MessageView):
             self.embeds.append(embed)
 
         self.update_image()
-        if len(pages) > 1:
+        if len(self.pages) > 1:
             self.add_graph_buttons()
 
     def update_image(self):
@@ -211,7 +214,7 @@ class GraphMessage(MessageView):
             self.graph_index = index
             self.update_image()
 
-            self.clear_items()  # <- to update button states
+            self.clear_items()
             self.add_graph_buttons()
 
             await self.update_embed(interaction)
@@ -229,6 +232,9 @@ class GraphMessage(MessageView):
         )
 
     async def update_embed(self, interaction):
+        if self.ctx.author.id != interaction.user.id:
+            return await interaction.response.defer()
+
         file_name = self.cache[self.graph_index]
         file = File(file_name, filename=os.path.basename(file_name))
         await interaction.response.edit_message(

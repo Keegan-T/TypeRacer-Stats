@@ -193,3 +193,8 @@
 
 4/29/2025
 - Added pagination for -textperformances and -best
+- Added score display to -text personal bests
+
+4/30/2025
+- Added pagination to -improvement
+- Added raw rankings to -matchgraph

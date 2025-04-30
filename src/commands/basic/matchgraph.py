@@ -1,4 +1,3 @@
-from discord import Embed, File
 from discord.ext import commands
 
 import commands.recent as recent
@@ -9,8 +8,8 @@ from commands.locks import match_lock
 from config import prefix
 from database.bot_users import get_user
 from graphs import match_graph
-from graphs.core import remove_file
-from utils import errors, urls, strings, embeds
+from utils import errors, urls, strings
+from utils.embeds import GraphMessage, GraphPage, is_embed
 from utils.errors import command_in_use
 
 command = {
@@ -43,7 +42,7 @@ class MatchGraph(commands.Cog):
             user = get_user(ctx)
 
             result = get_args(user, args, command)
-            if embeds.is_embed(result):
+            if is_embed(result):
                 return await ctx.send(embed=result)
 
             username, race_number, universe = result
@@ -63,7 +62,9 @@ async def run(ctx, user, username, race_number, universe):
     if not match:
         return await ctx.send(embed=errors.logs_not_found(username, race_number, universe))
 
-    description = strings.text_description(match) + "\n\n**Rankings**\n"
+    text_description = strings.text_description(match)
+    description = text_description + "\n\n**Rankings**\n"
+    raw_description = text_description + "\n\n**Raw Rankings**\n"
 
     for i, race in enumerate(match["rankings"]):
         racer_username = strings.escape_discord_format(race["username"])
@@ -75,29 +76,49 @@ async def run(ctx, user, username, race_number, universe):
             f"{race['start']:,}ms start)\n"
         )
 
-    description += f"\nCompleted {strings.discord_timestamp(match['timestamp'])}"
+    for i, race in enumerate(match["raw_rankings"]):
+        racer_username = strings.escape_discord_format(race["username"])
+        raw_description += (
+            f"{i + 1}. {racer_username} - "
+            f"[{race['wpm']:,.2f} WPM]"
+            f"({urls.replay(race['username'], race['race_number'], universe)}) "
+            f"({race['correction'] * 100:,.1f}% Corr, "
+            f"{race['start']:,}ms start)\n"
+        )
 
-    embed = Embed(
-        title=f"Match Graph - Race #{race_number:,}",
-        description=description,
-        url=urls.replay(username, race_number, universe),
-        color=user["colors"]["embed"],
-    )
-    embeds.add_profile(embed, stats, pfp=False)
-    embeds.add_universe(embed, universe)
-
-    title = f"Match Graph - {username} - Race #{race_number:,}"
+    completed = f"\nCompleted {strings.discord_timestamp(match['timestamp'])}"
+    description += completed
+    raw_description += completed
+    title = f"Match Graph - Race #{race_number:,}"
+    graph_title = f"Match Graph - {username} - Race #{race_number:,}"
     if universe != "play":
-        title += f"\nUniverse: {universe}"
-    file_name = f"match_{username}_{race_number}.png"
-    match_graph.render(user, match["rankings"], title, "WPM", file_name, limit_y="*" not in ctx.invoked_with)
+        graph_title += f"\nUniverse: {universe}"
+    url = urls.replay(username, race_number, universe)
 
-    embed.set_image(url=f"attachment://{file_name}")
-    file = File(file_name, filename=file_name)
+    def render(file_name):
+        return match_graph.render(user, match["rankings"], graph_title, "WPM", file_name, limit_y="*" not in ctx.invoked_with)
 
-    await ctx.send(embed=embed, file=file)
+    def render_raw(file_name):
+        return match_graph.render(user, match["raw_rankings"], graph_title, "WPM", file_name, limit_y="*" not in ctx.invoked_with)
 
-    remove_file(file_name)
+    def file_name(raw):
+        raw_text = "_raw" * raw
+        return f"match_{username}_{race_number}{raw_text}.png"
+
+    pages = [
+        GraphPage(render, file_name(False), title, description, "Rankings"),
+        GraphPage(render_raw, file_name(True), title, raw_description, "Raw Rankings"),
+    ]
+
+    message = GraphMessage(
+        ctx, user, pages,
+        url=url,
+        profile=stats,
+        universe=universe,
+        show_pfp=False,
+    )
+
+    await message.send()
 
     recent.text_id = match["text_id"]
 
