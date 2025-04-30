@@ -1,4 +1,3 @@
-from discord import Embed, File
 from discord.ext import commands
 
 import database.races as races
@@ -11,8 +10,8 @@ from commands.locks import big_lock
 from config import prefix
 from database.bot_users import get_user
 from graphs import improvement_graph
-from graphs.core import remove_file
-from utils import errors, strings, embeds, dates
+from utils import errors, strings, dates
+from utils.embeds import GraphPage, GraphMessage, is_embed
 
 command = {
     "name": "improvement",
@@ -45,8 +44,7 @@ class Improvement(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
-            self.improvement.reset_cooldown(ctx)
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username, start_date, end_date, start_number, end_number = result
@@ -58,7 +56,6 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
     universe = user["universe"]
     stats = users.get_user(username, universe)
     if not stats:
-        ctx.command.reset_cooldown(ctx)
         return await ctx.send(embed=errors.import_required(username, universe))
 
     if stats["races"] > 100_000:
@@ -137,6 +134,15 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
     average /= race_count
     recent_average /= moving
 
+    def graph_over_races(file_name):
+        return improvement_graph.render(user, wpm, title, file_name, timeframe, universe=universe)
+
+    def graph_over_time(file_name):
+        return improvement_graph.render(user, wpm, title, file_name, timeframe, timestamps, universe=universe)
+
+    def file_name(type):
+        return f"improvement_{username}_{type}.png"
+
     description = (
         f"**Races:** {race_count:,}\n"
         f"**Average:** {average:,.2f} WPM\n"
@@ -145,27 +151,25 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         f"**Average of Last {moving}:** {recent_average:,.2f} WPM"
     )
 
-    embed = Embed(
+    pages = [
+        GraphPage(graph_over_races, file_name("races"), button_name="Over Races", default=time),
+        GraphPage(graph_over_time, file_name("time"), button_name="Over Time", default=time),
+    ]
+
+    message = GraphMessage(
+        ctx=ctx,
+        user=user,
+        pages=pages,
         title=title,
-        description=description,
-        color=user["colors"]["embed"],
+        header=description,
+        profile=stats,
+        universe=universe,
     )
-    embeds.add_profile(embed, stats, universe)
-    embeds.add_universe(embed, universe)
 
-    title = f"WPM Improvement - {username}"
-    file_name = f"improvement_{username}.png"
-    improvement_graph.render(user, wpm, title, file_name, timeframe, timestamps if time else None, universe=universe)
-
-    embed.set_image(url=f"attachment://{file_name}")
-    file = File(file_name, filename=file_name)
-
-    await ctx.send(embed=embed, file=file, content=era_string)
+    await message.send()
 
     if big_lock.locked():
         big_lock.release()
-
-    remove_file(file_name)
 
 
 async def setup(bot):
