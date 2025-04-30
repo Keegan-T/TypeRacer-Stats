@@ -159,6 +159,7 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
             text.set_color(colors["text"])
 
 
+# Deprecated
 def remove_file(file_name):
     try:
         os.remove(file_name)

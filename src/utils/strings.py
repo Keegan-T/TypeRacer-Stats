@@ -152,7 +152,7 @@ def parse_command(user, params, args, command):
             if missing or args[i] == "^":
                 text_id = recent.text_id
             else:
-                text_id = int(args[i])
+                text_id = args[i]
 
             return_args.append(text_id)
 

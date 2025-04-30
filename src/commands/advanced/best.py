@@ -5,7 +5,8 @@ import database.races as races
 import database.texts as texts
 import database.users as users
 from database.bot_users import get_user
-from utils import errors, urls, strings, embeds
+from utils import errors, urls, strings
+from utils.embeds import Message, Page, get_pages, is_embed
 
 categories = ["wpm", "points"]
 command = {
@@ -34,7 +35,7 @@ class Best(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username, category, text_id = result
@@ -50,7 +51,7 @@ def get_args(user, args, info):
         params = f"username category:{'|'.join(categories)}"
 
     result = strings.parse_command(user, params, args, info)
-    if embeds.is_embed(result):
+    if is_embed(result):
         return result
 
     username, category = result
@@ -76,6 +77,7 @@ async def run(ctx, user, username, category, text_id, reverse=True):
     text_list = texts.get_texts(as_dictionary=True, universe=universe)
 
     if text_id is not None:
+        text_id = int(text_id)
         if text_id not in text_list:
             return await ctx.send(embed=errors.unknown_text(universe))
 
@@ -92,11 +94,11 @@ async def run(ctx, user, username, category, text_id, reverse=True):
                 f"User has no races on this text\n"
                 f"[Race this text]({text['ghost']})"
             )
-            message = embeds.Message(
+            message = Message(
                 ctx=ctx,
-                title=title,
-                descriptions=description,
                 user=user,
+                pages=Page(description=description),
+                title=title,
                 profile=stats,
                 universe=universe,
             )
@@ -135,7 +137,7 @@ async def run(ctx, user, username, category, text_id, reverse=True):
 
         title += f" ({category_title})"
 
-    descriptions = embeds.get_descriptions(race_list, formatter, pages=10, per_page=10)
+    pages = get_pages(race_list, formatter, page_count=10, per_page=10)
     limit = min(10, len(race_list))
     top_10_average = sum([race[category] for race in race_list[:10]]) / limit
     header += (
@@ -143,11 +145,11 @@ async def run(ctx, user, username, category, text_id, reverse=True):
         f"{top_10_average:,.2f} {category_title}\n\n"
     )
 
-    message = embeds.Message(
+    message = Message(
         ctx=ctx,
-        title=title,
-        descriptions=descriptions,
         user=user,
+        pages=pages,
+        title=title,
         header=header,
         profile=stats,
         universe=universe,

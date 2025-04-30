@@ -1,51 +1,53 @@
-from discord import Embed, ButtonStyle
+import os
+
+from discord import Embed, ButtonStyle, File
 from discord.ui import View, Button
 
 from config import web_server
 from utils import urls, strings
 
 
-class Message(View):
-    def __init__(self, ctx, title, descriptions, user, header="", color=None, profile=None, universe=None, show_pfp=True):
+class Page:
+    def __init__(self, title=None, description=""):
+        self.title = title
+        self.description = description
+
+
+class GraphPage(Page):
+    def __init__(self, render, file_name, title=None, description="", button_name=None, default=False):
+        super().__init__(title, description)
+        self.render = render
+        self.file_name = file_name
+        self.button_name = button_name
+        self.default = default
+
+
+class MessageView(View):
+    def __init__(self, ctx, user, pages, title=None, header="", color=None, profile=None, universe=None, show_pfp=True):
         super().__init__(timeout=60)
         self.ctx = ctx
+        self.message = None
+        self.user = user
         self.era_string = strings.get_era_string(user)
 
-        if not color:
-            color = user["colors"]["embed"]
-        if isinstance(descriptions, str):
-            descriptions = [descriptions]
-
+        self.title = title
+        self.pages = pages if isinstance(pages, list) else [pages]
+        self.header = header
+        self.color = color if color else user["colors"]["embed"]
+        self.profile = profile
+        self.universe = universe
+        self.show_pfp = show_pfp
         self.embeds = []
-        for i, description in enumerate(descriptions):
-            embed = Embed(
-                title=title,
-                description=header + description,
-                color=color,
-            )
-            if profile:
-                self.add_profile(embed, profile, show_pfp)
-            if universe:
-                self.add_universe(embed, universe)
-            if len(descriptions) > 1:
-                update_footer(embed, f"Page {i + 1} of {len(descriptions)}")
-            self.embeds.append(embed)
 
-        self.page = 1
-        self.pages = len(self.embeds)
-        if self.pages > 1:
-            self.add_navigation_buttons()
-            self.update_buttons()
-
-    def add_profile(self, embed, stats, show_pfp=True):
-        username = stats["username"]
+    def add_profile(self, embed):
+        username = self.profile["username"]
         author_icon = (
-            f"{web_server}/images/flags/{stats['country'].upper()}.png"
-            if stats["country"]
+            f"{web_server}/images/flags/{self.profile['country'].upper()}.png"
+            if self.profile["country"]
             else f"{web_server}/images/silhouette.png"
         )
 
-        if show_pfp:
+        if self.show_pfp:
             embed.set_thumbnail(url=urls.profile_picture(username))
 
         embed.set_author(
@@ -54,18 +56,54 @@ class Message(View):
             icon_url=author_icon,
         )
 
-    def add_universe(self, embed, universe):
-        if universe == "play":
+    def add_universe(self, embed):
+        if self.universe == "play":
             return
 
         if embed.author.url:
             embed.set_author(
                 name=embed.author.name,
-                url=f"{embed.author.url}&universe={universe}",
+                url=f"{embed.author.url}&universe={self.universe}",
                 icon_url=embed.author.icon_url,
             )
 
-        update_footer(embed, f"Universe: {universe}")
+        self.update_footer(embed, f"Universe: {self.universe}")
+
+    def update_footer(self, embed, text):
+        footer_text = f"{embed.footer.text}\n" if embed.footer.text else ""
+        embed.set_footer(text=footer_text + text)
+
+    async def on_timeout(self):
+        await super().on_timeout()
+        if len(self.pages) > 1:
+            await self.message.edit(view=None)
+
+
+class Message(MessageView):
+    def __init__(self, ctx, user, pages, title=None, header="", color=None, profile=None, universe=None, show_pfp=True):
+        super().__init__(ctx, user, pages, title, header, color, profile, universe, show_pfp)
+        self.page_count = len(self.pages)
+
+        for i, page in enumerate(self.pages):
+            title = page.title if page.title else self.title
+            description = self.header + page.description
+            embed = Embed(
+                title=title,
+                description=description,
+                color=self.color,
+            )
+            if self.profile:
+                self.add_profile(embed)
+            if self.universe:
+                self.add_universe(embed)
+            if self.page_count > 1:
+                self.update_footer(embed, f"Page {i + 1} of {self.page_count}")
+            self.embeds.append(embed)
+
+        self.page = 1
+        if self.page_count > 1:
+            self.add_navigation_buttons()
+            self.update_buttons()
 
     def update_buttons(self):
         self.children[0].disabled = self.page == 1
@@ -102,14 +140,14 @@ class Message(View):
             await self.update_embed(interaction)
 
     async def next(self, interaction):
-        if self.page < self.pages:
+        if self.page < self.page_count:
             self.page += 1
             self.update_buttons()
             await self.update_embed(interaction)
 
     async def last(self, interaction):
-        if self.page < self.pages:
-            self.page = self.pages
+        if self.page < self.page_count:
+            self.page = self.page_count
             self.update_buttons()
             await self.update_embed(interaction)
 
@@ -120,19 +158,104 @@ class Message(View):
         if self.ctx.author.id == interaction.user.id:
             await interaction.response.edit_message(embed=self.embeds[self.page - 1], view=self)
 
+
+class GraphMessage(MessageView):
+    def __init__(self, ctx, user, pages, title=None, header="", color=None, profile=None, universe=None, show_pfp=True):
+        super().__init__(ctx, user, pages, title, header, color, profile, universe, show_pfp)
+        self.cache = {}
+        self.graph_index = 0
+
+        self.embeds = []
+        for i, page in enumerate(pages):
+            if page.default:
+                self.graph_index = i
+            title = page.title if page.title else self.title
+            description = self.header + page.description
+            embed = Embed(
+                title=title,
+                description=description,
+                color=self.color,
+            )
+            if self.profile:
+                self.add_profile(embed)
+            if self.universe:
+                self.add_universe(embed)
+            self.embeds.append(embed)
+
+        self.update_image()
+        if len(pages) > 1:
+            self.add_graph_buttons()
+
+    def update_image(self):
+        index = self.graph_index
+        if index not in self.cache:
+            page = self.pages[index]
+            file_name = page.file_name
+            page.render(file_name)
+            self.cache[index] = file_name
+
+        self.embeds[index].set_image(url=f"attachment://{self.cache[index]}")
+
+    def add_graph_buttons(self):
+        for i, page in enumerate(self.pages):
+            style = ButtonStyle.primary if i == self.graph_index else ButtonStyle.secondary
+            button = Button(label=page.button_name, style=style)
+            button.callback = self.make_callback(i)
+            self.add_item(button)
+
+    def make_callback(self, index):
+        async def callback(interaction):
+            if index == self.graph_index:
+                return await interaction.response.defer()
+
+            self.graph_index = index
+            self.update_image()
+
+            self.clear_items()  # <- to update button states
+            self.add_graph_buttons()
+
+            await self.update_embed(interaction)
+
+        return callback
+
+    async def send(self):
+        file_name = self.cache[self.graph_index]
+        file = File(file_name, filename=os.path.basename(file_name))
+        self.message = await self.ctx.send(
+            embed=self.embeds[self.graph_index],
+            view=self,
+            content=self.era_string,
+            files=[file]
+        )
+
+    async def update_embed(self, interaction):
+        file_name = self.cache[self.graph_index]
+        file = File(file_name, filename=os.path.basename(file_name))
+        await interaction.response.edit_message(
+            embed=self.embeds[self.graph_index],
+            view=self,
+            attachments=[file]
+        )
+
     async def on_timeout(self):
-        if self.pages > 1:
-            await self.message.edit(view=None)
+        await super().on_timeout()
+        for file in self.cache.values():
+            try:
+                os.remove(file)
+            except (FileNotFoundError, PermissionError):
+                return
 
 
-def get_descriptions(data_list, formatter, pages=10, per_page=10):
-    pages = min(pages, len(data_list) // per_page + 1)
-    return ["".join([formatter(data) for data in data_list[i * per_page:(i + 1) * per_page]]) for i in range(pages)]
+def get_pages(data_list, formatter, page_count=10, per_page=10):
+    page_count = min(page_count, len(data_list) // per_page + 1)
+    pages = []
+    for i in range(page_count):
+        description = ""
+        for data in data_list[i * per_page:(i + 1) * per_page]:
+            description += formatter(data)
+        pages.append(Page(description=description))
 
-
-def update_footer(embed, text):
-    footer_text = f"{embed.footer.text}\n" if embed.footer.text else ""
-    embed.set_footer(text=footer_text + text)
+    return pages
 
 
 # Deprecated

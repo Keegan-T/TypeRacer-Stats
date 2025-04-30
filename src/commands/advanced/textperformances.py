@@ -3,7 +3,8 @@ from discord.ext import commands
 from database import users, texts, text_results
 from database.bot_users import get_user
 from database.texts import update_text_difficulties
-from utils import errors, embeds, strings, urls
+from utils import errors, strings, urls
+from utils.embeds import Message, get_pages, is_embed
 
 command = {
     "name": "textperformances",
@@ -26,7 +27,7 @@ class TextPerformances(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username, sort = result
@@ -95,13 +96,13 @@ async def run_all(ctx, user, sort):
             f'"{quote}"\n\n'
         )
 
-    descriptions = embeds.get_descriptions(performance_list, formatter, pages=20, per_page=5)
+    pages = get_pages(performance_list, formatter, page_count=20, per_page=5)
 
-    message = embeds.Message(
+    message = Message(
         ctx=ctx,
-        title=f"{sort.title()} Text Performances (All Users)",
-        descriptions=descriptions,
         user=user,
+        pages=pages,
+        title=f"{sort.title()} Text Performances (All Users)",
     )
 
     await message.send()
@@ -135,13 +136,13 @@ async def run(ctx, user, username, sort):
             f'"{quote}"\n\n'
         )
 
-    descriptions = embeds.get_descriptions(performance_list, formatter, pages=20, per_page=5)
+    pages = get_pages(performance_list, formatter, page_count=20, per_page=5)
 
-    message = embeds.Message(
+    message = Message(
         ctx=ctx,
-        title=f"{sort.title()} Text Performances",
-        descriptions=descriptions,
         user=user,
+        pages=pages,
+        title=f"{sort.title()} Text Performances",
         profile=stats,
         universe=universe,
     )
