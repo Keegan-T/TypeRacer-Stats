@@ -61,7 +61,7 @@ async def on_command_error(ctx, error):
 
 @bot.event
 async def on_message(message):
-    if not message.author.bot and not staging:
+    if message.content.startswith(prefix) and not message.author.bot and not staging:
         log_message = get_log_message(message)
         log(log_message)
         user_id = message.author.id
