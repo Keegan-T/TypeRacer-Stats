@@ -159,6 +159,14 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
             text.set_color(colors["text"])
 
 
+def universe_title(title, universe):
+    if universe != "play":
+        separator = " | " if "\n" in title else "\n"
+        title += f"{separator}Universe: {universe}"
+
+    return title
+
+
 # Deprecated
 def remove_file(file_name):
     try:

@@ -198,3 +198,6 @@
 4/30/2025
 - Added pagination to -improvement
 - Added raw rankings to -matchgraph
+
+5/2/2025
+- Added -activity
