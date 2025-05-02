@@ -43,7 +43,8 @@ class MessageView(View):
     def add_profile(self, embed):
         username = self.profile["username"]
         author_icon = (
-            f"{web_server}/images/flags/{self.profile['country'].upper()}.png"
+            # f"{web_server}/images/flags/{self.profile['country'].upper()}.png"
+            f"https://flagsapi.com/{self.profile['country'].upper()}/flat/64.png"
             if self.profile["country"]
             else f"{web_server}/images/silhouette.png"
         )
@@ -266,10 +267,10 @@ def get_pages(data_list, formatter, page_count=10, per_page=10):
 
 # Deprecated
 def add_profile(embed, stats, universe="play", pfp=True):
-    # def add_profile(embed, stats, show_pfp=True):
     username = stats["username"]
     author_icon = (
-        f"{web_server}/images/flags/{stats['country'].upper()}.png"
+        # f"{web_server}/images/flags/{stats['country'].upper()}.png"
+        f"https://flagsapi.com/{stats['country'].upper()}/flat/64.png"
         if stats["country"]
         else f"{web_server}/images/silhouette.png"
     )
