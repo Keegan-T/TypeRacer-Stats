@@ -4,13 +4,13 @@ from datetime import datetime, timezone
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib import rcParams
+from matplotlib import rcParams, image as mpimg
 from matplotlib.collections import LineCollection
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.legend_handler import HandlerLine2D
 from matplotlib.legend_handler import HandlerLineCollection
 
-from config import bot_owner
+from config import bot_owner, root_dir
 from utils.colors import graph_palette
 
 rcParams["axes.prop_cycle"] = plt.cycler(color=graph_palette)
@@ -157,6 +157,18 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
         legend.get_frame().set_edgecolor(colors["axis"])
         for text in legend.get_texts():
             text.set_color(colors["text"])
+
+    if int(user["id"]) == bot_owner:
+        apply_background_image(ax, os.path.join(root_dir, "assets", "backgrounds", "galaxy.png"))
+
+
+def apply_background_image(ax, image_path):
+    fig = ax.figure
+    bg_ax = fig.add_axes([0, 0, 1, 1], zorder=0)
+    bg_img = mpimg.imread(image_path)
+    bg_ax.imshow(bg_img, aspect="auto", extent=[0, 1, 0, 1])
+    bg_ax.axis("off")
+    ax.set_zorder(1)
 
 
 def universe_title(title, universe):
