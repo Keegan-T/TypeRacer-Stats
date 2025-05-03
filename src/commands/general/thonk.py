@@ -35,7 +35,7 @@ def get_args(user, args, info):
 async def run(ctx, seed):
     if not seed:
         seed = str(random.randint(0, 1000000000))
-    file_name = f"thonk_{seed[:100]}.png"
+    file_name = f"thonk.png"
     generate_thonk(file_name, seed)
 
     file = File(file_name, filename=file_name)
