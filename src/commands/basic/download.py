@@ -17,6 +17,7 @@ from api.users import get_stats, get_joined
 from commands.basic.stats import get_args
 from commands.locks import import_lock
 from database.bot_users import get_user
+from database.texts import update_text_difficulties
 from utils import errors, colors, urls, strings, embeds
 from utils.logging import log
 from utils.stats import calculate_points, calculate_seconds
@@ -147,9 +148,11 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, universe="play
                     "id": text_id,
                     "quote": get_quote(text_id),
                     "disabled": 0,
-                    "ghost": urls.ghost(username, race["gn"], universe)
+                    "ghost": urls.ghost(username, race["gn"], universe),
+                    "difficulty": None,
                 }
                 texts.add_text(text, universe)
+                update_text_difficulties(universe=universe)
                 text_list[text_id] = text
 
                 if universe == "play":

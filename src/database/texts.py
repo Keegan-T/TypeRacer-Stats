@@ -91,8 +91,8 @@ def add_text(text, universe):
     table = table_name(universe)
     db.run(f"""
         INSERT INTO {table}
-        VALUES (?, ?, ?, ?)
-    """, [text["id"], text["quote"], False, text["ghost"]])
+        VALUES (?, ?, ?, ?, ?)
+    """, [text["id"], text["quote"], False, text["ghost"], text["difficulty"]])
 
 
 def update_text(text_id, quote):
