@@ -136,6 +136,16 @@ async def run(ctx, user, username, sort):
             f'"{quote}"\n\n'
         )
 
+    texts_typed = len(performance_list)
+    total = sum([text["performance"] for text in performance_list])
+    average = total / texts_typed
+
+    header = (
+        f"**Text Performance Average:** {average:,.0f} Score\n"
+        f"**Texts Typed:** {texts_typed:,}\n"
+        f"**Text Performance Total:** {total:,.0f} Score\n\n"
+    )
+
     pages = get_pages(performance_list, formatter, page_count=20, per_page=5)
 
     message = Message(
@@ -143,6 +153,7 @@ async def run(ctx, user, username, sort):
         user=user,
         pages=pages,
         title=f"{sort.title()} Text Performances",
+        header=header,
         profile=stats,
         universe=universe,
     )
