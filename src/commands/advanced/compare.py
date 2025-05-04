@@ -7,12 +7,14 @@ from config import prefix
 from database import users
 from database.bot_users import get_user
 from database.users import get_text_bests
-from utils import errors, colors, urls, strings, embeds
+from utils import errors, colors, urls, strings, embeds, dates
+from utils.embeds import Page, Message
 
 command = {
     "name": "compare",
-    "aliases": ["vs", "v", "vr"],
+    "aliases": ["vs", "v", "vr", "vc"],
     "description": "Displays the top 10 races for each user sorted by text best WPM difference\n"
+                   f"Use `{prefix}vc` to view closest results"
                    f"Use `{prefix}vr` to randomize the results",
     "parameters": "[username_1] [username_2]",
     "usages": ["compare keegant poem"],
@@ -26,13 +28,14 @@ class Compare(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def compare(self, ctx, *args):
         user = get_user(ctx)
+        args, user = dates.set_command_date_range(args, user)
 
         result = get_args(user, args, command)
         if embeds.is_embed(result):
             return await ctx.send(embed=result)
 
         username1, username2 = result
-        await run(ctx, user, username1, username2, ctx.invoked_with == "vr")
+        await run(ctx, user, username1, username2)
 
 
 def get_args(user, args, info):
@@ -41,7 +44,7 @@ def get_args(user, args, info):
     return strings.parse_command(user, params, args, info)
 
 
-async def run(ctx, user, username1, username2, random):
+async def run(ctx, user, username1, username2):
     if username1 == username2:
         return await ctx.send(embed=same_username())
 
@@ -91,49 +94,66 @@ async def run(ctx, user, username1, username2, random):
         return await ctx.send(embed=no_common_texts(universe), content=era_string)
 
     comparison = sorted(comparison.items(), key=lambda x: x[1][2], reverse=True)
-    if random:
-        positive = [x for x in comparison if x[1][2] >= 0]
-        negative = [x for x in comparison if x[1][2] < 0]
-        shuffle(positive)
-        shuffle(negative)
-        comparison = positive + negative
+    positive = [x for x in comparison if x[1][2] >= 0]
+    negative = [x for x in comparison if x[1][2] < 0]
+    positive.reverse()
+    negative.reverse()
+    comparison_close = positive + negative
+    shuffle(positive)
+    shuffle(negative)
+    comparison_random = positive + negative
 
-    stats1 = f"**{strings.escape_discord_format(username1)}** (+{user1_better:,} texts)\n"
-    stats2 = f"**{strings.escape_discord_format(username2)}** (+{user2_better:,} texts)\n"
-
-    for i, text in enumerate(comparison[:10]):
-        gap = text[1][2]
+    def wpm_string(gap, score1, score2, username1, username2):
+        wpm1, race_number1 = score1[:2]
+        wpm2, race_number2 = score2[:2]
         gap_string = f"({'+' * (gap >= 0)}{gap:,.2f} WPM)"
-        stats1 += (
-            f"{i + 1}. [{text[1][0][0]:,.2f}]({urls.replay(username1, text[1][0][1], universe)}) vs. "
-            f"[{text[1][1][0]:,.2f}]({urls.replay(username2, text[1][1][1], universe)}) {gap_string}\n"
+        return (
+            f"[{wpm1:,.2f}]({urls.replay(username1, race_number1, universe)}) vs. "
+            f"[{wpm2:,.2f}]({urls.replay(username2, race_number2, universe)}) {gap_string}\n"
         )
 
-    if wpm_match:
-        stats1 += (
-            f"\n:handshake: [{wpm_match[0][0]:,.2f}]({urls.replay(username1, wpm_match[0][1], universe)})"
-            f" vs. [{wpm_match[1][0]:,.2f}]({urls.replay(username2, wpm_match[1][1], universe)})\n"
-        )
+    def formatter(comparison):
+        stats1 = f"**{strings.escape_discord_format(username1)}** (+{user1_better:,} texts)\n"
+        stats2 = f"**{strings.escape_discord_format(username2)}** (+{user2_better:,} texts)\n"
 
-    for i, text in enumerate(comparison[-10:][::-1]):
-        gap = -text[1][2]
-        gap_string = f"({'+' * (gap >= 0)}{gap:,.2f} WPM)"
-        stats2 += (
-            f"{i + 1}. [{text[1][1][0]:,.2f}]({urls.replay(username2, text[1][1][1], universe)}) vs. "
-            f"[{text[1][0][0]:,.2f}]({urls.replay(username1, text[1][0][1], universe)}) {gap_string}\n"
-        )
+        for i, (text_id, data) in enumerate(comparison[:10]):
+            score1, score2, gap = data
+            stats1 += f"{i + 1}. " + wpm_string(gap, score1, score2, username1, username2)
 
-    description = stats1 + "\n" + stats2
+        if wpm_match:
+            score1, score2 = wpm_match
+            wpm1, race_number1 = score1[:2]
+            wpm2, race_number2 = score2[:2]
+            stats1 += (
+                f"\n:handshake: [{wpm1:,.2f}]({urls.replay(username1, race_number1, universe)})"
+                f" vs. [{wpm2:,.2f}]({urls.replay(username2, race_number2, universe)})\n"
+            )
 
-    embed = Embed(
-        title=f"Text Best Comparison{' (Randomized)' * random}",
-        color=user["colors"]["embed"],
-        description=description,
-        url=urls.trdata_compare(username1, username2, universe),
+        for i, (text_id, data) in enumerate(comparison[::-1][:10]):
+            score1, score2, gap = data
+            stats2 += f"{i + 1}. " + wpm_string(-gap, score2, score1, username2, username1)
+
+        return stats1 + "\n" + stats2
+
+    description = formatter(comparison)
+    description_random = formatter(comparison_random)
+    description_close = formatter(comparison_close)
+    title = "Text Best Comparison"
+
+    pages = [
+        Page(title, description, "Normal"),
+        Page(title + " (Closest)", description_close, "Closest", default=ctx.invoked_with == "vc"),
+        Page(title + " (Randomized)", description_random, "Random", default=ctx.invoked_with == "vr"),
+    ]
+
+    message = Message(
+        ctx=ctx,
+        pages=pages,
+        user=user,
+        universe=universe,
     )
-    embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed, content=era_string)
+    await message.send()
 
 
 def same_username():
