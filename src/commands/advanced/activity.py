@@ -7,7 +7,7 @@ from database import users, races
 from database.bot_users import get_user
 from graphs import clock_graph, bar_graph
 from utils import errors, strings, dates
-from utils.embeds import GraphMessage, GraphPage, is_embed
+from utils.embeds import Page, Message, is_embed
 
 command = {
     "name": "activity",
@@ -97,17 +97,17 @@ async def run(ctx, user, username):
         return bar_graph.render(user, username, weekly, file_name, universe)
 
     pages = [
-        GraphPage(
-            render_daily, strings.get_file_name("daily_typing_activity", user, username),
+        Page(
             "Daily Typing Activity", daily_description, "Daily",
+            render_daily, strings.get_file_name("daily_typing_activity", user, username),
         ),
-        GraphPage(
-            render_weekly, strings.get_file_name("weekly_typing_activity", user, username),
+        Page(
             "Weekly Typing Activity", weekly_description, "Weekly",
+            render_weekly, strings.get_file_name("weekly_typing_activity", user, username),
         )
     ]
 
-    message = GraphMessage(
+    message = Message(
         ctx=ctx,
         pages=pages,
         user=user,

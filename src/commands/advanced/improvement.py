@@ -11,7 +11,7 @@ from config import prefix
 from database.bot_users import get_user
 from graphs import improvement_graph
 from utils import errors, strings, dates
-from utils.embeds import GraphPage, GraphMessage, is_embed
+from utils.embeds import Page, Message, is_embed
 
 command = {
     "name": "improvement",
@@ -152,11 +152,11 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
     )
 
     pages = [
-        GraphPage(graph_over_races, file_name("races"), button_name="Over Races", default=time),
-        GraphPage(graph_over_time, file_name("time"), button_name="Over Time", default=time),
+        Page(button_name="Over Races", render=graph_over_races, file_name=file_name("races"), default=time),
+        Page(button_name="Over Time", render=graph_over_time, file_name=file_name("time"), default=time),
     ]
 
-    message = GraphMessage(
+    message = Message(
         ctx=ctx,
         user=user,
         pages=pages,

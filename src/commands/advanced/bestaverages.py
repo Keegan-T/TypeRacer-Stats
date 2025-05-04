@@ -4,8 +4,8 @@ from discord.ext import commands
 import database.races as races
 import database.users as users
 from database.bot_users import get_user
-from utils import errors, colors, embeds, strings, dates
-from utils.embeds import Message, Page
+from utils import errors, colors, strings, dates
+from utils.embeds import Message, Page, is_embed
 
 command = {
     "name": "bestaverages",
@@ -30,7 +30,7 @@ class BestAverages(commands.Cog):
         args, user = dates.set_command_date_range(args, user)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username, n = result

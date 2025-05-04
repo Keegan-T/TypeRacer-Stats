@@ -9,7 +9,7 @@ from config import prefix
 from database.bot_users import get_user
 from graphs import match_graph
 from utils import errors, urls, strings
-from utils.embeds import GraphMessage, GraphPage, is_embed
+from utils.embeds import Message, Page, is_embed
 from utils.errors import command_in_use
 
 command = {
@@ -106,11 +106,11 @@ async def run(ctx, user, username, race_number, universe):
         return f"match_{username}_{race_number}{raw_text}.png"
 
     pages = [
-        GraphPage(render, file_name(False), title, description, "Rankings"),
-        GraphPage(render_raw, file_name(True), title, raw_description, "Raw Rankings"),
+        Page(title, description, "Rankings", render, file_name(False)),
+        Page(title, raw_description, "Raw Rankings", render_raw, file_name(True)),
     ]
 
-    message = GraphMessage(
+    message = Message(
         ctx, user, pages,
         url=url,
         profile=stats,
