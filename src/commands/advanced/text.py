@@ -7,12 +7,14 @@ import database.text_results as top_tens
 import database.texts as texts
 import database.users as users
 from api.users import get_stats
+from commands.advanced.textperformances import get_performance_list
 from commands.basic.download import run as download
 from config import prefix
 from database.bot_users import get_user
 from graphs import improvement_graph
 from graphs.core import remove_file
 from utils import errors, colors, urls, strings, embeds
+from utils.stats import calculate_performance
 
 command = {
     "name": "text",
@@ -123,12 +125,22 @@ async def run(ctx, user, username, text_id=None, race_number=None):
         worst = min(race_list, key=lambda r: r["wpm"])
         previous_best = max(race_list[:-1], key=lambda r: r["wpm"])
         if recent_race["wpm"] > previous_best["wpm"]:
+            text_bests = users.get_text_bests("keegant")
+            performance_list = get_performance_list(text_bests, universe)
+            performance_list.sort(key=lambda x: x["performance"], reverse=True)
+            text_ids = [p["text_id"] for p in performance_list]
+            rank = text_ids.index(int(text_id)) + 1
+            percentile = rank / len(text_ids)
+            performance = calculate_performance(recent_race["wpm"], text["difficulty"])
+
             description = (
                 f"**Recent Personal Best!** {recent_race['wpm']:,.2f} WPM (+"
                 f"{recent_race['wpm'] - previous_best['wpm']:,.2f} WPM)\n"
-                f":small_blue_diamond: {recent_race['wpm'] ** 1.5 * text['difficulty'] ** 1.2:,.0f} Score! "
+                f":small_blue_diamond: {performance:,.0f} Score "
                 f"[(?)]({url} \"Score is a measure of performance on a quote, based on difficulty and WPM.\n"
-                f"Run -textperformances to see your best quotes!\")\n\n"
+                f"Run -textperformances to see your best quotes!\") - "
+                f"Your #{rank:,} (Top {percentile:.2%})"
+                f"\n\n"
                 f"{description}"
             )
 

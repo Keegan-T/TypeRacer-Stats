@@ -51,3 +51,6 @@ def time_travel_races(race_list, user):
         (not start_date or race["timestamp"] >= start_date) and
         (not end_date or race["timestamp"] < end_date)
     ]
+
+def calculate_performance(wpm, difficulty):
+    return wpm ** 1.5 * difficulty ** 1.2

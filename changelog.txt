@@ -204,3 +204,8 @@
 
 5/3/2025
 - Added -thonk
+
+5/4/2025
+- Added standard deviation to races display
+- Added buttons to -compare
+- Added performance percentile to -text
