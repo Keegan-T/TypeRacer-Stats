@@ -122,6 +122,7 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, universe="play
     text_list = texts.get_texts(as_dictionary=True, universe=universe)
     end_time = time.time()
     race_list = []
+    new_texts = False
 
     while True:
         if races_left == 0:
@@ -152,7 +153,7 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, universe="play
                     "difficulty": None,
                 }
                 texts.add_text(text, universe)
-                update_text_difficulties(universe=universe)
+                new_texts = True
                 text_list[text_id] = text
 
                 if universe == "play":
@@ -186,6 +187,9 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, universe="play
             ))
 
         end_time = min(race_list, key=lambda r: r[9])[9] - 0.01
+
+    if new_texts:
+        update_text_difficulties(universe=universe)
 
     if new_user:
         users.add_user(username, universe)
