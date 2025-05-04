@@ -1,8 +1,6 @@
 import re
 from datetime import datetime, timezone
 
-from dateutil import parser
-
 import commands.recent as recent
 from utils import errors, urls, dates
 
@@ -48,6 +46,7 @@ category_aliases = [
     ["random", "rand", "r"],
     ["old", "oldest"],
     ["new", "newest"],
+    ["textperformances", "tp"],
 ]
 rank_emojis = [
     ":first_place:",
@@ -129,16 +128,10 @@ def parse_command(user, params, args, command):
             if missing:
                 return_args.append(dates.now())
             else:
-                try:
-                    if args[i] == "now":
-                        date = dates.now()
-                    elif args[i].isnumeric() and len(args[i]) > 4:
-                        date = datetime.fromtimestamp(int(args[i]), tz=timezone.utc)
-                    else:
-                        date = parser.parse(args[i])
-                    return_args.append(date)
-                except (ValueError, OverflowError):
+                date = dates.parse_date(args[i])
+                if not date:
                     return errors.invalid_date()
+                return_args.append(date)
 
         elif param_name == "duration":
             try:
@@ -476,3 +469,16 @@ def format_expression(num):
             if digit != "0":
                 break
         return formatted[:index]
+
+
+def get_file_name(title, user, username):
+    file_name = title
+    start_date = user["start_date"]
+    end_date = user["end_date"]
+    if start_date:
+        file_name += f"_{int(start_date)}"
+    if end_date:
+        file_name += f"_{int(end_date)}"
+    file_name += f"_{username}.png"
+
+    return file_name

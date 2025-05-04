@@ -2,18 +2,19 @@ from datetime import datetime, timezone
 
 from discord.ext import commands
 
+from commands.basic.stats import get_args
 from database import users, races
 from database.bot_users import get_user
 from graphs import clock_graph, bar_graph
-from utils import errors, embeds, strings, dates
-from utils.embeds import GraphPage, is_embed
+from utils import errors, strings, dates
+from utils.embeds import GraphMessage, GraphPage, is_embed
 
 command = {
     "name": "activity",
     "aliases": ["act", "clock"],
     "description": "Displays your daily and weekly active typing periods",
     "parameters": "[username]",
-    "usages": ["activity keegant", "activity me week"],
+    "usages": ["activity"],
 }
 
 
@@ -24,22 +25,17 @@ class Activity(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def activity(self, ctx, *args):
         user = get_user(ctx)
+        args, user = dates.set_command_date_range(args, user)
 
         result = get_args(user, args, command)
         if is_embed(result):
             return await ctx.send(embed=result)
 
-        username, timeframe = result
-        await run(ctx, user, username, timeframe)
+        username = result
+        await run(ctx, user, username)
 
 
-def get_args(user, args, info):
-    params = f"username timeframe:day|week"
-
-    return strings.parse_command(user, params, args, info)
-
-
-async def run(ctx, user, username, timeframe):
+async def run(ctx, user, username):
     universe = user["universe"]
     stats = users.get_user(username, universe)
     if not stats:
@@ -102,18 +98,16 @@ async def run(ctx, user, username, timeframe):
 
     pages = [
         GraphPage(
-            render_daily, f"typing_activity_daily_{username}.png",
+            render_daily, strings.get_file_name("daily_typing_activity", user, username),
             "Daily Typing Activity", daily_description, "Daily",
-            timeframe == "day",
         ),
         GraphPage(
-            render_weekly, f"typing_activity_weekly_{username}.png",
+            render_weekly, strings.get_file_name("weekly_typing_activity", user, username),
             "Weekly Typing Activity", weekly_description, "Weekly",
-            timeframe == "week",
         )
     ]
 
-    message = embeds.GraphMessage(
+    message = GraphMessage(
         ctx=ctx,
         pages=pages,
         user=user,

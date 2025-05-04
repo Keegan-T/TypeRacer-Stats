@@ -5,7 +5,7 @@ import database.races as races
 import database.texts as texts
 import database.users as users
 from database.bot_users import get_user
-from utils import errors, urls, strings
+from utils import errors, urls, strings, dates
 from utils.embeds import Message, Page, get_pages, is_embed
 
 categories = ["wpm", "points"]
@@ -33,6 +33,7 @@ class Best(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def best(self, ctx, *args):
         user = get_user(ctx)
+        args, user = dates.set_command_date_range(args, user)
 
         result = get_args(user, args, command)
         if is_embed(result):

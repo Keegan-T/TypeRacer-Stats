@@ -3,7 +3,7 @@ from discord.ext import commands
 from database import users, texts, text_results
 from database.bot_users import get_user
 from database.texts import update_text_difficulties
-from utils import errors, strings, urls
+from utils import errors, strings, urls, dates
 from utils.embeds import Message, get_pages, is_embed
 
 command = {
@@ -25,6 +25,7 @@ class TextPerformances(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def textperformances(self, ctx, *args):
         user = get_user(ctx)
+        args, user = dates.set_command_date_range(args, user)
 
         result = get_args(user, args, command)
         if is_embed(result):

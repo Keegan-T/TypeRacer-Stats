@@ -4,7 +4,8 @@ from discord.ext import commands
 import database.races as races
 import database.users as users
 from database.bot_users import get_user
-from utils import errors, colors, embeds, strings
+from utils import errors, colors, embeds, strings, dates
+from utils.embeds import Message, Page
 
 command = {
     "name": "bestaverages",
@@ -26,6 +27,7 @@ class BestAverages(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def bestaverages(self, ctx, *args):
         user = get_user(ctx)
+        args, user = dates.set_command_date_range(args, user)
 
         result = get_args(user, args, command)
         if embeds.is_embed(result):
@@ -62,7 +64,6 @@ async def run(ctx, user, username, n):
         start_date=user["start_date"], end_date=user["end_date"]
     )
     race_list.sort(key=lambda x: x[2])
-    description = ""
 
     count = 10
     averages = [sum([race[0] for race in race_list[:n]])]
@@ -76,29 +77,47 @@ async def run(ctx, user, username, n):
         start_index += 1
         end_index += 1
 
-    for i in range(count):
-        best = max(averages)
-        if best == 0:
+    pages = []
+    page_count = 10
+    per_page = min(10, len(averages) // 10 + 1)
+
+    for _ in range(page_count):
+        description = ""
+        for _ in range(per_page):
+            best = max(averages)
+            if best == 0:
+                break
+            best_index = averages.index(best)
+            for i in range(-n + 1, n):
+                target_index = best_index + i
+                if 0 <= target_index < len(averages):
+                    averages[target_index] = 0
+
+            start_number = race_list[best_index][1]
+            end_number = race_list[best_index + n - 1][1]
+            start_timestamp = race_list[best_index][2]
+            end_timestamp = race_list[best_index + n - 1][2]
+            date_range = (
+                f"{strings.discord_timestamp(start_timestamp, 'D')} - "
+                f"{strings.discord_timestamp(end_timestamp, 'D')}"
+            )
+            description += f"**{date_range}**\n{best / n:,.2f} WPM: (Races #{start_number:,} - {end_number:,})\n\n"
+        pages.append(Page(description=description))
+        if sum(averages) == 0:
             break
-        best_index = averages.index(best)
-        for j in range(-n + 1, n):
-            target_index = best_index + j
-            if 0 <= target_index < len(averages):
-                averages[target_index] = 0
 
-        start_number = race_list[best_index][1]
-        end_number = race_list[best_index + n - 1][1]
-        description += f"**{best / n:,.2f} WPM:** Races #{start_number:,} - {end_number:,}\n"
+    title = f"Best Last {n:,} Averages"
 
-    embed = Embed(
-        title=f"Best Last {n:,} Averages",
-        description=description,
-        color=user["colors"]["embed"],
+    message = Message(
+        ctx=ctx,
+        user=user,
+        pages=pages,
+        title=title,
+        profile=stats,
+        universe=universe,
     )
-    embeds.add_profile(embed, stats, universe)
-    embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed, content=era_string)
+    await message.send()
 
 
 def not_enough_races():

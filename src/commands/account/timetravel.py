@@ -42,11 +42,13 @@ travel_messages = [
 command = {
     "name": "timetravel",
     "aliases": ["tt"],
-    "description": "ꝐȺꞦȾ ȾĦɆ ȾɆᛗꝐꝊꞦȺŁ ₲ȺȾɆꞨ",
+    "description": "Set a date range to view stats for any time period\n"
+                   "Most commands also accept dates as direct parameters",
     "parameters": "[date_1] <date_2>",
     "usages": [
         "timetravel 2020-01-01",
-        "timetravel 4/20/22 4/20/23"
+        "timetravel 4/20/22 4/20/23",
+        "timetravel 1/1/2025 now",
     ],
 }
 
