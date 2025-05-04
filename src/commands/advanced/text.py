@@ -125,7 +125,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
         worst = min(race_list, key=lambda r: r["wpm"])
         previous_best = max(race_list[:-1], key=lambda r: r["wpm"])
         if recent_race["wpm"] > previous_best["wpm"]:
-            text_bests = users.get_text_bests("keegant")
+            text_bests = users.get_text_bests(username)
             performance_list = get_performance_list(text_bests, universe)
             performance_list.sort(key=lambda x: x["performance"], reverse=True)
             text_ids = [p["text_id"] for p in performance_list]
@@ -172,7 +172,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
 
     else:
         color = colors.success
-        text_bests = users.get_text_bests("keegant")
+        text_bests = users.get_text_bests(username)
         performance_list = get_performance_list(text_bests, universe)
         performance_list.sort(key=lambda x: x["performance"], reverse=True)
         text_ids = [p["text_id"] for p in performance_list]
