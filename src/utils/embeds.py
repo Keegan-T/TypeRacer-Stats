@@ -38,7 +38,7 @@ class Message(View):
         self.cache = {}
         self.paginated = any(not page.button_name for page in self.pages)
 
-        for i, page in enumerate(pages):
+        for i, page in enumerate(self.pages):
             title = page.title if page.title else self.title
             description = self.header + page.description
             if page.default:

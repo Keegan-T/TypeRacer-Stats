@@ -1,4 +1,4 @@
-from discord import Embed, File
+from discord import Embed
 from discord.ext import commands
 
 import commands.recent as recent
@@ -12,8 +12,8 @@ from commands.basic.download import run as download
 from config import prefix
 from database.bot_users import get_user
 from graphs import improvement_graph
-from graphs.core import remove_file
 from utils import errors, colors, urls, strings, embeds
+from utils.embeds import Message, Page
 from utils.stats import calculate_performance
 
 command = {
@@ -93,129 +93,147 @@ async def run(ctx, user, username, text_id=None, race_number=None):
     title = "Text History"
     if ctx.invoked_with in ["racetext", "rt", "racetextgraph", "rtg"]:
         title += f" (Race #{race_number:,})"
-    embed = Embed(title=title, url=urls.trdata_text_races(username, text_id, universe))
-    embeds.add_profile(embed, api_stats, universe)
-    embeds.add_universe(embed, universe)
+
     color = user["colors"]["embed"]
-
-    description = strings.text_description(dict(text), universe)
-
+    text_description = strings.text_description(dict(text), universe)
     race_list = races.get_text_races(
         username, text_id, universe, start_date=user["start_date"], end_date=user["end_date"]
     )
     if not race_list:
-        embed.description = (
-            f"{description}\n\nUser has no races on this text\n"
+        description = (
+            f"{text_description}\n\nUser has no races on this text\n"
             f"[Race this text]({text['ghost']})"
         )
-        embed.color = color
         recent.text_id = text_id
-        return await ctx.send(embed=embed, content=era_string)
+        message = Message(
+            ctx, user, Page(description=description),
+            title,
+            url=urls.trdata_text_races(username, text_id, universe),
+            color=color,
+            profile=db_stats,
+            universe=universe
+        )
+        return await message.send()
 
     times_typed = len(race_list)
-    wpm = [race["wpm"] for race in race_list]
-    average = sum(wpm) / times_typed
     recent_race = race_list[-1]
-
     stats_string = f"**Times Typed:** {times_typed:,}\n"
-    url = f"https://discord.com/channels/175964903033667585/746460695670816798"
+    score_display = ""
+    average = 0
+    best = {}
+    previous_best = {}
+    worst = {}
+    for race in race_list:
+        wpm = race["wpm"]
+        average += wpm
+        if wpm > best.get("wpm", 0):
+            best = dict(race)
+            if race != race_list[-1]:
+                previous_best = dict(race)
+        if wpm < worst.get("wpm", float("inf")):
+            worst = dict(race)
+    average /= times_typed
 
     if times_typed > 1:
-        best = max(race_list, key=lambda r: r["wpm"])
-        worst = min(race_list, key=lambda r: r["wpm"])
-        previous_best = max(race_list[:-1], key=lambda r: r["wpm"])
         if recent_race["wpm"] > previous_best["wpm"]:
-            text_bests = users.get_text_bests(username)
-            performance_list = get_performance_list(text_bests, universe)
-            performance_list.sort(key=lambda x: x["performance"], reverse=True)
-            text_ids = [p["text_id"] for p in performance_list]
-            rank = text_ids.index(int(text_id)) + 1
-            percentile = rank / len(text_ids)
-            performance = calculate_performance(recent_race["wpm"], text["difficulty"])
+            rank, percentile, performance = get_performance_stats(
+                username, universe, text_id, recent_race["wpm"], text["difficulty"]
+            )
 
-            description = (
+            score_display = (
                 f"**Recent Personal Best!** {recent_race['wpm']:,.2f} WPM (+"
                 f"{recent_race['wpm'] - previous_best['wpm']:,.2f} WPM)\n"
-                f":small_blue_diamond: {performance:,.0f} Score "
-                f"[(?)]({url} \"Score is a measure of performance on a quote, based on difficulty and WPM.\n"
-                f"Run -textperformances to see your best quotes!\") - "
-                f"Your #{rank:,} (Top {percentile:.2%})\n\n"
-                f"{description}"
+                f"{get_score_string(rank, percentile, performance)}"
             )
 
             color = colors.success
-            stats_string += (
-                f"**Average:** {average:,.2f} WPM\n"
-                f"**Previous Best:** [{previous_best['wpm']:,.2f} WPM]"
-                f"({urls.replay(username, previous_best['number'], universe)}) - "
-                f"<t:{int(previous_best['timestamp'])}:R>\n"
-                f"**Worst:** [{worst['wpm']:,.2f} WPM]"
-                f"({urls.replay(username, worst['number'], universe)}) - "
-                f"<t:{int(worst['timestamp'])}:R>\n"
-                f"**Recent:** [{recent_race['wpm']:,.2f} WPM]"
-                f"({urls.replay(username, recent_race['number'], universe)}) - "
-                f"<t:{int(recent_race['timestamp'])}:R>"
-            )
+            stats_string += get_stats_string(username, universe, average, previous_best, worst, recent_race, previous=True)
         else:
-            stats_string += (
-                f"**Average:** {average:,.2f} WPM\n"
-                f"**Best:** [{best['wpm']:,.2f} WPM]"
-                f"({urls.replay(username, best['number'], universe)}) - "
-                f"<t:{int(best['timestamp'])}:R>\n"
-                f"**Worst:** [{worst['wpm']:,.2f} WPM]"
-                f"({urls.replay(username, worst['number'], universe)}) - "
-                f"<t:{int(worst['timestamp'])}:R>\n"
-                f"**Recent:** [{recent_race['wpm']:,.2f} WPM]"
-                f"({urls.replay(username, recent_race['number'], universe)}) - "
-                f"<t:{int(recent_race['timestamp'])}:R>"
-            )
+            stats_string += get_stats_string(username, universe, average, best, worst, recent_race, previous=False)
 
     else:
         color = colors.success
-        text_bests = users.get_text_bests(username)
-        performance_list = get_performance_list(text_bests, universe)
-        performance_list.sort(key=lambda x: x["performance"], reverse=True)
-        text_ids = [p["text_id"] for p in performance_list]
-        rank = text_ids.index(int(text_id)) + 1
-        percentile = rank / len(text_ids)
-        performance = calculate_performance(recent_race["wpm"], text["difficulty"])
-        description = (
+        rank, percentile, performance = get_performance_stats(
+            username, universe, text_id, recent_race["wpm"], text["difficulty"]
+        )
+        score_display = (
             f"**New Text!** +{recent_race['wpm']:,.2f} WPM\n"
-            f":small_blue_diamond: {performance:,.0f} Score "
-            f"[(?)]({url} \"Score is a measure of performance on a quote, based on difficulty and WPM.\n"
-            f"Run -textperformances to see your best quotes!\") - "
-            f"Your #{rank:,} (Top {percentile:.2%})\n\n"
-            f"{description}"
+            f"{get_score_string(rank, percentile, performance)}"
         )
         stats_string += (
             f"**Recent:** [{recent_race['wpm']:,.2f} WPM]"
             f"({urls.replay(username, recent_race['number'], universe)}) - "
-            f"<t:{int(recent_race['timestamp'])}:R>"
+            f"{strings.discord_timestamp(recent_race['timestamp'])}"
         )
 
-    embed.description = description + f"\n\n{stats_string}"
-    embed.color = color
+    description = f"{score_display}\n\n{text_description}\n\n{stats_string}"
 
-    if graph:
+    def render(file_name):
         title = f"WPM Improvement - {username} - Text #{text_id}"
-        file_name = f"text_improvement_{username}_{text_id}.png"
+        wpm = [race["wpm"] for race in race_list]
         improvement_graph.render(user, wpm, title, file_name, universe=universe)
 
-        embed.set_image(url=f"attachment://{file_name}")
-        file = File(file_name, filename=file_name)
+    kwargs = {"description": description}
+    if graph:
+        kwargs["render"] = render
+        kwargs["file_name"] = f"text_improvement_{username}_{text_id}.png"
 
-        await ctx.send(embed=embed, file=file, content=era_string)
+    message = Message(
+        ctx, user, Page(**kwargs), title,
+        url=urls.trdata_text_races(username, text_id, universe),
+        color=color,
+        profile=db_stats,
+        universe=universe
+    )
 
-        remove_file(file_name)
-
-    else:
-        await ctx.send(embed=embed, content=era_string)
+    await message.send()
 
     recent.text_id = text_id
 
     if universe != "play" or user["end_date"]:
         return
 
+    await top_10_display(ctx, username, text_id, recent_race)
+
+
+def get_performance_stats(username, universe, text_id, wpm, difficulty):
+    text_bests = users.get_text_bests(username)
+    performance_list = get_performance_list(text_bests, universe)
+    performance_list.sort(key=lambda x: x["performance"], reverse=True)
+    text_ids = [p["text_id"] for p in performance_list]
+    rank = text_ids.index(int(text_id)) + 1
+    percentile = rank / len(text_ids)
+    performance = calculate_performance(wpm, difficulty)
+
+    return rank, percentile, performance
+
+
+def get_score_string(rank, percentile, performance):
+    return (
+        f":small_blue_diamond: {performance:,.0f} Score "
+        f"[(?)](https://discord.com/channels/175964903033667585/746460695670816798 "
+        f"\"Score is a measure of performance on a quote, based on difficulty and WPM.\n"
+        f"Run -textperformances to see your best quotes!\") - "
+        f"Your #{rank:,} (Top {percentile:.2%})"
+    )
+
+
+def get_stats_string(username, universe, average, best, worst, recent_race, previous=True):
+    return (
+        f"**Average:** {average:,.2f} WPM\n"
+        f"**{'Previous ' * previous}Best:** [{best['wpm']:,.2f} WPM]"
+        f"({urls.replay(username, best['number'], universe)}) - "
+        f"{strings.discord_timestamp(best['timestamp'])}\n"
+        f"**Worst:** [{worst['wpm']:,.2f} WPM]"
+        f"({urls.replay(username, worst['number'], universe)}) - "
+        f"{strings.discord_timestamp(worst['timestamp'])}\n"
+        f"**Recent:** [{recent_race['wpm']:,.2f} WPM]"
+        f"({urls.replay(username, recent_race['number'], universe)}) - "
+        f"{strings.discord_timestamp(recent_race['timestamp'])}"
+    )
+
+
+async def top_10_display(ctx, username, text_id, recent_race):
     top_10 = top_tens.get_top_n(text_id)
     existing_score = next((score for score in top_10 if score["username"] == username), None)
     await top_tens.update_results(text_id)
