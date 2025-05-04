@@ -139,8 +139,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
                 f":small_blue_diamond: {performance:,.0f} Score "
                 f"[(?)]({url} \"Score is a measure of performance on a quote, based on difficulty and WPM.\n"
                 f"Run -textperformances to see your best quotes!\") - "
-                f"Your #{rank:,} (Top {percentile:.2%})"
-                f"\n\n"
+                f"Your #{rank:,} (Top {percentile:.2%})\n\n"
                 f"{description}"
             )
 
@@ -173,9 +172,19 @@ async def run(ctx, user, username, text_id=None, race_number=None):
 
     else:
         color = colors.success
+        text_bests = users.get_text_bests("keegant")
+        performance_list = get_performance_list(text_bests, universe)
+        performance_list.sort(key=lambda x: x["performance"], reverse=True)
+        text_ids = [p["text_id"] for p in performance_list]
+        rank = text_ids.index(int(text_id)) + 1
+        percentile = rank / len(text_ids)
+        performance = calculate_performance(recent_race["wpm"], text["difficulty"])
         description = (
             f"**New Text!** +{recent_race['wpm']:,.2f} WPM\n"
-            f":small_blue_diamond: {recent_race['wpm'] ** 1.5 * text['difficulty'] ** 1.2:,.0f} Score!\n\n"
+            f":small_blue_diamond: {performance:,.0f} Score "
+            f"[(?)]({url} \"Score is a measure of performance on a quote, based on difficulty and WPM.\n"
+            f"Run -textperformances to see your best quotes!\") - "
+            f"Your #{rank:,} (Top {percentile:.2%})\n\n"
             f"{description}"
         )
         stats_string += (
