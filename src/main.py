@@ -1,4 +1,5 @@
 import asyncio
+import glob
 import os
 from datetime import datetime, timezone
 
@@ -127,7 +128,14 @@ async def load_commands():
                     await bot.load_extension(f"commands.{dir}.{file[:-3]}")
 
 
+def clear_image_cache():
+    images = glob.glob("*.png")
+    for file in images:
+        os.remove(file)
+
+
 async def main():
+    clear_image_cache()
     await load_commands()
     await bot.start(bot_token)
 
