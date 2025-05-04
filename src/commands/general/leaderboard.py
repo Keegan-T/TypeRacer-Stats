@@ -95,7 +95,24 @@ async def run(ctx, user, category, text_id=None):
         text_count = texts.get_text_count()
         min_texts = int(text_count * 0.2)
         title = "Text Bests"
-        leaderboard = users.get_top_text_best(limit)
+        leaderboard = users.get_top_text_best(limit * 2)
+
+        alts = get_alts()
+        filtered_leaderboard = []
+        unique_usernames = set()
+
+        for leader in leaderboard:
+            username = leader["username"]
+            if username in alts and any(alt in unique_usernames for alt in alts[username]):
+                continue
+            unique_usernames.add(username)
+            filtered_leaderboard.append(leader)
+            leaders.append(f"{leader['text_best_average']:,.2f} WPM")
+            if len(filtered_leaderboard) == limit:
+                break
+
+        leaderboard = filtered_leaderboard
+
         for leader in leaderboard:
             leaders.append(f"{leader['text_best_average']:,.2f} WPM")
         embed.set_footer(text=f"Minimum {min_texts:,} Texts Typed (20%)")
