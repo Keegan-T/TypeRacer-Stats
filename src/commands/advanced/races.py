@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 
+import numpy as np
 from dateutil.relativedelta import relativedelta
 from discord import Embed
 from discord.ext import commands
@@ -217,6 +218,7 @@ def add_stats(embed, username, race_list, start, end, mini=False, universe="play
     seconds_elapsed = last_race[7] - first_race[7]
     days = dates.count_unique_dates(start, end - 0.001)
     longest_break = {"time": 0, "start_race": {}, "end_race": {}}
+    standard_deviation = np.std([race[2] for race in race_list])
 
     previous_race = race_list[0]
     for i, race in enumerate(race_list):
@@ -290,7 +292,8 @@ def add_stats(embed, username, race_list, start, end, mini=False, universe="play
     text_count = len(unique_texts)
 
     summary_string = (
-        f"**Average Speed:** {average_wpm:,.2f} WPM "
+        f"**Average Speed:** {average_wpm:,.2f} WPM (± {standard_deviation:,.2f})\n"
+        f"**Range:** {best_race['wpm'] - worst_race['wpm']:,.2f} "
         f"([{worst_race['wpm']:,.2f}]({urls.replay(username, worst_race['number'], universe)}) - "
         f"[{best_race['wpm']:,.2f}]({urls.replay(username, best_race['number'], universe)}))\n"
         f"**Races:** {race_count:,} ({accuracy_percent:.2f}% Accuracy)\n"
