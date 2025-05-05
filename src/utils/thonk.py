@@ -229,7 +229,7 @@ def generate_hand():
     thumb_width = 20
     thumb_height = 100
 
-    finger_width = random.uniform(200, 250)
+    finger_width = random.uniform(175, 225)
     long_chance = random.randint(0, 50)
     if long_chance == 25:
         finger_width = random.uniform(300, 400)
@@ -446,8 +446,6 @@ def generate_thonk(file_name, seed):
 
     size = (512, 512)
     img = Image.new("RGBA", size, (0, 0, 0, 0))
-
-    # draw = ImageDraw.Draw(img)
 
     center = (size[0] // 2, size[1] // 2)
     radius = 180
