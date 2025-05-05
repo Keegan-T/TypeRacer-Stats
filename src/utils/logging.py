@@ -16,11 +16,11 @@ def time_start():
 
 
 def time_split():
-    time_end()
+    time_stop()
     time_start()
 
 
-def time_end():
+def time_stop():
     end = time.time() - start
     print(f"Took {end * 1000:,.0f}ms")
 
