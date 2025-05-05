@@ -9,7 +9,13 @@ from utils import strings
 command = {
     "name": "alts",
     "aliases": ["alt"],
-    "description": "Displays a list of alt accounts or updates the list",
+    "description": "Displays a list of alt accounts or updates the list\n",
+    "usages": [
+        "alts",
+        "alts username",
+        "alts add username",
+        "alts remove username",
+    ]
 }
 
 
@@ -23,19 +29,32 @@ class Alts(commands.Cog):
         user = get_user(ctx)
 
         if not args:
-            return await display(ctx, user)
+            return await display_all(ctx, user)
 
         if args[0] == "add":
             await add(ctx, user, args[1], args[2])
         elif args[0] == "remove":
             await remove(ctx, user, args[1])
+        else:
+            await display(ctx, user, args[0])
 
 
-async def display(ctx, user):
+async def display_all(ctx, user):
     alt_list = alts.get_alts()
 
     groups = {frozenset(group) for group in alt_list.values()}
     description = "\n".join(", ".join(group) for group in groups)
+
+    await send_embed(ctx, user, description)
+
+
+async def display(ctx, user, username):
+    alt_list = alts.get_alts()
+
+    groups = {frozenset(group) for group in alt_list.values()}
+    description = "\n".join(", ".join(group) for group in groups if username in group)
+    if not description:
+        description = "This account has no alts"
 
     await send_embed(ctx, user, description)
 
