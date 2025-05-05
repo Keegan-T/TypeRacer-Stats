@@ -4,10 +4,11 @@ import os
 from discord import Embed
 from discord.ext import commands
 
-from config import prefix, bot_admins
+from config import prefix, bot_admins, bot_owner
 from database.bot_users import get_user
 from utils import errors
 
+groups = ["account", "advanced", "basic", "general", "info", "admin", "owner"]
 command = {
     "name": "help",
     "aliases": ["h"],
@@ -27,9 +28,7 @@ class Help(commands.Cog):
         if not args:
             return await help_main(ctx, user)
 
-        groups = ["account", "admin", "advanced", "basic", "general", "info", "unlisted"]
         command_dict = {}
-
         for group in groups:
             for file in os.listdir(f"./commands/{group}"):
                 if file.endswith(".py") and not file.startswith("_"):
@@ -55,7 +54,6 @@ async def help_main(ctx, user):
         color=user["colors"]["embed"],
     )
 
-    groups = ["account", "advanced", "basic", "general", "info", "admin"]
     command_list = {}
 
     for group in groups:
@@ -73,6 +71,7 @@ async def help_main(ctx, user):
     basic_commands = ", ".join(f"`{cmd}`" for cmd in command_list["basic"])
     advanced_commands = ", ".join(f"`{cmd}`" for cmd in command_list["advanced"])
     admin_commands = ", ".join(f"`{cmd}`" for cmd in command_list["admin"])
+    owner_commands = ", ".join(f"`{cmd}`" for cmd in command_list["owner"])
 
     embed.add_field(name="Account Commands", value=account_commands, inline=False)
     embed.add_field(name="Info Commands", value=info_commands, inline=False)
@@ -81,6 +80,8 @@ async def help_main(ctx, user):
     embed.add_field(name=f"Advanced User Commands (`{prefix}import` required)", value=advanced_commands, inline=False)
     if ctx.author.id in bot_admins:
         embed.add_field(name="Admin Commands", value=admin_commands, inline=False)
+    if ctx.author.id == bot_owner:
+        embed.add_field(name="Owner Commands", value=owner_commands, inline=False)
 
     embed.set_footer(text="Developed by keegant", icon_url="https://cdn.discordapp.com/avatars/155481579005804544/33ede24295683bbb2253481d5029266e.webp?size=1024")
 
