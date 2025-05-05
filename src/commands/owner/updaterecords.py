@@ -10,6 +10,11 @@ command = {
     "name": "updaterecords",
     "aliases": ["records", "record", "rec"],
     "description": "Updates the record list",
+    "parameters": "[category] [index] [username] [record] [date] [link]",
+    "usages": [
+        "records reload",
+        "records speedrun 1..."
+    ]
 }
 
 

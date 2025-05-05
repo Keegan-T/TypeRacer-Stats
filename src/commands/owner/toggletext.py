@@ -9,7 +9,7 @@ from utils import errors
 command = {
     "name": "toggletext",
     "aliases": ["textenable", "te", "textdisable", "td"],
-    "description": "Enables/disabled texts",
+    "description": "Enables/disables texts",
 }
 
 
