@@ -146,7 +146,7 @@ async def run(ctx, user, username1, username2, category, rate1, rate2=None):
     current2 = user2["current"]
     rate1 = user1["rate"]
     rate2 = user2["rate"]
-    if rate1 == 0 or rate2 == 0 or rate1 < rate2:
+    if rate1 == 0 or rate1 < rate2:
         crossover_point = "Never"
     else:
         days_left = (current2 - current1) / (rate1 - rate2)
