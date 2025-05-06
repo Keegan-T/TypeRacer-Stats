@@ -47,6 +47,7 @@ category_aliases = [
     ["old", "oldest"],
     ["new", "newest"],
     ["textperformances", "tp"],
+    ["all", "alltime"]
 ]
 rank_emojis = [
     ":first_place:",

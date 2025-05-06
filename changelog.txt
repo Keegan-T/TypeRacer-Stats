@@ -209,3 +209,7 @@
 - Added standard deviation to races display
 - Added buttons to -compare
 - Added performance percentile to -text
+
+5/5/2025
+- Added -pace
+- Added -pacecompare
