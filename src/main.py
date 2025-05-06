@@ -46,9 +46,9 @@ async def on_command_error(ctx, error):
         return await ctx.send(embed=errors.command_cooldown(datetime.now().timestamp() + error.retry_after))
 
     elif isinstance(error, commands.CommandInvokeError):
-        if isinstance(error.original, (ConnectionError, ClientConnectionError, SSLError)):
-            return await ctx.send(embed=errors.connection_error())
-        elif "Embed size exceeds maximum size" in str(error):
+        # if isinstance(error.original, (ConnectionError, ClientConnectionError, SSLError)):
+        #     return await ctx.send(embed=errors.connection_error())
+        if "Embed size exceeds maximum size" in str(error):
             return await ctx.send(embed=errors.embed_limit_exceeded())
 
         if isinstance(error.original, discord.Forbidden):
