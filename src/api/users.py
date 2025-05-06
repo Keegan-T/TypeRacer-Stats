@@ -18,7 +18,7 @@ def get_stats(username=None, stats=None, universe="play"):
         url = urls.stats(username, universe)
         response = requests.get(url)
 
-        if response.status_code == 500:
+        if response.status_code == 404:
             return None
         elif response.status_code != 200:
             raise ConnectionError
