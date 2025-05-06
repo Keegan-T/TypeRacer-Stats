@@ -94,6 +94,7 @@ async def user_leaderboard(ctx, user, discord_id):
     title = "Most Used Commands"
     description = "**Overall**\n\n"
 
+    top_users = None
     if discord_id == "users":
         title = "Top Command Users"
         top_users = get_top_users()
@@ -121,7 +122,10 @@ async def user_leaderboard(ctx, user, discord_id):
         description=description,
         color=user["colors"]["embed"],
     )
-    embed.set_footer(text=f"Total Usages: {total_usages:,}")
+    footer_text = f"Total Usages: {total_usages:,}"
+    if top_users:
+        footer_text += f"\nTotal Users: {len(top_users)}"
+    embed.set_footer(text=footer_text)
 
     await ctx.send(embed=embed)
 
