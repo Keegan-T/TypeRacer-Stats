@@ -7,14 +7,13 @@ import database.text_results as top_tens
 import database.texts as texts
 import database.users as users
 from api.users import get_stats
-from commands.advanced.textperformances import get_performance_list
 from commands.basic.download import run as download
 from config import prefix
 from database.bot_users import get_user
 from graphs import improvement_graph
 from utils import errors, colors, urls, strings, embeds
 from utils.embeds import Message, Page
-from utils.stats import calculate_performance
+from utils.stats import calculate_performance, calculate_text_performances
 
 command = {
     "name": "text",
@@ -89,6 +88,8 @@ async def run(ctx, user, username, text_id=None, race_number=None):
     text = texts.get_text(text_id, universe)
     if not text:
         return await ctx.send(embed=errors.unknown_text(universe))
+    disabled_texts = texts.get_disabled_text_ids()
+    disabled = int(text_id) in disabled_texts
 
     title = "Text History"
     if ctx.invoked_with in ["racetext", "rt", "racetextgraph", "rtg"]:
@@ -136,15 +137,15 @@ async def run(ctx, user, username, text_id=None, race_number=None):
 
     if times_typed > 1:
         if recent_race["wpm"] > previous_best["wpm"]:
-            rank, percentile, performance = get_performance_stats(
-                username, universe, text_id, recent_race["wpm"], text["difficulty"]
-            )
-
             score_display = (
                 f"**Recent Personal Best!** {recent_race['wpm']:,.2f} WPM (+"
-                f"{recent_race['wpm'] - previous_best['wpm']:,.2f} WPM)\n"
-                f"{get_score_string(rank, percentile, performance)}"
+                f"{recent_race['wpm'] - previous_best['wpm']:,.2f} WPM)"
             )
+            if not disabled:
+                rank, percentile, performance = get_performance_stats(
+                    username, universe, text_id, recent_race["wpm"], text["difficulty"]
+                )
+                score_display += f"\n{get_score_string(rank, percentile, performance)}"
 
             color = colors.success
             stats_string += get_stats_string(username, universe, average, previous_best, worst, recent_race, previous=True)
@@ -153,13 +154,13 @@ async def run(ctx, user, username, text_id=None, race_number=None):
 
     else:
         color = colors.success
-        rank, percentile, performance = get_performance_stats(
-            username, universe, text_id, recent_race["wpm"], text["difficulty"]
-        )
-        score_display = (
-            f"**New Text!** +{recent_race['wpm']:,.2f} WPM\n"
-            f"{get_score_string(rank, percentile, performance)}"
-        )
+        score_display = f"**New Text!** +{recent_race['wpm']:,.2f} WPM"
+        if not disabled:
+            rank, percentile, performance = get_performance_stats(
+                username, universe, text_id, recent_race["wpm"], text["difficulty"]
+            )
+            score_display += f"\n{get_score_string(rank, percentile, performance)}"
+
         stats_string += (
             f"**Recent:** [{recent_race['wpm']:,.2f} WPM]"
             f"({urls.replay(username, recent_race['number'], universe)}) - "
@@ -198,9 +199,9 @@ async def run(ctx, user, username, text_id=None, race_number=None):
 
 def get_performance_stats(username, universe, text_id, wpm, difficulty):
     text_bests = users.get_text_bests(username)
-    performance_list = get_performance_list(text_bests, universe)
-    performance_list.sort(key=lambda x: x["performance"], reverse=True)
-    text_ids = [p["text_id"] for p in performance_list]
+    calculate_text_performances(text_bests, universe)
+    text_bests.sort(key=lambda x: x["performance"], reverse=True)
+    text_ids = [t["text_id"] for t in text_bests]
     rank = text_ids.index(int(text_id)) + 1
     percentile = rank / len(text_ids)
     performance = calculate_performance(wpm, difficulty)

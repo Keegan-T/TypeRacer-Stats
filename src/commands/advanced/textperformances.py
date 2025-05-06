@@ -1,10 +1,10 @@
 from discord.ext import commands
 
-from database import users, texts, text_results
+from database import users, text_results
 from database.bot_users import get_user
-from database.texts import update_text_difficulties
 from utils import errors, strings, urls, dates
 from utils.embeds import Message, get_pages, is_embed
+from utils.stats import calculate_text_performances
 
 command = {
     "name": "textperformances",
@@ -43,44 +43,14 @@ def get_args(user, args, info):
     return strings.parse_command(user, params, args, info)
 
 
-def get_performance_list(text_bests, universe):
-    performance_list = []
-    text_dict = texts.get_texts(as_dictionary=True, include_disabled=False, universe=universe)
-    if next(iter(text_dict.items()))[1]["difficulty"] is None:
-        update_text_difficulties(universe)
-        text_dict = texts.get_texts(as_dictionary=True, include_disabled=False, universe=universe)
-    text_list = [{"text_id": k, "difficulty": v["difficulty"]} for k, v in text_dict.items()]
-    difficulties = {text["text_id"]: text["difficulty"] for text in text_list}
-    min_difficulty = min(text["difficulty"] for text in text_list)
-    max_difficulty = max(text["difficulty"] for text in text_list)
-
-    for text in text_bests:
-        race = dict(text)
-        text_id = text["text_id"]
-        wpm = text["wpm"]
-        quote = text_dict[text_id]["quote"]
-        difficulty = difficulties[text_id]
-        performance = wpm ** 1.5 * difficulty ** 1.2
-        rating = ((difficulty - min_difficulty) / (max_difficulty - min_difficulty)) * 10
-        race.update({
-            "quote": quote,
-            "difficulty": difficulty,
-            "performance": performance,
-            "rating": rating
-        })
-        performance_list.append(race)
-
-    return performance_list
-
-
 async def run_all(ctx, user, sort):
     text_bests = []
     top_10s = text_results.get_top_10s()
     for text_id, results in top_10s.items():
         text_bests.append(dict(results[0]))
 
-    performance_list = get_performance_list(text_bests, "play")
-    performance_list.sort(key=lambda x: x["performance"], reverse=sort == "best")
+    calculate_text_performances(text_bests)
+    text_bests.sort(key=lambda x: x["performance"], reverse=sort == "best")
 
     def formatter(text):
         text_id = text["text_id"]
@@ -97,7 +67,7 @@ async def run_all(ctx, user, sort):
             f'"{quote}"\n\n'
         )
 
-    pages = get_pages(performance_list, formatter, page_count=20, per_page=5)
+    pages = get_pages(text_bests, formatter, page_count=20, per_page=5)
 
     message = Message(
         ctx=ctx,
@@ -121,8 +91,8 @@ async def run(ctx, user, username, sort):
     else:
         text_bests = await users.get_text_bests_time_travel(username, universe, user, race_stats=True)
 
-    performance_list = get_performance_list(text_bests, universe)
-    performance_list.sort(key=lambda x: x["performance"], reverse=sort == "best")
+    calculate_text_performances(text_bests, universe)
+    text_bests.sort(key=lambda x: x["performance"], reverse=sort == "best")
 
     def formatter(text):
         text_id = text["text_id"]
@@ -137,8 +107,8 @@ async def run(ctx, user, username, sort):
             f'"{quote}"\n\n'
         )
 
-    texts_typed = len(performance_list)
-    total = sum([text["performance"] for text in performance_list])
+    texts_typed = len(text_bests)
+    total = sum([text["performance"] for text in text_bests])
     average = total / texts_typed
 
     header = (
@@ -147,7 +117,7 @@ async def run(ctx, user, username, sort):
         f"**Text Performance Total:** {total:,.0f} Score\n\n"
     )
 
-    pages = get_pages(performance_list, formatter, page_count=20, per_page=5)
+    pages = get_pages(text_bests, formatter, page_count=20, per_page=5)
 
     message = Message(
         ctx=ctx,

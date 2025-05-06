@@ -1,3 +1,4 @@
+from database import texts
 from database.texts import filter_disabled_texts
 
 
@@ -52,5 +53,27 @@ def time_travel_races(race_list, user):
         (not end_date or race["timestamp"] < end_date)
     ]
 
+
 def calculate_performance(wpm, difficulty):
     return wpm ** 1.5 * difficulty ** 1.2
+
+
+def calculate_text_performances(text_bests, universe="play"):
+    text_dict = texts.get_texts(True, False, universe)
+    min_difficulty = min(text["difficulty"] for text in text_dict.values())
+    max_difficulty = max(text["difficulty"] for text in text_dict.values())
+    for i in range(len(text_bests)):
+        score = dict(text_bests[i])
+        text_id = score["text_id"]
+        wpm = score["wpm"]
+        quote = text_dict[text_id]["quote"]
+        text = text_dict[text_id]
+        difficulty = text["difficulty"]
+        performance = calculate_performance(wpm, difficulty)
+        rating = ((difficulty - min_difficulty) / (max_difficulty - min_difficulty)) * 10
+        score.update({
+            "quote": quote,
+            "performance": performance,
+            "rating": rating,
+        })
+        text_bests[i] = score
