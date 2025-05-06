@@ -103,11 +103,11 @@ async def run(ctx, user, username, number, category, rate):
     if not rate:
         rate = "month"
     average_of = ""
-    if isinstance(rte, str):
+    if isinstance(rate, str):
         if rate == "all":
             average_of = f"\n(Average of all-time)"
         else:
-            average_of = f"\n(Average of last {rate1})"
+            average_of = f"\n(Average of last {rate})"
     if rate in periods:
         end_date = dates.now()
         date_range = {
