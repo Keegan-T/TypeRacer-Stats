@@ -8,17 +8,28 @@ from utils import urls, strings
 
 
 class Page:
-    def __init__(self, title=None, description="", button_name=None, render=None, file_name=None, default=False):
+    def __init__(self, title=None, description="", fields=None, button_name=None, render=None, file_name=None, default=False):
         self.title = title
         self.description = description
+        self.fields = fields if isinstance(fields, list) else [fields]
         self.button_name = button_name
         self.default = default
         self.render = render
         self.file_name = file_name
 
+
+class Field:
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+
+
 class Message(View):
     def __init__(self, ctx, user, pages, title=None, url=None, header="", color=None, profile=None, universe=None, show_pfp=True):
-        super().__init__(timeout=60)
+        self.pages = pages if isinstance(pages, list) else [pages]
+        self.page_count = len(self.pages)
+        super().__init__(timeout=60 if self.page_count > 1 else 0.01)
+
         self.ctx = ctx
         self.message = None
         self.user = user
@@ -26,8 +37,6 @@ class Message(View):
 
         self.title = title
         self.url = url
-        self.pages = pages if isinstance(pages, list) else [pages]
-        self.page_count = len(self.pages)
         self.index = 0
         self.header = header
         self.color = color if color else user["colors"]["embed"]
@@ -49,6 +58,9 @@ class Message(View):
                 url=self.url,
                 color=self.color,
             )
+            if page.fields:
+                for field in page.fields:
+                    embed.add_field(name=field.name, value=field.value)
             if self.profile:
                 self.add_profile(embed)
             if self.universe:
@@ -208,6 +220,7 @@ class Message(View):
         self.message = await self.ctx.send(**kwargs)
 
     async def on_timeout(self):
+        print("Timing out...")
         await super().on_timeout()
         if len(self.pages) > 1:
             await self.message.edit(view=None)
