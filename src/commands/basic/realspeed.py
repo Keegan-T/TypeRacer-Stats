@@ -8,7 +8,7 @@ import database.races_300 as races_300
 import database.users as users
 from api.races import get_race
 from api.users import get_stats
-from commands.basic.download import run as download
+from commands.account.download import run as download
 from config import prefix
 from database.bot_users import get_user
 from graphs import match_graph

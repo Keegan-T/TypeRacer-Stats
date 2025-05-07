@@ -4,7 +4,7 @@ from discord.ext import commands
 import database.text_results as text_results
 import database.users as users
 from api.users import get_stats
-from commands.basic.download import run as download
+from commands.account.download import run as download
 from commands.basic.stats import get_args
 from commands.locks import tens_lock
 from config import bot_owner
@@ -75,7 +75,7 @@ async def run(ctx, user, username):
         text_results.delete_user_results(username)
         return await ctx.send(embed=Embed(
             title="Top Tens Update Request",
-            description=f"Deleted top tens for banned user {strings.escape_discord_format(username)}",
+            description=f"Deleted top tens for banned user {strings.escape_formatting(username)}",
             color=user["colors"]["embed"],
         ))
 
@@ -103,7 +103,7 @@ async def run(ctx, user, username):
                 if difference < 0:
                     outdated_texts.append(text_id)
 
-    username = strings.escape_discord_format(username)
+    username = strings.escape_formatting(username)
 
     if len(outdated_texts) == 0:
         return await ctx.send(embed=Embed(

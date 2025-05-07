@@ -2,7 +2,7 @@ from discord import Embed
 from discord.ext import commands
 
 from api.users import get_stats
-from commands.basic.download import run as download
+from commands.account.download import run as download
 from commands.basic.stats import get_args
 from commands.locks import import_lock
 from config import prefix

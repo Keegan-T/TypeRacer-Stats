@@ -5,7 +5,7 @@ import database.users as users
 import utils.stats
 from api.users import get_stats
 from commands.advanced.races import get_args
-from commands.basic.download import run as download
+from commands.account.download import run as download
 from commands.locks import big_lock
 from config import prefix
 from database.bot_users import get_user

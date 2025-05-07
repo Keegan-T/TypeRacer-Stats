@@ -10,7 +10,7 @@ import database.users as users
 from api.competitions import get_competition_info
 from api.users import get_stats
 from commands.advanced.races import add_stats
-from commands.basic.download import run as download
+from commands.account.download import run as download
 from config import prefix
 from database.bot_users import get_user
 from utils import errors, strings, dates, embeds

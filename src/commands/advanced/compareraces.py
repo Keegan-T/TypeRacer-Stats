@@ -5,7 +5,7 @@ from api import users
 from api.races import get_race
 from api.users import get_stats
 from commands import recent
-from commands.basic.download import run as download
+from commands.account.download import run as download
 from config import prefix
 from database import races
 from database.bot_users import get_user
@@ -148,10 +148,10 @@ async def run(ctx, user, username1, username2, race_number1, race_number2, unive
     timestamp2 = race_info2["timestamp"]
 
     description = (
-        f"{strings.escape_discord_format(username1)} - "
+        f"{strings.escape_formatting(username1)} - "
         f"[{unlagged1:,.2f} WPM]({urls.replay(username1, race_number1, universe)}) "
         f"({accuracy1:,.1f}%) {strings.discord_timestamp(timestamp1)}\nvs.\n"
-        f"{strings.escape_discord_format(username2)} - "
+        f"{strings.escape_formatting(username2)} - "
         f"[{unlagged2:,.2f} WPM]({urls.replay(username2, race_number2, universe)}) "
         f"({accuracy2:,.1f}%) {strings.discord_timestamp(timestamp2)}\n"
     )
@@ -255,7 +255,7 @@ def not_enough_races():
 def no_text_races(username):
     return Embed(
         title="No Text Races",
-        description=f"{strings.escape_discord_format(username)} has no races on this text",
+        description=f"{strings.escape_formatting(username)} has no races on this text",
         color=colors.error,
     )
 

@@ -7,7 +7,7 @@ import database.text_results as top_tens
 import database.texts as texts
 import database.users as users
 from api.users import get_stats
-from commands.basic.download import run as download
+from commands.account.download import run as download
 from config import prefix
 from database.bot_users import get_user
 from graphs import improvement_graph
@@ -261,7 +261,7 @@ async def top_10_display(ctx, username, text_id, recent_race):
             style = "~~"
         user = race["username"]
         description += (
-            f"{strings.rank(i + 1)} {style}{strings.escape_discord_format(user)} - [{race['wpm']:,.2f} WPM]"
+            f"{strings.rank(i + 1)} {style}{strings.escape_formatting(user)} - [{race['wpm']:,.2f} WPM]"
             f"({urls.replay(user, race['number'])}){style} - "
             f"{strings.discord_timestamp(race['timestamp'])}\n"
         )

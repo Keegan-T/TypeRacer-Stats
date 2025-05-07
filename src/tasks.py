@@ -9,7 +9,7 @@ import database.important_users as important_users
 import database.texts as texts
 import database.users as users
 from api.competitions import get_competition
-from commands.basic.download import run as download
+from commands.account.download import run as download
 from commands.locks import import_lock
 from utils import strings
 from utils.logging import log
