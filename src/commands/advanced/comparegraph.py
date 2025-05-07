@@ -1,4 +1,3 @@
-from discord import Embed, File
 from discord.ext import commands
 
 from commands.advanced.compare import get_args, no_common_texts, same_username
@@ -6,8 +5,8 @@ from database import users
 from database.bot_users import get_user
 from database.users import get_text_bests
 from graphs import compare_graph
-from graphs.core import remove_file
-from utils import errors, urls, strings, embeds
+from utils import errors, urls, strings, dates
+from utils.embeds import Page, Field, Message, is_embed
 
 command = {
     "name": "comparegraph",
@@ -25,9 +24,10 @@ class CompareGraph(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def comparegraph(self, ctx, *args):
         user = get_user(ctx)
+        args, user = dates.set_command_date_range(args, user)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username1, username2 = result
@@ -94,13 +94,6 @@ async def run(ctx, user, username1, username2):
         max_gap1, max_gap2 = max_gap2, max_gap1
         min_gap1, min_gap2 = min_gap2, min_gap1
 
-    embed = Embed(
-        title="Text Best Comparison",
-        color=user["colors"]["embed"],
-        url=urls.trdata_compare(username1, username2),
-    )
-    embeds.add_universe(embed, universe)
-
     same_text = ""
     if wpm_match:
         same_text = (
@@ -114,8 +107,9 @@ async def run(ctx, user, username1, username2):
         f"{same_text}"
     )
 
+    description = ""
     if not data2:
-        embed.description = "\U0001F3C6 **TOTAL DOMINATION** \U0001F3C6"
+        description = "\U0001F3C6 **TOTAL DOMINATION** \U0001F3C6"
         gap2 = (
             f"**Closest:** -{min_gap1[1] - min_gap1[2]:,.2f} WPM \n"
             f"({min_gap1[2]} WPM vs. {min_gap1[1]} WPM)\n"
@@ -148,18 +142,28 @@ async def run(ctx, user, username1, username2):
         f"{gap2}"
     )
 
-    embed.add_field(name=strings.escape_formatting(username1), value=stats1)
-    embed.add_field(name=strings.escape_formatting(username2), value=stats2)
+    def render(file_name):
+        return compare_graph.render(user, (username1, data1), (username2, data2), file_name)
 
     file_name = f"compare_{username1}_{username2}.png"
-    compare_graph.render(user, (username1, data1), (username2, data2), file_name)
 
-    embed.set_image(url=f"attachment://{file_name}")
-    file = File(file_name, filename=file_name)
+    page = Page(
+        description=description,
+        fields=[
+            Field(strings.escape_formatting(username1), stats1),
+            Field(strings.escape_formatting(username2), stats2),
+        ],
+        render=render,
+        file_name=file_name,
+    )
 
-    await ctx.send(embed=embed, file=file, content=era_string)
+    message = Message(
+        ctx, user, page,
+        title="Text Best Comparison",
+        url=urls.trdata_compare(username1, username2),
+    )
 
-    remove_file(file_name)
+    await message.send()
 
 
 async def setup(bot):
