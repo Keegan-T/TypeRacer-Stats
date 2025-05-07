@@ -98,11 +98,11 @@ async def run(ctx, user, username):
 
     pages = [
         Page(
-            "Daily Typing Activity", daily_description, "Daily",
+            "Daily Typing Activity", daily_description, None, "Daily",
             render_daily, strings.get_file_name("daily_typing_activity", user, username),
         ),
         Page(
-            "Weekly Typing Activity", weekly_description, "Weekly",
+            "Weekly Typing Activity", weekly_description, None, "Weekly",
             render_weekly, strings.get_file_name("weekly_typing_activity", user, username),
         )
     ]

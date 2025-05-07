@@ -65,7 +65,6 @@ async def run(ctx, user, username, n):
     )
     race_list.sort(key=lambda x: x[2])
 
-    count = 10
     averages = [sum([race[0] for race in race_list[:n]])]
     start_index = 0
     end_index = n
@@ -101,7 +100,10 @@ async def run(ctx, user, username, n):
                 f"{strings.discord_timestamp(start_timestamp, 'D')} - "
                 f"{strings.discord_timestamp(end_timestamp, 'D')}"
             )
-            description += f"**{date_range}**\n{best / n:,.2f} WPM: (Races #{start_number:,} - {end_number:,})\n\n"
+            description += (
+                f"**{date_range}**\n{best / n:,.2f} WPM: "
+                f"(Races #{start_number:,} - {end_number:,})\n\n"
+            )
         pages.append(Page(description=description))
         if sum(averages) == 0:
             break

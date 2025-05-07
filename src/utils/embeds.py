@@ -11,7 +11,9 @@ class Page:
     def __init__(self, title=None, description="", fields=None, button_name=None, render=None, file_name=None, default=False):
         self.title = title
         self.description = description
-        self.fields = fields if isinstance(fields, list) else [fields]
+        self.fields = None
+        if fields:
+            self.fields = fields if isinstance(fields, list) else [fields]
         self.button_name = button_name
         self.default = default
         self.render = render
