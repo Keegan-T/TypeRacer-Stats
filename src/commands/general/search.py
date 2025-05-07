@@ -39,7 +39,7 @@ async def run(ctx, user, query):
         return await ctx.send(embed=big_query())
 
     text_list = get_texts(universe=universe)
-    query_title = strings.escape_discord_format(query)
+    query_title = strings.escape_formatting(query)
     query = query.lower()
     search_id = ctx.invoked_with in ["searchid", "id"]
     title = f"Text {'ID ' * search_id}Search"
@@ -106,7 +106,7 @@ async def run(ctx, user, query):
         )
     else:
         for result in results[:10]:
-            quote = result["quote"].strip().replace("*", "\*").replace("_", "\_")
+            quote = result["quote"]
             chars = max_chars - query_length
             if no_matches:
                 start_index = result["leven"]["start"]
@@ -138,7 +138,7 @@ async def run(ctx, user, query):
             if start_index > 0:
                 substring += "..."
             substring += quote[start_index:query_index]
-            substring += f"**{quote[query_index:query_index + query_length]}**"
+            substring += f"\t{quote[query_index:query_index + query_length]}\t"
             substring += quote[query_index + query_length:end_index]
             if end_index < len(quote):
                 substring += "..."
@@ -152,7 +152,10 @@ async def run(ctx, user, query):
                 similarity = (1 - (result["leven"]["distance"] / query_length)) * 100
                 results_string += f" - {similarity:,.2f}% Match"
 
-            results_string += f' - {len(quote):,} characters - [Ghost]({result["ghost"]})\n"{substring}"\n'
+            results_string += (
+                f' - {len(quote):,} characters - [Ghost]({result["ghost"]})\n'
+                f'"{strings.escape_formatting(substring).replace('\t', '**')}"\n'
+            )
 
     embed = Embed(
         title=title,
