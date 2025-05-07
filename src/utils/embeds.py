@@ -220,7 +220,6 @@ class Message(View):
         self.message = await self.ctx.send(**kwargs)
 
     async def on_timeout(self):
-        print("Timing out...")
         await super().on_timeout()
         if len(self.pages) > 1:
             await self.message.edit(view=None)
