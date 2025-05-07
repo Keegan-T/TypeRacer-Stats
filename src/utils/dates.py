@@ -71,7 +71,7 @@ def time_travel_dates(user, start_date, end_date):
 
 
 def parse_date(string):
-    if string == "now":
+    if string in ["now", "present"]:
         date = now()
     else:
         try:
