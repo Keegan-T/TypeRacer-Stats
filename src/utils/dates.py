@@ -114,11 +114,11 @@ def set_command_date_range(args, user):
 
             return args, user
 
-        try:
-            arg = int(arg)
+        if arg.isalpha() or arg.isnumeric():
             date = None
-        except ValueError:
+        else:
             date = parse_date(arg)
+        print(date)
         if date:
             if not start_date:
                 start_date = date
