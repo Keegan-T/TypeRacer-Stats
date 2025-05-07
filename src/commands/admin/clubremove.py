@@ -30,7 +30,7 @@ class ClubRemove(commands.Cog):
 
             await ctx.send(embed=Embed(
                 title="Removing User",
-                description=f"Removing {strings.escape_discord_format(username)} from the 300 WPM club",
+                description=f"Removing {strings.escape_formatting(username)} from the 300 WPM club",
                 color=user["colors"]["embed"],
             ))
 

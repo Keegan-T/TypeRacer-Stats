@@ -67,7 +67,7 @@ async def run(ctx, user, username, race_number, universe):
     raw_description = text_description + "\n\n**Raw Rankings**\n"
 
     for i, race in enumerate(match["rankings"]):
-        racer_username = strings.escape_discord_format(race["username"])
+        racer_username = strings.escape_formatting(race["username"])
         description += (
             f"{i + 1}. {racer_username} - "
             f"[{race['wpm']:,.2f} WPM]"
@@ -77,7 +77,7 @@ async def run(ctx, user, username, race_number, universe):
         )
 
     for i, race in enumerate(match["raw_rankings"]):
-        racer_username = strings.escape_discord_format(race["username"])
+        racer_username = strings.escape_formatting(race["username"])
         raw_description += (
             f"{i + 1}. {racer_username} - "
             f"[{race['wpm']:,.2f} WPM]"

@@ -58,7 +58,7 @@ async def run_all(ctx, user, sort):
         username = text["username"]
         quote = strings.truncate_clean(quote, 150)
         return (
-            f"{strings.escape_discord_format(username)} - [{text['wpm']:,.2f} WPM]"
+            f"{strings.escape_formatting(username)} - [{text['wpm']:,.2f} WPM]"
             f"({urls.replay(username, text['number'])}) - "
             f"{text['performance']:,.0f} Score - "
             f"{strings.discord_timestamp(text["timestamp"])}\n"

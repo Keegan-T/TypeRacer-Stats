@@ -148,8 +148,8 @@ async def run(ctx, user, username1, username2):
         f"{gap2}"
     )
 
-    embed.add_field(name=strings.escape_discord_format(username1), value=stats1)
-    embed.add_field(name=strings.escape_discord_format(username2), value=stats2)
+    embed.add_field(name=strings.escape_formatting(username1), value=stats1)
+    embed.add_field(name=strings.escape_formatting(username2), value=stats2)
 
     file_name = f"compare_{username1}_{username2}.png"
     compare_graph.render(user, (username1, data1), (username2, data2), file_name)

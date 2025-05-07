@@ -113,8 +113,8 @@ async def run(ctx, user, username1, username2):
         )
 
     def formatter(comparison):
-        stats1 = f"**{strings.escape_discord_format(username1)}** (+{user1_better:,} texts)\n"
-        stats2 = f"**{strings.escape_discord_format(username2)}** (+{user2_better:,} texts)\n"
+        stats1 = f"**{strings.escape_formatting(username1)}** (+{user1_better:,} texts)\n"
+        stats2 = f"**{strings.escape_formatting(username2)}** (+{user2_better:,} texts)\n"
 
         for i, (text_id, data) in enumerate(comparison[:10]):
             score1, score2, gap = data

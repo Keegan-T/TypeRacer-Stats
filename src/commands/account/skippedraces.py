@@ -47,7 +47,7 @@ async def run(ctx, user, username):
 
     await ctx.send(embed=Embed(
         title="Checking Skipped Races",
-        description=f"Scanning races for {strings.escape_discord_format(username)}",
+        description=f"Scanning races for {strings.escape_formatting(username)}",
         color=user["colors"]["embed"],
     ))
 

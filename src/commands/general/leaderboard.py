@@ -217,7 +217,7 @@ async def run(ctx, user, category, text_id=None):
 
         for i, leader in enumerate(leaderboard[:10]):
             rank = strings.rank(i + 1)
-            username = strings.escape_discord_format(leader[0])
+            username = strings.escape_formatting(leader[0])
             leaderboard_string += f"{rank} {username} - {leader[1]:,}\n"
 
         embed.set_footer(
@@ -228,7 +228,7 @@ async def run(ctx, user, category, text_id=None):
     if category != "toptens" and not category.isnumeric():
         for i, leader in enumerate(leaderboard):
             rank = strings.rank(i + 1)
-            username = strings.escape_discord_format(leader["username"])
+            username = strings.escape_formatting(leader["username"])
             flag = f":flag_{leader['country']}: " if leader['country'] else ""
             leaderboard_string += f"{rank} {flag}{username} - {leaders[i]}\n"
 

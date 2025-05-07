@@ -92,7 +92,7 @@ async def run(ctx, user, username, race_number, universe):
         f"**Speed:** {race_info['unlagged']:,.2f} WPM ({race_info['accuracy'] * 100:,.1f}% Accuracy)\n\n"
     )
     for segment in segments:
-        segment_text = strings.escape_discord_format(segment["text"]).replace("-", "\\-")
+        segment_text = strings.escape_formatting(segment["text"]).replace("-", "\\-")
         if len(segment_text) > 100:
             segment_text = f"{segment_text[:100]}..."
         description += f"**{segment['wpm']:,.2f} WPM"

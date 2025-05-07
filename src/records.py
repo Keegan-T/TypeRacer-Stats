@@ -154,7 +154,7 @@ def format_club_string(score):
     rank = medals[position - 1] if position <= 3 else f"{position}."
 
     return (
-        f"{rank} {get_flag(username)}{strings.escape_discord_format(username)} - "
+        f"{rank} {get_flag(username)}{strings.escape_formatting(username)} - "
         f"[{adjusted:.3f} WPM]({urls.replay(username, race_number)}) - "
         f"{date}"
     )
@@ -206,7 +206,7 @@ def format_leaderboard(user_list, formatter):
     for i, user in enumerate(user_list):
         username = user["username"]
         flag = get_flag(username)
-        leaderboard += f"{medals[i]} {flag}{strings.escape_discord_format(username)} - {formatter(user)}\n"
+        leaderboard += f"{medals[i]} {flag}{strings.escape_formatting(username)} - {formatter(user)}\n"
     return leaderboard
 
 
@@ -301,7 +301,7 @@ async def text_records():
 
     max_texts_typed = most_texts[0]["texts_typed"]
     text_completion_str = "\n".join(
-        f"{i + 1}. {get_flag(user['username'])}{strings.escape_discord_format(user['username'])}"
+        f"{i + 1}. {get_flag(user['username'])}{strings.escape_formatting(user['username'])}"
         for i, user in enumerate(most_texts)
         if user["texts_typed"] >= max_texts_typed
     )
@@ -383,7 +383,7 @@ def add_database_records(embed, category, formatter):
         flag = get_flag(username)
         embed.add_field(
             name=name,
-            value=f"{flag}{strings.escape_discord_format(username)} - "
+            value=f"{flag}{strings.escape_formatting(username)} - "
                   f"[{formatter(record)}]({link}) - {date}",
             inline=False,
         )

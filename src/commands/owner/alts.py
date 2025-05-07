@@ -80,7 +80,7 @@ async def remove(ctx, user, username):
 async def send_embed(ctx, user, description):
     embed = Embed(
         title="Alt Accounts",
-        description=strings.escape_discord_format(description),
+        description=strings.escape_formatting(description),
         color=user["colors"]["embed"],
     )
 

@@ -150,7 +150,7 @@ async def run(ctx, user, period, sort, date):
         bold = "**" if username == user["username"] else ""
         flag = "" if not competitor["country"] else f":flag_{competitor['country']}:"
         description += (
-            f"{rank} {bold}{flag} {strings.escape_discord_format(username)} - {competitor['points']:,} / "
+            f"{rank} {bold}{flag} {strings.escape_formatting(username)} - {competitor['points']:,} / "
             f"{competitor['races']:,} - {competitor['average_wpm']} WPM "
             f"({competitor['accuracy'] * 100:,.1f}% Acc){bold}\n"
         )

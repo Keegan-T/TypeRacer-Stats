@@ -313,17 +313,19 @@ def parse_value_string(value):
         raise ValueError
 
 
-def escape_discord_format(string):
-    return (string
-            .replace("*", "\\*")
-            .replace("_", "\\_")
-            .replace("~", "\\~")
-            .replace("`", ""))
+def escape_formatting(string):
+    return (
+        string
+        .replace("*", "\\*")
+        .replace("_", "\\_")
+        .replace("~", "\\~")
+        .replace("`", "")
+    )
 
 
 def truncate_clean(text, max_chars):
     if len(text) <= max_chars:
-        return escape_discord_format(text)
+        return escape_formatting(text)
     if len(text.split(" ")) == 1:
         return text[:max_chars] + "..."
 
@@ -335,7 +337,7 @@ def truncate_clean(text, max_chars):
     substring = substring[:-1]
     substring += "..."
 
-    return escape_discord_format(substring)
+    return escape_formatting(substring)
 
 
 def text_description(text, universe="play"):

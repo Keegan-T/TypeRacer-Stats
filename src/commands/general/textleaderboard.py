@@ -77,7 +77,7 @@ async def run(ctx, user, text_id):
             race, user = score
             username = user["id"][3:]
             embed.description += (
-                f"{strings.rank(i + 1)} {strings.escape_discord_format(username)} - [{race['wpm']:,.2f} WPM]"
+                f"{strings.rank(i + 1)} {strings.escape_formatting(username)} - [{race['wpm']:,.2f} WPM]"
                 f"({urls.replay(username, race['gn'], universe)}) - "
                 f"{strings.discord_timestamp(race['t'])}\n"
             )
@@ -93,7 +93,7 @@ async def run(ctx, user, text_id):
     for i, race in enumerate(top_10):
         username = race["username"]
         embed.description += (
-            f"{strings.rank(i + 1)} {strings.escape_discord_format(username)} - [{race['wpm']:,.2f} WPM]"
+            f"{strings.rank(i + 1)} {strings.escape_formatting(username)} - [{race['wpm']:,.2f} WPM]"
             f"({urls.replay(race['username'], race['number'])}) - "
             f"{strings.discord_timestamp(race['timestamp'])}\n"
         )
