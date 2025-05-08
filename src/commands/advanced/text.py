@@ -198,7 +198,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
 
 
 def get_performance_stats(username, universe, text_id, wpm, difficulty):
-    text_bests = users.get_text_bests(username)
+    text_bests = users.get_text_bests(username, universe=universe)
     calculate_text_performances(text_bests, universe)
     text_bests.sort(key=lambda x: x["performance"], reverse=True)
     text_ids = [t["text_id"] for t in text_bests]
