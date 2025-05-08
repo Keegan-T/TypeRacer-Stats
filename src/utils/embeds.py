@@ -8,12 +8,13 @@ from utils import urls, strings
 
 
 class Page:
-    def __init__(self, title=None, description="", fields=None, button_name=None, render=None, file_name=None, default=False):
+    def __init__(self, title=None, description="", fields=None, footer=None, button_name=None, render=None, file_name=None, default=False):
         self.title = title
         self.description = description
         self.fields = None
         if fields:
             self.fields = fields if isinstance(fields, list) else [fields]
+        self.footer = footer
         self.button_name = button_name
         self.default = default
         self.render = render
@@ -21,9 +22,10 @@ class Page:
 
 
 class Field:
-    def __init__(self, name, value):
+    def __init__(self, name, value, inline=True):
         self.name = name
         self.value = value
+        self.inline = inline
 
 
 class Message(View):
@@ -62,7 +64,9 @@ class Message(View):
             )
             if page.fields:
                 for field in page.fields:
-                    embed.add_field(name=field.name, value=field.value)
+                    embed.add_field(name=field.name, value=field.value, inline=field.inline)
+            if page.footer:
+                self.update_footer(embed, page.footer)
             if self.profile:
                 self.add_profile(embed)
             if self.universe:
