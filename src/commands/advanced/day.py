@@ -2,18 +2,18 @@ from datetime import datetime, timedelta, timezone
 
 from dateutil import parser
 from dateutil.relativedelta import relativedelta
-from discord import Embed
 from discord.ext import commands
 
 import database.races as races
 import database.users as users
 from api.competitions import get_competition_info
 from api.users import get_stats
-from commands.advanced.races import add_stats
 from commands.account.download import run as download
+from commands.advanced.races import get_stats_fields
 from config import prefix
 from database.bot_users import get_user
 from utils import errors, strings, dates, embeds
+from utils.embeds import Message, Page
 
 command = {
     "name": "day",
@@ -85,7 +85,7 @@ async def run(ctx, user, username, date):
         "year", "lastyear", "miniyear",
     ], ctx.invoked_with.lower())
 
-    mini = command_name.startswith("mini")
+    detailed = not command_name.startswith("mini")
     previous = command_name.startswith("last") or "yester" in command_name
     period = "day"
     if "week" in command_name:
@@ -134,24 +134,26 @@ async def run(ctx, user, username, date):
     race_list = await races.get_races(username, columns, start_time, end_time, universe=universe)
     race_list.sort(key=lambda x: x[7])
 
-    embed = Embed(title=title, color=user["colors"]["embed"])
-    embeds.add_profile(embed, api_stats, universe)
-
     if not race_list:
-        embed.description = "No races completed"
-        embeds.add_universe(embed, universe)
-        return await ctx.send(embed=embed)
+        page = Page(description="No races completed")
+    else:
+        fields, footer = get_stats_fields(username, race_list, start_time, end_time, universe, detailed)
+        page = Page(fields=fields, footer=footer)
 
     if competition and competition["competitors"][0]["username"] == username:
         if competition["end_timestamp"] > datetime.now(timezone.utc).timestamp():
-            embed.description = f":crown: **Competition Leader** :crown:"
+            page.description = f":crown: **Competition Leader** :crown:"
         else:
-            embed.description = f":first_place: **Competition Winner** :first_place:"
+            page.description = f":first_place: **Competition Winner** :first_place:"
 
-    add_stats(embed, username, race_list, start_time, end_time, mini=mini, universe=universe)
-    embeds.add_universe(embed, universe)
+    message = Message(
+        ctx, user, page,
+        title,
+        profile=stats,
+        universe=universe,
+    )
 
-    await ctx.send(embed=embed)
+    await message.send()
 
 
 async def setup(bot):

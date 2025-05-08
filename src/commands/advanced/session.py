@@ -1,11 +1,12 @@
-from discord import Embed
 from discord.ext import commands
 
 import database.races as races
 import database.users as users
-from commands.advanced.races import add_stats
+from commands.advanced.races import get_stats_fields
+from commands.locks import big_lock
 from database.bot_users import get_user
-from utils import errors, strings, embeds
+from utils import errors, strings
+from utils.embeds import Page, Message, is_embed
 
 categories = ["races", "time"]
 command = {
@@ -35,7 +36,7 @@ class Session(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username, category, seconds = result
@@ -55,11 +56,18 @@ async def run(ctx, user, username, kind, seconds):
         return await ctx.send(embed=errors.import_required(username, universe))
     era_string = strings.get_era_string(user)
 
+    if stats["races"] > 100_000:
+        if big_lock.locked():
+            return await ctx.send(embed=errors.large_query_in_progress())
+        await big_lock.acquire()
+
     columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
     race_list = await races.get_races(
         username, columns=columns, universe=universe, start_date=user["start_date"], end_date=user["end_date"]
     )
     if not race_list:
+        if big_lock.locked():
+            big_lock.release()
         return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
     race_list.sort(key=lambda x: x[7])
     race_range = [0, 0]
@@ -113,20 +121,24 @@ async def run(ctx, user, username, kind, seconds):
     start_time = session_races[0][7]
     end_time = session_races[-1][7]
 
-    embed = Embed(
+    fields, footer = get_stats_fields(username, session_races, start_time, end_time, universe)
+
+    page = Page(fields=fields, footer=footer)
+    if kind == "time":
+        page.description = strings.format_duration_short(end_time - start_time, False)
+
+    message = Message(
+        ctx, user, page,
         title=f"{'Longest' if kind == 'time' else 'Highest Race'} Session "
               f"({strings.format_duration_short(seconds, False)} interval)",
-        color=user["colors"]["embed"],
+        profile=stats,
+        universe=universe,
     )
 
-    if kind == "time":
-        embed.description = strings.format_duration_short(end_time - start_time, False)
+    await message.send()
 
-    embeds.add_profile(embed, stats, universe)
-    add_stats(embed, username, session_races, start_time, end_time, universe=universe)
-    embeds.add_universe(embed, universe)
-
-    await ctx.send(embed=embed, content=era_string)
+    if big_lock.locked():
+        big_lock.release()
 
 
 async def setup(bot):

@@ -3,10 +3,11 @@ from discord.ext import commands
 
 import database.races as races
 import database.users as users
-from commands.advanced.races import add_stats
+from commands.advanced.races import get_stats_fields
 from commands.locks import big_lock
 from database.bot_users import get_user
-from utils import errors, colors, strings, embeds
+from utils import errors, colors, strings
+from utils.embeds import Page, Message, is_embed
 
 categories = ["races", "points"]
 command = {
@@ -36,7 +37,7 @@ class Marathon(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username, category, seconds = result
@@ -57,13 +58,12 @@ async def run(ctx, user, username, category, seconds):
     stats = users.get_user(username, universe)
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
+    era_string = strings.get_era_string(user)
 
     if stats["races"] > 100_000:
         if big_lock.locked():
             return await ctx.send(embed=errors.large_query_in_progress())
         await big_lock.acquire()
-
-    era_string = strings.get_era_string(user)
 
     columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
     race_list = await races.get_races(
@@ -71,6 +71,8 @@ async def run(ctx, user, username, category, seconds):
         start_date=user["start_date"], end_date=user["end_date"]
     )
     if not race_list:
+        if big_lock.locked():
+            big_lock.release()
         return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
 
     race_list.sort(key=lambda x: x[7])
@@ -118,17 +120,19 @@ async def run(ctx, user, username, category, seconds):
     start_time = marathon_races[0][7]
     end_time = marathon_races[-1][7]
 
-    embed = Embed(
+    fields, footer = get_stats_fields(username, marathon_races, start_time, end_time, universe)
+
+    page = Page(fields=fields, footer=footer)
+
+    message = Message(
+        ctx, user, page,
         title=f"Best {category[:-1].title()} Marathon "
               f"({strings.format_duration_short(seconds, False)} period)",
-        color=user["colors"]["embed"],
+        profile=stats,
+        universe=universe,
     )
-    embeds.add_profile(embed, stats, universe)
-    embeds.add_universe(embed, universe)
 
-    add_stats(embed, username, marathon_races, start_time, end_time, universe=universe)
-
-    await ctx.send(embed=embed, content=era_string)
+    await message.send()
 
     if big_lock.locked():
         big_lock.release()

@@ -102,7 +102,7 @@ async def run(ctx, user, username, n):
             )
             description += (
                 f"**{date_range}**\n{best / n:,.2f} WPM: "
-                f"(Races #{start_number:,} - {end_number:,})\n\n"
+                f"(Races {start_number:,} - {end_number:,})\n\n"
             )
         pages.append(Page(description=description))
         if sum(averages) == 0:

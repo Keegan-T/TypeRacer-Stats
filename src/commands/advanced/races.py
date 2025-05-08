@@ -10,7 +10,8 @@ import database.texts as texts
 import database.users as users
 from commands.locks import big_lock
 from database.bot_users import get_user
-from utils import errors, colors, urls, strings, dates, embeds
+from utils import errors, colors, urls, strings, dates
+from utils.embeds import Message, Page, Field, is_embed
 
 command = {
     "name": "races",
@@ -40,7 +41,7 @@ class Races(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username, start_date, end_date, start_number, end_number = result
@@ -56,7 +57,7 @@ def get_args(user, args, info):
     if len(args) > 1 and args[1]:
         params = "username category:day|yesterday|week|month|year"
         result = strings.parse_command(user, params, args, info)
-        if not embeds.is_embed(result):
+        if not is_embed(result):
             username, date = result
             now = dates.now()
             if "day" in date:
@@ -81,11 +82,11 @@ def get_args(user, args, info):
     params = "username int int"
     result = strings.parse_command(user, params, args, info)
 
-    if embeds.is_embed(result):
+    if is_embed(result):
         params = "username date date"
         result = strings.parse_command(user, params, args, info)
 
-        if embeds.is_embed(result):
+        if is_embed(result):
             return result
 
         username, start_date, end_date = result
@@ -174,25 +175,34 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         )
 
     if not race_list:
+        if big_lock.locked():
+            big_lock.release()
         return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
     race_list.sort(key=lambda x: x[7])
 
-    embed = Embed(title=title, color=user["colors"]["embed"])
-    embeds.add_profile(embed, stats, universe)
-    add_stats(embed, username, race_list, start, end, universe=universe)
-    embeds.add_universe(embed, universe)
+    fields, footer = get_stats_fields(username, race_list, start, end, universe)
 
-    await ctx.send(embed=embed, content=era_string)
+    page = Page(title, fields=fields, footer=footer)
+
+    message = Message(
+        ctx, user, page,
+        profile=stats,
+        universe=universe,
+    )
+
+    await message.send()
 
     if big_lock.locked():
         big_lock.release()
 
 
-def add_stats(embed, username, race_list, start, end, mini=False, universe="play"):
-    end = min(end, datetime.now(timezone.utc).timestamp())
-    text_list = texts.get_texts(as_dictionary=True, universe=universe)
+def get_stats_fields(username, race_list, start_time, end_time, universe="play", detailed=True):
+    fields = []
+    footer = None
 
     race_count = len(race_list)
+    end_time = min(end_time, datetime.now(timezone.utc).timestamp())
+    text_list = texts.get_texts(as_dictionary=True, universe=universe)
     wins = 0
     points = 0
     total_wpm = 0
@@ -216,7 +226,7 @@ def add_stats(embed, username, race_list, start, end, mini=False, universe="play
     last_race = race_list[-1]
     race_difference = last_race[1] - first_race[1] + 1
     seconds_elapsed = last_race[7] - first_race[7]
-    days = dates.count_unique_dates(start, end - 0.001)
+    days = dates.count_unique_dates(start_time, end_time - 0.001)
     longest_break = {"time": 0, "start_race": {}, "end_race": {}}
     standard_deviation = np.std([race[2] for race in race_list])
 
@@ -301,17 +311,17 @@ def add_stats(embed, username, race_list, start, end, mini=False, universe="play
         f"**Points:** {points:,.0f} ({points_per_race:,.2f} points/race)"
     )
 
-    if len(race_list) > 10 and not mini:
+    if len(race_list) > 10 and detailed:
         summary_string += f"\n**Best Last 10:** {best_last_10 / 10:,.2f} WPM"
 
-    embed.add_field(
+    fields.append(Field(
         name="Summary",
         value=summary_string,
         inline=False,
-    )
+    ))
 
-    if mini:
-        return
+    if not detailed:
+        return fields, None
 
     details = (
         f"**Words Typed:** {words:,} ({words_per_race:,.2f} words/race)\n"
@@ -347,26 +357,28 @@ def add_stats(embed, username, race_list, start, end, mini=False, universe="play
         )
 
     if days > 1:
-        embed.add_field(name="Details", value=details, inline=False)
+        fields.append(Field(name="Details", value=details, inline=False))
 
         daily_races = race_count / days
         daily_points = points / days
         daily_seconds = seconds / days
 
-        embed.add_field(
+        fields.append(Field(
             name=f"Daily Average (Over {days:,} Days)",
             value=f"**Races:** {daily_races:,.2f}\n"
                   f"**Points:** {daily_points:,.2f}\n"
                   f"**Time:** {strings.format_duration_short(daily_seconds)}\n\n"
                   f"{other_stats}",
-            inline=False,
-        )
+            inline=False
+        ))
 
     else:
-        embed.add_field(name="Details", value=details + other_stats, inline=False)
+        fields.append(Field(name="Details", value=details + other_stats, inline=False))
 
     if race_difference > len(race_list):
-        embed.set_footer(text=f"Missing races found in this range, actual races completed: {race_difference:,}")
+        footer = f"Missing races found in this range, actual races completed: {race_difference:,}"
+
+    return fields, footer
 
 
 def same_dates():
