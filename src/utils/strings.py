@@ -49,6 +49,11 @@ category_aliases = [
     ["textperformances", "tp"],
     ["all", "alltime"]
 ]
+
+username_aliases = {
+    "hfs": "hospitalforsouls2"
+}
+
 rank_emojis = [
     ":first_place:",
     ":second_place:",
@@ -120,6 +125,8 @@ def parse_command(user, params, args, command):
 
             if not missing and args[i] != "me":
                 username = args[i]
+                if username in username_aliases:
+                    username = username_aliases[username]
             if not username:
                 return errors.missing_argument(command)
 
