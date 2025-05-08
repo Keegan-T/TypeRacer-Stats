@@ -1,25 +1,11 @@
 import numpy as np
 from matplotlib.ticker import FuncFormatter
 
-from graphs.core import plt, color_graph
+from graphs.core import plt, color_graph, universe_title
 from utils.strings import format_big_number
 
 
-def render(user, username, values, category, file_name, universe):
-    category_title = "WPM"
-    y_label = "WPM"
-    bins = "auto"
-
-    if category == "accuracy":
-        values = np.array(values)
-        values = values[values >= 90]
-        bins = np.arange(min(values), 102, 1)
-        category_title = "Accuracy"
-        y_label = "Accuracy %"
-
-    elif category == "textbests":
-        category_title = "Text Bests"
-
+def render(user, username, values, category, y_label, bins, file_name, universe):
     ax = plt.subplots()[1]
     counts, groups = np.histogram(values, bins=bins)
 
@@ -30,7 +16,7 @@ def render(user, username, values, category, file_name, universe):
     else:
         ax.bar(groups[:-1], counts, width=np.diff(groups), align="edge", color=color)
 
-    if category == "accuracy":
+    if category == "Accuracy":
         x_ticks = ax.get_xticks()
         ax.set_xticks(x_ticks + 0.5, [int(value) for value in x_ticks])
         ax.set_xlim(max(ax.get_xlim()[0], 90), 101)
@@ -38,9 +24,7 @@ def render(user, username, values, category, file_name, universe):
     ax.yaxis.set_major_formatter(FuncFormatter(format_big_number))
     ax.set_xlabel(y_label)
     ax.set_ylabel("Frequency")
-    title = f"{category_title} Histogram - {username}"
-    if universe != "play":
-        title += f"\nUniverse: {universe}"
+    title = universe_title(f"{category} Histogram - {username}", universe)
     ax.set_title(title)
     ax.grid()
 

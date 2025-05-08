@@ -216,3 +216,4 @@
 
 5/8/2025
 - Added buttons to -fastestcompletion
+- Added buttons to -histogram

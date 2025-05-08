@@ -8,13 +8,13 @@ from utils import urls, strings
 
 
 class Page:
-    def __init__(self, title=None, description="", fields=None, footer=None, button_name=None, render=None, file_name=None, default=False):
+    def __init__(self, title=None, description="", fields=None, footer=None, color=None,
+                 button_name=None, render=None, file_name=None, default=False):
         self.title = title
         self.description = description
-        self.fields = None
-        if fields:
-            self.fields = fields if isinstance(fields, list) else [fields]
+        self.fields = fields if isinstance(fields, list) else [fields] if fields else None
         self.footer = footer
+        self.color = color
         self.button_name = button_name
         self.default = default
         self.render = render
@@ -60,7 +60,7 @@ class Message(View):
                 title=title,
                 description=description,
                 url=self.url,
-                color=self.color,
+                color=page.color if page.color else self.color,
             )
             if page.fields:
                 for field in page.fields:
