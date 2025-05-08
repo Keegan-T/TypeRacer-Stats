@@ -98,12 +98,18 @@ async def run(ctx, user, username):
 
     pages = [
         Page(
-            "Daily Typing Activity", daily_description, None, "Daily",
-            render_daily, strings.get_file_name("daily_typing_activity", user, username),
+            title="Daily Typing Activity",
+            description=daily_description,
+            button_name="Daily",
+            render=render_daily,
+            file_name=strings.get_file_name("daily_typing_activity", user, username),
         ),
         Page(
-            "Weekly Typing Activity", weekly_description, None, "Weekly",
-            render_weekly, strings.get_file_name("weekly_typing_activity", user, username),
+            title="Weekly Typing Activity",
+            description=weekly_description,
+            button_name="Weekly",
+            render=render_weekly,
+            file_name=strings.get_file_name("weekly_typing_activity", user, username),
         )
     ]
 

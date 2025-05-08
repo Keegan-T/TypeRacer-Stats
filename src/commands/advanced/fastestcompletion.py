@@ -144,9 +144,11 @@ async def run(ctx, user, username, number, category):
 
     pages = [
         Page(
-            f"Fastest Completion ({number:,} {category.title()})",
-            f"{strings.format_duration_short(fastest_time, False)}",
-            fields, footer, "Fastest",
+            title=f"Fastest Completion ({number:,} {category.title()})",
+            description=f"{strings.format_duration_short(fastest_time, False)}",
+            fields=fields,
+            footer=footer,
+            button_name="Fastest",
         ),
         Page(
             f"Top 10 Fastest ({number:,} {category.title()})",
