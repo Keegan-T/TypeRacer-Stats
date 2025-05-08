@@ -213,3 +213,6 @@
 5/5/2025
 - Added -pace
 - Added -pacecompare
+
+5/8/2025
+- Added buttons to -fastestcompletion
