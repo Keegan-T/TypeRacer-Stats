@@ -106,8 +106,8 @@ async def run(ctx, user, username, race_number, universe):
         return f"match_{username}_{race_number}{raw_text}.png"
 
     pages = [
-        Page(title, description, None, "Rankings", render, file_name(False)),
-        Page(title, raw_description, None, "Raw Rankings", render_raw, file_name(True)),
+        Page(title, description, button_name="Rankings", render=render, file_name=file_name(False)),
+        Page(title, raw_description, button_name="Raw Rankings", render=render_raw, file_name=file_name(True)),
     ]
 
     message = Message(
