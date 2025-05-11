@@ -1,4 +1,5 @@
 import os
+import textwrap
 from datetime import datetime, timezone
 
 import matplotlib
@@ -132,10 +133,9 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False, for
             if int(user["id"]) != bot_owner:
                 line.set_linewidth(1)
             recolored_line = 1
+        label = "-\n".join(textwrap.wrap(label, width=18))
         if force_labels and label.startswith("_"):
             label = "\u200B" + label
-        import textwrap
-        label = "-\n".join(textwrap.wrap(label, width=18))
         line_handler = LineHandler()
         if i == recolored_line:
             if line_color in plt.colormaps():
