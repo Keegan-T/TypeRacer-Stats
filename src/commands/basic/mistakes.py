@@ -62,10 +62,8 @@ async def run(ctx, user, username, race_number, universe):
 
     typos = race_info["typos"]
     quote = list(race_info["quote"])
-    offset = 0
-    for typo in typos:
-        quote.insert(typo[0] + offset, "\\❌")
-        offset += 1
+    for offset, typo in enumerate(typos):
+        quote.insert(typo[1] + offset, "\\❌")
     race_info["quote"] = "".join(quote)
 
     description = strings.text_description(race_info)
@@ -83,7 +81,7 @@ async def run(ctx, user, username, race_number, universe):
         f"Completed <t:{int(race_info['timestamp'])}:R>"
     )
 
-    embed = Embed(  # Make it green if no mistakes
+    embed = Embed(
         title=f"Mistakes - Race #{race_number:,}",
         description=description + f"\n\n{speeds_string}",
         url=urls.replay(username, race_number, universe, stats['disqualified']),

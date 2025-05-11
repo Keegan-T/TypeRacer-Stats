@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import numpy as np
 
 from graphs.core import plt, color_graph
@@ -52,20 +54,40 @@ def render(user, rankings, title, y_label, file_name, limit_y=True, typos=[]):
         ax.set_ylim(bottom=min_wpm - padding)
         ax.set_ylim(top=max_wpm + padding)
 
-    if len(typos) > 0:
-        typo_count = 1
-        for index, word in typos:
+    if typos:
+        word_counts = defaultdict(int)
+        for word_index, _, _ in typos:
+            word_counts[word_index] += 1
+
+        typo_count = 0
+        word_indexes = {}
+
+        for word_index, index, word in typos:
+            last_index = word_indexes.get(word_index, -1)
+            if index <= last_index:
+                continue
+
+            word_indexes[word_index] = index
             wpm = rankings[0]["average_wpm"][max(0, index - 1)]
-            ax.plot(index, wpm, marker="x", color="red", zorder=999, markersize=7,
-                    markeredgewidth=1.5, label=f"{typo_count}. {word}")
-            typo_count += 1
+
+            label = None
+            if last_index == -1:
+                typo_count += 1
+                label = f"{typo_count}. {word}"
+                if word_counts[word_index] > 1:
+                    label += f" (x{word_counts[word_index]})"
+
+            ax.plot(
+                index, wpm, marker="x", color="red", zorder=999, markersize=7,
+                markeredgewidth=1.5, label=label
+            )
 
     ax.set_xlabel("Keystrokes")
     ax.set_ylabel(y_label)
     ax.set_title(title)
     ax.grid()
 
-    color_graph(ax, user, caller_index, match=True)
+    color_graph(ax, user, caller_index, match=True, force_labels=False)
 
     plt.savefig(file_name)
     plt.close()

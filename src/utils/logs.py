@@ -65,11 +65,11 @@ def get_raw_speeds(typing_log, times):
     typing_log = re.sub(r"\t\d", "a", typing_log).split("|", 1)
     raw_times = []
 
-    for keystroke in re.findall("\d+,(?:\d+[+\-$].?)+,", typing_log[1]):
+    for keystroke in re.findall(r"\d+,(?:\d+[+\-$].?)+,", typing_log[1]):
         delay = int(keystroke.split(",")[0])
 
         chars = []
-        for i, char in enumerate(re.findall("(?:\d+[+\-$].?)", keystroke)):
+        for i, char in enumerate(re.findall(r"(?:\d+[+\-$].?)", keystroke)):
             if char[-2] == "$":
                 chars.append("0-k")
             chars.append(char)
@@ -82,16 +82,16 @@ def get_raw_speeds(typing_log, times):
             else:
                 raw_times.pop()
 
-    while raw_times[-1] == 0: # Removing trailing delays
+    while raw_times[-1] == 0:  # Removing trailing delays
         raw_times.pop()
 
-    if raw_times[0] == 0: # Preventing zero starts
+    if raw_times[0] == 0:  # Preventing zero starts
         for i in range(1, len(raw_times)):
             if raw_times[i] > 0:
                 raw_times.insert(0, raw_times.pop(i))
                 break
 
-    for i in range(min(len(raw_times), len(times))): # Taking the fastest time per character
+    for i in range(min(len(raw_times), len(times))):  # Taking the fastest time per character
         if raw_times[i] > times[i]:
             raw_times[i] = times[i]
 
@@ -147,13 +147,15 @@ def get_adjusted_wpm_over_keystrokes(delays):
 
     return average_wpm, instant_chars
 
+
 def get_typos(quote, action_data):
     action_data = escape_characters(action_data)
     action_data = re.sub(r"\t\d", "a", action_data)
     actions = re.findall(r"\d+,(?:\d+[+\-$].?)+,", action_data)
     action_list = [action.split(",", 1)[1] for action in actions]
 
-    typos = {}
+    typos = []
+    typo_flag = False
     quote_words = [word + " " for word in quote.split(" ")]
     quote_words[-1] = quote_words[-1][:-1]
 
@@ -178,13 +180,15 @@ def get_typos(quote, action_data):
             current_word = quote_words[current_word_index]
             text_string = "".join(text_box)
 
-            if text_string[:len(current_word)] != current_word[:len(text_string)]:
-                if current_word_index not in typos:
-                    typo_index = len("".join(completed_words) + "".join(text_box)) - 1
-                    word = current_word
-                    if current_word[-1] == " ":
-                        word = word[:-1]
-                    typos[current_word_index] = f"{word},{typo_index}"
+            is_typo = text_string[:len(current_word)] != current_word[:len(text_string)]
+
+            if is_typo and not typo_flag and operator != "-":
+                typo_flag = True
+                typo_index = len("".join(completed_words) + "".join(text_box)) - 1
+                word = current_word.rstrip()
+                typos.append((current_word_index, typo_index, word))
+            elif not is_typo and typo_flag:
+                typo_flag = False
 
         while "".join(text_box).startswith(quote_words[current_word_index]):
             completed_words.append(quote_words[current_word_index])
@@ -197,9 +201,4 @@ def get_typos(quote, action_data):
         if "".join(completed_words) == quote:
             break
 
-    typo_list = []
-    for typo in typos.values():
-        word, index = typo.rsplit(",", 1)
-        typo_list.append([int(index), word])
-
-    return typo_list
+    return typos
