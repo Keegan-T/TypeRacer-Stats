@@ -6,7 +6,7 @@ from discord.ext import commands
 import database.users as users
 from api.users import get_stats, get_joined
 from database.bot_users import get_user
-from utils import errors, embeds, strings, dates
+from utils import errors, embeds, strings, dates, colors
 
 command = {
     "name": "stats",
@@ -87,6 +87,7 @@ async def run(ctx, user, username):
         f"**Membership:** {'Premium' if stats['premium'] else 'Basic'}"
     )
     if stats["disqualified"]:
+        embed.color = colors.error
         general_string += "\n**Status:** Banned"
 
     stats_string = (
