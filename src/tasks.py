@@ -16,6 +16,7 @@ from utils.logging import log
 
 
 async def import_competitions():
+    log("Importing Competitions")
     grace_period = 21600
     comps = competition_results.get_latest()
     utc = timezone.utc
@@ -76,12 +77,12 @@ async def import_competitions():
         if user["awards_first"] != first or user["awards_second"] != second or user["awards_third"] != third:
             users.update_awards(username, first, second, third)
 
-    log("Imported all new competitions")
+    log("Finished Importing Competitions")
 
 
 async def update_important_users():
     user_list = important_users.get_users()
-    log(f"Updating {len(user_list)} important users...")
+    log(f"Updating {len(user_list)} Important Users")
 
     leaders = users.get_most("races", 10) + \
               users.get_most_daily_races(10) + \
@@ -106,6 +107,7 @@ async def update_important_users():
     for username in user_list:
         await download(username)
     import_lock.release()
+    log("Finished Updating Important Users")
 
 
 async def import_top_ten_users():
@@ -145,6 +147,7 @@ async def import_top_ten_users():
 
 
 async def update_top_tens():
+    log(f"Updating Top Tens")
     import database.text_results as text_results
     from database.users import get_text_bests
     from database.alts import get_alts
@@ -196,6 +199,6 @@ async def update_top_tens():
                 username, number, score[3], score[4],
             ))
 
-    log(f"Adding {len(results)} results")
+    log(f"Adding {len(results):,} results")
     text_results.add_results(results)
-    log("Added results")
+    log(f"Finished Updating Top Tens")

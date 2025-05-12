@@ -46,8 +46,9 @@ async def on_command_error(ctx, error):
         return await ctx.send(embed=errors.command_cooldown(datetime.now().timestamp() + error.retry_after))
 
     elif isinstance(error, commands.CommandInvokeError):
-        # if isinstance(error.original, (ConnectionError, ClientConnectionError, SSLError)):
-        #     return await ctx.send(embed=errors.connection_error())
+        if isinstance(error.original, (ConnectionError, ClientConnectionError, SSLError)):
+            log_error("Connection Error", error)
+            return await ctx.send(embed=errors.connection_error())
         if "Embed size exceeds maximum size" in str(error):
             return await ctx.send(embed=errors.embed_limit_exceeded())
 
@@ -103,21 +104,13 @@ async def on_guild_join(guild):
 async def loops():
     if datetime.now(tz=timezone.utc).hour == 4 and datetime.now(tz=timezone.utc).minute == 0:
         try:
-            log("Importing competitions")
             await import_competitions()
-            log("Finished importing competitions")
-            log("Updating important users")
             await update_important_users()
-            log("Finished updating important users")
-            log(f"Updating records")
             await records.update_all(bot)
-            log(f"Finished updating records")
             if datetime.now(tz=timezone.utc).day == 1:
-                log(f"Updating top tens")
                 await update_top_tens()
-                log(f"Finished updating top tens")
         except Exception as error:
-            log_error("Task Failure", error)
+            log_error("Task Failed", error)
 
 
 async def load_commands():
