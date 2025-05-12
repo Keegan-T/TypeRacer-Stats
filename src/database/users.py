@@ -1,6 +1,6 @@
 import time
 
-from database import db
+from database import db, texts
 from database.texts import filter_disabled_texts, get_disabled_text_ids
 from utils import strings
 from utils.logging import log
@@ -141,6 +141,32 @@ def get_most(column, limit):
     """, [limit])
 
     return top
+
+
+def get_most_texts_typed(limit):
+    leaders = get_most("texts_typed", limit)
+    text_count = texts.get_text_count()
+    results = []
+
+    for user in leaders:
+        min_repeats = 1
+        if user["texts_typed"] == text_count:
+            username = user["username"]
+            repeats = db.fetch("""
+                SELECT r.text_id, COUNT(*) as times_typed
+                FROM races r
+                JOIN texts t ON r.text_id = t.id
+                WHERE r.username = ?
+                AND t.disabled = 0
+                GROUP BY r.text_id;
+            """, [username])
+
+            min_repeats = min([row[1] for row in repeats])
+        results.append((user, user["texts_typed"], min_repeats))
+
+    results.sort(key=lambda x: (x[2], x[1]), reverse=True)
+
+    return results
 
 
 async def get_most_text_repeats(limit):

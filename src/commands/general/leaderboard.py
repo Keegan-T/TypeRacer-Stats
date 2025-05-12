@@ -119,9 +119,13 @@ async def run(ctx, user, category, text_id=None):
 
     elif category == "textstyped":
         title = "Texts Typed"
-        leaderboard = users.get_most("texts_typed", limit)
-        for leader in leaderboard:
-            leaders.append(f"{leader['texts_typed']:,}")
+        leaderboard = users.get_most_texts_typed(limit)
+        for user, texts_typed, min_repeats in leaderboard:
+            repeat_string = ""
+            if min_repeats > 1:
+                repeat_string = f" ({min_repeats}x each)"
+            leaders.append(f"{texts_typed:,}{repeat_string}")
+        leaderboard = [results[0] for results in leaderboard]
 
     elif category == "textrepeats":
         if text_id is not None:

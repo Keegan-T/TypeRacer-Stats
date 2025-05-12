@@ -296,15 +296,16 @@ async def text_records():
 
     text_bests = users.get_top_text_best(3)
     total_text_wpm = users.get_most("text_wpm_total", 3)
-    most_texts = users.get_most("texts_typed", 20)
+    most_texts = users.get_most_texts_typed(20)
     max_quote = await users.get_most_text_repeats(3)
 
-    max_texts_typed = most_texts[0]["texts_typed"]
-    text_completion_str = "\n".join(
-        f"{i + 1}. {get_flag(user['username'])}{strings.escape_formatting(user['username'])}"
-        for i, user in enumerate(most_texts)
-        if user["texts_typed"] >= max_texts_typed
-    )
+    text_completion_str = ""
+    for i, (user, texts_typed, min_repeats) in enumerate(most_texts):
+        if texts_typed < text_count:
+            break
+        username = user["username"]
+        repeat_string = f" ({min_repeats}x each)" if min_repeats > 1 else ""
+        text_completion_str += f"{i + 1}. {get_flag(username)}{strings.escape_formatting(username)}{repeat_string}\n"
 
     embed.add_field(
         name=f"Text Best WPM (Min. {min_texts:,} Texts Typed)",
@@ -325,7 +326,7 @@ async def text_records():
     )
 
     embed.add_field(
-        name=f"Text Completion Club ({max_texts_typed:,} Texts Typed)",
+        name=f"Text Completion Club ({text_count:,} Texts Typed)",
         value=text_completion_str,
         inline=False,
     )
