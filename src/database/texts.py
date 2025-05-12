@@ -247,7 +247,7 @@ def filter_disabled_texts(text_list):
     return [text for text in text_list if text["text_id"] not in disabled_text_ids]
 
 
-def update_text_difficulties(universe):
+def update_text_difficulties(universe="play"):
     print(f"Updating text difficulties for {universe}... ")
     table = table_name(universe)
     text_list = get_texts(include_disabled=False, universe=universe)

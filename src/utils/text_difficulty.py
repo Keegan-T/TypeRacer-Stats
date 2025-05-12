@@ -44,7 +44,7 @@ def set_difficulties(text_list):
         words = text["words"]
         pairs = text["pairs"]
         length = len(quote)
-        short_factor = min(1, math.log(length) / math.log(150))
+        short_factor = min(1, math.log(length) / math.log(200))
 
         text["word_score"] = sum([word_ranks[word] for word in words]) / len(words) * short_factor
         text["bigram_score"] = sum([bigram_ranks[pair] for pair in pairs]) / len(pairs) * short_factor
@@ -64,14 +64,14 @@ def set_difficulties(text_list):
                 i += 1
             else:
                 if (c1 in shift_keys) != (c2 in shift_keys):
-                    shift_weight += 1
+                    shift_weight += 0.5
             i += 1
 
         if quote[0] in shift_keys and quote[1] not in shift_keys:
             if quote[1] == " ":
                 shift_weight -= 0.25
             else:
-                shift_weight -= 1
+                shift_weight -= 0.5
 
         text["shift_score"] = shift_weight / length * short_factor
 
@@ -85,7 +85,7 @@ def set_difficulties(text_list):
         difficulty = (
                 text["word_score"] * 0.2
                 + text["bigram_score"] * 0.2
-                + text["shift_score"] * 0.4
+                + text["shift_score"] * 0.2
                 + text["repeat_score"] * 0.2
                 + text["length_score"] * 0.7
         )
