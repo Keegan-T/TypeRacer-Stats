@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from discord import Embed
 from discord.ext import commands
 
@@ -96,9 +98,9 @@ async def run(ctx, user, username, n):
             end_number = race_list[best_index + n - 1][1]
             start_timestamp = race_list[best_index][2]
             end_timestamp = race_list[best_index + n - 1][2]
-            date_range = (
-                f"{strings.discord_timestamp(start_timestamp, 'D')} - "
-                f"{strings.discord_timestamp(end_timestamp, 'D')}"
+            date_range = strings.get_display_date_range(
+                datetime.fromtimestamp(start_timestamp, tz=timezone.utc),
+                datetime.fromtimestamp(end_timestamp, tz=timezone.utc),
             )
             description += (
                 f"**{date_range}**\n{best / n:,.2f} WPM: "
