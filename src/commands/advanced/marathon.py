@@ -8,6 +8,7 @@ from commands.locks import big_lock
 from database.bot_users import get_user
 from utils import errors, colors, strings
 from utils.embeds import Page, Message, is_embed
+from utils.stats import get_top_disjoint_windows
 
 categories = ["races", "points"]
 command = {
@@ -76,58 +77,68 @@ async def run(ctx, user, username, category, seconds):
         return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
 
     race_list.sort(key=lambda x: x[7])
-    marathon = 0
-    race_range = []
-    start_index = 0
-    end_index = 0
-    current = -1
 
+    windows = []
     if category == "races":
-        # I deem this the "inchworm" technique
-        while end_index < len(race_list):
-            start_race = race_list[start_index]
-            end_race = race_list[end_index]
-            if end_race[7] - start_race[7] < seconds:
-                current = end_index - start_index + 1
+        start_index = 0
+        end_index = 0
+        race_count = len(race_list)
+        while start_index < race_count:
+            while end_index < race_count and race_list[end_index][7] - race_list[start_index][7] <= seconds:
                 end_index += 1
-                if current > marathon:
-                    marathon = current
-                    race_range = [start_index, end_index]
-            else:
-                start_index += 1
+            count = end_index - start_index
+            if count > 0:
+                windows.append((start_index, end_index - 1, count))
+            start_index += 1
 
     else:
+        start_index = 0
         total_points = 0
-
-        while end_index < len(race_list):
-            start_race = race_list[start_index]
-            end_race = race_list[end_index]
-            if end_race[7] - start_race[7] < seconds:
-                total_points += end_race[4]
-                current = total_points
-                end_index += 1
-                if current > marathon:
-                    marathon = current
-                    race_range = [start_index, end_index]
-            else:
-                total_points -= start_race[4]
+        for end_index in range(len(race_list)):
+            end_time = race_list[end_index][7]
+            total_points += race_list[end_index][4]
+            while start_index <= end_index and end_time - race_list[start_index][7] > seconds:
+                total_points -= race_list[start_index][4]
                 start_index += 1
+            windows.append((start_index, end_index, total_points))
 
-    if current > marathon:
-        race_range = [start_index, end_index]
+    windows.sort(key=lambda x: -x[2])
+    top_windows = get_top_disjoint_windows(windows, 10)
 
-    marathon_races = race_list[race_range[0]:race_range[1]]
-    start_time = marathon_races[0][7]
-    end_time = marathon_races[-1][7]
+    best = top_windows[0]
+    race_range = race_list[best[0]:best[1] + 1]
+    start_time = race_range[0]["timestamp"]
+    end_time = race_range[-1]["timestamp"]
+    fields, footer = get_stats_fields(
+        username, race_range, start_time, end_time, universe="play"
+    )
 
-    fields, footer = get_stats_fields(username, marathon_races, start_time, end_time, universe)
+    description = ""
+    for i in range(len(top_windows)):
+        window = top_windows[i]
+        amount = window[2]
+        start_number = race_list[window[0]]["number"]
+        end_number = race_list[window[1]]["number"]
+        description += f"{i + 1}. {amount:,.0f} (Races {start_number:,} - {end_number:,})\n"
 
-    page = Page(fields=fields, footer=footer)
+    period_string = strings.format_duration_short(seconds, False)
+    category = category[:-1].title()
+
+    pages = [
+        Page(
+            title=f"Best {category} Marathons ({period_string} period)",
+            fields=fields,
+            footer=footer,
+            button_name="Fastest",
+        ),
+        Page(
+            f"Top 10 Best {category} Marathon ({period_string} period)",
+            description, button_name="Top 10",
+        )
+    ]
 
     message = Message(
-        ctx, user, page,
-        title=f"Best {category[:-1].title()} Marathon "
-              f"({strings.format_duration_short(seconds, False)} period)",
+        ctx, user, pages,
         profile=stats,
         universe=universe,
     )

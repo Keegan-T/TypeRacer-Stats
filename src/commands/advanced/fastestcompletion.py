@@ -9,6 +9,7 @@ from database import texts
 from database.bot_users import get_user
 from utils import errors, colors, strings, embeds
 from utils.embeds import Message, Page, is_embed
+from utils.stats import get_top_disjoint_windows
 
 categories = ["races", "points"]
 command = {
@@ -107,23 +108,9 @@ async def run(ctx, user, username, number, category):
                 start_index += 1
 
     windows.sort(key=lambda x: x[2])
-
-    top_windows = []
-    used_ranges = []
-    for start, end, duration in windows:
-        overlap = False
-        for s, e in used_ranges:
-            if not (end <= s or start >= e):
-                overlap = True
-                break
-        if not overlap:
-            top_windows.append((start, end, duration))
-            used_ranges.append((start, end))
-            if len(top_windows) == 10:
-                break
+    top_windows = get_top_disjoint_windows(windows, 10)
 
     fastest = top_windows[0]
-    fastest_time = fastest[2]
     race_range = race_list[fastest[0]:fastest[1]]
     start_time = race_range[0]["timestamp"]
     end_time = race_range[-1]["timestamp"]
@@ -138,20 +125,20 @@ async def run(ctx, user, username, number, category):
         start_number = race_list[window[0]]["number"]
         end_number = race_list[window[1] - 1]["number"]
         description += (
-            f"{i + 1}. **{strings.format_duration_short(duration, False)}** "
+            f"{i + 1}. {strings.format_duration_short(duration, False)} "
             f"(Races {start_number:,} - {end_number:,})\n"
         )
 
     pages = [
         Page(
             title=f"Fastest Completion ({number:,} {category.title()})",
-            description=f"{strings.format_duration_short(fastest_time, False)}",
+            description=f"{strings.format_duration_short(fastest[2], False)}",
             fields=fields,
             footer=footer,
             button_name="Fastest",
         ),
         Page(
-            f"Top 10 Fastest ({number:,} {category.title()})",
+            f"Top 10 Fastest Completions ({number:,} {category.title()})",
             description, button_name="Top 10",
         )
     ]

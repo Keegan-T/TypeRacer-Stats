@@ -77,3 +77,21 @@ def calculate_text_performances(text_bests, universe="play"):
             "rating": rating,
         })
         text_bests[i] = score
+
+
+def get_top_disjoint_windows(windows, count=10):
+    top_windows = []
+    used_ranges = []
+    for start_index, end_index, race_count in windows:
+        overlap = False
+        for s, e in used_ranges:
+            if not (end_index <= s or start_index >= e):
+                overlap = True
+                break
+        if not overlap:
+            top_windows.append((start_index, end_index, race_count))
+            used_ranges.append((start_index, end_index))
+            if len(top_windows) == count:
+                break
+
+    return top_windows
