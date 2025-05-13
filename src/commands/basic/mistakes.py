@@ -77,8 +77,9 @@ async def run(ctx, user, username, race_number, universe):
         f"**Lagged:** {lagged:,.2f} WPM ({race_info['lag']:,.2f} WPM lag)\n"
         f"**Unlagged:** {unlagged:,.2f} WPM ({race_info['ping']:,}ms ping)\n"
         f"**Adjusted:** {adjusted:,.3f} WPM ({race_info['start']:,}ms start)\n"
-        f"**Race Time:** {strings.format_duration_short(race_info['ms'] / 1000, False)}\n\n"
-        f"Completed <t:{int(race_info['timestamp'])}:R>"
+        f"**Race Time:** {strings.format_duration_short(race_info['ms'] / 1000, False)}\n"
+        f"**Mistakes:** {len(typos):,}\n\n"
+        f"Completed {strings.discord_timestamp(race_info['timestamp'])}"
     )
 
     embed = Embed(
