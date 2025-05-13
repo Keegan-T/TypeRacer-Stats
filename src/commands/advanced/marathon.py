@@ -129,7 +129,7 @@ async def run(ctx, user, username, category, seconds):
             title=f"Best {category} Marathons ({period_string} period)",
             fields=fields,
             footer=footer,
-            button_name="Fastest",
+            button_name="Best",
         ),
         Page(
             f"Top 10 Best {category} Marathon ({period_string} period)",
