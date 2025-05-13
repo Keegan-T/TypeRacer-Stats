@@ -89,7 +89,7 @@ def render(user, rankings, title, y_label, file_name, limit_y=True, typos=[]):
     ax.set_title(title)
     ax.grid()
 
-    color_graph(ax, user, caller_index, match=True, force_labels=False)
+    color_graph(ax, user, caller_index, match=True)
 
     plt.savefig(file_name)
     plt.close()

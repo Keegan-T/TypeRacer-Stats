@@ -102,7 +102,7 @@ def get_line_cmap(ax, line_index, user):
     return lc
 
 
-def color_graph(ax, user, recolored_line=0, force_legend=False, match=False, force_labels=True):
+def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
     colors = user["colors"]
     ax.set_facecolor(colors["graphbackground"])
 
@@ -127,14 +127,16 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False, for
     line_color = colors["line"]
 
     for i, line in enumerate(ax.get_lines()):
-        raw_label = line.get_label()
-        if raw_label == "Raw Adjusted":
+        label = line.get_label()
+        if label.startswith("_child"):
+            continue
+        if label == "Raw Adjusted":
             line.set_color(user["colors"]["raw"])
             if int(user["id"]) != bot_owner:
                 line.set_linewidth(1)
             recolored_line = 1
-        label = "-\n".join(textwrap.wrap(raw_label, width=18))
-        if force_labels and raw_label.startswith("_"):
+        label = "-\n".join(textwrap.wrap(label, width=18))
+        if label.startswith("_"):
             label = "\u200B" + label
         line_handler = LineHandler()
         if i == recolored_line:
