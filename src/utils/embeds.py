@@ -29,7 +29,7 @@ class Field:
 
 
 class Message(View):
-    def __init__(self, ctx, user, pages, title=None, url=None, header="", color=None, profile=None, universe=None, show_pfp=True):
+    def __init__(self, ctx, user, pages, title=None, url=None, header="", footer="", color=None, profile=None, universe=None, show_pfp=True):
         self.pages = pages if isinstance(pages, list) else [pages]
         self.page_count = len(self.pages)
         super().__init__(timeout=60 if self.page_count > 1 else 0.01)
@@ -43,6 +43,7 @@ class Message(View):
         self.url = url
         self.index = 0
         self.header = header
+        self.footer = footer
         self.color = color if color else user["colors"]["embed"]
         self.profile = profile
         self.universe = universe
@@ -54,6 +55,7 @@ class Message(View):
         for i, page in enumerate(self.pages):
             title = page.title if page.title else self.title
             description = self.header + page.description
+            footer = page.footer if page.footer else self.footer
             if page.default:
                 self.index = i
             embed = Embed(
@@ -65,8 +67,8 @@ class Message(View):
             if page.fields:
                 for field in page.fields:
                     embed.add_field(name=field.name, value=field.value, inline=field.inline)
-            if page.footer:
-                self.update_footer(embed, page.footer)
+            if footer:
+                self.update_footer(embed, footer)
             if self.profile:
                 self.add_profile(embed)
             if self.universe:

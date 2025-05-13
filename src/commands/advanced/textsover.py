@@ -1,12 +1,12 @@
 from random import shuffle
 
-from discord import Embed
 from discord.ext import commands
 
 import database.texts as texts
 import database.users as users
 from database.bot_users import get_user
-from utils import errors, urls, strings, embeds
+from utils import errors, urls, strings
+from utils.embeds import Message, get_pages, is_embed
 
 categories = ["wpm", "points", "times"]
 command = {
@@ -35,7 +35,7 @@ class TextsOver(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username, threshold, category = result
@@ -85,7 +85,6 @@ async def run(ctx, user, username, threshold, category, over=True, random=False)
         text_id = text["text_id"]
         text = {**text, **text_bests_dict[text_id]}
         final.append(text)
-
     race_list = final
 
     if random:
@@ -93,27 +92,12 @@ async def run(ctx, user, username, threshold, category, over=True, random=False)
     else:
         race_list.sort(key=lambda x: x[category], reverse=True)
 
-    description = ""
-    for race in race_list[:10]:
-        text_id = race["text_id"]
-        description += (
-            f"\n\n[#{text_id}]({urls.trdata_text(text_id, universe)}) - "
-            f"[{race['wpm']:,.2f} WPM]({urls.replay(username, race['number'], universe)}) - "
-            f"**{race['times']:,} time{'s' * (race['times'] != 1)}** - "
-            f"[Ghost]({text_list[text_id]['ghost']})\n"
-            f'"{strings.truncate_clean(text_list[text_id]["quote"], 60)}"'
-        )
-
-    category_title = category
-    if category == "wpm":
-        category_title = "WPM"
-
+    category_title = {"wpm": "WPM"}.get(category, category)
     race_count = len(race_list)
-    percent = (race_count / texts_typed) * 100
-    description = (
+    header = (
         f"**{race_count:,}** of **{texts_typed:,}** texts are "
         f"{'above' if over else 'below'} {threshold:,} {category_title} "
-        f"({percent:,.2f}%){description}"
+        f"({race_count / texts_typed:.2%})\n\n"
     )
 
     if category == "points":
@@ -121,16 +105,27 @@ async def run(ctx, user, username, threshold, category, over=True, random=False)
     elif category == "times":
         category_title = f"Time{'s' if threshold != 1 else ''}"
 
-    embed = Embed(
+    def formatter(race):
+        text_id = race["text_id"]
+        return (
+            f"[#{text_id}]({urls.trdata_text(text_id, universe)}) - "
+            f"[{race['wpm']:,.2f} WPM]({urls.replay(username, race['number'], universe)}) - "
+            f"**{race['times']:,} time{'s' * (race['times'] != 1)}** - "
+            f"[Ghost]({text_list[text_id]['ghost']})\n"
+            f'"{strings.truncate_clean(text_list[text_id]["quote"], 60)}"\n\n'
+        )
+
+    pages = get_pages(race_list, formatter, page_count=10, per_page=10)
+    message = Message(
+        ctx, user, pages,
         title=f"Texts {'Over' if over else 'Under'} {threshold:,} "
               f"{category_title}{' (Randomized)' * random}",
-        description=description,
-        color=user["colors"]["embed"],
+        header=header,
+        profile=stats,
+        universe=universe,
     )
-    embeds.add_profile(embed, stats, universe)
-    embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed, content=era_string)
+    await message.send()
 
 
 async def setup(bot):

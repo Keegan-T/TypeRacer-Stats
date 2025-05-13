@@ -1,14 +1,12 @@
-from discord import Embed, File
 from discord.ext import commands
 
 import database.races as races
 import database.users as users
 from database.bot_users import get_user
 from graphs import personal_best_graph
-from graphs.core import remove_file
-from utils import errors, urls, embeds, strings
+from utils import errors, urls, strings
+from utils.embeds import Page, Message, is_embed
 
-categories = ["races", "time"]
 command = {
     "name": "personalbestgraph",
     "aliases": ["pbg"],
@@ -30,7 +28,7 @@ class PersonalBestGraph(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username, category = result
@@ -38,7 +36,7 @@ class PersonalBestGraph(commands.Cog):
 
 
 def get_args(user, args, info):
-    params = f"username category:{'|'.join(categories)}"
+    params = f"username category:races|time"
 
     return strings.parse_command(user, params, args, info)
 
@@ -57,69 +55,82 @@ async def run(ctx, user, username, category):
     )
     if not race_list:
         return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
-    race_list.sort(key=lambda r: r[1])
+    race_list.sort(key=lambda r: r[column])
 
-    pbs = [race_list[0]]
-    y = [race_list[0][0]]
-    x = [race_list[0][column]]
+    first_race = race_list[0]
+    pbs = [first_race]
+    wpms = [first_race["wpm"]]
+    numbers = [first_race["number"]]
+    timestamps = [first_race["timestamp"]]
 
     for race in race_list:
-        wpm = race[0]
-        if y[-1] < wpm:
+        wpm, number, timestamp = race
+        if wpms[-1] < wpm:
             pbs.append(race)
-            y.append(wpm)
-            x.append(race[column])
+            wpms.append(wpm)
+            numbers.append(number)
+            timestamps.append(timestamp)
 
-    indicator = f"#{pbs[0]['number']:,}" if category == "races" else f"<t:{int(pbs[0]['timestamp'])}:R>"
-    description = (
-        f"**First Race:** [{pbs[0]['wpm']:,.2f} WPM]"
-        f"({urls.replay(username, pbs[0]['number'], universe)}) - {indicator}\n"
-    )
+    def formatter(race, label, time=False):
+        indicator = strings.discord_timestamp(race["timestamp"]) if time else f"#{race['number']:,}"
+        return (
+            f"**{label}:** [{race['wpm']:,.2f} WPM]"
+            f"({urls.replay(username, race['number'], universe)}) - {indicator}\n"
+        )
 
+    race_description = formatter(first_race, label="First Race")
+    time_description = formatter(first_race, label="First Race", time=True)
     latest_break = None
 
     for i in range(len(pbs) - 1):
         current_pb = pbs[i]["wpm"]
         next_pb = pbs[i + 1]
         next_wpm = next_pb["wpm"]
-        next_number = next_pb["number"]
-        next_indicator = f"#{next_number:,}" if category == "races" else f"<t:{int(next_pb['timestamp'])}:R>"
         next_barrier = next_wpm - (next_wpm % 10)
 
         if next_barrier > current_pb:
             latest_break = next_pb
-            label = f"**Best Race:**" if i == len(pbs) - 2 else f"**Broke {next_barrier:.0f}:**"
-            description += (
-                f"{label} [{next_wpm:,.2f} WPM]"
-                f"({urls.replay(username, next_pb['number'], universe)}) - "
-                f"{next_indicator}\n"
-            )
+            label = "Best Race" if i == len(pbs) - 2 else f"Broke {next_barrier:.0f}"
+            race_description += formatter(next_pb, label)
+            time_description += formatter(next_pb, label, time=True)
 
     if latest_break != pbs[-1]:
-        indicator = f"#{pbs[-1]['number']:,}" if category == "races" else f"<t:{int(pbs[-1]['timestamp'])}:R>"
-        description += (
-            f"**Best Race:** [{pbs[-1]['wpm']:,.2f} WPM]"
-            f"({urls.replay(username, pbs[-1]['number'], universe)}) - "
-            f"{indicator}\n"
+        race_description += formatter(pbs[-1], "Best Race")
+        time_description += formatter(pbs[-1], "Best Race", time=True)
+
+    def render_races(file_name):
+        return personal_best_graph.render(user, username, numbers, wpms, "races", file_name, universe)
+
+    def render_time(file_name):
+        return personal_best_graph.render(user, username, timestamps, wpms, "time", file_name, universe)
+
+    title = "Personal Best Progression"
+    pages = [
+        Page(
+            title=title,
+            description=race_description,
+            render=render_races,
+            file_name=f"personal_best_over_races_{username}.png",
+            button_name="Over Races",
+            default=category == "races",
+        ),
+        Page(
+            title=title + " (Over Time)",
+            description=time_description,
+            render=render_time,
+            file_name=f"personal_best_over_time_{username}.png",
+            button_name="Over Time",
+            default=category == "time",
         )
+    ]
 
-    embed = Embed(
-        title=f"Personal Best Progression",
-        description=description,
-        color=user["colors"]["embed"],
+    message = Message(
+        ctx, user, pages,
+        profile=stats,
+        universe=universe,
     )
-    embeds.add_profile(embed, stats, universe)
-    embeds.add_universe(embed, universe)
 
-    file_name = f"personal_best_over_{category}_{username}.png"
-    personal_best_graph.render(user, username, x, y, category, file_name, universe)
-
-    embed.set_image(url=f"attachment://{file_name}")
-    file = File(file_name, filename=file_name)
-
-    await ctx.send(embed=embed, file=file, content=era_string)
-
-    remove_file(file_name)
+    await message.send()
 
 
 async def setup(bot):

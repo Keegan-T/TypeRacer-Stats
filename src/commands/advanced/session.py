@@ -7,8 +7,8 @@ from commands.locks import big_lock
 from database.bot_users import get_user
 from utils import errors, strings
 from utils.embeds import Page, Message, is_embed
+from utils.stats import get_top_disjoint_windows
 
-categories = ["races", "time"]
 command = {
     "name": "session",
     "aliases": ["ss"],
@@ -44,12 +44,12 @@ class Session(commands.Cog):
 
 
 def get_args(user, args, info):
-    params = f"username category:{'|'.join(categories)} duration:1800"
+    params = f"username category:races|time duration:1800"
 
     return strings.parse_command(user, params, args, info)
 
 
-async def run(ctx, user, username, kind, seconds):
+async def run(ctx, user, username, category, seconds):
     universe = user["universe"]
     stats = users.get_user(username, universe)
     if not stats:
@@ -70,67 +70,82 @@ async def run(ctx, user, username, kind, seconds):
             big_lock.release()
         return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
     race_list.sort(key=lambda x: x[7])
-    race_range = [0, 0]
-    start_race = 0
 
-    if kind == "races":
-        session = 1
+    windows = []
+    start_index = 0
+
+    if category == "races":
         current_session = 1
-
         for i in range(1, len(race_list)):
-            current_timestamp = race_list[i][7]
-            previous_timestamp = race_list[i - 1][7]
-            time_difference = current_timestamp - previous_timestamp
-
+            time_difference = race_list[i][7] - race_list[i - 1][7]
             if time_difference < seconds:
                 current_session += 1
             else:
-                if current_session > session:
-                    session = current_session
-                    race_range = [start_race, i - 1]
-
+                end_index = i - 1
+                windows.append((start_index, end_index, current_session))
+                start_index = i
                 current_session = 1
-                start_race = i
-
-        if current_session > session:
-            race_range = [start_race, len(race_list) - 1]
 
     else:
-        session = 0
         current_session = 0
-
         for i in range(1, len(race_list)):
-            current_timestamp = race_list[i][7]
-            previous_timestamp = race_list[i - 1][7]
-            time_difference = current_timestamp - previous_timestamp
-
+            time_difference = race_list[i][7] - race_list[i - 1][7]
             if time_difference < seconds:
                 current_session += time_difference
             else:
-                if current_session > session:
-                    session = current_session
-                    race_range = [start_race, i - 1]
-
+                end_index = i - 1
+                windows.append((start_index, end_index, current_session))
+                start_index = i
                 current_session = 0
-                start_race = i
 
-        if current_session > session:
-            race_range = [start_race, len(race_list) - 1]
+    end_index = len(race_list) - 1
+    windows.append((start_index, end_index, current_session))
+    windows.sort(key=lambda x: -x[2])
+    top_windows = get_top_disjoint_windows(windows, 10)
 
-    session_races = race_list[race_range[0]:race_range[1] + 1]
-    start_time = session_races[0][7]
-    end_time = session_races[-1][7]
+    best = top_windows[0]
+    race_range = race_list[best[0]:best[1] + 1]
+    start_time = race_range[0]["timestamp"]
+    end_time = race_range[-1]["timestamp"]
+    fields, footer = get_stats_fields(
+        username, race_range, start_time, end_time, universe
+    )
 
-    fields, footer = get_stats_fields(username, session_races, start_time, end_time, universe)
+    interval = f" ({strings.format_duration_short(seconds, False)} interval)"
+    title = f"{'Longest' if category == 'time' else 'Highest Race'} Session"
 
-    page = Page(fields=fields, footer=footer)
-    if kind == "time":
-        page.description = strings.format_duration_short(end_time - start_time, False)
+    description = ""
+    for i in range(len(top_windows)):
+        window = top_windows[i]
+        value = window[2]
+        start_number = race_list[window[0]]["number"]
+        end_number = race_list[window[1]]["number"]
+        if category == "races":
+            formatted = f"{value:,.0f}"
+        else:
+            formatted = strings.format_duration_short(value, False)
+        description += f"{i + 1}. {formatted} (Races {start_number:,} - {end_number:,})\n"
+
+    pages = [
+        Page(
+            title=title + interval,
+            description=(
+                strings.format_duration_short(end_time - start_time, False)
+                if category == "time" else ""
+            ),
+            fields=fields,
+            footer=footer,
+            button_name="Best",
+        ),
+        Page(
+            f"Top 10 {title}s{interval}",
+            description, button_name="Top 10",
+        )
+    ]
 
     message = Message(
-        ctx, user, page,
-        title=f"{'Longest' if kind == 'time' else 'Highest Race'} Session "
-              f"({strings.format_duration_short(seconds, False)} interval)",
+        ctx, user, pages,
+        title=title,
         profile=stats,
         universe=universe,
     )

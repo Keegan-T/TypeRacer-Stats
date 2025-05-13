@@ -1,4 +1,5 @@
 import math
+from bisect import bisect_left
 
 from discord import Embed
 from discord.ext import commands
@@ -6,13 +7,15 @@ from discord.ext import commands
 import database.texts as texts
 import database.users as users
 from commands.basic.stats import get_args
+from config import prefix
 from database.bot_users import get_user
 from utils import errors, embeds, strings
 
 command = {
     "name": "textbestdistribution",
     "aliases": ["tbd", "bd"],
-    "description": "Displays a WPM distribution of a user's text bests",
+    "description": "Displays a WPM distribution of a user's text bests\n"
+                   f"Use `{prefix}textbestdistribution [username]` bin to display binned brackets",
     "parameters": "[username]",
     "usages": ["textbestdistribution keegant"],
 }
@@ -31,10 +34,11 @@ class TextBestDistribution(commands.Cog):
             return await ctx.send(embed=result)
 
         username = result
-        await run(ctx, user, username)
+        binned = len(args) > 1 and args[1] in ["bin", "binned"]
+        await run(ctx, user, username, binned)
 
 
-async def run(ctx, user, username):
+async def run(ctx, user, username, binned):
     universe = user["universe"]
     stats = users.get_user(username, universe)
     if not stats:
@@ -53,28 +57,43 @@ async def run(ctx, user, username):
     if len(text_bests) == 0:
         return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
 
-    top_bracket = int(10 * (math.floor(text_bests[0]["wpm"] / 10)))
-    bottom_bracket = int(10 * (math.floor(text_bests[-1]["wpm"] / 10)))
+    wpm_list = sorted(text["wpm"] for text in text_bests)
+    total = len(wpm_list)
+    top_bracket = int(10 * (math.floor(wpm_list[-1] / 10)))
+    bottom_bracket = int(10 * (math.floor(wpm_list[0] / 10)))
     brackets = []
-    spacing = [len(str(top_bracket)), 4, 6, 4]
+    spacing = [len(str(top_bracket)), 4, 5, 4]
+    if binned:
+        spacing[1] += 1
 
-    previous_over = 0
+    previous_count = 0
     for wpm in range(bottom_bracket, top_bracket + 1, 10):
-        over = len([text for text in text_bests if text["wpm"] >= wpm])
-        completion = f"{(over / len(text_bests)) * 100:,.2f}"
-        left = f"{len(text_bests) - over:,}"
-        over = f"{over:,}"
+        if binned:
+            lower = wpm
+            upper = wpm + 10
+            start = bisect_left(wpm_list, lower)
+            end = bisect_left(wpm_list, upper)
+            count = end - start
+            if count == 0:
+                continue
+            left = f"{total - count:,}"
+        else:
+            index = bisect_left(wpm_list, wpm)
+            count = total - index
+            if count == previous_count:
+                brackets.pop()
+            previous_count = count
+            left = f"{index:,}"
+
+        completion = f"{count / total:.2%}"
+        over = f"{count:,}"
         wpm = f"{wpm}"
 
-        if len(over) > spacing[1]:
-            spacing[1] = len(over)
-        if len(left) > spacing[3]:
-            spacing[3] = len(left)
+        spacing[1] = max(spacing[1], len(over))
+        spacing[2] = max(spacing[2], len(completion))
+        spacing[3] = max(spacing[3], len(left))
 
-        if over == previous_over:
-            brackets.pop()
         brackets.append((wpm, over, completion, left))
-        previous_over = over
 
     average = stats["text_best_average"]
     texts_typed = stats["texts_typed"]
@@ -94,18 +113,18 @@ async def run(ctx, user, username):
     )
 
     breakdown = (
-        f"{'Bracket':<{spacing[0] + 5}} | "
-        f"{'Over':>{spacing[1]}} | "
-        f"{'Done':>{spacing[2] + 1}} | "
-        f"{'Left':>{spacing[3]}}\t\t\n"
+            f"{'Bracket':<{spacing[0] + 5}}"
+            + f" | {'Count' if binned else 'Over':>{spacing[1]}}"
+            + f" | {'Done':>{spacing[2]}}"
+            + f" | {'Left':>{spacing[3]}}" * (not binned) + "\t\t\n"
     )
 
     for bracket in brackets:
         bracket_str = (
-            f"{bracket[0]:<{spacing[0]}} WPM+ | "
-            f"{bracket[1]:>{spacing[1]}} | "
-            f"{bracket[2]:>{spacing[2]}}% | "
-            f"{bracket[3]:>{spacing[3]}}"
+                f"{bracket[0]:<{spacing[0]}} WPM+"
+                + f" | {bracket[1]:>{spacing[1]}}"
+                + f" | {bracket[2]:>{spacing[2]}}"
+                + f" | {bracket[3]:>{spacing[3]}}" * (not binned)
         )
         breakdown += f"{bracket_str}\n"
 

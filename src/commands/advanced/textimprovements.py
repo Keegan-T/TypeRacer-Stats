@@ -1,4 +1,3 @@
-from discord import Embed
 from discord.ext import commands
 
 import database.users as users
@@ -6,7 +5,8 @@ from api.users import get_stats
 from commands.account.download import run as download
 from database import races
 from database.bot_users import get_user
-from utils import errors, urls, strings, embeds
+from utils import errors, urls, strings
+from utils.embeds import Message, get_pages, is_embed
 
 categories = ["recent", "best", "worst"]
 command = {
@@ -34,7 +34,7 @@ class TextImprovements(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username, sort = result
@@ -66,7 +66,6 @@ async def run(ctx, user, username, sort):
     race_list.sort(key=lambda x: x[3])
 
     improvements = []
-
     text_bests = {}
     for race in race_list:
         text_id = race["text_id"]
@@ -89,28 +88,27 @@ async def run(ctx, user, username, sort):
         improvements.sort(key=lambda x: x[2])
         title += " (Worst)"
 
-    description = ""
-    n = min(len(improvements), 10)
-    for i in range(n):
-        race1, race2, improvement = improvements[i]
+    def formatter(data):
+        race1, race2, improvement = data
         text_id = race1["text_id"]
         replay1 = urls.replay(username, race1["number"], universe)
         replay2 = urls.replay(username, race2["number"], universe)
-        description += (
+        return (
             f"[{race1['wpm']:,.2f}]({replay1}) ➜ [{race2['wpm']:,.2f}]({replay2}) (+{improvement:,.2f} WPM) - "
             f"[#{text_id}]({urls.trdata_text(text_id, universe)}) - "
             f"{strings.discord_timestamp(race2['timestamp'])}\n"
         )
 
-    embed = Embed(
-        title=title,
-        description=description,
-        color=user["colors"]["embed"],
-    )
-    embeds.add_profile(embed, stats, universe)
-    embeds.add_universe(embed, universe)
+    pages = get_pages(improvements, formatter, page_count=10, per_page=10)
 
-    await ctx.send(embed=embed, content=era_string)
+    message = Message(
+        ctx, user, pages,
+        title=title,
+        profile=stats,
+        universe=universe,
+    )
+
+    await message.send()
 
 
 async def setup(bot):

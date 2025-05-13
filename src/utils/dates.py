@@ -118,7 +118,6 @@ def set_command_date_range(args, user):
             date = None
         else:
             date = parse_date(arg)
-        print(date)
         if date:
             if not start_date:
                 start_date = date

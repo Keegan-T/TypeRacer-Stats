@@ -1,13 +1,13 @@
 import math
 
-from discord import Embed
 from discord.ext import commands
 
 import database.texts as texts
 import database.users as users
 from config import prefix
 from database.bot_users import get_user
-from utils import errors, urls, strings, embeds
+from utils import errors, urls, strings
+from utils.embeds import get_pages, Message, is_embed
 
 categories = ["best", "worst", "old", "new", "accuracy"]
 command = {
@@ -37,7 +37,7 @@ class TextBests(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username, sort, n = result
@@ -50,7 +50,7 @@ def get_args(user, args, info):
 
     params = f"username choice:{'|'.join(categories)}"
     result = strings.parse_command(user, params, args, info)
-    if embeds.is_embed(result):
+    if is_embed(result):
         if len(args) > 1:
             try:
                 username = args[0]
@@ -90,10 +90,10 @@ async def run(ctx, user, username, sort, n):
         return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
 
     if sort in ["new", "old"]:
-        text_bests.sort(key=lambda x: x["timestamp"])
+        text_bests.sort(key=lambda x: x["timestamp"], reverse=sort == "new")
     elif sort == "accuracy":
         text_bests.sort(key=lambda x: x["accuracy"])
-    if sort in ["worst", "new"]:
+    elif sort == "worst":
         text_bests.reverse()
     text_bests = text_bests[:n]
     texts_typed = len(text_bests)
@@ -102,21 +102,21 @@ async def run(ctx, user, username, sort, n):
     next_milestone = 5 * math.ceil(average / 5)
     required_wpm_gain = texts_typed * next_milestone - total_text_wpm
 
-    description = (
+    header = (
         f"**Text Best Average:** {average:,.2f} WPM\n"
         f"**Texts Typed:** {texts_typed:,}\n"
         f"**Text WPM Total:** {total_text_wpm:,.0f} WPM\n"
-        f"**Gain Until {next_milestone} Average:** {required_wpm_gain:,.0f} WPM\n"
+        f"**Gain Until {next_milestone} Average:** {required_wpm_gain:,.0f} WPM\n\n"
     )
 
-    limit = 10
-    scores = ""
-
-    for text in text_bests[:limit]:
+    def formatter(text):
         text_id = text["text_id"]
         quote = strings.truncate_clean(text_list[text_id]["quote"], 60)
-        race_stat = f"{text['accuracy'] * 100}% Accuracy - " if sort == "accuracy" else f"Race #{text['number']:,} - "
-        scores += (
+        race_stat = (
+            f"{text['accuracy'] * 100}% Accuracy - " if sort == "accuracy"
+            else f"Race #{text['number']:,} - "
+        )
+        return (
             f"[{text['wpm']:,.2f} WPM]({urls.replay(username, text['number'], universe)}) - "
             f"{race_stat}"
             f"[Text #{text_id}]({urls.trdata_text(text_id, universe)}) - "
@@ -135,17 +135,17 @@ async def run(ctx, user, username, sort, n):
     elif sort == "accuracy":
         title += " (Worst Accuracy)"
 
-    embed = Embed(
+    pages = get_pages(text_bests, formatter, page_count=10, per_page=10)
+
+    message = Message(
+        ctx, user, pages,
         title=title,
-        description=f"{description}\n{scores}",
-        color=user["colors"]["embed"],
-        url=urls.trdata_text_analysis(username, universe),
+        header=header,
+        profile=stats,
+        universe=universe,
     )
 
-    embeds.add_profile(embed, stats, universe)
-    embeds.add_universe(embed, universe)
-
-    await ctx.send(embed=embed, content=era_string)
+    await message.send()
 
 
 async def setup(bot):

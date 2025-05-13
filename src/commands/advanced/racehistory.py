@@ -2,7 +2,6 @@ import math
 from datetime import datetime, timezone
 
 from dateutil.relativedelta import relativedelta
-from discord import Embed
 from discord.ext import commands
 
 import database.races as races
@@ -11,7 +10,8 @@ import database.users as users
 from api.users import get_stats
 from commands.account.download import run as download
 from database.bot_users import get_user
-from utils import errors, urls, strings, dates, embeds
+from utils import errors, urls, strings, dates
+from utils.embeds import Message, get_pages, is_embed
 from utils.stats import calculate_seconds
 
 periods = ["races", "day", "week", "month", "year"]
@@ -44,7 +44,7 @@ class RaceHistory(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username, time_period, sort = result
@@ -62,52 +62,48 @@ async def run(ctx, user, username, time_period, sort):
     db_stats = users.get_user(username, universe)
     if not db_stats:
         return await ctx.send(embed=errors.import_required(username, universe))
-    era_string = strings.get_era_string(user)
 
     api_stats = get_stats(username, universe=universe)
     await download(stats=api_stats, universe=universe)
-    if era_string:
-        api_stats = await users.time_travel_stats(api_stats, user)
 
     if time_period == "races":
         columns = ["number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
         race_list = await races.get_races(
             username, columns=columns, order_by="timestamp",
-            limit=20, reverse=True, universe=universe,
+            limit=200, reverse=True, universe=universe,
             start_date=user["start_date"], end_date=user["end_date"]
         )
 
-        title = "Race History"
-        description = ""
-        for race in race_list:
-            description += (
+        def formatter(race):
+            return (
                 f"[#{race['number']:,}]({urls.replay(username, race['number'], universe)}) - "
                 f"{race['wpm']:,.2f} WPM - {math.floor(race['accuracy'] * 100):,.0f}% - {race['points']:,.0f} pts - "
                 f"{race['rank']}/{race['racers']} - <t:{int(race['timestamp'])}:R>\n"
             )
 
+        title = "Race History"
+        pages = get_pages(race_list, formatter, page_count=10, per_page=20)
+
     else:
-        sort_title = sort.title()
-        if sort_title == "Wpm":
-            sort_title = "WPM"
-        title = f"Race History - {time_period.title()}s (By {sort_title})"
-        description = ""
-        history = await get_history(username, time_period, sort, universe, user["start_date"], user["end_date"])
-        for period in history[:10]:
-            description += (
+        def formatter(period):
+            return (
                 f"**{period[1]}**\n{period[3]:,.0f} pts / {period[2]:,} races - "
                 f"{period[4]:,.2f} WPM - {strings.format_duration_short(period[5])}\n\n"
             )
 
-    embed = Embed(
-        title=title,
-        description=description,
-        color=user["colors"]["embed"],
-    )
-    embeds.add_profile(embed, api_stats, universe)
-    embeds.add_universe(embed, universe)
+        sort_title = {"wpm": "WPM"}.get(sort, sort.title())
+        title = f"Race History - {time_period.title()}s (By {sort_title})"
+        history = await get_history(username, time_period, sort, universe, user["start_date"], user["end_date"])
+        pages = get_pages(history, formatter, page_count=10, per_page=10)
 
-    await ctx.send(embed=embed, content=era_string)
+    message = Message(
+        ctx, user, pages,
+        title=title,
+        profile=api_stats,
+        universe=universe,
+    )
+
+    await message.send()
 
 
 async def get_history(username, category, sort, universe, start_date, end_date):

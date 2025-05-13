@@ -1,6 +1,5 @@
 import math
 
-from discord import Embed, File
 from discord.ext import commands
 
 import database.races as races
@@ -8,8 +7,8 @@ import database.texts as texts
 import database.users as users
 from database.bot_users import get_user
 from graphs import text_bests_graph
-from graphs.core import remove_file
-from utils import errors, embeds, strings
+from utils import errors, strings
+from utils.embeds import Page, Message, is_embed
 
 categories = ["races", "time", "texts"]
 command = {
@@ -37,7 +36,7 @@ class TextBestsGraph(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username, category = result
@@ -57,13 +56,6 @@ async def run(ctx, user, username, category):
         return await ctx.send(embed=errors.import_required(username, universe))
     era_string = strings.get_era_string(user)
 
-    x = []
-    y = []
-    text_ids = {}
-    disabled_text_ids = texts.get_disabled_text_ids()
-    wpm_total = 0
-    wpm_count = 0
-
     columns = ["number", "wpm", "text_id", "timestamp"]
     race_list = await races.get_races(
         username, columns=columns, universe=universe,
@@ -73,30 +65,44 @@ async def run(ctx, user, username, category):
         return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
     race_list.sort(key=lambda r: r[0])
 
+    race_counts = []
+    timestamps = []
+    changes = []
+    averages = []
+
+    text_ids = {}
+    disabled_text_ids = texts.get_disabled_text_ids()
+    wpm_total = 0
+    wpm_count = 0
+
     for race in race_list:
         if race[2] in disabled_text_ids:
             continue
 
-        appendage = len(x)
-        if category == "races":
-            appendage = race[0]
-        elif category == "time":
-            appendage = race[3]
+        race_num = race[0]
+        wpm = race[1]
+        text_id = race[2]
+        timestamp = race[3]
 
-        if text_ids.get(race[2], False):
-            if race[1] > text_ids[race[2]]:
-                x.append(appendage)
-                wpm_total += race[1] - text_ids[race[2]]
-                text_ids.update({race[2]: race[1]})
-                y.append(wpm_total / wpm_count)
+        if text_ids.get(text_id, False):
+            if wpm > text_ids[text_id]:
+                improvement = wpm - text_ids[text_id]
+                wpm_total += improvement
+                text_ids[text_id] = wpm
+                changes.append(len(changes))
+                timestamps.append(timestamp)
+                race_counts.append(race_num)
+                averages.append(wpm_total / wpm_count)
         else:
-            x.append(appendage)
-            text_ids.update({race[2]: race[1]})
-            wpm_total += race[1]
+            wpm_total += wpm
             wpm_count += 1
-            y.append(wpm_total / wpm_count)
+            text_ids[text_id] = wpm
+            changes.append(len(changes))
+            timestamps.append(timestamp)
+            race_counts.append(race_num)
+            averages.append(wpm_total / wpm_count)
 
-    average = y[-1]
+    average = averages[-1]
     texts_typed = len(text_ids)
     next_milestone = 5 * math.ceil(average / 5)
     required_wpm_gain = texts_typed * next_milestone - wpm_total
@@ -108,26 +114,50 @@ async def run(ctx, user, username, category):
         f"**Gain Until {next_milestone} Average:** {required_wpm_gain:,.0f} WPM"
     )
 
-    if category == "texts":
-        description += f"\n**Total Text Improvements:** {len(x):,}"
+    def render_races(file_name):
+        return text_bests_graph.render(user, username, race_counts, averages, "races", file_name, universe)
 
-    embed = Embed(
-        title=f"Text Best Progression",
-        description=description,
-        color=user["colors"]["embed"],
+    def render_time(file_name):
+        return text_bests_graph.render(user, username, timestamps, averages, "time", file_name, universe)
+
+    def render_texts(file_name):
+        return text_bests_graph.render(user, username, changes, averages, "texts", file_name, universe)
+
+    title = "Text Best Progression"
+    pages = [
+        Page(
+            title=title + " (Over Races)",
+            description=description,
+            render=render_races,
+            file_name=f"text_bests_over_races_{username}.png",
+            button_name="Over Races",
+            default=category == "races",
+        ),
+        Page(
+            title=title + " (Over Time)",
+            description=description,
+            render=render_time,
+            file_name=f"text_bests_over_time_{username}.png",
+            button_name="Over Time",
+            default=category == "time",
+        ),
+        Page(
+            title=title + " (Over Text Changes)",
+            description=description + f"\n**Total Text Improvements:** {len(changes):,}",
+            render=render_texts,
+            file_name=f"text_bests_over_text_changes_{username}.png",
+            button_name="Over Text Changes",
+            default=category == "texts",
+        )
+    ]
+
+    message = Message(
+        ctx, user, pages,
+        profile=stats,
+        universe=universe,
     )
-    embeds.add_profile(embed, stats, universe)
-    embeds.add_universe(embed, universe)
 
-    file_name = f"text_bests_over_{category}_{username}.png"
-    text_bests_graph.render(user, username, x, y, category, file_name, universe)
-
-    embed.set_image(url=f"attachment://{file_name}")
-    file = File(file_name, filename=file_name)
-
-    await ctx.send(embed=embed, file=file, content=era_string)
-
-    remove_file(file_name)
+    await message.send()
 
 
 async def setup(bot):

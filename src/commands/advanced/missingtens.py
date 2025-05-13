@@ -1,13 +1,13 @@
 from random import shuffle
 
-from discord import Embed
 from discord.ext import commands
 
 import database.text_results as text_results
 import database.texts as texts
 import database.users as users
 from database.bot_users import get_user
-from utils import errors, urls, strings, embeds
+from utils import errors, urls, strings, colors
+from utils.embeds import Page, Message, get_pages, is_embed
 
 sorts = ["best", "worst", "random"]
 command = {
@@ -37,7 +37,7 @@ class MissingTens(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username, sort = get_args(user, args, command)
@@ -89,33 +89,41 @@ async def run(ctx, user, username, sort):
         sort_title = "Randomized"
         shuffle(missing_texts)
 
-    embed = Embed(
+    def formatter(text):
+        text_id = text["text_id"]
+        wpm = text["wpm"]
+        difference = text["difference"]
+        return (
+            f"[Text #{text_id}]({urls.trdata_text(text_id)}) - "
+            f"{wpm:,.2f} WPM ({difference:,.2f} WPM from 10th) - "
+            f"[Ghost]({text_list[text_id]['ghost']})\n"
+            f'"{strings.truncate_clean(text_list[text_id]["quote"], 60)}"\n\n'
+        )
+
+    if missing_texts:
+        pages = get_pages(missing_texts, formatter, page_count=10, per_page=10)
+        header = (
+            f"**Total Missing:** {len(missing_texts):,} / {len(text_bests):,} "
+            f"({len(missing_texts) / len(text_bests):.2%})\n\n"
+        )
+        for text in missing_texts:
+            if text["difference"] < 0:
+                pages[0].footer = "Negative differences mean that a higher score exists on an alternate account"
+    else:
+        pages = Page(
+            description="User ranks in every top 10 for texts they have typed!",
+            color=colors.success,
+        )
+        header = ""
+
+    message = Message(
+        ctx, user, pages,
         title=f"Missing Top Tens ({sort_title})",
-        color=user["colors"]["embed"],
+        header=header,
+        profile=stats,
     )
 
-    if not missing_texts:
-        description = "User ranks in every top 10 for texts they have typed!"
-
-    else:
-        description = ""
-        for text in missing_texts[:10]:
-            text_id = text["text_id"]
-            wpm = text["wpm"]
-            difference = text["difference"]
-            description += (
-                f"[Text #{text_id}]({urls.trdata_text(text_id)}) - "
-                f"{wpm:,.2f} WPM ({difference:,.2f} WPM from 10th) - "
-                f"[Ghost]({text_list[text_id]['ghost']})\n"
-                f'"{strings.truncate_clean(text_list[text_id]["quote"], 60)}"\n\n'
-            )
-            if difference < 0:
-                embed.set_footer(text="Negative differences mean that a higher score exists on an alternate account")
-
-    embed.description = description
-    embeds.add_profile(embed, stats)
-
-    await ctx.send(embed=embed)
+    await message.send()
 
 
 async def setup(bot):
