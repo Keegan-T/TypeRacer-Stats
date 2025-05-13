@@ -1,11 +1,11 @@
-from discord import Embed
 from discord.ext import commands
 
 import database.races as races
 import database.users as users
 from commands.basic.stats import get_args
 from database.bot_users import get_user
-from utils import errors, urls, embeds, strings
+from utils import errors, urls, strings
+from utils.embeds import Page, Message, Field, is_embed
 
 command = {
     "name": "positionstats",
@@ -25,7 +25,7 @@ class PositionStats(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username = result
@@ -112,20 +112,29 @@ async def run(ctx, user, username):
             f"[#{win_streak[2]:,}]({urls.replay(username, win_streak[2], universe)}))\n"
         )
 
-    description += "\n**Positions**\n"
+    fields = []
+    for i in range(3):
+        fields.append(Field(
+            name="",
+            value="\n".join(
+                f"**{result}:** {frequency:,}"
+                for result, frequency in sorted_results[i * 10:(i * 10) + 10]
+            )
+        ))
 
-    for result, frequency in sorted_results[:20]:
-        description += f"**{result}:** {frequency:,}\n"
-
-    embed = Embed(
+    page = Page(
         title="Position Stats",
         description=description,
-        color=user["colors"]["embed"],
+        fields=fields,
     )
-    embeds.add_profile(embed, stats, universe)
-    embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed, content=era_string)
+    message = Message(
+        ctx, user, page,
+        profile=stats,
+        universe=universe,
+    )
+
+    await message.send()
 
 
 async def setup(bot):
