@@ -47,7 +47,11 @@ async def run(ctx, user, username, show_graph):
     awards = await competition_results.get_awards(username, user["start_date"], user["end_date"])
     total = awards["total"]
 
-    embed = Embed(title=f"Awards ({total:,})", color=user["colors"]["embed"])
+    embed = Embed(
+        title=f"Awards ({total:,})",
+        url=f"https://data.typeracer.com/pit/award_history?user={username}",
+        color=user["colors"]["embed"]
+    )
     embeds.add_profile(embed, stats)
 
     if total == 0:
