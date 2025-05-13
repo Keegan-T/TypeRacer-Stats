@@ -48,6 +48,8 @@ def render(user, rankings, title, y_label, file_name, limit_y=True, typos=[]):
     if remaining and limit_y:
         if max(starts) > max(remaining):
             max_wpm = max(remaining) * 1.1
+        if min(starts) < min(remaining):
+            min_wpm = min(remaining) * 0.9
 
     if min_wpm < inf:
         padding = 0.1 * (max_wpm - min_wpm)
