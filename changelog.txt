@@ -218,5 +218,14 @@
 - Added buttons to -fastestcompletion
 - Added buttons to -histogram
 
+5/11/2025
+- Added multiple typo markers within words for -mistakes
+- Added red highlight for banned users in -stats
+
 5/12/2025
 - Added buttons to -marathon
+
+5/13/2025
+- Added mistake count to -mistakes
+- Raised y-limit for graphs with slow starts
+- Added buttons to a lot of commands
