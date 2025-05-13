@@ -110,7 +110,7 @@ async def run(ctx, user, username, category, seconds):
     start_time = race_range[0]["timestamp"]
     end_time = race_range[-1]["timestamp"]
     fields, footer = get_stats_fields(
-        username, race_range, start_time, end_time, universe="play"
+        username, race_range, start_time, end_time, universe
     )
 
     description = ""

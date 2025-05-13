@@ -71,7 +71,7 @@ async def run(ctx, user, username, number, category):
             return await ctx.send(embed=errors.large_query_in_progress())
         await big_lock.acquire()
 
-    text_list = texts.get_texts()
+    text_list = texts.get_texts(universe=universe)
     text_lengths = {text["id"]: len(text["quote"]) for text in text_list}
 
     columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
@@ -115,7 +115,7 @@ async def run(ctx, user, username, number, category):
     start_time = race_range[0]["timestamp"]
     end_time = race_range[-1]["timestamp"]
     fields, footer = get_stats_fields(
-        username, race_range, start_time, end_time, universe="play"
+        username, race_range, start_time, end_time, universe
     )
 
     description = ""
