@@ -128,8 +128,6 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False, for
 
     for i, line in enumerate(ax.get_lines()):
         raw_label = line.get_label()
-        if not force_labels and raw_label.startswith("_"):
-            continue
         if raw_label == "Raw Adjusted":
             line.set_color(user["colors"]["raw"])
             if int(user["id"]) != bot_owner:
