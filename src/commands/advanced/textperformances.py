@@ -8,7 +8,7 @@ from utils.stats import calculate_text_performances
 
 command = {
     "name": "textperformances",
-    "aliases": ["tp", "pf"],
+    "aliases": ["tp", "pf", "pw"],
     "description": "Displays your best/worst scores based on a calculated performance metric",
     "parameters": "[username] <sort>",
     "defaults": {
@@ -32,6 +32,8 @@ class TextPerformances(commands.Cog):
             return await ctx.send(embed=result)
 
         username, sort = result
+        if ctx.invoked_with == "pw":
+            sort = "worst"
         if username == "all":
             await run_all(ctx, user, sort)
         else:
