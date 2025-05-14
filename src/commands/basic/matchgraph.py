@@ -82,8 +82,8 @@ async def run(ctx, user, username, race_number, universe):
             f"{i + 1}. {racer_username} - "
             f"[{race['wpm']:,.2f} WPM]"
             f"({urls.replay(race['username'], race['race_number'], universe)}) "
-            f"({race['correction'] * 100:,.1f}% Corr, "
-            f"{race['start']:,}ms start)\n"
+            f"({race['correction_percent']:.1%} Corr, "
+            f"{race['pause_percent']:.1%} Pause)\n"
         )
 
     completed = f"\nCompleted {strings.discord_timestamp(match['timestamp'])}"

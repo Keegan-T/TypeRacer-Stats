@@ -85,7 +85,8 @@ def get_raw_speeds(typing_log, times):
     while raw_times[-1] == 0:  # Removing trailing delays
         raw_times.pop()
 
-    if raw_times[0] == 0:  # Preventing zero starts
+    raw_start = raw_times[0]
+    if raw_start == 0:  # Preventing zero starts
         for i in range(1, len(raw_times)):
             if raw_times[i] > 0:
                 raw_times.insert(0, raw_times.pop(i))
@@ -95,13 +96,25 @@ def get_raw_speeds(typing_log, times):
         if raw_times[i] > times[i]:
             raw_times[i] = times[i]
 
+    # Eliminating pauses
+    no_start = raw_times[1:]
+    average = round(sum(no_start) / len(no_start))
+    pauseless_times = [raw_start] + [time if time < average * 3 else average for time in no_start]
+    pauseless = sum(pauseless_times)
+    ms = sum(times)
+    raw = sum(raw_times)
+    correction = ms - raw
+    pause_time = raw - pauseless
+
     return {
-        "raw_start": raw_times[0],
-        "duration": sum(times),
-        "raw_duration": sum(raw_times),
-        "correction": sum(times) - sum(raw_times),
+        "raw_start": raw_start,
+        "raw_duration": pauseless,
+        "correction": correction,
+        "correction_percent": correction / ms if ms > 0 else 0,
+        "pause_time": pause_time,
+        "pause_percent": pause_time / raw if raw > 0 else 0,
         "adjusted_correction": sum(times[1:]) - sum(raw_times[1:]),
-        "delays": raw_times,
+        "delays": pauseless_times,
     }
 
 

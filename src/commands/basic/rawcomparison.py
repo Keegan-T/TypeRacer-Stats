@@ -57,35 +57,18 @@ async def run(ctx, user, username, race_number, universe):
     if not race_info or "unlagged" not in race_info:
         return await ctx.send(embed=errors.logs_not_found(username, race_number, universe))
 
-    lagged = race_info["lagged"]
-    unlagged = race_info["unlagged"]
-    adjusted = race_info["adjusted"]
     description = strings.text_description(race_info)
+    speeds_string = strings.real_speed_description(race_info)
+    speeds_string += strings.raw_speed_description(race_info)
+    speeds_string += strings.discord_timestamp(race_info["timestamp"])
 
-    speeds_string = (
-        f"**Lagged:** {lagged:,.2f} WPM ({race_info['lag']:,.2f} WPM lag)\n"
-        f"**Unlagged:** {unlagged:,.2f} WPM ({race_info['ping']:,}ms ping)\n"
-        f"**Adjusted:** {adjusted:,.3f} WPM ({race_info['start']:,}ms start)\n"
-        f"**Race Time:** {strings.format_duration_short(race_info['ms'] / 1000, False)}\n\n"
-    )
-
-    correction = race_info["correction"]
-    correction_percent = (correction / race_info["ms"]) * 100
-    speeds_string += (
-        f"**Raw Unlagged:** {race_info['raw_unlagged']:,.2f} WPM\n"
-        f"**Raw Adjusted:**  {race_info['raw_adjusted']:,.3f} WPM\n"
-        f"**Correction Time:** {strings.format_duration_short(correction / 1000, False)} "
-        f"({correction_percent:,.2f}%)\n\n"
-    )
-    speeds_string += f"Completed <t:{int(race_info['timestamp'])}:R>"
-
-    if universe == "play" and 300 <= adjusted <= 450 and not stats["disqualified"]:
+    if universe == "play" and 300 <= race_info["adjusted"] <= 450 and not stats["disqualified"]:
         await races_300.add_new_race(username, race_number, race_info)
 
     embed = Embed(
         title=f"Real vs. Raw Speed - Race #{race_number:,}",
         description=description,
-        url=urls.replay(username, race_number, universe) + f"{'&allowDisqualified=true' * stats['disqualified']}",
+        url=urls.replay(username, race_number, universe, stats["disqualified"]),
         color=user["colors"]["embed"],
     )
 

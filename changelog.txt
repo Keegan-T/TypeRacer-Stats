@@ -229,3 +229,6 @@
 - Added mistake count to -mistakes
 - Raised y-limit for graphs with slow starts
 - Added buttons to a lot of commands
+
+5/14/2025
+- Added pause time to raw speeds

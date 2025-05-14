@@ -49,7 +49,7 @@ async def run(ctx, user, username, race_number, universe):
     embed = Embed(
         title=f"WPM Segments - Race #{race_number:,}",
         color=user["colors"]["embed"],
-        url=urls.replay(username, race_number, universe) + f"{'&allowDisqualified=true' * stats['disqualified']}",
+        url=urls.replay(username, race_number, universe, stats["disqualified"]),
     )
     embeds.add_profile(embed, stats)
     embeds.add_universe(embed, universe)
@@ -89,7 +89,9 @@ async def run(ctx, user, username, race_number, universe):
         f"**Text** - [#{text_id}]"
         f"({urls.trdata_text(text_id)}) - "
         f"{words:,} words - {chars:,} characters\n\n"
-        f"**Speed:** {race_info['unlagged']:,.2f} WPM ({race_info['accuracy'] * 100:,.1f}% Accuracy)\n\n"
+        f"**Speed:** {race_info['unlagged']:,.2f} WPM "
+        f"({race_info['accuracy']:.1%} Accuracy)\n"
+        f"**Raw Speed:** {race_info['raw_unlagged']:,.2f} WPM\n\n"
     )
     for segment in segments:
         segment_text = strings.escape_formatting(segment["text"]).replace("-", "\\-")

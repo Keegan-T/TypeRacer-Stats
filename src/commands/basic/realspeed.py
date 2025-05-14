@@ -110,27 +110,10 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
             description = "\U0001F6A9 Reverse Lagged Score \U0001F6A9\n\n" + description
             color = colors.error
 
-        speeds_string = (
-            f"**Lagged:** {lagged:,.2f} WPM ({race_info['lag']:,.2f} WPM lag)\n"
-            f"**Unlagged:** {unlagged:,.2f} WPM ({race_info['ping']:,}ms ping)\n"
-            f"**Adjusted:** {adjusted:,.3f} WPM ({race_info['start']:,}ms start)\n"
-            f"**Race Time:** {strings.format_duration_short(race_info['ms'] / 1000, False)}\n\n"
-        )
-
+        speeds_string = strings.real_speed_description(race_info)
         if raw:
-            correction = race_info["correction"]
-            try:
-                correction_percent = (correction / race_info["ms"]) * 100
-            except ZeroDivisionError:
-                correction_percent = 0
-            speeds_string += (
-                f"**Raw Unlagged:** {race_info['raw_unlagged']:,.2f} WPM\n"
-                f"**Raw Adjusted:**  {race_info['raw_adjusted']:,.3f} WPM\n"
-                f"**Correction Time:** {strings.format_duration_short(correction / 1000, False)} "
-                f"({correction_percent:,.2f}%)\n\n"
-            )
-
-        speeds_string += f"Completed <t:{int(race_info['timestamp'])}:R>"
+            speeds_string += strings.raw_speed_description(race_info)
+        speeds_string += strings.discord_timestamp(race_info["timestamp"])
 
         if universe == "play" and 300 <= adjusted <= 450 and not stats["disqualified"]:
             await races_300.add_new_race(username, race_number, race_info)
@@ -138,7 +121,7 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
     embed = Embed(
         title=f"{title.title()} - Race #{race_number:,}",
         description=description,
-        url=urls.replay(username, race_number, universe) + f"{'&allowDisqualified=true' * stats['disqualified']}",
+        url=urls.replay(username, race_number, universe, stats["disqualified"]),
         color=color
     )
 

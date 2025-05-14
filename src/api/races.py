@@ -136,9 +136,7 @@ async def get_race_details(html, get_raw=False, get_opponents=False, universe="p
     # Calculating raw speeds
     if get_raw:
         raw_speeds = logs.get_raw_speeds(typing_log, delays)
-        duration = details["ms"]
         raw_duration = raw_speeds["raw_duration"]
-        correction = duration - raw_duration
         try:
             raw_unlagged = universe_multiplier * len(delays) / raw_duration
         except ZeroDivisionError:
@@ -147,7 +145,10 @@ async def get_race_details(html, get_raw=False, get_opponents=False, universe="p
             raw_adjusted = universe_multiplier * (len(delays) - 1) / (raw_duration - raw_speeds["raw_start"])
         except ZeroDivisionError:
             raw_adjusted = float("inf")
-        details["correction"] = correction
+        details["correction"] = raw_speeds["correction"]
+        details["correction_percent"] = raw_speeds["correction_percent"]
+        details["pause_time"] = raw_speeds["pause_time"]
+        details["pause_percent"] = raw_speeds["pause_percent"]
         details["raw_unlagged"] = raw_unlagged
         details["raw_adjusted"] = raw_adjusted
         raw_delays = raw_speeds["delays"]
@@ -208,7 +209,8 @@ async def get_match(username, race_number, universe="play"):
         **user,
         "wpm": match["raw_unlagged"],
         "average_wpm": match["raw_wpm_over_keystrokes"],
-        "correction": match["correction"] / match["ms"],
+        "correction_percent": match["correction_percent"],
+        "pause_percent": match["pause_percent"],
     }]
 
     if "opponents" in match:
@@ -231,7 +233,8 @@ async def get_match(username, race_number, universe="play"):
                 **user,
                 "wpm": opp_race_info["raw_unlagged"],
                 "average_wpm": opp_race_info["raw_wpm_over_keystrokes"],
-                "correction": opp_race_info["correction"] / opp_race_info["ms"],
+                "correction_percent": opp_race_info["correction_percent"],
+                "pause_percent": opp_race_info["pause_percent"],
             })
 
     rankings.sort(key=lambda x: x["wpm"], reverse=True)
