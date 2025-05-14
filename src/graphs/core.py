@@ -128,8 +128,7 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
 
     for i, line in enumerate(ax.get_lines()):
         label = line.get_label()
-        if label.startswith("_child"):
-            continue
+        hide_label = label.startswith("_child")
         if label == "Raw Adjusted":
             line.set_color(user["colors"]["raw"])
             if int(user["id"]) != bot_owner:
@@ -145,17 +144,23 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
                 line_handler = CollectionHandler(numpoints=50)
             else:
                 line.set_color(line_color)
+        if hide_label:
+            continue
         legend_lines.append(line)
         legend_labels.append(label)
         handler_map[line] = line_handler
 
     if len(legend_lines) > 1 or force_legend:
         if match:
-            legend = ax.legend(legend_lines, legend_labels, handler_map=handler_map, loc="upper left",
-                               bbox_to_anchor=(1.03, 1), borderaxespad=0, handletextpad=0.5)
+            legend = ax.legend(
+                legend_lines, legend_labels, handler_map=handler_map, loc="upper left",
+                bbox_to_anchor=(1.03, 1), borderaxespad=0, handletextpad=0.5
+            )
             ax.set_position([0.1, 0.1, 0.6, 0.8])
         else:
-            legend = ax.legend(legend_lines, legend_labels, handler_map=handler_map, loc="upper left", framealpha=0.5)
+            legend = ax.legend(
+                legend_lines, legend_labels, handler_map=handler_map, loc="upper left", framealpha=0.5
+            )
 
         legend.get_frame().set_facecolor(colors["graphbackground"])
         legend.get_frame().set_edgecolor(colors["axis"])
