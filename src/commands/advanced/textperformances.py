@@ -83,15 +83,19 @@ async def run_all(ctx, user, sort):
 
 async def run(ctx, user, username, sort):
     universe = user["universe"]
+    era_string = strings.get_era_string(user)
 
     stats = users.get_user(username, universe)
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
 
-    if not user["start_date"] and not user["end_date"]:
-        text_bests = users.get_text_bests(username, universe=universe, race_stats=True)
-    else:
+    if era_string:
         text_bests = await users.get_text_bests_time_travel(username, universe, user, race_stats=True)
+    else:
+        text_bests = users.get_text_bests(username, universe=universe, race_stats=True)
+
+    if not text_bests:
+        return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
 
     calculate_text_performances(text_bests, universe)
     text_bests.sort(key=lambda x: x["performance"], reverse=sort == "best")
