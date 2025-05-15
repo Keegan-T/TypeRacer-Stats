@@ -12,10 +12,12 @@ from utils.embeds import Page, Message
 
 command = {
     "name": "compare",
-    "aliases": ["vs", "v", "vr", "vc"],
+    "aliases": ["vs", "v", "vr", "vc", "vn", "vo"],
     "description": "Displays the top 10 races for each user sorted by text best WPM difference\n"
                    f"Use `{prefix}vc` to view closest results"
-                   f"Use `{prefix}vr` to randomize the results",
+                   f"Use `{prefix}vr` to randomize the results"
+                   f"Use `{prefix}vn` to view newest results"
+                   f"Use `{prefix}vo` to view oldest results",
     "parameters": "[username_1] [username_2]",
     "usages": ["compare keegant poem"],
 }
@@ -102,6 +104,12 @@ async def run(ctx, user, username1, username2):
     shuffle(positive)
     shuffle(negative)
     comparison_random = positive + negative
+    positive.sort(key=lambda x: -x[1][0][2])
+    negative.sort(key=lambda x: x[1][1][2])
+    comparison_new = positive + negative
+    positive.reverse()
+    negative.reverse()
+    comparison_old = positive + negative
 
     def wpm_string(gap, score1, score2, username1, username2):
         wpm1, race_number1 = score1[:2]
@@ -138,12 +146,16 @@ async def run(ctx, user, username1, username2):
     description = formatter(comparison)
     description_random = formatter(comparison_random)
     description_close = formatter(comparison_close)
+    description_new = formatter(comparison_new)
+    description_old = formatter(comparison_old)
     title = "Text Best Comparison"
 
     pages = [
         Page(title, description, button_name="Normal"),
         Page(title + " (Closest)", description_close, button_name="Closest", default=ctx.invoked_with == "vc"),
         Page(title + " (Randomized)", description_random, button_name="Random", default=ctx.invoked_with == "vr"),
+        Page(title + " (Newest)", description_new, button_name="Newest", default=ctx.invoked_with == "vn"),
+        Page(title + " (Oldest)", description_old, button_name="Oldest", default=ctx.invoked_with == "vo"),
     ]
 
     message = Message(
