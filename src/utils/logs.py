@@ -37,16 +37,21 @@ def split_log(log):
 def get_log_details(log, multiplier=12000):
     quote, delays = split_log(log)
 
-    total_ms = sum(delays)
+    lagged_chars = 0
+    for delay in delays[1:]:
+        if delay != 0:
+            break
+        lagged_chars += 1
+
+    distributed = round(delays[0] / (lagged_chars + 1))
+    delays[:lagged_chars + 1] = [distributed] * (lagged_chars + 1)
+
     start = delays[0]
-    try:
-        unlagged = multiplier * len(quote) / total_ms
-    except ZeroDivisionError:
-        unlagged = float("inf")
-    try:
-        adjusted = multiplier * (len(quote) - 1) / (total_ms - start)
-    except ZeroDivisionError:
-        adjusted = float("inf")
+    total_ms = sum(delays)
+    length = len(quote)
+
+    unlagged = multiplier * length / total_ms if total_ms else float("inf")
+    adjusted = multiplier * (length - 1) / (total_ms - start) if total_ms != start else float("inf")
 
     details = {
         "quote": quote,
@@ -55,6 +60,7 @@ def get_log_details(log, multiplier=12000):
         "unlagged": unlagged,
         "adjusted": adjusted,
         "start": start,
+        "distributed": lagged_chars > 0,
     }
 
     return details
