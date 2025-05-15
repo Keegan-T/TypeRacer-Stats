@@ -4,7 +4,6 @@ from discord.ext import commands
 from api.races import get_races
 from api.users import get_stats
 from commands.basic.stats import get_args
-from commands.checks import admin_check
 from commands.locks import skip_lock
 from database import races
 from database.bot_users import get_user
@@ -16,6 +15,7 @@ command = {
     "description": "Checks and imports any skipped races for a user",
     "parameters": "[username]",
     "usages": ["skippedraces keegant"],
+    "temporal": False,
 }
 
 
@@ -44,14 +44,21 @@ async def run(ctx, user, username):
     stats = get_stats(username)
     if not stats:
         return await ctx.send(embed=errors.invalid_username())
+    universe = user["universe"]
 
-    await ctx.send(embed=Embed(
+    race_list = await races.get_races(username, columns=["number", "timestamp"], universe=universe)
+    if not race_list:
+        return await ctx.send(embed=errors.no_races(universe))
+
+    embed = Embed(
         title="Checking Skipped Races",
         description=f"Scanning races for {strings.escape_formatting(username)}",
         color=user["colors"]["embed"],
-    ))
+    )
+    embeds.add_universe(embed, universe)
 
-    race_list = await races.get_races(username, columns=["number", "timestamp"])
+    await ctx.send(embed=embed)
+
     race_list.sort(key=lambda x: x["number"])
 
     numbers = [race["number"] for race in race_list]
@@ -79,7 +86,7 @@ async def run(ctx, user, username):
         start_time = prev_race["timestamp"] - 10
         end_time = next_race["timestamp"] + 10
 
-        race_range = await get_races(username, start_time, end_time, last - first + 10, "play")
+        race_range = await get_races(username, start_time, end_time, last - first + 10, universe)
         for race in race_range:
             if race["gn"] in group:
                 found_races.append((
@@ -88,13 +95,16 @@ async def run(ctx, user, username):
                 ))
 
     if not found_races:
-        return await ctx.send(embed=Embed(
+        embed = Embed(
             title="No Skipped Races Found",
             description="No skipped races were found",
             color=user["colors"]["embed"],
-        ))
+        )
+        embeds.add_universe(embed, universe)
 
-    races.add_races(found_races, user["universe"])
+        return await ctx.send(embed=embed)
+
+    races.add_races(found_races, universe)
 
     skipped_groups = []
     for group in group_numbers([r[3] for r in found_races], proximity=1):
@@ -109,6 +119,7 @@ async def run(ctx, user, username):
         description="Imported these missing races:\n" + ", ".join(skipped_groups),
         color=user["colors"]["embed"],
     )
+    embeds.add_universe(embed, universe)
 
     await ctx.send(embed=embed)
 
