@@ -60,7 +60,7 @@ async def run(ctx, user, username, race_number, universe):
     description = strings.text_description(race_info)
     speeds_string = strings.real_speed_description(race_info)
     speeds_string += strings.raw_speed_description(race_info)
-    speeds_string += strings.discord_timestamp(race_info["timestamp"])
+    speeds_string += "Completed " + strings.discord_timestamp(race_info["timestamp"])
 
     if universe == "play" and 300 <= race_info["adjusted"] <= 450 and not stats["disqualified"]:
         await races_300.add_new_race(username, race_number, race_info)
