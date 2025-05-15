@@ -10,6 +10,7 @@ from matplotlib.collections import LineCollection
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.legend_handler import HandlerLine2D
 from matplotlib.legend_handler import HandlerLineCollection
+from matplotlib.lines import Line2D
 
 from config import bot_owner, root_dir
 from utils.colors import graph_palette
@@ -129,14 +130,27 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
     for i, line in enumerate(ax.get_lines()):
         label = line.get_label()
         hide_label = label.startswith("_child")
+
+        if label in ["Corrections", "Pauses"]:
+            marker_color = line.get_color()
+            dot = Line2D(
+                [0], [0], marker='.', linestyle='None', color=marker_color,
+                markersize=7, label=label
+            )
+            legend_lines.append(dot)
+            legend_labels.append(label)
+            continue
+
         if label == "Raw Adjusted":
             line.set_color(user["colors"]["raw"])
             if int(user["id"]) != bot_owner:
                 line.set_linewidth(1)
             recolored_line = 1
+
         label = "-\n".join(textwrap.wrap(label, width=18))
         if label.startswith("_"):
             label = "\u200B" + label
+
         line_handler = LineHandler()
         if i == recolored_line:
             if line_color in plt.colormaps():
@@ -144,8 +158,10 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
                 line_handler = CollectionHandler(numpoints=50)
             else:
                 line.set_color(line_color)
+
         if hide_label:
             continue
+
         legend_lines.append(line)
         legend_labels.append(label)
         handler_map[line] = line_handler

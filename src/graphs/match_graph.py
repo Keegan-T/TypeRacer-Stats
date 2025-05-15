@@ -5,7 +5,7 @@ import numpy as np
 from graphs.core import plt, color_graph
 
 
-def render(user, rankings, title, y_label, file_name, limit_y=True, typos=[]):
+def render(user, rankings, title, y_label, file_name, limit_y=True, typos=[], markers=[]):
     ax = plt.subplots()[1]
     caller_index = 0
     starts = []
@@ -83,6 +83,20 @@ def render(user, rankings, title, y_label, file_name, limit_y=True, typos=[]):
                 index, wpm, marker="x", color="red", zorder=999, markersize=7,
                 markeredgewidth=1.5, label=label
             )
+
+    if markers:
+        typos, pauses = markers
+        typos = [typo[1] for typo in typos]
+
+        if typos:
+            x = typos
+            y = [rankings[1]["average_wpm"][max(0, i - 1)] for i in x]
+            ax.plot(x, y, marker=".", linestyle="None", zorder=999, markersize=7, color="red", label="Corrections")
+
+        if pauses:
+            x = pauses
+            y = [rankings[1]["average_wpm"][max(0, i - 1)] for i in x]
+            ax.plot(x, y, marker=".", linestyle="None", zorder=888, markersize=7, color="#ffb600", label="Pauses")
 
     ax.set_xlabel("Keystrokes")
     ax.set_ylabel(y_label)

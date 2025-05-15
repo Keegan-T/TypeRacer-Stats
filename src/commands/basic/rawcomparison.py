@@ -53,7 +53,7 @@ async def run(ctx, user, username, race_number, universe):
     elif race_number < 1:
         race_number = stats["races"] + race_number
 
-    race_info = await get_race(username, race_number, get_raw=True, universe=universe)
+    race_info = await get_race(username, race_number, get_raw=True, get_typos=True, universe=universe)
     if not race_info or "unlagged" not in race_info:
         return await ctx.send(embed=errors.logs_not_found(username, race_number, universe))
 
@@ -95,7 +95,13 @@ async def run(ctx, user, username, race_number, universe):
 
     y_label = "Adjusted vs. Raw WPM"
 
-    match_graph.render(user, rankings, title, y_label, file_name)
+    match_graph.render(
+        user, rankings, title, y_label, file_name,
+        markers=[
+            race_info["typos"],
+            race_info["pauses"]
+        ]
+    )
 
     embed.set_image(url=f"attachment://{file_name}")
     file = File(file_name, filename=file_name)

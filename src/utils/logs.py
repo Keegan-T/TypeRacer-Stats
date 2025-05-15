@@ -99,7 +99,14 @@ def get_raw_speeds(typing_log, times):
     # Eliminating pauses
     no_start = raw_times[1:]
     average = round(sum(no_start) / len(no_start))
-    pauseless_times = [raw_start] + [time if time < average * 3 else average for time in no_start]
+    pauses = []
+    pauseless_times = [raw_start]
+    for i, time in enumerate(no_start):
+        if time < average * 3:
+            pauseless_times.append(time)
+        else:
+            pauseless_times.append(average)
+            pauses.append(i + 1)
     pauseless = sum(pauseless_times)
     ms = sum(times)
     raw = sum(raw_times)
@@ -113,6 +120,7 @@ def get_raw_speeds(typing_log, times):
         "correction_percent": correction / ms if ms > 0 else 0,
         "pause_time": pause_time,
         "pause_percent": pause_time / raw if raw > 0 else 0,
+        "pauses": pauses,
         "adjusted_correction": sum(times[1:]) - sum(raw_times[1:]),
         "delays": pauseless_times,
     }

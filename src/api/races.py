@@ -149,6 +149,7 @@ async def get_race_details(html, get_raw=False, get_opponents=False, universe="p
         details["correction_percent"] = raw_speeds["correction_percent"]
         details["pause_time"] = raw_speeds["pause_time"]
         details["pause_percent"] = raw_speeds["pause_percent"]
+        details["pauses"] = raw_speeds["pauses"]
         details["raw_unlagged"] = raw_unlagged
         details["raw_adjusted"] = raw_adjusted
         raw_delays = raw_speeds["delays"]
