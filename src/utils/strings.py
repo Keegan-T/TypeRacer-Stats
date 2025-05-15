@@ -89,6 +89,9 @@ def get_category(options, param):
         if category in options:
             return category
 
+    if param in options:
+        return param
+
     return None
 
 

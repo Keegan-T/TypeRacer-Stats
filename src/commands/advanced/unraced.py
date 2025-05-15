@@ -58,9 +58,9 @@ async def run(ctx, user, username, category):
     if category == "random":
         random.shuffle(unraced)
     elif category in ["short", "long"]:
-        unraced.sort(key=lambda x: len(x["quote"]), reverse=category == "short")
+        unraced.sort(key=lambda x: len(x["quote"]), reverse=category == "long")
     elif category in ["easy", "hard"]:
-        unraced.sort(key=lambda x: x["difficulty"], reverse=category == "easy")
+        unraced.sort(key=lambda x: x["difficulty"], reverse=category == "hard")
 
     def formatter(text):
         text_id = text["id"]
