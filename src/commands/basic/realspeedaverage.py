@@ -103,6 +103,8 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
     raw_adjusted = 0
     correction = 0
     correction_percent = 0
+    pause_time = 0
+    pause_percent = 0
     reverse_lag = False
     races = "**Races**\n"
 
@@ -132,7 +134,9 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
             raw_unlagged += race["raw_unlagged"]
             raw_adjusted += race["raw_adjusted"]
             correction += race["correction"]
+            pause_time += race["pause_time"]
             correction_percent += race["correction"] / race["ms"]
+            pause_percent += race["pause_time"] / race["ms"]
 
         flag = ""
         if race["lagged"] > round(race["unlagged"], 2):
@@ -172,12 +176,15 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
         raw_adjusted /= race_count
         correction /= race_count
         correction_percent /= race_count
-        correction_percent *= 100
+        pause_time /= race_count
+        pause_percent /= race_count
         real_speeds += (
             f"**Raw Unlagged:** {raw_unlagged:,.2f} WPM\n"
             f"**Raw Adjusted:**  {raw_adjusted:,.3f} WPM\n"
             f"**Correction Time:** {strings.format_duration_short(correction / 1000, False)} "
-            f"({correction_percent:,.2f}%)\n\n"
+            f"({correction_percent:.2%})\n"
+            f"**Pause Time:** {strings.format_duration_short(pause_time / 1000, False)} "
+            f"({pause_percent:.2%})\n\n"
         )
 
     real_speeds += (
