@@ -195,7 +195,7 @@ async def run(ctx, user, category, secondary):
         except ValueError:
             return
         title = f"Texts Over {wpm:,.0f} WPM"
-        leaderboard = users.get_most_texts_over(wpm)
+        leaderboard = await users.get_most_texts_over(wpm)
         for leader in leaderboard:
             leaders.append(f"{leader['unique_texts']:,}")
 

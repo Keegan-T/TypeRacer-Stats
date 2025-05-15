@@ -286,8 +286,8 @@ def get_most_awards(limit):
     return top
 
 
-def get_most_texts_over(wpm):
-    top = db.fetch("""
+async def get_most_texts_over(wpm):
+    top = await db.fetch_async("""
         SELECT r.*, u.*, COUNT(DISTINCT r.text_id) AS unique_texts
         FROM races r
         JOIN users u ON r.username = u.username
