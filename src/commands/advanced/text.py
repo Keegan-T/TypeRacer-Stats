@@ -237,6 +237,9 @@ def get_stats_string(username, universe, average, best, worst, recent_race, prev
 async def top_10_display(ctx, username, text_id, recent_race):
     top_10 = top_tens.get_top_n(text_id)
     existing_score = next((score for score in top_10 if score["username"] == username), None)
+    original_rank = None
+    if existing_score:
+        original_rank = top_10.index(existing_score) + 1
     await top_tens.update_results(text_id)
     top_10 = top_tens.get_top_n(text_id, 11)
     top_10_score = next((score for score in top_10[:10] if score["id"] == recent_race["id"]), None)
@@ -251,8 +254,12 @@ async def top_10_display(ctx, username, text_id, recent_race):
     title = ""
     for i, race in enumerate(top_10):
         style = ""
+        increase = ""
         if race["id"] == recent_race["id"]:
             style = "**"
+            if original_rank is not None and original_rank > i + 1:
+                increase = f"<:increase:1372466536693891142> {original_rank - (i + 1)}"
+
             if i == 0:
                 title = "Top Score! :trophy:"
             else:
@@ -263,7 +270,7 @@ async def top_10_display(ctx, username, text_id, recent_race):
         description += (
             f"{strings.rank(i + 1)} {style}{strings.escape_formatting(user)} - [{race['wpm']:,.2f} WPM]"
             f"({urls.replay(user, race['number'])}){style} - "
-            f"{strings.discord_timestamp(race['timestamp'])}\n"
+            f"{strings.discord_timestamp(race['timestamp'])} {increase}\n"
         )
 
     embed = Embed(

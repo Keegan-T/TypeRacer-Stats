@@ -232,3 +232,6 @@
 
 5/14/2025
 - Added pause time to raw speeds
+
+5/15/2025
+- Added an increase indicator to leaderboard scores for -text
