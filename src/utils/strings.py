@@ -30,8 +30,7 @@ category_aliases = [
     ["racetime", "rt", "seconds", "s"],
     ["characters", "chars", "c"],
     ["time", "t"],
-    ["texts"],
-    ["times"],
+    ["times", "x"],
     ["accuracy", "acc", "ac"],
     ["embed", "em"],
     ["background", "bg"],
@@ -41,13 +40,12 @@ category_aliases = [
     ["raw", "rawspeed"],
     ["text", "txt"],
     ["grid", "#"],
-    ["best"],
-    ["worst"],
     ["random", "rand", "r"],
     ["old", "oldest"],
     ["new", "newest"],
     ["textperformances", "tp"],
-    ["all", "alltime"]
+    ["all", "alltime"],
+    ["textsover", "to"]
 ]
 
 username_aliases = {
