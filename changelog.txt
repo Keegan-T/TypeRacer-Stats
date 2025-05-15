@@ -237,3 +237,4 @@
 - Added an increase indicator to leaderboard scores for -text
 - Added -leaderboard textsover
 - Added correction and pause markers to -rawcomparison
+- Added newest/oldest filters to -compare
