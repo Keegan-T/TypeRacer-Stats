@@ -15,8 +15,10 @@ from graphs.core import remove_file
 from utils import errors, urls, strings, dates
 from utils.errors import command_in_use
 
-categories = ["races", "points", "awards", "textbests", "textstyped", "toptens",
-              "textrepeats", "totaltextwpm", "wpm", "racetime", "characters"]
+categories = [
+    "races", "points", "awards", "textbests", "textstyped", "toptens",
+    "textrepeats", "totaltextwpm", "wpm", "racetime", "characters", "textsover",
+]
 command = {
     "name": "leaderboard",
     "aliases": ["lb"],
@@ -40,7 +42,7 @@ class Leaderboard(commands.Cog):
 
         async with leaderboard_lock:
             user = get_user(ctx)
-            text_id = None
+            secondary = None
 
             if not args:
                 return await ctx.send(embed=errors.missing_argument(command))
@@ -55,12 +57,12 @@ class Leaderboard(commands.Cog):
                     return await ctx.send(embed=errors.invalid_choice("category", categories))
 
             if len(args) > 1:
-                text_id = args[1]
+                secondary = args[1]
 
-            await run(ctx, user, category, text_id)
+            await run(ctx, user, category, secondary)
 
 
-async def run(ctx, user, category, text_id=None):
+async def run(ctx, user, category, secondary):
     limit = 10
     leaders = []
     leaderboard_string = ""
@@ -128,7 +130,8 @@ async def run(ctx, user, category, text_id=None):
         leaderboard = [results[0] for results in leaderboard]
 
     elif category == "textrepeats":
-        if text_id is not None:
+        if secondary is not None:
+            text_id = secondary
             text = texts.get_text(text_id)
             if not text:
                 return await ctx.send(embed=errors.unknown_text())
@@ -186,6 +189,16 @@ async def run(ctx, user, category, text_id=None):
         for leader in leaderboard:
             leaders.append(f"{leader['characters']:,}")
 
+    elif category == "textsover":
+        try:
+            wpm = float(secondary)
+        except ValueError:
+            return
+        title = f"Texts Over {wpm:,.0f} WPM"
+        leaderboard = users.get_most_texts_over(wpm)
+        for leader in leaderboard:
+            leaders.append(f"{leader['unique_texts']:,}")
+
     else:
         top = 10
         if category.isnumeric():
@@ -193,7 +206,7 @@ async def run(ctx, user, category, text_id=None):
 
         leaderboard, text_count = top_tens.get_top_n_counts(top)
 
-        if text_id == "export":
+        if secondary == "export":
             export_data = {
                 "timestamp": dates.now().timestamp(),
                 "total_texts": text_count,

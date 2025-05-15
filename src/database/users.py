@@ -286,6 +286,20 @@ def get_most_awards(limit):
     return top
 
 
+def get_most_texts_over(wpm):
+    top = db.fetch("""
+        SELECT r.*, u.*, COUNT(DISTINCT r.text_id) AS unique_texts
+        FROM races r
+        JOIN users u ON r.username = u.username
+        WHERE r.wpm > ? AND u.disqualified = 0
+        GROUP BY r.username
+        ORDER BY unique_texts DESC
+        LIMIT 10;
+    """, [wpm])
+
+    return top
+
+
 def update_stats(user, universe):
     table = table_name(universe)
     db.run(f"""
