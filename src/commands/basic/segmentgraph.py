@@ -10,20 +10,20 @@ from graphs.core import remove_file
 from utils import errors, urls, strings, embeds
 
 command = {
-    "name": "wpmsegments",
-    "aliases": ["segments", "ws"],
+    "name": "segmentgraph",
+    "aliases": ["segments", "seg", "sg", "wpmsegments", "ws"],
     "description": "Displays a bar graph of WPM segments over a race",
     "parameters": "[username] <race_number>",
-    "usages": ["wpmsegments keegant 420"],
+    "usages": ["segmentgraph keegant 420"],
 }
 
 
-class WpmSegments(commands.Cog):
+class SegmentGraph(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command(aliases=command["aliases"])
-    async def wpmsegments(self, ctx, *args):
+    async def segmentgraph(self, ctx, *args):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
@@ -117,4 +117,4 @@ async def run(ctx, user, username, race_number, universe):
 
 
 async def setup(bot):
-    await bot.add_cog(WpmSegments(bot))
+    await bot.add_cog(SegmentGraph(bot))

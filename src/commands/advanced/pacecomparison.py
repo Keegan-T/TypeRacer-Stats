@@ -12,7 +12,7 @@ from utils.embeds import Page, Field, Message, is_embed
 
 periods = ["month", "day", "week", "year", "all"]
 command = {
-    "name": "pacecompare",
+    "name": "pacecomparison",
     "aliases": ["pc"],
     "description": "Displays an estimate of when one user will pass another\n"
                    "`daily_rate` accepts day/week/month/year for those averages",
@@ -22,19 +22,19 @@ command = {
         "daily_rate": "daily average of the last 30 days"
     },
     "usages": [
-        "pace xanderec charlieog races",
-        "pace mark40511 keegant points 20000 5000",
-        "pace cappy_11 rektless races month",
+        "pacecomparison xanderec charlieog races",
+        "pacecomparison mark40511 keegant points 20000 5000",
+        "pacecomparison cappy_11 rektless races month",
     ],
 }
 
 
-class PaceCompare(commands.Cog):
+class PaceComparison(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command(aliases=command["aliases"])
-    async def pacecompare(self, ctx, *args):
+    async def pacecomparison(self, ctx, *args):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
@@ -220,4 +220,4 @@ def next_milestone(n):
 
 
 async def setup(bot):
-    await bot.add_cog(PaceCompare(bot))
+    await bot.add_cog(PaceComparison(bot))
