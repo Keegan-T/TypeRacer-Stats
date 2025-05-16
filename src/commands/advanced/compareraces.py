@@ -191,10 +191,8 @@ async def run(ctx, user, username1, username2, race_number1, race_number2, unive
         rankings[1]["username"] = username2 + "\u200B"
 
     title = f"{username1} #{race_number1:,} vs. {username2} #{race_number2:,}"
-    if universe != "play":
-        title += f"\nUniverse: {universe}"
     file_name = f"{username1}_{race_number1}_{username2}_{race_number2}.png"
-    match_graph.render(user, rankings, title, "WPM", file_name)
+    match_graph.render(user, rankings, title, "WPM", file_name, universe)
 
     embed.set_image(url=f"attachment://{file_name}")
     file = File(file_name, filename=file_name)

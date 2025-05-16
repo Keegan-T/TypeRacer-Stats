@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib.colors import hex2color
 from matplotlib.ticker import FuncFormatter
 
-from graphs.core import plt, color_graph, date_x_ticks, interpolate_segments
+from graphs.core import plt, color_graph, date_x_ticks, interpolate_segments, universe_title
 from utils.strings import format_big_number
 
 
@@ -26,9 +26,7 @@ def render(user, username, x, y, category, file_name, universe):
     ax.set_ylabel("WPM")
     plt.grid()
     title = f"Personal Best Over {category.title()} - {username}"
-    if universe != "play":
-        title += f"\nUniverse: {universe}"
-    ax.set_title(title)
+    ax.set_title(universe_title(title, universe))
 
     color_graph(ax, user)
 

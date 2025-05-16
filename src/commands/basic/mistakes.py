@@ -93,14 +93,12 @@ async def run(ctx, user, username, race_number, universe):
     embeds.add_universe(embed, universe)
 
     title = f"Race Graph - {username} - Race #{race_number:,}"
-    if universe != "play":
-        title += f"\nUniverse: {universe}"
     file_name = f"mistakes_{username}_{race_number}.png"
 
     rankings = [{"username": username, "average_wpm": race_info["wpm_adjusted_over_keystrokes"]}]
     y_label = "Adjusted WPM"
 
-    match_graph.render(user, rankings, title, y_label, file_name, typos=race_info["typos"])
+    match_graph.render(user, rankings, title, y_label, file_name, universe=universe, typos=race_info["typos"])
 
     embed.set_image(url=f"attachment://{file_name}")
     file = File(file_name, filename=file_name)

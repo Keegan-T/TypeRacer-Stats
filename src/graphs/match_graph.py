@@ -2,10 +2,10 @@ from collections import defaultdict
 
 import numpy as np
 
-from graphs.core import plt, color_graph
+from graphs.core import plt, color_graph, universe_title
 
 
-def render(user, rankings, title, y_label, file_name, limit_y=True, typos=[], markers=[]):
+def render(user, rankings, title, y_label, file_name, universe="play", limit_y=True, typos=[], markers=[]):
     ax = plt.subplots()[1]
     caller_index = 0
     starts = []
@@ -100,7 +100,7 @@ def render(user, rankings, title, y_label, file_name, limit_y=True, typos=[], ma
 
     ax.set_xlabel("Keystrokes")
     ax.set_ylabel(y_label)
-    ax.set_title(title)
+    ax.set_title(universe_title(title, universe))
     ax.grid()
 
     color_graph(ax, user, caller_index, match=True)

@@ -1,6 +1,6 @@
 from matplotlib.ticker import FuncFormatter
 
-from graphs.core import plt, color_graph, date_x_ticks, interpolate_segments
+from graphs.core import plt, color_graph, date_x_ticks, interpolate_segments, universe_title
 from utils.strings import format_big_number
 
 
@@ -23,9 +23,7 @@ def render(user, username, x, y, category, file_name, universe):
     ax.set_ylabel("WPM")
     plt.grid()
     title = f"Text Bests Over {category.title()} - {username}"
-    if universe != "play":
-        title += f"\nUniverse: {universe}"
-    ax.set_title(title)
+    ax.set_title(universe_title(title, universe))
 
     if len(y) > 10:
         starts, remaining = y[:10], y[10:]
