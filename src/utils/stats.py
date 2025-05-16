@@ -11,6 +11,14 @@ def calculate_seconds(quote, wpm):
     return (len(quote) * 12) / wpm
 
 
+def calculate_wpm(delays, duration, multiplier, start=None):
+    length = len(delays)
+    if start:
+        length -= 1
+        duration -= start
+    return multiplier * length / duration if duration != 0 else float("inf")
+
+
 def get_text_stats(text_bests):
     text_wpm_total = 0
     for text_best in text_bests:

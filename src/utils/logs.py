@@ -66,10 +66,10 @@ def get_log_details(log, multiplier=12000):
     return details
 
 
-def get_raw_speeds(typing_log, times):
+def get_raw_speeds(typing_log, delays):
     typing_log = escape_characters(typing_log)
     typing_log = re.sub(r"\t\d", "a", typing_log).split("|", 1)
-    raw_times = []
+    raw_delays = []
 
     for keystroke in re.findall(r"\d+,(?:\d+[+\-$].?)+,", typing_log[1]):
         delay = int(keystroke.split(",")[0])
@@ -84,51 +84,52 @@ def get_raw_speeds(typing_log, times):
             if i == 1:
                 delay = 0
             if char[-2] == "+" or char[-2] == "$":
-                raw_times.append(delay)
+                raw_delays.append(delay)
             else:
-                raw_times.pop()
+                raw_delays.pop()
 
-    while raw_times[-1] == 0:  # Removing trailing delays
-        raw_times.pop()
+    while raw_delays[-1] == 0:  # Removing trailing delays
+        raw_delays.pop()
 
-    raw_start = raw_times[0]
+    raw_start = raw_delays[0]
     if raw_start == 0:  # Preventing zero starts
-        for i in range(1, len(raw_times)):
-            if raw_times[i] > 0:
-                raw_times.insert(0, raw_times.pop(i))
+        for i in range(1, len(raw_delays)):
+            if raw_delays[i] > 0:
+                raw_delays.insert(0, raw_delays.pop(i))
                 break
 
-    for i in range(min(len(raw_times), len(times))):  # Taking the fastest time per character
-        if raw_times[i] > times[i]:
-            raw_times[i] = times[i]
+    for i in range(min(len(raw_delays), len(delays))):  # Taking the fastest time per character
+        if raw_delays[i] > delays[i]:
+            raw_delays[i] = delays[i]
 
     # Eliminating pauses
-    no_start = raw_times[1:]
+    no_start = raw_delays[1:]
     average = round(sum(no_start) / len(no_start))
     pauses = []
-    pauseless_times = [raw_start]
+    pauseless_delays = [raw_start]
     for i, time in enumerate(no_start):
         if time < average * 3:
-            pauseless_times.append(time)
+            pauseless_delays.append(time)
         else:
-            pauseless_times.append(average)
+            pauseless_delays.append(average)
             pauses.append(i + 1)
-    pauseless = sum(pauseless_times)
-    ms = sum(times)
-    raw = sum(raw_times)
-    correction = ms - raw
-    pause_time = raw - pauseless
+    pauseless = sum(pauseless_delays)
+    ms = sum(delays)
+    raw_duration = sum(raw_delays)
+    correction_time = ms - raw_duration
+    pause_time = raw_duration - pauseless
 
     return {
         "raw_start": raw_start,
-        "raw_duration": pauseless,
-        "correction": correction,
-        "correction_percent": correction / ms if ms > 0 else 0,
+        "raw_duration": raw_duration,
+        "raw_delays": raw_delays,
+        "correction_time": correction_time,
+        "correction_percent": correction_time / ms if ms > 0 else 0,
         "pause_time": pause_time,
-        "pause_percent": pause_time / raw if raw > 0 else 0,
+        "pause_percent": pause_time / raw_duration if raw_duration > 0 else 0,
+        "pauseless_duration": pauseless,
+        "pauseless_delays": pauseless_delays,
         "pauses": pauses,
-        "adjusted_correction": sum(times[1:]) - sum(raw_times[1:]),
-        "delays": pauseless_times,
     }
 
 

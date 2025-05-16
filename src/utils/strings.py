@@ -374,7 +374,8 @@ def real_speed_description(race):
 def raw_speed_description(race):
     return (
         f"**Raw Unlagged:** {race['raw_unlagged']:,.2f} WPM\n"
-        f"**Raw Adjusted:**  {race['raw_adjusted']:,.3f} WPM\n"
+        f"**Raw Adjusted:** {race['raw_adjusted']:,.3f} WPM\n"
+        f"**Pauseless:** {race['pauseless_adjusted']:,.2f} WPM\n"
         f"**Correction Time:** {format_duration_short(race['correction'] / 1000, False)} "
         f"({race['correction_percent']:.2%})\n"
         f"**Pause Time**: {format_duration_short(race['pause_time'] / 1000, False)} "

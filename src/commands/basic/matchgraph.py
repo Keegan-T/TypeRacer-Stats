@@ -65,6 +65,7 @@ async def run(ctx, user, username, race_number, universe):
     text_description = strings.text_description(match)
     description = text_description + "\n\n**Rankings**\n"
     raw_description = text_description + "\n\n**Raw Rankings**\n"
+    pauseless_description = text_description + "\n\n**Pauseless Rankings**\n"
 
     for i, race in enumerate(match["rankings"]):
         racer_username = strings.escape_formatting(race["username"])
@@ -86,28 +87,55 @@ async def run(ctx, user, username, race_number, universe):
             f"{race['pause_percent']:.1%} Pause)\n"
         )
 
+    for i, race in enumerate(match["pauseless_rankings"]):
+        racer_username = strings.escape_formatting(race["username"])
+        pauseless_description += (
+            f"{i + 1}. {racer_username} - "
+            f"[{race['wpm']:,.2f} WPM]"
+            f"({urls.replay(race['username'], race['race_number'], universe)}) "
+            f"({race['correction_percent']:.1%} Corr, "
+            f"{race['pause_percent']:.1%} Pause)\n"
+        )
+
     completed = f"\nCompleted {strings.discord_timestamp(match['timestamp'])}"
     description += completed
     raw_description += completed
+    pauseless_description += completed
     title = f"Match Graph - Race #{race_number:,}"
     graph_title = f"Match Graph - {username} - Race #{race_number:,}"
-    if universe != "play":
-        graph_title += f"\nUniverse: {universe}"
     url = urls.replay(username, race_number, universe)
 
     def render(file_name):
-        return match_graph.render(user, match["rankings"], graph_title, "WPM", file_name, limit_y="*" not in ctx.invoked_with)
+        return match_graph.render(
+            user, match["rankings"], graph_title, "WPM", file_name,
+            universe=universe, limit_y="*" not in ctx.invoked_with
+        )
 
     def render_raw(file_name):
-        return match_graph.render(user, match["raw_rankings"], graph_title, "WPM", file_name, limit_y="*" not in ctx.invoked_with)
+        return match_graph.render(
+            user, match["raw_rankings"], graph_title, "WPM", file_name,
+            universe=universe, limit_y="*" not in ctx.invoked_with
+        )
 
-    def file_name(raw):
-        raw_text = "_raw" * raw
-        return f"match_{username}_{race_number}{raw_text}.png"
+    def render_pauseless(file_name):
+        return match_graph.render(
+            user, match["pauseless_rankings"], graph_title, "WPM", file_name,
+            universe=universe, limit_y="*" not in ctx.invoked_with
+        )
 
     pages = [
-        Page(title, description, button_name="Rankings", render=render, file_name=file_name(False)),
-        Page(title, raw_description, button_name="Raw Rankings", render=render_raw, file_name=file_name(True)),
+        Page(
+            title, description, button_name="Rankings", render=render,
+            file_name=f"match_{username}_{race_number}.png",
+        ),
+        Page(
+            title, raw_description, button_name="Raw Rankings", render=render_raw,
+            file_name=f"match_{username}_{race_number}_raw.png",
+        ),
+        Page(
+            title, pauseless_description, button_name="Pauseless Rankings", render=render_pauseless,
+            file_name=f"match_{username}_{race_number}_pauseless.png",
+        ),
     ]
 
     message = Message(

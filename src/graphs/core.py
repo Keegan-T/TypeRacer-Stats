@@ -141,7 +141,7 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
             legend_labels.append(label)
             continue
 
-        if label == "Raw Adjusted":
+        if label in ["Raw Adjusted", "Pauseless"]:
             line.set_color(user["colors"]["raw"])
             if int(user["id"]) != bot_owner:
                 line.set_linewidth(1)

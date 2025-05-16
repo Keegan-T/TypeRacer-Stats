@@ -5,7 +5,7 @@ from commands.checks import admin_check
 
 command = {
     "name": "ping",
-    "aliases": ["p"],
+    "aliases": [],
     "description": "Displays the ping of the bot",
     "parameters": "",
     "usages": ["ping"],

@@ -8,7 +8,7 @@ from dateutil import parser
 
 import api.bulk as bulk
 from utils import logs, urls
-from utils.stats import calculate_points
+from utils.stats import calculate_points, calculate_wpm
 
 
 async def get_races(username, start_time, end_time, races_per_page, universe="play"):
@@ -136,30 +136,32 @@ async def get_race_details(html, get_raw=False, get_opponents=False, universe="p
     # Calculating raw speeds
     if get_raw:
         raw_speeds = logs.get_raw_speeds(typing_log, delays)
-        raw_duration = raw_speeds["raw_duration"]
-        try:
-            raw_unlagged = universe_multiplier * len(delays) / raw_duration
-        except ZeroDivisionError:
-            raw_unlagged = float("inf")
-        try:
-            raw_adjusted = universe_multiplier * (len(delays) - 1) / (raw_duration - raw_speeds["raw_start"])
-        except ZeroDivisionError:
-            raw_adjusted = float("inf")
-        details["correction"] = raw_speeds["correction"]
+        raw_delays = raw_speeds["raw_delays"]
+        pauseless_delays = raw_speeds["pauseless_delays"]
+
+        details["raw_unlagged"] = calculate_wpm(delays, raw_speeds["raw_duration"], universe_multiplier)
+        details["raw_adjusted"] = calculate_wpm(delays, raw_speeds["raw_duration"], universe_multiplier, raw_delays[0])
+        details["pauseless_unlagged"] = calculate_wpm(delays, raw_speeds["pauseless_duration"], universe_multiplier)
+        details["pauseless_adjusted"] = calculate_wpm(delays, raw_speeds["pauseless_duration"], universe_multiplier, pauseless_delays[0])
+
+        details["raw_delays"] = raw_delays
+        details["correction"] = raw_speeds["correction_time"]
         details["correction_percent"] = raw_speeds["correction_percent"]
+
         details["pause_time"] = raw_speeds["pause_time"]
         details["pause_percent"] = raw_speeds["pause_percent"]
+        details["pauseless_delays"] = pauseless_delays
         details["pauses"] = raw_speeds["pauses"]
-        details["raw_unlagged"] = raw_unlagged
-        details["raw_adjusted"] = raw_adjusted
-        raw_delays = raw_speeds["delays"]
-        details["raw_delays"] = raw_delays
 
         raw_wpm_over_keystrokes = logs.get_wpm_over_keystrokes(raw_delays)
         raw_wpm_adjusted_over_keystrokes, instant_chars = logs.get_adjusted_wpm_over_keystrokes(raw_delays)
+        pauseless_wpm_over_keystrokes = logs.get_wpm_over_keystrokes(pauseless_delays)
+        pauseless_wpm_adjusted_over_keystrokes, _ = logs.get_adjusted_wpm_over_keystrokes(pauseless_delays)
 
         details["raw_wpm_over_keystrokes"] = raw_wpm_over_keystrokes
         details["raw_wpm_adjusted_over_keystrokes"] = raw_wpm_adjusted_over_keystrokes
+        details["pauseless_wpm_over_keystrokes"] = pauseless_wpm_over_keystrokes
+        details["pauseless_wpm_adjusted_over_keystrokes"] = pauseless_wpm_adjusted_over_keystrokes
         details["instant_chars"] = instant_chars
 
     # Getting opponent information
@@ -213,6 +215,13 @@ async def get_match(username, race_number, universe="play"):
         "correction_percent": match["correction_percent"],
         "pause_percent": match["pause_percent"],
     }]
+    pauseless_rankings = [{
+        **user,
+        "wpm": match["pauseless_unlagged"],
+        "average_wpm": match["pauseless_wpm_over_keystrokes"],
+        "correction_percent": match["correction_percent"],
+        "pause_percent": match["pause_percent"],
+    }]
 
     if "opponents" in match:
         for opponent in match["opponents"][:9]:
@@ -237,6 +246,13 @@ async def get_match(username, race_number, universe="play"):
                 "correction_percent": opp_race_info["correction_percent"],
                 "pause_percent": opp_race_info["pause_percent"],
             })
+            pauseless_rankings.append({
+                **user,
+                "wpm": opp_race_info["pauseless_unlagged"],
+                "average_wpm": opp_race_info["pauseless_wpm_over_keystrokes"],
+                "correction_percent": opp_race_info["correction_percent"],
+                "pause_percent": opp_race_info["pause_percent"],
+            })
 
     rankings.sort(key=lambda x: x["wpm"], reverse=True)
     raw_rankings.sort(key=lambda x: x["wpm"], reverse=True)
@@ -247,6 +263,7 @@ async def get_match(username, race_number, universe="play"):
         "timestamp": match["timestamp"],
         "rankings": rankings,
         "raw_rankings": raw_rankings,
+        "pauseless_rankings": pauseless_rankings,
     }
 
 
