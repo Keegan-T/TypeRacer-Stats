@@ -134,7 +134,6 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
     embed.description += f"\n\n{speeds_string}"
 
     title = f"Race Graph - {username} - Race #{race_number:,}"
-    file_name = f"race_{username}_{race_number}.png"
 
     if graph:
         ranking = {"username": username}
@@ -158,7 +157,7 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
             y_label = "WPM"
             ranking["average_wpm"] = race_info["wpm_over_keystrokes"]
 
-        match_graph.render(
+        file_name = match_graph.render(
             user, [ranking], title, y_label, universe,
             limit_y="*" not in ctx.invoked_with
         )

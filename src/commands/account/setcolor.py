@@ -122,9 +122,8 @@ async def run(ctx, user, element, color):
 
     update_colors(ctx.author.id, user["colors"])
 
-    sample_graph.render(user)
+    file_name = sample_graph.render(user)
 
-    file_name = "sample.png"
     file = File(file_name, filename=file_name)
     embed.set_image(url=f"attachment://{file_name}")
     await ctx.send(embed=embed, file=file)
@@ -158,14 +157,13 @@ async def view(ctx, user):
 async def reset(ctx, user):
     user["colors"] = colors.default_colors
     update_colors(ctx.author.id, user["colors"])
-    sample_graph.render(user)
+    file_name = sample_graph.render(user)
 
     embed = Embed(
         title=f"Colors Reset To Default",
         color=user["colors"]["embed"],
     )
 
-    file_name = "sample.png"
     file = File(file_name, filename=file_name)
     embed.set_image(url=f"attachment://{file_name}")
     await ctx.send(embed=embed, file=file)

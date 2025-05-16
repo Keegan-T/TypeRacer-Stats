@@ -19,5 +19,8 @@ def render(user):
 
     color_graph(ax, user, 0, True)
 
-    plt.savefig(file_name("sample"))
+    file = file_name("sample")
+    plt.savefig(file)
     plt.close(fig)
+
+    return file
