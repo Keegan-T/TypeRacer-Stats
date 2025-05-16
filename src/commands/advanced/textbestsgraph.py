@@ -114,38 +114,35 @@ async def run(ctx, user, username, category):
         f"**Gain Until {next_milestone} Average:** {required_wpm_gain:,.0f} WPM"
     )
 
-    def render_races(file_name):
-        return text_bests_graph.render(user, username, race_counts, averages, "races", file_name, universe)
+    x_axes = {
+        "races": race_counts,
+        "time": timestamps,
+        "texts": changes,
+    }
 
-    def render_time(file_name):
-        return text_bests_graph.render(user, username, timestamps, averages, "time", file_name, universe)
-
-    def render_texts(file_name):
-        return text_bests_graph.render(user, username, changes, averages, "texts", file_name, universe)
+    def render(category):
+        return lambda: text_bests_graph.render(user, username, race_counts, x_axes[category], category, universe)
 
     title = "Text Best Progression"
     pages = [
         Page(
             title=title + " (Over Races)",
             description=description,
-            render=render_races,
-            file_name=f"text_bests_over_races_{username}.png",
+            render=render("races"),
             button_name="Over Races",
             default=category == "races",
         ),
         Page(
             title=title + " (Over Time)",
             description=description,
-            render=render_time,
-            file_name=f"text_bests_over_time_{username}.png",
+            render=render("time"),
             button_name="Over Time",
             default=category == "time",
         ),
         Page(
             title=title + " (Over Text Changes)",
             description=description + f"\n**Total Text Improvements:** {len(changes):,}",
-            render=render_texts,
-            file_name=f"text_bests_over_text_changes_{username}.png",
+            render=render("texts"),
             button_name="Over Text Changes",
             default=category == "texts",
         )

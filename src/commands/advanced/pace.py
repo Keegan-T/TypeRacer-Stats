@@ -134,7 +134,7 @@ async def run(ctx, user, username, number, category, rate):
     render = None
     completion = "Never"
     remaining = number - current
-    days_left = remaining / max(0.01, rate)
+    days_left = remaining / rate if rate > 0 else float("inf")
     if days_left < 365 * 3000 - dates.now().year:
         predicted_timestamp = dates.now().timestamp() + (days_left * 86400)
         completion = strings.discord_timestamp(predicted_timestamp)
@@ -142,12 +142,11 @@ async def run(ctx, user, username, number, category, rate):
         timestamps.append(predicted_timestamp)
         values.append(number)
 
-        def render(file_name):
-            return line_graph.render(
-                user, [[username, timestamps, values]],
-                f"Races Over Time Projection - {username}",
-                "Date", "Races", file_name
-            )
+        render = lambda: line_graph.render(
+            user, [[username, timestamps, values]],
+            f"Races Over Time Projection - {username}",
+            "Date", "Races"
+        )
 
     category = category.title()
     page = Page(
@@ -159,7 +158,6 @@ async def run(ctx, user, username, number, category, rate):
             f"**Estimated Completion:** {completion}"
         ),
         render=render,
-        file_name=f"projection_{username}_{number}_{category.lower()}.png",
     )
 
     message = Message(
@@ -171,6 +169,7 @@ async def run(ctx, user, username, number, category, rate):
     )
 
     await message.send()
+
 
 def next_milestone(n):
     for i in [50, 100, 500, 1000, 5000, 10000]:

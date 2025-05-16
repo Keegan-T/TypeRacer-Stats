@@ -4,8 +4,8 @@ import database.races as races
 import database.users as users
 import utils.stats
 from api.users import get_stats
-from commands.advanced.races import get_args
 from commands.account.download import run as download
+from commands.advanced.races import get_args
 from commands.locks import big_lock
 from config import prefix
 from database.bot_users import get_user
@@ -134,15 +134,6 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
     average /= race_count
     recent_average /= moving
 
-    def graph_over_races(file_name):
-        return improvement_graph.render(user, wpm, title, file_name, timeframe, universe=universe)
-
-    def graph_over_time(file_name):
-        return improvement_graph.render(user, wpm, title, file_name, timeframe, timestamps, universe=universe)
-
-    def file_name(type):
-        return f"improvement_{username}_{type}.png"
-
     description = (
         f"**Races:** {race_count:,}\n"
         f"**Average:** {average:,.2f} WPM\n"
@@ -152,8 +143,16 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
     )
 
     pages = [
-        Page(button_name="Over Races", render=graph_over_races, file_name=file_name("races"), default=time),
-        Page(button_name="Over Time", render=graph_over_time, file_name=file_name("time"), default=time),
+        Page(
+            button_name="Over Races",
+            render=lambda: improvement_graph.render(user, wpm, title, timeframe, universe=universe),
+            default=time,
+        ),
+        Page(
+            button_name="Over Time",
+            render=lambda: improvement_graph.render(user, wpm, title, timeframe, timestamps, universe),
+            default=time,
+        ),
     ]
 
     message = Message(

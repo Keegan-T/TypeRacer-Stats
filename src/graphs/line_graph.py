@@ -1,11 +1,11 @@
 from matplotlib.ticker import FuncFormatter
 
-from graphs.core import plt, color_graph, interpolate_segments, date_x_ticks
+from graphs.core import plt, color_graph, interpolate_segments, date_x_ticks, file_name
 from utils.strings import format_big_number
 
 
-def render(user, lines, title, x_label, y_label, file_name):
-    ax = plt.subplots()[1]
+def render(user, lines, title, x_label, y_label):
+    fig, ax = plt.subplots()
 
     caller = user["username"]
     caller_index = 0
@@ -40,5 +40,8 @@ def render(user, lines, title, x_label, y_label, file_name):
 
     color_graph(ax, user, caller_index)
 
-    plt.savefig(file_name)
-    plt.close()
+    file = file_name("line")
+    plt.savefig(file)
+    plt.close(fig)
+
+    return file

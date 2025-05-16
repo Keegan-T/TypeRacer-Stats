@@ -2,17 +2,17 @@ import numpy as np
 from matplotlib.colors import hex2color
 from matplotlib.ticker import FuncFormatter
 
-from graphs.core import plt, color_graph, date_x_ticks, interpolate_segments
+from graphs.core import plt, color_graph, date_x_ticks, interpolate_segments, file_name
 from utils.strings import format_big_number
 
 
-def render(user, wpm, title, file_name, timeframe="", timestamps=None, universe="play"):
+def render(user, wpm, title, timeframe="", timestamps=None, universe="play"):
     text_graph = "Text #" in title
     wpm = np.array(wpm)
     best_index, best = max(enumerate(wpm), key=lambda x: x[1])
     worst_index, worst = min(enumerate(wpm), key=lambda x: x[1])
 
-    ax = plt.subplots()[1]
+    fig, ax = plt.subplots()
 
     downsample_factor = max(len(wpm) // 100000, 1)
     downsampled_indices = np.arange(0, len(wpm), downsample_factor)
@@ -66,5 +66,8 @@ def render(user, wpm, title, file_name, timeframe="", timestamps=None, universe=
 
     color_graph(ax, user)
 
-    plt.savefig(file_name)
-    plt.close()
+    file = file_name("improvement")
+    plt.savefig(file)
+    plt.close(fig)
+
+    return file

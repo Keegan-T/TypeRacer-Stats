@@ -1,10 +1,10 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
-from graphs.core import color_graph, universe_title
+from graphs.core import color_graph, universe_title, file_name
 
 
-def render(user, username, activity, file_name, universe):
+def render(user, username, activity, universe):
     color = user["colors"]["line"]
     fig = plt.figure()
     ax = fig.add_subplot(111, polar=True)
@@ -31,8 +31,11 @@ def render(user, username, activity, file_name, universe):
 
     color_graph(ax, user)
 
-    plt.savefig(file_name)
-    plt.close()
+    file = file_name(f"activity_{username}")
+    plt.savefig(file)
+    plt.close(fig)
+
+    return file
 
 
 def apply_cmap(ax, user, activity):

@@ -2,12 +2,12 @@ import numpy as np
 from matplotlib import patches
 from matplotlib.ticker import FuncFormatter
 
-from graphs.core import plt, color_graph, universe_title
+from graphs.core import plt, color_graph, universe_title, file_name
 from utils.strings import format_big_number
 
 
-def render(user, username, activity, file_name, universe):
-    ax = plt.subplots()[1]
+def render(user, username, activity, universe):
+    fig, ax = plt.subplots()
     days = range(len(activity))
 
     color = user["colors"]["line"]
@@ -25,8 +25,11 @@ def render(user, username, activity, file_name, universe):
 
     color_graph(ax, user)
 
-    plt.savefig(file_name)
-    plt.close()
+    file = file_name(f"bar_{username}")
+    plt.savefig(file)
+    plt.close(fig)
+
+    return file
 
 
 def apply_cmap(ax, user, labels, values, top_values=None):

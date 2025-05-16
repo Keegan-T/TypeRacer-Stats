@@ -2,11 +2,11 @@ from collections import defaultdict
 
 import numpy as np
 
-from graphs.core import plt, color_graph, universe_title
+from graphs.core import plt, color_graph, universe_title, file_name
 
 
-def render(user, rankings, title, y_label, file_name, universe="play", limit_y=True, typos=[], markers=[]):
-    ax = plt.subplots()[1]
+def render(user, rankings, title, y_label, universe="play", limit_y=True, typos=[], markers=[]):
+    fig, ax = plt.subplots()
     caller_index = 0
     starts = []
     remaining = []
@@ -105,5 +105,8 @@ def render(user, rankings, title, y_label, file_name, universe="play", limit_y=T
 
     color_graph(ax, user, caller_index, match=True)
 
-    plt.savefig(file_name)
-    plt.close()
+    file = file_name("match")
+    plt.savefig(file)
+    plt.close(fig)
+
+    return file

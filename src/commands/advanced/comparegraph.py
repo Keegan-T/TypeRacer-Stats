@@ -142,19 +142,13 @@ async def run(ctx, user, username1, username2):
         f"{gap2}"
     )
 
-    def render(file_name):
-        return compare_graph.render(user, (username1, data1), (username2, data2), file_name)
-
-    file_name = f"compare_{username1}_{username2}.png"
-
     page = Page(
         description=description,
         fields=[
             Field(strings.escape_formatting(username1), stats1),
             Field(strings.escape_formatting(username2), stats2),
         ],
-        render=render,
-        file_name=file_name,
+        render=lambda: compare_graph.render(user, (username1, data1), (username2, data2)),
     )
 
     message = Message(

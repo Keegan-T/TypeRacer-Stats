@@ -1,12 +1,12 @@
 import numpy as np
 from matplotlib.ticker import FuncFormatter
 
-from graphs.core import plt, color_graph, universe_title
+from graphs.core import plt, color_graph, universe_title, file_name
 from utils.strings import format_big_number
 
 
-def render(user, username, values, category, y_label, bins, file_name, universe):
-    ax = plt.subplots()[1]
+def render(user, username, values, category, y_label, bins, universe):
+    fig, ax = plt.subplots()
     counts, groups = np.histogram(values, bins=bins)
 
     color = user["colors"]["line"]
@@ -30,8 +30,12 @@ def render(user, username, values, category, y_label, bins, file_name, universe)
 
     color_graph(ax, user)
 
-    plt.savefig(file_name)
-    plt.close()
+    category = category.replace(" ", "_")
+    file = file_name(f"{category.lower()}_histogram_{username}")
+    plt.savefig(file)
+    plt.close(fig)
+
+    return file
 
 
 def apply_cmap(ax, user, counts, groups):

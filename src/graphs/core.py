@@ -13,6 +13,7 @@ from matplotlib.legend_handler import HandlerLineCollection
 from matplotlib.lines import Line2D
 
 from config import bot_owner, root_dir
+from utils import dates
 from utils.colors import graph_palette
 
 rcParams["axes.prop_cycle"] = plt.cycler(color=graph_palette)
@@ -202,6 +203,10 @@ def universe_title(title, universe):
         title += f"{separator}Universe: {universe}"
 
     return title
+
+
+def file_name(name):
+    return f"{name}_{round(dates.now().timestamp() * 1000)}.png"
 
 
 # Deprecated

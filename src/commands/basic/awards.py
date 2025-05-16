@@ -1,4 +1,3 @@
-from discord import Embed, File
 from discord.ext import commands
 
 import database.competition_results as competition_results
@@ -7,8 +6,8 @@ from commands.basic.stats import get_args
 from config import prefix
 from database.bot_users import get_user
 from graphs import awards_graph
-from graphs.core import remove_file
-from utils import errors, embeds, strings
+from utils import errors
+from utils.embeds import Page, Message, is_embed, Field
 
 graph_commands = ["awardsgraph", "medalsgraph", "awg"]
 command = {
@@ -31,7 +30,7 @@ class Awards(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username = result
@@ -42,52 +41,51 @@ async def run(ctx, user, username, show_graph):
     stats = get_stats(username)
     if not stats:
         return await ctx.send(embed=errors.invalid_username())
-    era_string = strings.get_era_string(user)
 
     awards = await competition_results.get_awards(username, user["start_date"], user["end_date"])
     total = awards["total"]
-
-    embed = Embed(
-        title=f"Awards ({total:,})",
-        url=f"https://data.typeracer.com/pit/award_history?user={username}",
-        color=user["colors"]["embed"]
-    )
-    embeds.add_profile(embed, stats)
-
-    if total == 0:
-        embed.description = "No awards"
-        return await ctx.send(embed=embed)
-
-    kinds = ["year", "month", "week", "day"]
+    periods = ["year", "month", "week", "day"]
     ranks = ["first", "second", "third"]
+    fields = []
 
-    counts = [0, 0, 0]
-    field_strings = ["", "", ""]
-
-    for kind in kinds:
-        kind_title = "Daily" if kind == "day" else kind.title() + "ly"
-        for i, rank in enumerate(ranks):
-            count = awards[kind][rank]
-            counts[i] += count
+    for i, rank in enumerate(ranks):
+        field_string = ""
+        rank_count = 0
+        for period in periods:
+            count = awards[period][rank]
+            rank_count += count
             if count > 0:
-                field_strings[i] += f"**{kind_title}:** {count:,}\n"
+                period_title = "Daily" if period == "day" else period.title() + "ly"
+                field_string += f"**{period_title}:** {count:,}\n"
+        if field_string:
+            fields.append(Field(
+                name=f":{ranks[i]}_place: x{rank_count:,}",
+                value=field_string,
+            ))
 
-    for i, count in enumerate(counts):
-        if count > 0:
-            embed.add_field(name=f":{ranks[i]}_place: x{count}", value=field_strings[i])
+    render = None
+    description = "No awards"
+    if total > 0:
+        description = ""
+        if show_graph:
+            competitions = list(await competition_results.get_competitions(user["start_date"], user["end_date"]))
+            competitions.sort(key=lambda x: x["end_time"])
+            render = lambda: awards_graph.render(user, username, competitions)
 
-    if not show_graph:
-        return await ctx.send(embed=embed, content=era_string)
+    page = Page(
+        title=f"Awards ({total:,})",
+        description=description,
+        fields=fields,
+        render=render,
+    )
 
-    file_name = f"awards_{username}.png"
-    await awards_graph.render(user, username, file_name)
+    message = Message(
+        ctx, user, page,
+        url=f"https://data.typeracer.com/pit/award_history?user={username}",
+        profile=stats,
+    )
 
-    embed.set_image(url=f"attachment://{file_name}")
-    file = File(file_name, filename=file_name)
-
-    await ctx.send(embed=embed, file=file, content=era_string)
-
-    remove_file(file_name)
+    await message.send()
 
 
 async def setup(bot):

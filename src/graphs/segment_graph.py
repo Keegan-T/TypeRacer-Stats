@@ -1,9 +1,9 @@
 from graphs import bar_graph
-from graphs.core import plt, color_graph
+from graphs.core import plt, color_graph, universe_title, file_name
 
 
-def render(user, segments, title, file_name):
-    ax = plt.subplots()[1]
+def render(user, segments, title, universe):
+    fig, ax = plt.subplots()
     x = range(1, len(segments) + 1)
     y = []
     raw_y = []
@@ -27,9 +27,12 @@ def render(user, segments, title, file_name):
     ax.set_ylabel("WPM")
     ax.set_xlabel("Segments")
     plt.grid()
-    ax.set_title(title)
+    ax.set_title(universe_title(title, universe))
 
     color_graph(ax, user)
 
-    plt.savefig(file_name)
-    plt.close()
+    file = file_name("segments")
+    plt.savefig(file)
+    plt.close(fig)
+
+    return file

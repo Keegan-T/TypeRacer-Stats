@@ -168,19 +168,14 @@ async def run(ctx, user, username, text_id=None, race_number=None):
         )
 
     description = f"{score_display}\n\n{text_description}\n\n{stats_string}"
-
-    def render(file_name):
+    page = Page(description=description)
+    if graph:
         title = f"WPM Improvement - {username} - Text #{text_id}"
         wpm = [race["wpm"] for race in race_list]
-        improvement_graph.render(user, wpm, title, file_name, universe=universe)
-
-    kwargs = {"description": description}
-    if graph:
-        kwargs["render"] = render
-        kwargs["file_name"] = f"text_improvement_{username}_{text_id}.png"
+        page.render = lambda: improvement_graph.render(user, wpm, title, universe=universe)
 
     message = Message(
-        ctx, user, Page(**kwargs), title,
+        ctx, user, page, title,
         url=urls.trdata_text_races(username, text_id, universe),
         color=color,
         profile=db_stats,

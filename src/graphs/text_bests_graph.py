@@ -1,11 +1,11 @@
 from matplotlib.ticker import FuncFormatter
 
-from graphs.core import plt, color_graph, date_x_ticks, interpolate_segments, universe_title
+from graphs.core import plt, color_graph, date_x_ticks, interpolate_segments, universe_title, file_name
 from utils.strings import format_big_number
 
 
-def render(user, username, x, y, category, file_name, universe):
-    ax = plt.subplots()[1]
+def render(user, username, x, y, category, universe):
+    fig, ax = plt.subplots()
     x_segments, y_segments = interpolate_segments(x, y)
     ax.plot(x_segments, y_segments)
 
@@ -32,5 +32,9 @@ def render(user, username, x, y, category, file_name, universe):
 
     color_graph(ax, user)
 
-    plt.savefig(file_name)
-    plt.close()
+    category = category.replace(" ", "_")
+    file = file_name(f"text_bests_{username}_{category}")
+    plt.savefig(file)
+    plt.close(fig)
+
+    return file

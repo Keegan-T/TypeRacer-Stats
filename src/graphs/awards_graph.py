@@ -2,16 +2,12 @@ from datetime import datetime, timezone
 
 from dateutil.relativedelta import relativedelta
 
-from database.competition_results import get_competitions
-from graphs.core import plt, color_graph
+from graphs.core import plt, color_graph, file_name
 from utils import dates
 
 
-async def render(user, username, file_name):
+def render(user, username, competitions):
     medal_list = []
-    competitions = list(await get_competitions(user["start_date"], user["end_date"]))
-    competitions.sort(key=lambda x: x["end_time"])
-
     for competition in competitions:
         competitors = sorted(competition["competitors"], key=lambda x: x["points"], reverse=True)
         for i in range(3):
@@ -31,7 +27,7 @@ async def render(user, username, file_name):
         timestamps[rank - 1].append(medal["timestamp"])
         types[rank - 1].append(type_index)
 
-    ax = plt.subplots()[1]
+    fig, ax = plt.subplots()
     ax.scatter(x=timestamps[0], y=types[0], color="#ffb600", zorder=3)
     ax.scatter(x=timestamps[1], y=types[1], color="#c0c0c0", zorder=2)
     ax.scatter(x=timestamps[2], y=types[2], color="#cd7f32", zorder=1)
@@ -56,4 +52,8 @@ async def render(user, username, file_name):
 
     color_graph(ax, user)
 
-    plt.savefig(file_name)
+    file = file_name(f"awards_{username}")
+    plt.savefig(file)
+    plt.close(fig)
+
+    return file

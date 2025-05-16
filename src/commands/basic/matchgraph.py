@@ -105,37 +105,16 @@ async def run(ctx, user, username, race_number, universe):
     graph_title = f"Match Graph - {username} - Race #{race_number:,}"
     url = urls.replay(username, race_number, universe)
 
-    def render(file_name):
-        return match_graph.render(
-            user, match["rankings"], graph_title, "WPM", file_name,
-            universe=universe, limit_y="*" not in ctx.invoked_with
-        )
-
-    def render_raw(file_name):
-        return match_graph.render(
-            user, match["raw_rankings"], graph_title, "WPM", file_name,
-            universe=universe, limit_y="*" not in ctx.invoked_with
-        )
-
-    def render_pauseless(file_name):
-        return match_graph.render(
-            user, match["pauseless_rankings"], graph_title, "WPM", file_name,
-            universe=universe, limit_y="*" not in ctx.invoked_with
+    def render(key):
+        return lambda: match_graph.render(
+            user, match[key], graph_title, "WPM", universe,
+            limit_y="*" not in ctx.invoked_with
         )
 
     pages = [
-        Page(
-            title, description, button_name="Rankings", render=render,
-            file_name=f"match_{username}_{race_number}.png",
-        ),
-        Page(
-            title, raw_description, button_name="Raw Rankings", render=render_raw,
-            file_name=f"match_{username}_{race_number}_raw.png",
-        ),
-        Page(
-            title, pauseless_description, button_name="Pauseless Rankings", render=render_pauseless,
-            file_name=f"match_{username}_{race_number}_pauseless.png",
-        ),
+        Page(title, description, button_name="Rankings", render=render("rankings")),
+        Page(title, raw_description, button_name="Raw Rankings", render=render("raw_rankings")),
+        Page(title, pauseless_description, button_name="Pauseless Rankings", render=render("pauseless_rankings")),
     ]
 
     message = Message(

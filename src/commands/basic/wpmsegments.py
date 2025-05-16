@@ -105,11 +105,8 @@ async def run(ctx, user, username, race_number, universe):
     description += f"\nCompleted {strings.discord_timestamp(race_info['timestamp'])}"
     embed.description = description
 
-    file_name = f"race_wpm_{username}.png"
     title = f"WPM Segments - {username} - Race #{race_number:,}"
-    if universe != "play":
-        title += f"\nUniverse: {universe}"
-    segment_graph.render(user, segments, title, file_name)
+    file_name = segment_graph.render(user, segments, title, universe)
 
     embed.set_image(url=f"attachment://{file_name}")
     file = File(file_name, filename=file_name)

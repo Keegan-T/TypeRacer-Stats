@@ -1,4 +1,4 @@
-from graphs.core import plt, color_graph
+from graphs.core import plt, color_graph, file_name
 
 
 def render(user):
@@ -8,7 +8,7 @@ def render(user):
     x2 = [i for i in range(50)]
     y2 = [i + 50 for i in x2]
 
-    ax = plt.subplots()[1]
+    fig, ax = plt.subplots()
     ax.plot(x, y, label="Data")
     ax.plot(x2, y2, label="Raw Speed", color=user["colors"]["raw"], zorder=10)
 
@@ -19,6 +19,5 @@ def render(user):
 
     color_graph(ax, user, 0, True)
 
-    plt.savefig("sample.png")
-
-    plt.close()
+    plt.savefig(file_name("sample"))
+    plt.close(fig)

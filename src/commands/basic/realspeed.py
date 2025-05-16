@@ -159,8 +159,8 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
             ranking["average_wpm"] = race_info["wpm_over_keystrokes"]
 
         match_graph.render(
-            user, [ranking], title, y_label, file_name,
-            universe=universe, limit_y="*" not in ctx.invoked_with
+            user, [ranking], title, y_label, universe,
+            limit_y="*" not in ctx.invoked_with
         )
 
         embed.set_image(url=f"attachment://{file_name}")

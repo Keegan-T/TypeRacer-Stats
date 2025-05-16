@@ -98,27 +98,19 @@ async def run(ctx, user, username, category):
         race_description += formatter(pbs[-1], "Best Race")
         time_description += formatter(pbs[-1], "Best Race", time=True)
 
-    def render_races(file_name):
-        return personal_best_graph.render(user, username, numbers, wpms, "races", file_name, universe)
-
-    def render_time(file_name):
-        return personal_best_graph.render(user, username, timestamps, wpms, "time", file_name, universe)
-
     title = "Personal Best Progression"
     pages = [
         Page(
             title=title,
             description=race_description,
-            render=render_races,
-            file_name=f"personal_best_over_races_{username}.png",
+            render=lambda: personal_best_graph.render(user, username, numbers, wpms, "races", universe),
             button_name="Over Races",
             default=category == "races",
         ),
         Page(
             title=title + " (Over Time)",
             description=time_description,
-            render=render_time,
-            file_name=f"personal_best_over_time_{username}.png",
+            render=lambda: personal_best_graph.render(user, username, timestamps, wpms, "time", universe),
             button_name="Over Time",
             default=category == "time",
         )

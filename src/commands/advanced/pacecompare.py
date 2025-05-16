@@ -1,16 +1,14 @@
 from datetime import datetime, timezone
 
 from dateutil.relativedelta import relativedelta
-from discord import Embed, File
 from discord.ext import commands
 
 from commands.advanced.compare import same_username
 from database import users, races
 from database.bot_users import get_user
 from graphs import line_graph
-from graphs.core import remove_file
 from utils import errors, strings, dates
-from utils.embeds import is_embed
+from utils.embeds import Page, Field, Message, is_embed
 
 periods = ["month", "day", "week", "year", "all"]
 command = {
@@ -163,20 +161,19 @@ async def run(ctx, user, username1, username2, category, rate1, rate2=None):
                 user_list[i]["timestamps"].append(intersection_timestamp)
                 user_list[i]["values"].append(intersection_value)
 
-            def render(file_name):
-                lines = []
-                for i in range(2):
-                    lines.append([
-                        user_list[i]["username"],
-                        user_list[i]["timestamps"],
-                        user_list[i]["values"],
-                    ])
-                return line_graph.render(
-                    user, lines,
-                    f"Races Over Time Projection\n"
-                    f"{user_list[0]['username']} vs. {user_list[1]['username']}",
-                    "Date", "Races", file_name
-                )
+            lines = []
+            for i in range(2):
+                lines.append([
+                    user_list[i]["username"],
+                    user_list[i]["timestamps"],
+                    user_list[i]["values"],
+                ])
+            render = lambda: line_graph.render(
+                user, lines,
+                f"Races Over Time Projection\n"
+                f"{user_list[0]['username']} vs. {user_list[1]['username']}",
+                "Date", "Races"
+            )
 
     category = category.title()
     title = f"Pace Comparison ({category})"
@@ -187,34 +184,29 @@ async def run(ctx, user, username1, username2, category, rate1, rate2=None):
             f"**Rate:** {user['rate']:,.2f} / Day{average_of}\n"
         )
 
-    embed = Embed(
-        title=title,
-        color=user["colors"]["embed"],
-    )
-
+    fields = []
     for i in range(2):
         name = ["Chaser", "Leader"][i]
         stats = formatter(user_list[i])
-        embed.add_field(name=user_list[i]["username"] + f" - {name}", value=stats)
-
-    embed.add_field(
+        fields.append(Field(
+            name=user_list[i]["username"] + f" - {name}",
+            value=stats,
+        ))
+    fields.append(Field(
         name="Crossover Point",
         value=crossover_point,
-        inline=False
+        inline=False,
+    ))
+
+    page = Page(
+        title=title,
+        fields=fields,
+        render=render,
     )
 
-    if render:
-        file_name = f"projection_{username1}_{username2}_{category.lower()}.png"
-        render(file_name)
+    message = Message(ctx, user, page)
 
-        embed.set_image(url=f"attachment://{file_name}")
-        file = File(file_name, filename=file_name)
-
-        await ctx.send(embed=embed, file=file)
-
-        remove_file(file_name)
-    else:
-        await ctx.send(embed=embed)
+    await message.send()
 
 
 def next_milestone(n):

@@ -9,7 +9,7 @@ from utils import urls, strings
 
 class Page:
     def __init__(self, title=None, description="", fields=None, footer=None, color=None,
-                 button_name=None, render=None, file_name=None, default=False):
+                 button_name=None, render=None, default=False):
         self.title = title
         self.description = description
         self.fields = fields if isinstance(fields, list) else [fields] if fields else None
@@ -18,7 +18,6 @@ class Page:
         self.button_name = button_name
         self.default = default
         self.render = render
-        self.file_name = file_name
 
 
 class Field:
@@ -193,8 +192,7 @@ class Message(View):
         index = self.index
         if index not in self.cache:
             page = self.pages[index]
-            file_name = page.file_name
-            page.render(file_name)
+            file_name = page.render()
             self.cache[index] = file_name
 
         self.embeds[index].set_image(url=f"attachment://{self.cache[index]}")

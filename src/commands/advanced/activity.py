@@ -90,26 +90,18 @@ async def run(ctx, user, username):
         f"**Least Active:** {weekly_activity_description(weekly_min_index)}"
     )
 
-    def render_daily(file_name):
-        return clock_graph.render(user, username, daily, file_name, universe)
-
-    def render_weekly(file_name):
-        return bar_graph.render(user, username, weekly, file_name, universe)
-
     pages = [
         Page(
             title="Daily Typing Activity",
             description=daily_description,
             button_name="Daily",
-            render=render_daily,
-            file_name=strings.get_file_name("daily_typing_activity", user, username),
+            render=lambda: clock_graph.render(user, username, daily, universe),
         ),
         Page(
             title="Weekly Typing Activity",
             description=weekly_description,
             button_name="Weekly",
-            render=render_weekly,
-            file_name=strings.get_file_name("weekly_typing_activity", user, username),
+            render=lambda: bar_graph.render(user, username, weekly, universe),
         )
     ]
 

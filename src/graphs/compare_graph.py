@@ -1,9 +1,9 @@
 import numpy as np
 
-from graphs.core import plt, color_graph
+from graphs.core import plt, color_graph, file_name
 
 
-def render(user, user1, user2, file_name):
+def render(user, user1, user2):
     username1, data1 = user1
     username2, data2 = user2
     fig, (ax1, ax2) = plt.subplots(1, 2)
@@ -49,8 +49,11 @@ def render(user, user1, user2, file_name):
     fig.suptitle(f"Text Bests Comparison", color=user["colors"]["text"])
     fig.text(0.5, 0.025, "Number of Texts", ha="center", color=user["colors"]["text"])
 
-    plt.savefig(file_name)
-    plt.close()
+    file = file_name(f"compare_{username1}_{username2}")
+    plt.savefig(file)
+    plt.close(fig)
+
+    return file
 
 
 def apply_cmap(ax, user, counts, groups, extent):

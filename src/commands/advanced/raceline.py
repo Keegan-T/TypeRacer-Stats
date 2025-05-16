@@ -180,8 +180,7 @@ async def run(ctx, user, usernames, start_date, end_date, column="number"):
 
     lines.sort(key=lambda x: x[3], reverse=True)
 
-    file_name = f"{kind.lower()}_over_time_{usernames[0]}.png"
-    line_graph.render(user, lines, title, "Date", kind, file_name)
+    file_name = line_graph.render(user, lines, title, "Date", kind)
 
     file = File(file_name, filename=file_name)
     await ctx.send(file=file, content=era_string)

@@ -1,4 +1,3 @@
-from discord import Embed, File
 from discord.ext import commands
 
 import commands.recent as recent
@@ -9,7 +8,6 @@ from commands.basic.realspeed import get_args
 from config import prefix
 from database.bot_users import get_user
 from graphs import match_graph
-from graphs.core import remove_file
 from utils import errors, urls, strings
 from utils.embeds import Page, Message, is_embed
 
@@ -74,7 +72,7 @@ async def run(ctx, user, username, race_number, universe):
         "average_wpm": race_info["wpm_adjusted_over_keystrokes"],
     }
 
-    def render_raw(file_name):
+    def render_raw():
         rankings = [
             {
                 "username": "Raw Adjusted",
@@ -84,12 +82,11 @@ async def run(ctx, user, username, race_number, universe):
         ]
 
         return match_graph.render(
-            user, rankings, graph_title, y_label, file_name,
-            universe=universe,
+            user, rankings, graph_title, y_label, universe,
             markers=[race_info["typos"], []]
         )
 
-    def render_pauseless(file_name):
+    def render_pauseless():
         rankings = [
             {
                 "username": "Pauseless",
@@ -99,8 +96,7 @@ async def run(ctx, user, username, race_number, universe):
         ]
 
         return match_graph.render(
-            user, rankings, graph_title, y_label, file_name,
-            universe=universe,
+            user, rankings, graph_title, y_label, universe,
             markers=[race_info["typos"], race_info["pauses"]]
         )
 
@@ -110,14 +106,12 @@ async def run(ctx, user, username, race_number, universe):
             description=description,
             button_name="Raw",
             render=render_raw,
-            file_name=f"real_vs_raw_{username}_{race_number}.png",
         ),
         Page(
             title=f"Real vs. Pauseless Speed - Race #{race_number:,}",
             description=description,
             button_name="Pauseless",
             render=render_pauseless,
-            file_name=f"real_vs_pauseless_{username}_{race_number}.png",
             default=ctx.invoked_with == "p",
         ),
     ]
