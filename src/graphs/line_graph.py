@@ -1,6 +1,6 @@
 from matplotlib.ticker import FuncFormatter
 
-from graphs.core import plt, color_graph, interpolate_segments, date_x_ticks, file_name
+from graphs.core import plt, color_graph, interpolate_segments, date_x_ticks, file_name, filter_palette
 from utils.strings import format_big_number
 
 
@@ -9,6 +9,7 @@ def render(user, lines, title, x_label, y_label):
 
     caller = user["username"]
     caller_index = 0
+    ax.set_prop_cycle(plt.cycler(color=filter_palette(user["colors"]["line"])))
     for i, l in enumerate(lines):
         username, x, y = l[:3]
         first_x, first_y = x[0], y[0]

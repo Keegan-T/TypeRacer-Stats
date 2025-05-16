@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import rcParams, image as mpimg
 from matplotlib.collections import LineCollection
-from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import LinearSegmentedColormap, to_rgb
 from matplotlib.legend_handler import HandlerLine2D
 from matplotlib.legend_handler import HandlerLineCollection
 from matplotlib.lines import Line2D
@@ -130,7 +130,6 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
 
     for i, line in enumerate(ax.get_lines()):
         label = line.get_label()
-        hide_label = label.startswith("_child")
 
         if label in ["Corrections", "Pauses"]:
             marker_color = line.get_color()
@@ -160,7 +159,7 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
             else:
                 line.set_color(line_color)
 
-        if hide_label:
+        if label.startswith("_child"):
             continue
 
         legend_lines.append(line)
@@ -207,6 +206,22 @@ def universe_title(title, universe):
 
 def file_name(name):
     return f"{name}_{round(dates.now().timestamp() * 1000)}.png"
+
+
+def color_distance(color1, color2):
+    rgb1 = to_rgb(color1)
+    rgb2 = to_rgb(color2)
+    return np.linalg.norm(np.array(rgb1) - np.array(rgb2))
+
+
+def filter_palette(line_color):
+    if line_color in plt.colormaps():
+        return graph_palette
+
+    return [
+        color for color in graph_palette
+        if color_distance(line_color, color) > 0.2
+    ]
 
 
 # Deprecated

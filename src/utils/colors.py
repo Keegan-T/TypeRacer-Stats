@@ -17,8 +17,8 @@ default_colors = {
 }
 
 graph_palette = [
-    "#00E1FF", "#E41A1C", "#4DAF4A", "#FF7F00", "#7C3AFF",
-    "#FFFF33", "#00C299", "#F781BF", "#999999", "#A65628",
+    "#00E1FF", "#E41A1C", "#FF7F00", "#4DAF4A", "#4DAF4A",
+    "#FFFF33", "#00C299", "#F781BF", "#A65628", "#999999",
 ]
 
 

@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import numpy as np
 
-from graphs.core import plt, color_graph, universe_title, file_name
+from graphs.core import plt, color_graph, universe_title, file_name, filter_palette
 
 
 def render(user, rankings, title, y_label, universe="play", limit_y=True, typos=[], markers=[]):
@@ -28,6 +28,7 @@ def render(user, rankings, title, y_label, universe="play", limit_y=True, typos=
         remaining += average_wpm[9:]
 
     else:
+        ax.set_prop_cycle(plt.cycler(color=filter_palette(user["colors"]["line"])))
         caller = user["username"]
         for i, racer in enumerate(rankings):
             zorder = len(rankings) + 5 - i
