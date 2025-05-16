@@ -121,7 +121,7 @@ async def run(ctx, user, username, category):
     }
 
     def render(category):
-        return lambda: text_bests_graph.render(user, username, race_counts, x_axes[category], category, universe)
+        return lambda: text_bests_graph.render(user, username, x_axes[category], averages, category, universe)
 
     title = "Text Best Progression"
     pages = [
