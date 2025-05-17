@@ -43,7 +43,9 @@ async def display_all(ctx, user):
     alt_list = alts.get_alts()
 
     groups = {frozenset(group) for group in alt_list.values()}
-    description = "\n".join(", ".join(group) for group in groups)
+    description = ""
+    for group in groups:
+        description += ", ".join(sorted(group)) + "\n\n"
 
     await send_embed(ctx, user, description)
 
