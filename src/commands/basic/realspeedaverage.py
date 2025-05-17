@@ -99,8 +99,10 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
     ping = 0
     start = 0
     ms = 0
+    accuracy = 0
     raw_unlagged = 0
     raw_adjusted = 0
+    pauseless = 0
     correction = 0
     correction_percent = 0
     pause_time = 0
@@ -130,9 +132,11 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
         ping += race["ping"]
         start += race["start"]
         ms += race["ms"]
+        accuracy += race["accuracy"]
         if raw:
             raw_unlagged += race["raw_unlagged"]
             raw_adjusted += race["raw_adjusted"]
+            pauseless += race["pauseless_adjusted"]
             correction += race["correction"]
             pause_time += race["pause_time"]
             correction_percent += race["correction"] / race["ms"]
@@ -163,17 +167,20 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
     ping /= race_count
     start /= race_count
     ms /= race_count
+    accuracy /= race_count
 
     real_speeds = (
         f"**Lagged:** {lagged:,.2f} WPM\n"
         f"**Unlagged:** {unlagged:,.2f} WPM\n"
         f"**Adjusted:** {adjusted:,.3f} WPM\n"
-        f"**Race Time:** {strings.format_duration_short(ms / 1000, False)}\n\n"
+        f"**Race Time:** {strings.format_duration_short(ms / 1000, False)}\n"
+        f"**Accuracy:** {accuracy:.2%}\n\n"
     )
 
     if raw:
         raw_unlagged /= race_count
         raw_adjusted /= race_count
+        pauseless /= race_count
         correction /= race_count
         correction_percent /= race_count
         pause_time /= race_count
@@ -181,6 +188,7 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
         real_speeds += (
             f"**Raw Unlagged:** {raw_unlagged:,.2f} WPM\n"
             f"**Raw Adjusted:**  {raw_adjusted:,.3f} WPM\n"
+            f"**Pauseless:**  {pauseless:,.2f} WPM\n"
             f"**Correction Time:** {strings.format_duration_short(correction / 1000, False)} "
             f"({correction_percent:.2%})\n"
             f"**Pause Time:** {strings.format_duration_short(pause_time / 1000, False)} "
