@@ -85,7 +85,7 @@ def get_args(user, args, info):
 
     unique_usernames = []
     for username in usernames:
-        if not users.get_user(username):
+        if not users.get_user(username, user["universe"]):
             return errors.import_required(username)
         if username not in unique_usernames:
             unique_usernames.append(username)
