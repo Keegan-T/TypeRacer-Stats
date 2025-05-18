@@ -159,7 +159,7 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
             else:
                 line.set_color(line_color)
 
-        if label.startswith("_child"):
+        if label.replace("​", "").startswith("_child"):
             continue
 
         legend_lines.append(line)
