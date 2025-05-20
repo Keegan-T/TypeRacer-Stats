@@ -115,7 +115,7 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
         links.append(urls.replay(username, i, universe))
 
     race_htmls = await get_race_html_bulk(links)
-    race_list = [await get_race_details(html, get_raw=raw, universe=universe) for html in race_htmls]
+    race_list = [await get_race_details(html, universe=universe) for html in race_htmls]
 
     missed_races = []
 
@@ -131,16 +131,16 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
         lag += race["lag"]
         ping += race["ping"]
         start += race["start"]
-        ms += race["ms"]
+        ms += race["duration"]
         accuracy += race["accuracy"]
         if raw:
             raw_unlagged += race["raw_unlagged"]
             raw_adjusted += race["raw_adjusted"]
             pauseless += race["pauseless_adjusted"]
-            correction += race["correction"]
+            correction += race["correction_time"]
             pause_time += race["pause_time"]
-            correction_percent += race["correction"] / race["ms"]
-            pause_percent += race["pause_time"] / race["ms"]
+            correction_percent += race["correction_time"] / race["duration"]
+            pause_percent += race["pause_time"] / race["duration"]
 
         flag = ""
         if race["lagged"] > round(race["unlagged"], 2):
@@ -152,7 +152,7 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
             f"**Lagged:** {race['lagged']:,.2f} WPM ({race['lag']:,.2f} WPM lag)\n"
             f"**Unlagged:** {race['unlagged']:,.2f} WPM ({race['ping']:,}ms ping)\n"
             f"**Adjusted:** {race['adjusted']:,.3f} WPM ({race['start']:,}ms start)\n"
-            f"**Race Time:** {strings.format_duration_short(race['ms'] / 1000, False)}\n\n"
+            f"**Race Time:** {strings.format_duration_short(race['duration'] / 1000, False)}\n\n"
         )
 
     if lagged == 0:

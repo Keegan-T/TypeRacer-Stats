@@ -13,10 +13,10 @@ from utils.embeds import Page, Message, is_embed
 
 command = {
     "name": "rawcomparison",
-    "aliases": ["rc", "poem", "p"],
+    "aliases": ["rc", "poem", "pauseless", "p"],
     "description": "Displays an overlay of adjusted and raw adjusted speed of a race\n"
                    f"`{prefix}rawcomparison [username] <-n>` will display the comparison for n races ago\n"
-                   f"`{prefix}p` to view pauseless stats",
+                   f"`{prefix}pauseless` to view pauseless stats",
     "parameters": "[username] <race_number>",
     "defaults": {
         "race_number": "the user's most recent race number"
@@ -53,7 +53,7 @@ async def run(ctx, user, username, race_number, universe):
     elif race_number < 1:
         race_number = stats["races"] + race_number
 
-    race_info = await get_race(username, race_number, get_raw=True, get_typos=True, universe=universe)
+    race_info = await get_race(username, race_number, get_typos=True, universe=universe)
     if not race_info or "unlagged" not in race_info:
         return await ctx.send(embed=errors.logs_not_found(username, race_number, universe))
 
@@ -69,14 +69,14 @@ async def run(ctx, user, username, race_number, universe):
     y_label = "Adjusted vs. Raw WPM"
     adjusted_ranking = {
         "username": "Adjusted",
-        "average_wpm": race_info["wpm_adjusted_over_keystrokes"],
+        "keystroke_wpm": race_info["keystroke_wpm_adjusted"],
     }
 
     def render_raw():
         rankings = [
             {
                 "username": "Raw Adjusted",
-                "average_wpm": race_info["raw_wpm_adjusted_over_keystrokes"],
+                "keystroke_wpm": race_info["keystroke_wpm_raw_adjusted"],
             },
             adjusted_ranking
         ]
@@ -90,7 +90,7 @@ async def run(ctx, user, username, race_number, universe):
         rankings = [
             {
                 "username": "Pauseless",
-                "average_wpm": race_info["pauseless_wpm_adjusted_over_keystrokes"],
+                "keystroke_wpm": race_info["keystroke_wpm_pauseless_adjusted"],
             },
             adjusted_ranking,
         ]
@@ -112,13 +112,14 @@ async def run(ctx, user, username, race_number, universe):
             description=description,
             button_name="Pauseless",
             render=render_pauseless,
-            default=ctx.invoked_with == "p",
+            default=ctx.invoked_with in ["pauseless", "p"],
         ),
     ]
 
     message = Message(
         ctx, user, pages,
         url=urls.replay(username, race_number, universe, stats["disqualified"]),
+        footer="Adjusted speed recalculated to account for lag at the start of the race" * race_info["distributed"],
         profile=stats,
         universe=universe,
     )

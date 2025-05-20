@@ -42,7 +42,7 @@ async def run(ctx, user, username, race_number, universe):
     if race_number < 1:
         race_number = stats["races"] + race_number
 
-    race_info = await get_race(username, race_number, universe=universe, get_raw=True)
+    race_info = await get_race(username, race_number, universe=universe)
     if not race_info:
         return await ctx.send(embed=errors.race_not_found(username, race_number, universe))
 

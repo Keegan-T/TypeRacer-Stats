@@ -179,11 +179,11 @@ async def run(ctx, user, username1, username2, race_number1, race_number2, unive
     rankings = [
         {
             "username": username1,
-            "average_wpm": race_info1["wpm_over_keystrokes"],
+            "keystroke_wpm": race_info1["keystroke_wpm"],
         },
         {
             "username": username2,
-            "average_wpm": race_info2["wpm_over_keystrokes"],
+            "keystroke_wpm": race_info2["keystroke_wpm"],
         }
     ]
 

@@ -366,9 +366,9 @@ def text_description(text, universe="play"):
 def real_speed_description(race):
     return (
         f"**Lagged:** {race['lagged']:,.2f} WPM ({race['lag']:,.2f} WPM lag)\n"
-        f"**Unlagged:** {race['unlagged']:,.2f} WPM ({race['ping']:,}ms ping)\n"
-        f"**Adjusted:** {race['adjusted']:,.3f} WPM ({race['start']:,}ms start)\n"
-        f"**Race Time:** {format_duration_short(race['ms'] / 1000, False)}\n\n"
+        f"**Unlagged:** {race['unlagged']:,.2f} WPM ({race['ping']:,.0f}ms ping)\n"
+        f"**Adjusted:** {race['adjusted']:,.3f} WPM ({race['start']:,.0f}ms start)\n"
+        f"**Race Time:** {format_duration_short(race['duration'] / 1000, False)}\n\n"
     )
 
 
@@ -377,7 +377,7 @@ def raw_speed_description(race):
         f"**Raw Unlagged:** {race['raw_unlagged']:,.2f} WPM\n"
         f"**Raw Adjusted:** {race['raw_adjusted']:,.3f} WPM\n"
         f"**Pauseless:** {race['pauseless_adjusted']:,.2f} WPM\n"
-        f"**Correction Time:** {format_duration_short(race['correction'] / 1000, False)} "
+        f"**Correction Time:** {format_duration_short(race['correction_time'] / 1000, False)} "
         f"({race['correction_percent']:.2%})\n"
         f"**Pause Time**: {format_duration_short(race['pause_time'] / 1000, False)} "
         f"({race['pause_percent']:.2%})\n\n"

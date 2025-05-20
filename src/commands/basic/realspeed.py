@@ -84,7 +84,7 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
     if race_number < 1:
         race_number = stats["races"] + race_number
 
-    race_info = await get_race(username, race_number, get_raw=raw, universe=universe)
+    race_info = await get_race(username, race_number, universe=universe)
     if not race_info:
         return await ctx.send(embed=errors.race_not_found(username, race_number, universe))
 
@@ -141,21 +141,19 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
         if raw:
             if ctx.invoked_with in ["rawadjustedgraph", "rag"]:
                 y_label = "Raw Adjusted WPM"
-                ranking["average_adjusted_wpm"] = race_info["raw_wpm_adjusted_over_keystrokes"]
-                ranking["instant_chars"] = race_info["instant_chars"]
+                ranking["keystroke_wpm"] = race_info["keystroke_wpm_raw_adjusted"]
 
             else:
                 y_label = "Raw WPM"
-                ranking["average_wpm"] = race_info["raw_wpm_over_keystrokes"]
+                ranking["keystroke_wpm"] = race_info["keystroke_wpm_raw"]
 
         elif ctx.invoked_with in ["adjustedgraph", "ag", "ag*"]:
             y_label = "Adjusted WPM"
-            ranking["average_adjusted_wpm"] = race_info["wpm_adjusted_over_keystrokes"]
-            ranking["instant_chars"] = race_info["instant_chars"]
+            ranking["keystroke_wpm"] = race_info["keystroke_wpm_adjusted"]
 
         else:
             y_label = "WPM"
-            ranking["average_wpm"] = race_info["wpm_over_keystrokes"]
+            ranking["keystroke_wpm"] = race_info["keystroke_wpm"]
 
         file_name = match_graph.render(
             user, [ranking], title, y_label, universe,

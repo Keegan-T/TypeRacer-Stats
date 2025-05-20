@@ -1,5 +1,7 @@
 import re
 
+from utils.stats import calculate_wpm
+
 
 def escape_characters(string):
     escapes = "".join([chr(char) for char in range(1, 32)])
@@ -34,48 +36,64 @@ def split_log(log):
     return quote, delays
 
 
-def get_log_details(log, multiplier=12000):
-    quote, delays = split_log(log)
-
-    lagged_chars = 0
+def distribute_start_lag(delays):
+    lagged_chars = 1
     for delay in delays[1:]:
         if delay != 0:
             break
         lagged_chars += 1
 
-    distributed = round(delays[0] / (lagged_chars + 1))
-    delays[:lagged_chars + 1] = [distributed] * (lagged_chars + 1)
+    distributed = delays[0] / lagged_chars
+    delays[:lagged_chars] = [distributed] * lagged_chars
 
+    return delays, lagged_chars > 1
+
+
+def get_log_details(typing_log, multiplier, typos=False):
+    separator = re.search(r"\|(\d+),(\d+),(\d+),0\+", typing_log)
+    if not separator:
+        first_half = typing_log
+        action_data = None
+    else:
+        split = separator.span()[0]
+        first_half = typing_log[:split]
+        action_data = typing_log[split + 1:]
+    delay_data = ",".join(first_half.split(",")[3:])
+    quote, delays = split_log(delay_data)
+
+    # Real Speeds
+    delays, distributed = distribute_start_lag(delays)
     start = delays[0]
-    total_ms = sum(delays)
-    length = len(quote)
+    duration = sum(delays)
 
-    unlagged = multiplier * length / total_ms if total_ms else float("inf")
-    adjusted = multiplier * (length - 1) / (total_ms - start) if total_ms != start else float("inf")
+    unlagged = calculate_wpm(delays, duration, multiplier)
+    adjusted = calculate_wpm(delays, duration, multiplier, start)
 
-    details = {
-        "quote": quote,
-        "delays": delays,
-        "ms": total_ms,
-        "unlagged": unlagged,
-        "adjusted": adjusted,
-        "start": start,
-        "distributed": lagged_chars > 0,
-    }
+    details = dict(
+        quote=quote,
+        delays=delays,
+        duration=duration,
+        unlagged=unlagged,
+        adjusted=adjusted,
+        start=start,
+        distributed=distributed,
+    )
 
-    return details
+    if not action_data:
+        return details
 
+    if typos:
+        details["typos"] = get_typos(quote, action_data)
 
-def get_raw_speeds(typing_log, delays):
-    typing_log = escape_characters(typing_log)
-    typing_log = re.sub(r"\t\d", "a", typing_log).split("|", 1)
+    # Raw Speeds
     raw_delays = []
+    action_data = escape_characters(action_data)
+    action_data = re.sub(r"\t\d", "a", action_data)
 
-    for keystroke in re.findall(r"\d+,(?:\d+[+\-$].?)+,", typing_log[1]):
+    for keystroke in re.findall(r"\d+,(?:\d+[+\-$].?)+,", action_data):
         delay = int(keystroke.split(",")[0])
-
         chars = []
-        for i, char in enumerate(re.findall(r"(?:\d+[+\-$].?)", keystroke)):
+        for i, char in enumerate(re.findall(r"\d+[+\-$].?", keystroke)):
             if char[-2] == "$":
                 chars.append("0-k")
             chars.append(char)
@@ -88,23 +106,21 @@ def get_raw_speeds(typing_log, delays):
             else:
                 raw_delays.pop()
 
-    while raw_delays[-1] == 0:  # Removing trailing delays
+    raw_delays = distribute_start_lag(raw_delays)[0]
+
+    # Removing trailing delays
+    while raw_delays[-1] == 0:
         raw_delays.pop()
 
-    raw_start = raw_delays[0]
-    if raw_start == 0:  # Preventing zero starts
-        for i in range(1, len(raw_delays)):
-            if raw_delays[i] > 0:
-                raw_delays.insert(0, raw_delays.pop(i))
-                break
-
-    for i in range(min(len(raw_delays), len(delays))):  # Taking the fastest time per character
+    # Taking the fastest time per character
+    for i in range(min(len(raw_delays), len(delays))):
         if raw_delays[i] > delays[i]:
             raw_delays[i] = delays[i]
 
     # Eliminating pauses
+    raw_start = raw_delays[0]
     no_start = raw_delays[1:]
-    average = round(sum(no_start) / len(no_start))
+    average = sum(no_start) / len(no_start)
     pauses = []
     pauseless_delays = [raw_start]
     for i, time in enumerate(no_start):
@@ -113,67 +129,53 @@ def get_raw_speeds(typing_log, delays):
         else:
             pauseless_delays.append(average)
             pauses.append(i + 1)
-    pauseless = sum(pauseless_delays)
-    ms = sum(delays)
+
     raw_duration = sum(raw_delays)
-    correction_time = ms - raw_duration
-    pause_time = raw_duration - pauseless
+    raw_unlagged = calculate_wpm(raw_delays, raw_duration, multiplier)
+    raw_adjusted = calculate_wpm(raw_delays, raw_duration, multiplier, raw_start)
+    correction_time = duration - raw_duration
+    correction_percent = correction_time / duration if duration else 0
 
-    return {
-        "raw_start": raw_start,
-        "raw_duration": raw_duration,
-        "raw_delays": raw_delays,
-        "correction_time": correction_time,
-        "correction_percent": correction_time / ms if ms > 0 else 0,
-        "pause_time": pause_time,
-        "pause_percent": pause_time / raw_duration if raw_duration > 0 else 0,
-        "pauseless_duration": pauseless,
-        "pauseless_delays": pauseless_delays,
-        "pauses": pauses,
-    }
+    pauseless_duration = sum(pauseless_delays)
+    pauseless_unlagged = calculate_wpm(pauseless_delays, pauseless_duration, multiplier)
+    pauseless_adjusted = calculate_wpm(pauseless_delays, pauseless_duration, multiplier, pauseless_delays[0])
+    pause_time = raw_duration - pauseless_duration
+    pause_percent = pause_time / raw_duration if raw_duration else 0
+
+    details.update(dict(
+        raw_start=raw_start,
+        raw_duration=raw_duration,
+        raw_delays=raw_delays,
+        raw_unlagged=raw_unlagged,
+        raw_adjusted=raw_adjusted,
+        correction_time=correction_time,
+        correction_percent=correction_percent,
+        pauseless_duration=pauseless_duration,
+        pauseless_delays=pauseless_delays,
+        pauseless_unlagged=pauseless_unlagged,
+        pauseless_adjusted=pauseless_adjusted,
+        pause_time=pause_time,
+        pause_percent=pause_percent,
+        pauses=pauses,
+    ))
+
+    return details
 
 
-def get_wpm_over_keystrokes(delays):
-    if delays[0] == 0:
-        return get_adjusted_wpm_over_keystrokes(delays)[0]
-
+def get_keystroke_wpm(delays, multiplier, adjusted=False):
     average_wpm = []
+    duration = 0
 
-    total_ms = 0
+    if adjusted or delays[0] == 0:
+        delays = delays[1:]
+        average_wpm = [float("inf")]
+
     for i, delay in enumerate(delays):
-        chars = i + 1
-        total_ms += delay
-        wpm = chars / ((total_ms / 1000) / 12)
+        duration += delay
+        wpm = multiplier * (i + 1) / duration
         average_wpm.append(wpm)
 
     return average_wpm
-
-
-def get_adjusted_wpm_over_keystrokes(delays):
-    average_wpm = []
-
-    instant_chars = 1
-    for delay in delays[1:]:
-        if delay == 0:
-            instant_chars += 1
-        else:
-            break
-
-    total_ms = 0
-    i = 0
-    while i < len(delays):
-        delay = delays[i]
-        chars = i + 1
-        if chars == 1:
-            average_wpm += [float("inf")] * instant_chars
-            i += instant_chars
-        else:
-            total_ms += delay
-            wpm = (chars - 1) / ((total_ms / 1000) / 12)
-            average_wpm.append(wpm)
-            i += 1
-
-    return average_wpm, instant_chars
 
 
 def get_typos(quote, action_data):

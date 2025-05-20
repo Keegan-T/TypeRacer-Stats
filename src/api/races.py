@@ -27,10 +27,10 @@ async def get_races(username, start_time, end_time, races_per_page, universe="pl
     return data
 
 
-async def get_race(username, race_number, get_raw=False, get_opponents=False, universe="play", get_typos=False):
+async def get_race(username, race_number, get_opponents=False, universe="play", get_typos=False):
     html = await get_race_html(username, race_number, universe)
 
-    return await get_race_details(html, get_raw, get_opponents, universe, get_typos)
+    return await get_race_details(html, get_opponents, universe, get_typos)
 
 
 async def get_race_html(username, race_number, universe="play"):
@@ -47,7 +47,7 @@ async def get_race_html_bulk(urls):
     return await bulk.fetch(urls)
 
 
-async def get_race_details(html, get_raw=False, get_opponents=False, universe="play", get_typos=False):
+async def get_race_details(html, get_opponents=False, universe="play", get_typos=False):
     soup = BeautifulSoup(html, "html.parser")
     details = {}
 
@@ -102,19 +102,14 @@ async def get_race_details(html, get_raw=False, get_opponents=False, universe="p
     except IndexError:
         return details
 
-    universe_multiplier = get_universe_multiplier(universe)
-    split_log = typing_log.split("|")
-    pipe_count = quote.count("|")
-    first_half = "|".join(split_log[0:pipe_count + 1])
-    action_data = "|".join(split_log[pipe_count + 1:])
-    delay_data = ",".join(first_half.split(",")[3:])
-    log_details = logs.get_log_details(delay_data, universe_multiplier)
+    multiplier = get_universe_multiplier(universe)
+    log_details = logs.get_log_details(typing_log, multiplier, get_typos)
     for key, value in log_details.items():
         details[key] = value
 
     lagged = details["lagged"]
-    lagged_ms = universe_multiplier * len(details["quote"]) / lagged if lagged > 0 else 0
-    ping = round(lagged_ms) - details['ms']
+    lagged_ms = multiplier * len(details["quote"]) / lagged if lagged > 0 else 0
+    ping = round(lagged_ms) - details['duration']
     lag = details['unlagged'] - lagged
 
     details["ping"] = ping
@@ -122,47 +117,16 @@ async def get_race_details(html, get_raw=False, get_opponents=False, universe="p
 
     delays = log_details["delays"]
 
-    wpm_over_keystrokes = logs.get_wpm_over_keystrokes(delays)
-    wpm_adjusted_over_keystrokes, instant_chars = logs.get_adjusted_wpm_over_keystrokes(delays)
+    details["keystroke_wpm"] = logs.get_keystroke_wpm(delays, multiplier)
+    details["keystroke_wpm_adjusted"] = logs.get_keystroke_wpm(delays, multiplier, adjusted=True)
 
-    details["wpm_over_keystrokes"] = wpm_over_keystrokes
-    details["wpm_adjusted_over_keystrokes"] = wpm_adjusted_over_keystrokes
-    details["instant_chars"] = instant_chars
+    raw_delays = log_details["raw_delays"]
 
-    # Getting typos
-    if get_typos:
-        details["typos"] = logs.get_typos(log_details["quote"], action_data)
-
-    # Calculating raw speeds
-    if get_raw:
-        raw_speeds = logs.get_raw_speeds(typing_log, delays)
-        raw_delays = raw_speeds["raw_delays"]
-        pauseless_delays = raw_speeds["pauseless_delays"]
-
-        details["raw_unlagged"] = calculate_wpm(delays, raw_speeds["raw_duration"], universe_multiplier)
-        details["raw_adjusted"] = calculate_wpm(delays, raw_speeds["raw_duration"], universe_multiplier, raw_delays[0])
-        details["pauseless_unlagged"] = calculate_wpm(delays, raw_speeds["pauseless_duration"], universe_multiplier)
-        details["pauseless_adjusted"] = calculate_wpm(delays, raw_speeds["pauseless_duration"], universe_multiplier, pauseless_delays[0])
-
-        details["raw_delays"] = raw_delays
-        details["correction"] = raw_speeds["correction_time"]
-        details["correction_percent"] = raw_speeds["correction_percent"]
-
-        details["pause_time"] = raw_speeds["pause_time"]
-        details["pause_percent"] = raw_speeds["pause_percent"]
-        details["pauseless_delays"] = pauseless_delays
-        details["pauses"] = raw_speeds["pauses"]
-
-        raw_wpm_over_keystrokes = logs.get_wpm_over_keystrokes(raw_delays)
-        raw_wpm_adjusted_over_keystrokes, instant_chars = logs.get_adjusted_wpm_over_keystrokes(raw_delays)
-        pauseless_wpm_over_keystrokes = logs.get_wpm_over_keystrokes(pauseless_delays)
-        pauseless_wpm_adjusted_over_keystrokes, _ = logs.get_adjusted_wpm_over_keystrokes(pauseless_delays)
-
-        details["raw_wpm_over_keystrokes"] = raw_wpm_over_keystrokes
-        details["raw_wpm_adjusted_over_keystrokes"] = raw_wpm_adjusted_over_keystrokes
-        details["pauseless_wpm_over_keystrokes"] = pauseless_wpm_over_keystrokes
-        details["pauseless_wpm_adjusted_over_keystrokes"] = pauseless_wpm_adjusted_over_keystrokes
-        details["instant_chars"] = instant_chars
+    pauseless_delays = log_details["pauseless_delays"]
+    details["keystroke_wpm_raw"] = logs.get_keystroke_wpm(raw_delays, multiplier)
+    details["keystroke_wpm_raw_adjusted"] = logs.get_keystroke_wpm(raw_delays, multiplier, adjusted=True)
+    details["keystroke_wpm_pauseless"] = logs.get_keystroke_wpm(pauseless_delays, multiplier)
+    details["keystroke_wpm_pauseless_adjusted"] = logs.get_keystroke_wpm(pauseless_delays, multiplier, adjusted=True)
 
     # Getting opponent information
     if get_opponents:
@@ -194,7 +158,7 @@ def find_race(username, race_number, timestamp, universe="play"):
 
 
 async def get_match(username, race_number, universe="play"):
-    match = await get_race(username, race_number, get_opponents=True, universe=universe, get_raw=True)
+    match = await get_race(username, race_number, get_opponents=True, universe=universe)
 
     if not match or isinstance(match, int) or "unlagged" not in match:
         return None
@@ -205,20 +169,20 @@ async def get_match(username, race_number, universe="play"):
         "wpm": match["unlagged"],
         "accuracy": match["accuracy"],
         "start": match["start"],
-        "average_wpm": match["wpm_over_keystrokes"],
+        "keystroke_wpm": match["keystroke_wpm"],
     }
     rankings = [user]
     raw_rankings = [{
         **user,
         "wpm": match["raw_unlagged"],
-        "average_wpm": match["raw_wpm_over_keystrokes"],
+        "keystroke_wpm": match["keystroke_wpm_raw"],
         "correction_percent": match["correction_percent"],
         "pause_percent": match["pause_percent"],
     }]
     pauseless_rankings = [{
         **user,
         "wpm": match["pauseless_unlagged"],
-        "average_wpm": match["pauseless_wpm_over_keystrokes"],
+        "keystroke_wpm": match["keystroke_wpm_pauseless"],
         "correction_percent": match["correction_percent"],
         "pause_percent": match["pause_percent"],
     }]
@@ -227,7 +191,7 @@ async def get_match(username, race_number, universe="play"):
         for opponent in match["opponents"][:9]:
             opp_username = opponent[0]
             opp_race_number = opponent[2]
-            opp_race_info = await get_race(opp_username, opp_race_number, universe=universe, get_raw=True)
+            opp_race_info = await get_race(opp_username, opp_race_number, universe=universe)
             if not opp_race_info or isinstance(opp_race_info, int):
                 continue
             user = {
@@ -236,20 +200,20 @@ async def get_match(username, race_number, universe="play"):
                 "wpm": opp_race_info["unlagged"],
                 "accuracy": opp_race_info["accuracy"],
                 "start": opp_race_info["start"],
-                "average_wpm": opp_race_info["wpm_over_keystrokes"],
+                "keystroke_wpm": opp_race_info["keystroke_wpm"],
             }
             rankings.append(user)
             raw_rankings.append({
                 **user,
                 "wpm": opp_race_info["raw_unlagged"],
-                "average_wpm": opp_race_info["raw_wpm_over_keystrokes"],
+                "keystroke_wpm": opp_race_info["keystroke_wpm_raw"],
                 "correction_percent": opp_race_info["correction_percent"],
                 "pause_percent": opp_race_info["pause_percent"],
             })
             pauseless_rankings.append({
                 **user,
                 "wpm": opp_race_info["pauseless_unlagged"],
-                "average_wpm": opp_race_info["pauseless_wpm_over_keystrokes"],
+                "keystroke_wpm": opp_race_info["keystroke_wpm_pauseless"],
                 "correction_percent": opp_race_info["correction_percent"],
                 "pause_percent": opp_race_info["pause_percent"],
             })
