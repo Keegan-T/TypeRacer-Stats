@@ -111,22 +111,8 @@ async def get_race_details(html, get_opponents=False, universe="play", get_typos
     lagged_ms = multiplier * len(details["quote"]) / lagged if lagged > 0 else 0
     ping = round(lagged_ms) - details['duration']
     lag = details['unlagged'] - lagged
-
     details["ping"] = ping
     details["lag"] = lag
-
-    delays = log_details["delays"]
-
-    details["keystroke_wpm"] = logs.get_keystroke_wpm(delays, multiplier)
-    details["keystroke_wpm_adjusted"] = logs.get_keystroke_wpm(delays, multiplier, adjusted=True)
-
-    raw_delays = log_details["raw_delays"]
-
-    pauseless_delays = log_details["pauseless_delays"]
-    details["keystroke_wpm_raw"] = logs.get_keystroke_wpm(raw_delays, multiplier)
-    details["keystroke_wpm_raw_adjusted"] = logs.get_keystroke_wpm(raw_delays, multiplier, adjusted=True)
-    details["keystroke_wpm_pauseless"] = logs.get_keystroke_wpm(pauseless_delays, multiplier)
-    details["keystroke_wpm_pauseless_adjusted"] = logs.get_keystroke_wpm(pauseless_delays, multiplier, adjusted=True)
 
     # Getting opponent information
     if get_opponents:

@@ -68,6 +68,8 @@ def get_log_details(typing_log, multiplier, typos=False):
 
     unlagged = calculate_wpm(delays, duration, multiplier)
     adjusted = calculate_wpm(delays, duration, multiplier, start)
+    keystroke_wpm = get_keystroke_wpm(delays, multiplier)
+    keystroke_wpm_adjusted = get_keystroke_wpm(delays, multiplier, adjusted=True)
 
     details = dict(
         quote=quote,
@@ -75,6 +77,8 @@ def get_log_details(typing_log, multiplier, typos=False):
         duration=duration,
         unlagged=unlagged,
         adjusted=adjusted,
+        keystroke_wpm=keystroke_wpm,
+        keystroke_wpm_adjusted=keystroke_wpm_adjusted,
         start=start,
         distributed=distributed,
     )
@@ -133,12 +137,16 @@ def get_log_details(typing_log, multiplier, typos=False):
     raw_duration = sum(raw_delays)
     raw_unlagged = calculate_wpm(raw_delays, raw_duration, multiplier)
     raw_adjusted = calculate_wpm(raw_delays, raw_duration, multiplier, raw_start)
+    keystroke_wpm_raw = get_keystroke_wpm(raw_delays, multiplier)
+    keystroke_wpm_raw_adjusted = get_keystroke_wpm(raw_delays, multiplier, adjusted=True)
     correction_time = duration - raw_duration
     correction_percent = correction_time / duration if duration else 0
 
     pauseless_duration = sum(pauseless_delays)
     pauseless_unlagged = calculate_wpm(pauseless_delays, pauseless_duration, multiplier)
     pauseless_adjusted = calculate_wpm(pauseless_delays, pauseless_duration, multiplier, pauseless_delays[0])
+    keystroke_wpm_pauseless = get_keystroke_wpm(pauseless_delays, multiplier)
+    keystroke_wpm_pauseless_adjusted = get_keystroke_wpm(pauseless_delays, multiplier, adjusted=True)
     pause_time = raw_duration - pauseless_duration
     pause_percent = pause_time / raw_duration if raw_duration else 0
 
@@ -147,12 +155,16 @@ def get_log_details(typing_log, multiplier, typos=False):
         raw_duration=raw_duration,
         raw_delays=raw_delays,
         raw_unlagged=raw_unlagged,
+        keystroke_wpm_raw=keystroke_wpm_raw,
+        keystroke_wpm_raw_adjusted=keystroke_wpm_raw_adjusted,
         raw_adjusted=raw_adjusted,
         correction_time=correction_time,
         correction_percent=correction_percent,
         pauseless_duration=pauseless_duration,
         pauseless_delays=pauseless_delays,
         pauseless_unlagged=pauseless_unlagged,
+        keystroke_wpm_pauseless=keystroke_wpm_pauseless,
+        keystroke_wpm_pauseless_adjusted=keystroke_wpm_pauseless_adjusted,
         pauseless_adjusted=pauseless_adjusted,
         pause_time=pause_time,
         pause_percent=pause_percent,
