@@ -151,7 +151,7 @@ async def run(ctx, user, username1, username2):
     title = "Text Best Comparison"
 
     pages = [
-        Page(title, description, button_name="Normal"),
+        Page(title, description, button_name="Farthest"),
         Page(title + " (Closest)", description_close, button_name="Closest", default=ctx.invoked_with == "vc"),
         Page(title + " (Randomized)", description_random, button_name="Random", default=ctx.invoked_with == "vr"),
         Page(title + " (Newest)", description_new, button_name="Newest", default=ctx.invoked_with == "vn"),
