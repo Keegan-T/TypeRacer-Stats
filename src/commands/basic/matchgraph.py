@@ -74,7 +74,7 @@ async def run(ctx, user, username, race_number, universe):
             f"[{race['wpm']:,.2f} WPM]"
             f"({urls.replay(race['username'], race['race_number'], universe)}) "
             f"({race['accuracy'] * 100:,.1f}% Acc, "
-            f"{race['start']:,}ms start)\n"
+            f"{race['start']:,.0f}ms start)\n"
         )
 
     for i, race in enumerate(match["raw_rankings"]):

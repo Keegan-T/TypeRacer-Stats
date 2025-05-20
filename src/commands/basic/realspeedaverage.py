@@ -150,8 +150,8 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
         races += (
             f"[#{race_number:,}]({urls.replay(username, race_number, universe)}){flag}\n"
             f"**Lagged:** {race['lagged']:,.2f} WPM ({race['lag']:,.2f} WPM lag)\n"
-            f"**Unlagged:** {race['unlagged']:,.2f} WPM ({race['ping']:,}ms ping)\n"
-            f"**Adjusted:** {race['adjusted']:,.3f} WPM ({race['start']:,}ms start)\n"
+            f"**Unlagged:** {race['unlagged']:,.2f} WPM ({race['ping']:,.0f}ms ping)\n"
+            f"**Adjusted:** {race['adjusted']:,.3f} WPM ({race['start']:,.0f}ms start)\n"
             f"**Race Time:** {strings.format_duration_short(race['duration'] / 1000, False)}\n\n"
         )
 
