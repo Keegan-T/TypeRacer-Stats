@@ -88,7 +88,7 @@ async def run(ctx, user, username):
 
         race_range = await get_races(username, start_time, end_time, last - first + 10, universe)
         for race in race_range:
-            if race["gn"] in group:
+            if race["gn"] in group and race["wpm"] != 0:
                 found_races.append((
                     strings.race_id(username, race["gn"]), username, race["tid"], race["gn"],
                     race["wpm"], race["ac"], race["pts"], race["r"], race["np"], race["t"],
