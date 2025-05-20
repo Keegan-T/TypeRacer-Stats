@@ -49,11 +49,7 @@ async def run(ctx, user, username):
     )
 
     if new_user:
-        description += (
-            f"You no longer need to type your username after commands.\n"
-            "You can also use \"me\" in the place of your username.\n"
-            f"Example: `{prefix}improvement me day`"
-        )
+        description += "You no longer need to type your username after commands!"
 
     embed = Embed(
         title="Account Linked",

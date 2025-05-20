@@ -14,7 +14,6 @@ from commands.checks import ban_check
 from config import prefix, bot_token, staging, welcome_message, bot_owner, typeracer_stats_channel_id
 from database import bot_users
 from database.bot_users import update_commands
-from database.welcomed import get_welcomed, add_welcomed
 from tasks import import_competitions, update_important_users, update_top_tens
 from utils import errors, colors
 from utils.logging import get_log_message, log, log_error
@@ -24,6 +23,7 @@ bot.remove_command("help")
 bot.add_check(ban_check)
 
 total_commands = sum(bot_users.get_total_commands().values())
+users = bot_users.get_user_ids()
 
 
 @bot.event
@@ -67,11 +67,10 @@ async def on_message(message):
         log_message = get_log_message(message)
         log(log_message)
         user_id = message.author.id
-        welcomed = get_welcomed()
-        if user_id not in welcomed:
-            await message.reply(content=welcome_message)
-            add_welcomed(user_id)
-            return
+        if user_id not in users:
+            users.append(user_id)
+            if not message.content.startswith(prefix + "link"):
+                return await message.reply(content=welcome_message)
 
     await bot.process_commands(message)
 

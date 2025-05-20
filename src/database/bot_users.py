@@ -13,6 +13,12 @@ def get_users():
     return users
 
 
+def get_user_ids():
+    users = db.fetch("SELECT id FROM users")
+
+    return [int(user[0]) for user in users]
+
+
 def get_user(ctx, auto_add=True):
     if isinstance(ctx, commands.Context):
         user_id = str(ctx.author.id)
@@ -76,6 +82,7 @@ def get_commands(user_id):
     user_commands = json.loads(user[0]["commands"])
 
     return user_commands
+
 
 def get_top_users():
     users = db.fetch("SELECT id, commands FROM users")
