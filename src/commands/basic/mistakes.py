@@ -73,13 +73,7 @@ async def run(ctx, user, username, race_number, universe):
     race_info["quote"] = get_marked_quote(quote, markers)
     pause_description = strings.text_description(race_info) + "\n\n"
 
-    speed_string = (
-        f"**Lagged:** {race_info['lagged']:,.2f} WPM ({race_info['lag']:,.2f} WPM lag)\n"
-        f"**Unlagged:** {race_info['unlagged']:,.2f} WPM ({race_info['ping']:,}ms ping)\n"
-        f"**Adjusted:** {race_info['adjusted']:,.3f} WPM ({race_info['start']:,}ms start)\n"
-        f"**Race Time:** {strings.format_duration_short(race_info['duration'] / 1000, False)}\n"
-    )
-
+    speed_string = strings.real_speed_description(race_info)
     typo_count = len(typos)
     pause_count = len(pauses)
     typo_string = f"**Mistakes:** {typo_count:,}\n"
@@ -108,6 +102,7 @@ async def run(ctx, user, username, race_number, universe):
             typos=typos, markers=[[], race_info["pauses"]]
         ),
         button_name="With Pauses",
+        default=ctx.invoked_with in ["pauses", "xp"],
     )
 
     if not typo_count:
