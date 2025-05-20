@@ -238,3 +238,6 @@
 - Added -leaderboard textsover
 - Added correction and pause markers to -rawcomparison
 - Added newest/oldest filters to -compare
+
+5/20/2025
+- Added pauses to -mistakes

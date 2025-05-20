@@ -1,4 +1,5 @@
-from discord import Embed, File
+from collections import defaultdict
+
 from discord.ext import commands
 
 import commands.recent as recent
@@ -8,14 +9,15 @@ from commands.basic.realspeed import get_args
 from config import prefix
 from database.bot_users import get_user
 from graphs import match_graph
-from graphs.core import remove_file
-from utils import errors, embeds, strings, urls, colors
+from utils import errors, strings, urls, colors
+from utils.embeds import Page, Message, is_embed
 
 command = {
     "name": "mistakes",
-    "aliases": ["typos", "ty", "x"],
+    "aliases": ["typos", "ty", "x", "pauses", "xp"],
     "description": "Displays the typos on a graph for a user's race\n"
-                   f"`{prefix}mistakes [username] <-n>` will return real speeds for n races ago\n",
+                   f"`{prefix}mistakes [username] <-n>` will return real speeds for n races ago\n"
+                   f"`{prefix}pauses will include pauses in the graph\n",
     "parameters": "[username] <race_number>",
     "defaults": {
         "race_number": "the user's most recent race number"
@@ -37,7 +39,7 @@ class Mistakes(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username, race_number, universe = result
@@ -56,56 +58,85 @@ async def run(ctx, user, username, race_number, universe):
     if not race_info or "unlagged" not in race_info:
         return await ctx.send(embed=errors.logs_not_found(username, race_number, universe))
 
-    lagged = race_info["lagged"]
-    unlagged = race_info["unlagged"]
-    adjusted = race_info["adjusted"]
-
     typos = race_info["typos"]
-    quote = list(race_info["quote"])
-    for offset, typo in enumerate(typos):
-        quote.insert(typo[1] + offset, "\\❌")
-    race_info["quote"] = "".join(quote)
+    markers = defaultdict(str)
+    for typo in typos:
+        markers[typo[1]] += "\\❌"
 
-    description = strings.text_description(race_info)
+    quote = race_info["quote"]
+    race_info["quote"] = get_marked_quote(quote, markers)
+    typo_description = strings.text_description(race_info) + "\n\n"
 
-    color = user["colors"]["embed"]
-    if len(typos) == 0:
-        description += "\n\nNo mistakes!"
-        color = colors.success
+    pauses = race_info["pauses"]
+    for pause in pauses:
+        markers[pause] += "\\⏸️"
+    race_info["quote"] = get_marked_quote(quote, markers)
+    pause_description = strings.text_description(race_info) + "\n\n"
 
-    speeds_string = (
-        f"**Lagged:** {lagged:,.2f} WPM ({race_info['lag']:,.2f} WPM lag)\n"
-        f"**Unlagged:** {unlagged:,.2f} WPM ({race_info['ping']:,}ms ping)\n"
-        f"**Adjusted:** {adjusted:,.3f} WPM ({race_info['start']:,}ms start)\n"
-        f"**Race Time:** {strings.format_duration_short(race_info['ms'] / 1000, False)}\n"
-        f"**Mistakes:** {len(typos):,}\n\n"
-        f"Completed {strings.discord_timestamp(race_info['timestamp'])}"
+    speed_string = (
+        f"**Lagged:** {race_info['lagged']:,.2f} WPM ({race_info['lag']:,.2f} WPM lag)\n"
+        f"**Unlagged:** {race_info['unlagged']:,.2f} WPM ({race_info['ping']:,}ms ping)\n"
+        f"**Adjusted:** {race_info['adjusted']:,.3f} WPM ({race_info['start']:,}ms start)\n"
+        f"**Race Time:** {strings.format_duration_short(race_info['duration'] / 1000, False)}\n"
     )
 
-    embed = Embed(
-        title=f"Mistakes - Race #{race_number:,}",
-        description=description + f"\n\n{speeds_string}",
-        url=urls.replay(username, race_number, universe, stats['disqualified']),
-        color=color,
-    )
-
-    embeds.add_profile(embed, stats)
-    embeds.add_universe(embed, universe)
+    typo_count = len(typos)
+    pause_count = len(pauses)
+    typo_string = f"**Mistakes:** {typo_count:,}\n"
+    pause_string = f"**Pauses:** {pause_count:,}\n"
+    completed_string = f"\nCompleted {strings.discord_timestamp(race_info['timestamp'])}"
+    typo_description += speed_string + typo_string + completed_string
+    pause_description += speed_string + typo_string + pause_string + completed_string
 
     title = f"Race Graph - {username} - Race #{race_number:,}"
-    rankings = [{"username": username, "average_wpm": race_info["wpm_adjusted_over_keystrokes"]}]
+    rankings = [{
+        "username": username,
+        "keystroke_wpm": race_info["keystroke_wpm_adjusted"]
+    }]
     y_label = "Adjusted WPM"
 
-    file_name = match_graph.render(user, rankings, title, y_label, universe, typos=race_info["typos"])
+    typo_page = Page(
+        description=typo_description,
+        render=lambda: match_graph.render(user, rankings, title, y_label, universe, typos=typos),
+        button_name="Mistakes",
+    )
 
-    embed.set_image(url=f"attachment://{file_name}")
-    file = File(file_name, filename=file_name)
+    pause_page = Page(
+        description=pause_description,
+        render=lambda: match_graph.render(
+            user, rankings, title, y_label, universe,
+            typos=typos, markers=[[], race_info["pauses"]]
+        ),
+        button_name="With Pauses",
+    )
 
-    await ctx.send(embed=embed, file=file)
+    if not typo_count:
+        typo_page.color = colors.success
+        if not pause_count:
+            pause_page.color = colors.success
 
-    remove_file(file_name)
+    message = Message(
+        ctx, user, [typo_page, pause_page],
+        title=f"Mistakes - Race #{race_number:,}",
+        url=urls.replay(username, race_number, universe, stats['disqualified']),
+        profile=stats,
+        universe=universe,
+    )
+
+    await message.send()
 
     recent.text_id = race_info["text_id"]
+
+
+def get_marked_quote(quote, markers):
+    characters = []
+    for index, symbol in markers.items():
+        characters.append([index - 0.5, symbol])
+    for i, char in enumerate(quote):
+        characters.append([i, char])
+    characters.sort(key=lambda x: x[0])
+
+    return "".join(x[1] for x in characters)
 
 
 async def setup(bot):
