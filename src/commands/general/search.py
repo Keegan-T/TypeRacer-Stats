@@ -6,7 +6,8 @@ import commands.recent as recent
 from config import prefix
 from database.bot_users import get_user
 from database.texts import get_texts
-from utils import errors, colors, urls, strings, embeds
+from utils import errors, colors, urls, strings
+from utils.embeds import Page, Message, get_pages
 
 command = {
     "name": "search",
@@ -50,13 +51,14 @@ async def run(ctx, user, query):
         if text_id_match:
             results.append(text_id_match)
         else:
-            embed = Embed(
-                title=title,
-                description=f'No results found.\n**Query:** "{query_title}"',
-                color=user["colors"]["embed"],
+            message = Message(
+                ctx, user, Page(
+                    title=title,
+                    description=f'No results found.\n**Query:** "{query_title}"',
+                )
             )
-            embeds.add_universe(embed, universe)
-            return await ctx.send(embed=embed)
+
+            return await message.send()
 
     else:
         for text in text_list:
@@ -88,24 +90,28 @@ async def run(ctx, user, query):
 
         results = sorted(text_list, key=lambda t: t["leven"]["distance"])
 
-    results_string = (
+    header = (
         f'Displaying **{min(result_count, 10)}** of **{result_count:,}** '
         f'result{"s" * (result_count != 1)}.\n**Query:** "{query_title}"\n'
     )
 
     if no_matches:
-        results_string = f'No results found, displaying similar results.\n**Query:** "{query_title}"\n'
+        header = f'No results found, displaying similar results.\n**Query:** "{query_title}"\n'
 
     if search_id:
         result = results[0]
         quote = strings.truncate_clean(result["quote"], max_chars)
-        results_string += (
-            f"\n[#**{result['id']}**]({urls.trdata_text(result['id'], universe)})"
-            f"{' (Disabled)' * result['disabled']} - [Ghost]({result['ghost']})\n"
-            f'"{quote}"\n'
+        pages = Page(
+            description=(
+                f"\n[#**{result['id']}**]({urls.trdata_text(result['id'], universe)})"
+                f"{' (Disabled)' * result['disabled']} - [Ghost]({result['ghost']})\n"
+                f'"{quote}"\n'
+            )
         )
+
     else:
-        for result in results[:10]:
+        def formatter(result):
+            description = ""
             quote = result["quote"]
             chars = max_chars - query_length
             if no_matches:
@@ -143,32 +149,33 @@ async def run(ctx, user, query):
             if end_index < len(quote):
                 substring += "..."
 
-            results_string += (
+            description += (
                 f"\n[#{result['id']}]({urls.trdata_text(result['id'], universe)})"
                 f"{' (Disabled) ' * result['disabled']}"
             )
 
             if no_matches:
                 similarity = (1 - (result["leven"]["distance"] / query_length)) * 100
-                results_string += f" - {similarity:,.2f}% Match"
+                description += f" - {similarity:,.2f}% Match"
 
-            results_string += (
+            description += (
                 f' - {len(quote):,} characters - [Ghost]({result["ghost"]})\n'
                 f'"{strings.escape_formatting(substring).replace('\t', '**')}"\n'
             )
 
-    embed = Embed(
+            return description
+
+        pages = get_pages(results, formatter, page_count=10, per_page=5)
+
+    message = Message(
+        ctx, user, pages,
         title=title,
-        description=results_string,
-        color=user["colors"]["embed"],
+        header=header,
+        footer="Use a more specific query to narrow search results" * (result_count > 50),
+        universe=universe
     )
 
-    if result_count > 10:
-        embed.set_footer(text="Use a more specific query to narrow search results")
-
-    embeds.add_universe(embed, universe)
-
-    await ctx.send(embed=embed)
+    await message.send()
 
     recent.text_id = results[0]["id"]
 
