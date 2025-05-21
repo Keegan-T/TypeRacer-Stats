@@ -1,3 +1,4 @@
+import requests
 from discord import Embed
 from discord.ext import commands
 
@@ -5,9 +6,9 @@ import database.races as races
 import database.texts as texts
 import database.users as users
 from api.texts import get_text_list
-from api.universes import get_universe_list
 from database.bot_users import get_user, update_universe
-from utils import colors
+from database.users import get_universe_list
+from utils import colors, strings
 from utils.logging import log
 
 command = {
@@ -36,15 +37,19 @@ class SetUniverse(commands.Cog):
 
         universes = get_universe_list()
         if universe not in universes:
-            return await ctx.send(embed=unknown_universe())
+            url = f"https://play.typeracer.com/?universe={strings.escape_url(universe)}"
+            response = requests.get(url)
+            if response.status_code == 404:
+                return await ctx.send(embed=unknown_universe())
+            else:
+                if not texts.universe_exists(universe):
+                    await ctx.send(embed=creating_universe(user))
+                    create_universe(universe)
 
         await run(ctx, user, universe)
 
 
 async def run(ctx, user, universe):
-    if not texts.universe_exists(universe):
-        create_universe(universe)
-
     update_universe(ctx.author.id, universe)
 
     embed = Embed(
@@ -67,6 +72,14 @@ def create_universe(universe):
     texts.add_texts(text_list, universe)
 
     log("Finished creating universe")
+
+
+def creating_universe(user):
+    return Embed(
+        title="Creating Universe",
+        description="Initializing new universe",
+        color=user["colors"]["embed"],
+    )
 
 
 def unknown_universe():

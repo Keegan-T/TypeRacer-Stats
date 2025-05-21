@@ -626,3 +626,19 @@ def get_countries():
         country_dict[user['username']] = user['country']
 
     return country_dict
+
+
+def get_universe_list():
+    table_list = db.fetch("""
+        SELECT name FROM sqlite_master
+        WHERE type = 'table'
+        AND name LIKE 'users_%'
+    """)
+
+    universe_list = ["_".join(table["name"].split("_")[1:]) for table in table_list]
+    for i, universe in enumerate(universe_list):
+        if universe in ["lang_zh_tw", "lang_sr_latn", "clickit_academy", "new_lang_zh_tw"]:
+            underscore = universe.rfind("_")
+            universe_list[i] = universe[:underscore] + "-" + universe[underscore + 1:]
+
+    return universe_list

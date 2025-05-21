@@ -1,4 +1,5 @@
 import re
+import urllib.parse
 from datetime import datetime, timezone
 
 import commands.recent as recent
@@ -330,6 +331,9 @@ def escape_formatting(string):
         .replace("~", "\\~")
         .replace("`", "")
     )
+
+def escape_url(string):
+    return urllib.parse.quote_plus(string)
 
 
 def truncate_clean(text, max_chars):
