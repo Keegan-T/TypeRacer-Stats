@@ -18,7 +18,8 @@ from commands.basic.stats import get_args
 from commands.locks import import_lock
 from database.bot_users import get_user
 from database.texts import update_text_difficulties
-from utils import errors, colors, urls, strings, embeds
+from utils import errors, colors, urls, strings
+from utils.embeds import Page, Message, is_embed
 from utils.logging import log
 from utils.stats import calculate_points, calculate_seconds
 
@@ -44,7 +45,7 @@ class Download(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username = result
@@ -99,7 +100,7 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, universe="play
     users.update_stats(stats, universe)
 
     if invoked:
-        await send_completion(ctx, bot_user, username, new_races, races_left, universe)
+        await send_completion(ctx, bot_user, username, races_left, universe)
 
     if new_races:
         log(f"Finished importing {username}")
@@ -233,31 +234,36 @@ async def update_database(username, universe, stats, race_list, new_texts, new_r
 
 async def send_start(ctx, bot_user, username, races_left, universe):
     if ctx:
-        embed = Embed(
-            title=f"Import Request",
-            description=f"Downloading {races_left:,} new races for "
-                        f"{strings.escape_formatting(username)}",
-            color=bot_user["colors"]["embed"],
+        message = Message(
+            ctx, bot_user, Page(
+                title=f"Import Request",
+                description=f"Downloading {races_left:,} new races for "
+                            f"{strings.escape_formatting(username)}",
+            ),
+            universe=universe,
         )
-        embeds.add_universe(embed, universe)
-        await ctx.send(embed=embed)
+        await message.send()
     log(f"Downloading {races_left:,} new races for {username}")
 
 
-async def send_completion(ctx, bot_user, username, new_races, races_left, universe):
+async def send_completion(ctx, bot_user, username, races_left, universe):
     username = strings.escape_formatting(username)
-    ping = f"<@{ctx.author.id}>" if races_left > 1000 else ""
-    embed = Embed(color=bot_user["colors"]["embed"])
+    page = Page()
 
-    if new_races:
-        embed.title = "Import Complete"
-        embed.description = f"Finished importing new races for {username}"
+    if races_left > 0:
+        page.title = "Import Complete"
+        page.description = f"Finished importing new races for {username}"
     else:
-        embed.title = "Import Request"
-        embed.description = f"No new races to import for {username}"
+        page.title = "Import Request"
+        page.description = f"No new races to import for {username}"
 
-    embeds.add_universe(embed, universe)
-    await ctx.send(content=ping, embed=embed)
+    message = Message(
+        ctx, bot_user, page,
+        content=f"<@{ctx.author.id}>" if races_left > 1000 else "",
+        universe=universe,
+    )
+
+    await message.send()
 
 
 async def update_award_count(username):

@@ -28,7 +28,7 @@ class Field:
 
 
 class Message(View):
-    def __init__(self, ctx, user, pages, title=None, url=None, header="", footer="", color=None, profile=None, universe=None, show_pfp=True):
+    def __init__(self, ctx, user, pages, title=None, url=None, header="", footer="", content="", color=None, profile=None, universe=None, show_pfp=True):
         self.pages = pages if isinstance(pages, list) else [pages]
         self.page_count = len(self.pages)
         super().__init__(timeout=60 if self.page_count > 1 else 0.01)
@@ -36,7 +36,7 @@ class Message(View):
         self.ctx = ctx
         self.message = None
         self.user = user
-        self.era_string = strings.get_era_string(user)
+        self.content = content if content else strings.get_era_string(user)
 
         self.title = title
         self.url = url
@@ -216,7 +216,7 @@ class Message(View):
         kwargs = {
             "embed": self.embeds[self.index],
             "view": self,
-            "content": self.era_string,
+            "content": self.content,
         }
         if self.pages[self.index].render:
             file_name = self.cache[self.index]
