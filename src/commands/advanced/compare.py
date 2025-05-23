@@ -1,14 +1,13 @@
 from random import shuffle
 
-from discord import Embed
 from discord.ext import commands
 
 from config import prefix
 from database import users
 from database.bot_users import get_user
 from database.users import get_text_bests
-from utils import errors, colors, urls, strings, embeds, dates
-from utils.embeds import Page, Message
+from utils import errors, urls, strings, dates
+from utils.embeds import Page, Message, is_embed
 
 command = {
     "name": "compare",
@@ -33,7 +32,7 @@ class Compare(commands.Cog):
         args, user = dates.set_command_date_range(args, user)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username1, username2 = result
@@ -48,7 +47,7 @@ def get_args(user, args, info):
 
 async def run(ctx, user, username1, username2):
     if username1 == username2:
-        return await ctx.send(embed=same_username())
+        return await ctx.send(embed=errors.same_username())
 
     if username2 == user["username"]:
         username2 = username1
@@ -93,7 +92,7 @@ async def run(ctx, user, username1, username2):
             comparison[text_id] = (tb_dict1[text_id], tb_dict2[text_id], gap)
 
     if not comparison:
-        return await ctx.send(embed=no_common_texts(universe), content=era_string)
+        return await ctx.send(embed=errors.no_common_texts(universe), content=era_string)
 
     comparison = sorted(comparison.items(), key=lambda x: x[1][2], reverse=True)
     positive = [x for x in comparison if x[1][2] >= 0]
@@ -166,25 +165,6 @@ async def run(ctx, user, username1, username2):
     )
 
     await message.send()
-
-
-def same_username():
-    return Embed(
-        title="Same Username",
-        description="Must input two unique usernames to compare",
-        color=colors.error,
-    )
-
-
-def no_common_texts(universe):
-    embed = Embed(
-        title="No Data",
-        description="Users do not have any texts in common",
-        color=colors.error,
-    )
-    embeds.add_universe(embed, universe)
-
-    return embed
 
 
 async def setup(bot):

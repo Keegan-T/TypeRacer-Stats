@@ -1,6 +1,6 @@
 from discord.ext import commands
 
-from commands.advanced.compare import get_args, no_common_texts, same_username
+from commands.advanced.compare import get_args
 from database import users
 from database.bot_users import get_user
 from database.users import get_text_bests
@@ -36,7 +36,7 @@ class CompareGraph(commands.Cog):
 
 async def run(ctx, user, username1, username2):
     if username1 == username2:
-        return await ctx.send(embed=same_username())
+        return await ctx.send(embed=errors.same_username())
 
     if username2 == user["username"]:
         username2 = username1
@@ -88,7 +88,7 @@ async def run(ctx, user, username1, username2):
 
     if not data1:
         if not data2:
-            return await ctx.send(embed=no_common_texts(universe), content=era_string)
+            return await ctx.send(embed=errors.no_common_texts(universe), content=era_string)
         data1, data2 = data2, data1
         username1, username2 = username2, username1
         max_gap1, max_gap2 = max_gap2, max_gap1

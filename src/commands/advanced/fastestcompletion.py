@@ -7,7 +7,7 @@ from commands.advanced.races import get_stats_fields
 from commands.locks import big_lock
 from database import texts
 from database.bot_users import get_user
-from utils import errors, colors, strings, embeds
+from utils import errors, colors, strings
 from utils.embeds import Message, Page, is_embed
 from utils.stats import get_top_disjoint_windows
 
@@ -161,7 +161,7 @@ def no_milestone(category, universe):
         description=f"This user has not achieved this many {category}",
         color=colors.error
     )
-    embeds.add_universe(embed, universe)
+    errors.add_universe(embed, universe)
 
     return embed
 

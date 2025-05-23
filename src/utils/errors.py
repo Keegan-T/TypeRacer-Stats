@@ -1,8 +1,16 @@
 from discord import Embed
 
 from config import prefix
-from utils import strings, embeds
+from utils import strings
 from utils.colors import error, warning
+
+
+def add_universe(embed, universe):
+    if universe == "play":
+        return
+
+    footer_text = f"{embed.footer.text}\n" if embed.footer.text else ""
+    embed.set_footer(text=footer_text + f"Universe: {universe}")
 
 
 def missing_argument(info):
@@ -66,7 +74,7 @@ def no_races(universe="play"):
         description="User has not completed any races",
         color=error,
     )
-    embeds.add_universe(embed, universe)
+    add_universe(embed, universe)
 
     return embed
 
@@ -77,7 +85,7 @@ def no_races_in_range(universe):
         description="User has no races in this range",
         color=error,
     )
-    embeds.add_universe(embed, universe)
+    add_universe(embed, universe)
 
     return embed
 
@@ -89,7 +97,7 @@ def import_required(username, universe="play", time_travel=False):
         description=f"Must `{prefix}import {username}` to use this command",
         color=error,
     )
-    embeds.add_universe(embed, universe)
+    add_universe(embed, universe)
 
     if time_travel:
         embed.description += "\nwhile time travelling"
@@ -171,7 +179,7 @@ def unknown_text(universe="play"):
         description="Not a recognized text ID",
         color=error,
     )
-    embeds.add_universe(embed, universe)
+    add_universe(embed, universe)
 
     return embed
 
@@ -224,3 +232,20 @@ def embed_limit_exceeded():
         description="The maximum number of characters\nfor an embed has been exceeded",
         color=error,
     )
+
+def same_username():
+    return Embed(
+        title="Same Username",
+        description="Must input two unique usernames to compare",
+        color=error,
+    )
+
+def no_common_texts(universe):
+    embed = Embed(
+        title="No Data",
+        description="Users do not have any texts in common",
+        color=error,
+    )
+    add_universe(embed, universe)
+
+    return embed

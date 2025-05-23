@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 from dateutil.relativedelta import relativedelta
 from discord.ext import commands
 
-from commands.advanced.compare import same_username
 from database import users, races
 from database.bot_users import get_user
 from graphs import line_graph
@@ -60,7 +59,7 @@ def get_args(user, args, info):
 
 async def run(ctx, user, username1, username2, category, rate1, rate2=None):
     if username1 == username2:
-        return await ctx.send(embed=same_username())
+        return await ctx.send(embed=errors.same_username())
 
     universe = user["universe"]
     for username in [username1, username2]:
