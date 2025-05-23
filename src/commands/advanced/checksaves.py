@@ -1,6 +1,5 @@
 from datetime import datetime
 
-from discord import Embed
 from discord.ext import commands
 
 import commands.recent as recent
@@ -10,7 +9,8 @@ import database.users as users
 from api.users import get_stats
 from commands.account.download import run as download
 from database.bot_users import get_user
-from utils import errors, urls, strings, embeds
+from utils import errors, urls, strings
+from utils.embeds import Page, Message, is_embed
 
 command = {
     "name": "checksaves",
@@ -34,7 +34,7 @@ class CheckSaves(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username, text_id = result
@@ -93,15 +93,16 @@ async def run(ctx, user, username, text_id):
                 f"[{score['wpm']:,} WPM]({urls.replay(username, score['number'], universe)})\n"
             )
 
-    embed = Embed(
-        title=f"Available Saves",
-        description=description,
-        color=user["colors"]["embed"],
+    message = Message(
+        ctx, user, Page(
+            title=f"Available Saves",
+            description=description,
+        ),
+        universe=universe,
     )
-    embeds.add_profile(embed, api_stats, universe)
-    embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed)
+    await message.send()
+
     recent.text_id = text_id
 
 

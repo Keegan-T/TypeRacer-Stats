@@ -1,4 +1,4 @@
-from discord import Embed, File
+from discord import Embed
 from discord.ext import commands
 
 from api import users
@@ -11,8 +11,8 @@ from database import races
 from database.bot_users import get_user
 from database.texts import get_text
 from graphs import match_graph
-from graphs.core import remove_file
-from utils import errors, embeds, urls, colors, strings
+from utils import errors, urls, colors, strings
+from utils.embeds import Page, Message, is_embed
 
 command = {
     "name": "compareraces",
@@ -41,7 +41,7 @@ class CompareRaces(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         if len(result) == 4:
@@ -164,18 +164,6 @@ async def run(ctx, user, username1, username2, race_number1, race_number2, unive
             description = "**Best**\n" + description + "**Recent**"
 
     description = f"{strings.text_description(dict(text), universe)}\n\n" + description
-
-    embed = Embed(
-        title="Race Comparison",
-        description=description,
-        color=user["colors"]["embed"],
-    )
-    if username1 == username2:
-        if not stats:
-            stats = get_stats(username1, universe=universe)
-        embeds.add_profile(embed, stats, universe)
-    embeds.add_universe(embed, universe)
-
     rankings = [
         {
             "username": username1,
@@ -190,15 +178,21 @@ async def run(ctx, user, username1, username2, race_number1, race_number2, unive
     if username1 == username2 == user["username"]:
         rankings[1]["username"] = username2 + "\u200B"
 
-    title = f"{username1} #{race_number1:,} vs. {username2} #{race_number2:,}"
-    file_name = match_graph.render(user, rankings, title, "WPM", universe)
+    graph_title = f"{username1} #{race_number1:,} vs. {username2} #{race_number2:,}"
+    page = Page(
+        title="Race Comparison",
+        description=description,
+        render=lambda: match_graph.render(user, rankings, graph_title, "WPM", universe),
+    )
 
-    embed.set_image(url=f"attachment://{file_name}")
-    file = File(file_name, filename=file_name)
+    profile = None
+    if username1 == username2:
+        if not stats:
+            stats = get_stats(username1, universe=universe)
+        profile = stats
+    message = Message(ctx, user, page, profile=profile, universe=universe)
 
-    await ctx.send(embed=embed, file=file)
-
-    remove_file(file_name)
+    await message.send()
 
     recent.text_id = race_info1["text_id"]
 

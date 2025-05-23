@@ -1,4 +1,3 @@
-from discord import Embed
 from discord.ext import commands
 
 from api.races import get_races
@@ -7,7 +6,8 @@ from commands.basic.stats import get_args
 from commands.locks import skip_lock
 from database import races
 from database.bot_users import get_user
-from utils import embeds, strings, errors
+from utils import strings, errors
+from utils.embeds import Page, Message, is_embed
 
 command = {
     "name": "skippedraces",
@@ -31,7 +31,7 @@ class SkippedRaces(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username = result
@@ -50,14 +50,15 @@ async def run(ctx, user, username):
     if not race_list:
         return await ctx.send(embed=errors.no_races(universe))
 
-    embed = Embed(
-        title="Checking Skipped Races",
-        description=f"Scanning races for {strings.escape_formatting(username)}",
-        color=user["colors"]["embed"],
+    message = Message(
+        ctx, user, Page(
+            title="Checking Skipped Races",
+            description=f"Scanning races for {strings.escape_formatting(username)}",
+        ),
+        universe=universe,
     )
-    embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed)
+    await message.send()
 
     race_list.sort(key=lambda x: x["number"])
 
@@ -95,14 +96,15 @@ async def run(ctx, user, username):
                 ))
 
     if not found_races:
-        embed = Embed(
-            title="No Skipped Races Found",
-            description="No skipped races were found",
-            color=user["colors"]["embed"],
+        message = Message(
+            ctx, user, Page(
+                title="No Skipped Races Found",
+                description="No skipped races were found",
+            ),
+            universe=universe,
         )
-        embeds.add_universe(embed, universe)
 
-        return await ctx.send(embed=embed)
+        return await message.send()
 
     races.add_races(found_races, universe)
 
@@ -114,14 +116,15 @@ async def run(ctx, user, username):
         else:
             skipped_groups.append(f"{first:,}-{last:,}")
 
-    embed = Embed(
-        title=f"{len(found_races):,} Skipped Races Found",
-        description="Imported these missing races:\n" + ", ".join(skipped_groups),
-        color=user["colors"]["embed"],
+    message = Message(
+        ctx, user, Page(
+            title=f"{len(found_races):,} Skipped Races Found",
+            description="Imported these missing races:\n" + ", ".join(skipped_groups),
+        ),
+        universe=universe,
     )
-    embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed)
+    await message.send()
 
 
 def group_numbers(numbers, proximity=20):

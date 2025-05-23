@@ -1,13 +1,13 @@
 from datetime import datetime, timezone
 
 from dateutil.relativedelta import relativedelta
-from discord import Embed
 from discord.ext import commands
 
 import database.races as races
 import database.users as users
 from database.bot_users import get_user
-from utils import errors, strings, dates, embeds
+from utils import errors, strings, dates
+from utils.embeds import Page, Message, is_embed
 
 periods = ["month", "day", "week", "year"]
 command = {
@@ -36,7 +36,7 @@ class LongevityStats(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username, n, period = result
@@ -110,15 +110,16 @@ async def run(ctx, user, username, n, time_period):
 
         description += f"**Total {time_period.title()}s:** {over:,}"
 
-    embed = Embed(
-        title=f"Longevity Stats - {time_period.title()}s ({n:,} Races)",
-        description=description,
-        color=user["colors"]["embed"],
+    message = Message(
+        ctx, user, Page(
+            title=f"Longevity Stats - {time_period.title()}s ({n:,} Races)",
+            description=description,
+        ),
+        profile=stats,
+        universe=universe,
     )
-    embeds.add_profile(embed, stats, universe)
-    embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed, content=era_string)
+    await message.send()
 
 
 async def get_history(username, kind, universe, start_date, end_date):
