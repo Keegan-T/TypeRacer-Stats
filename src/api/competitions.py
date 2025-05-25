@@ -69,12 +69,10 @@ async def get_competition(date, period):
 
     competitors = list(competitors_dict.values())
     start, end = dates.get_start_end(date, period)
-    competition_id = f"{period[0].upper()}{start.strftime('%Y-%m-%d')}"
 
     return {
-        "id": competition_id,
-        "competitors": competitors,
-        "type": period,
         "start_time": start.timestamp(),
         "end_time": end.timestamp(),
+        "period": period,
+        "competitors": competitors,
     }

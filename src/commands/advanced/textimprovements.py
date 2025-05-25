@@ -1,10 +1,10 @@
 from discord.ext import commands
 
-import database.users as users
+import database.main.users as users
 from api.users import get_stats
 from commands.account.download import run as download
-from database import races
-from database.bot_users import get_user
+from database.main import races
+from database.bot.users import get_user
 from utils import errors, urls, strings
 from utils.embeds import Message, get_pages, is_embed
 

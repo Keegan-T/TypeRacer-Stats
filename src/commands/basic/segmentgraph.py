@@ -4,7 +4,7 @@ from discord.ext import commands
 from api.races import get_race, get_universe_multiplier
 from api.users import get_stats
 from commands.basic.realspeed import get_args
-from database.bot_users import get_user
+from database.bot.users import get_user
 from graphs import segment_graph
 from graphs.core import remove_file
 from utils import errors, urls, strings, embeds

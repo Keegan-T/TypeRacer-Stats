@@ -4,8 +4,8 @@ from api.races import get_races
 from api.users import get_stats
 from commands.basic.stats import get_args
 from commands.locks import skip_lock
-from database import races
-from database.bot_users import get_user
+from database.bot.users import get_user
+from database.main import races, deleted_races
 from utils import strings, errors
 from utils.embeds import Page, Message, is_embed
 
@@ -56,6 +56,7 @@ async def run(ctx, user, username):
             description=f"Scanning races for {strings.escape_formatting(username)}",
         ),
         universe=universe,
+        time_travel=False,
     )
 
     await message.send()
@@ -72,6 +73,7 @@ async def run(ctx, user, username):
 
     grouped_numbers = group_numbers(missing_numbers)
     found_races = []
+    deleted_ids = deleted_races.get_ids()
 
     for group in grouped_numbers:
         first, last = group[0], group[-1]
@@ -89,10 +91,12 @@ async def run(ctx, user, username):
 
         race_range = await get_races(username, start_time, end_time, last - first + 10, universe)
         for race in race_range:
-            if race["gn"] in group and race["wpm"] != 0:
+            if race["gn"] in group and race["wpm"] != 0 \
+                    and f"{universe}|{username}|{race['gn']}" not in deleted_ids:
                 found_races.append((
-                    strings.race_id(username, race["gn"]), username, race["tid"], race["gn"],
-                    race["wpm"], race["ac"], race["pts"], race["r"], race["np"], race["t"],
+                    universe, username, race["gn"], race["tid"], race["wpm"],
+                    race["ac"], race["pts"], race["r"], race["np"], race["t"],
+                    None, None, None, None, None, None, None, None, None, None  # Waiting for logs API
                 ))
 
     if not found_races:
@@ -102,11 +106,12 @@ async def run(ctx, user, username):
                 description="No skipped races were found",
             ),
             universe=universe,
+            time_travel=False,
         )
 
         return await message.send()
 
-    races.add_races(found_races, universe)
+    races.add_races(found_races)
 
     skipped_groups = []
     for group in group_numbers([r[3] for r in found_races], proximity=1):
@@ -122,6 +127,7 @@ async def run(ctx, user, username):
             description="Imported these missing races:\n" + ", ".join(skipped_groups),
         ),
         universe=universe,
+        time_travel=False,
     )
 
     await message.send()

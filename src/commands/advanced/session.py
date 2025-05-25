@@ -1,10 +1,10 @@
 from discord.ext import commands
 
-import database.races as races
-import database.users as users
+import database.main.races as races
+import database.main.users as users
 from commands.advanced.races import get_stats_fields
 from commands.locks import big_lock
-from database.bot_users import get_user
+from database.bot.users import get_user
 from utils import errors, strings
 from utils.embeds import Page, Message, is_embed
 from utils.stats import get_top_disjoint_windows
@@ -12,7 +12,7 @@ from utils.stats import get_top_disjoint_windows
 command = {
     "name": "session",
     "aliases": ["ss"],
-    "description": "Displays the maximum duration/race get_count sessions for a user with a given minimum break\n"
+    "description": "Displays the maximum duration/race get_competition_count sessions for a user with a given minimum break\n"
                    "A session ends whenever two races are greater apart in time than the minimum break",
     "parameters": "[username] <category> <time>",
     "defaults": {

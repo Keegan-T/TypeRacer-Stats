@@ -2,12 +2,12 @@ from discord import Embed
 from discord.ext import commands
 
 import commands.recent as recent
-import database.races as races
-import database.texts as texts
-import database.users as users
+import database.main.races as races
+import database.main.texts as texts
+import database.main.users as users
 from api.races import get_race
 from commands.basic.race import add_stats
-from database.bot_users import get_user
+from database.bot.users import get_user
 from utils import errors, urls, embeds, strings
 
 categories = ["races", "points", "wpm", "texts"]

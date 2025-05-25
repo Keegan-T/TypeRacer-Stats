@@ -6,7 +6,7 @@ from discord.ext import commands
 from api.users import get_latest_race
 from api.users import get_stats
 from commands.basic.stats import get_args
-from database.bot_users import get_user
+from database.bot.users import get_user
 from utils import errors, embeds
 from utils import strings
 

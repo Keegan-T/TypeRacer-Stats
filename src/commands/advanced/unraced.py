@@ -2,9 +2,9 @@ import random
 
 from discord.ext import commands
 
-import database.texts as texts
-import database.users as users
-from database.bot_users import get_user
+import database.main.texts as texts
+import database.main.users as users
+from database.bot.users import get_user
 from utils import errors, colors, urls, strings
 from utils.embeds import Page, Message, get_pages, is_embed
 
@@ -49,7 +49,7 @@ async def run(ctx, user, username, category):
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
 
-    text_list = texts.get_texts(as_dictionary=True, include_disabled=False, universe=universe)
+    text_list = texts.get_texts(as_dictionary=True, get_disabled=False, universe=universe)
     unraced = users.get_unraced_texts(username, universe)
     text_count = texts.get_text_count(universe)
     unraced_count = len(unraced)
@@ -62,8 +62,8 @@ async def run(ctx, user, username, category):
     elif category in ["easy", "hard"]:
         unraced.sort(key=lambda x: x["difficulty"], reverse=category == "hard")
 
-    def formatter(text):
-        text_id = text["id"]
+    def formatter(text_id):
+        text = text_list[text_id]
         return (
             f"[Text #{text_id}]({urls.trdata_text(text_id, universe)}) - [Ghost]({text['ghost']})\n"
             f'"{strings.truncate_clean(text["quote"], 500)}"\n\n'
@@ -86,6 +86,7 @@ async def run(ctx, user, username, category):
         ),
         profile=stats,
         universe=universe,
+        time_travel=False,
     )
 
     await message.send()

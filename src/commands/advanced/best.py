@@ -1,10 +1,10 @@
 from discord.ext import commands
 
 import commands.recent as recent
-import database.races as races
-import database.texts as texts
-import database.users as users
-from database.bot_users import get_user
+import database.main.races as races
+import database.main.texts as texts
+import database.main.users as users
+from database.bot.users import get_user
 from utils import errors, urls, strings, dates
 from utils.embeds import Message, Page, get_pages, is_embed
 
@@ -118,16 +118,17 @@ async def run(ctx, user, username, category, text_id, reverse=True):
 
     else:
         race_list = await races.get_races(
-            username, with_texts=True, order_by=category,
-            reverse=reverse, limit=100, universe=universe,
-            start_date=user["start_date"], end_date=user["end_date"]
+            username, order_by=category, reverse=reverse, limit=100,
+            universe=universe, start_date=user["start_date"], end_date=user["end_date"]
         )
+        text_list = texts.get_texts(as_dictionary=True, universe=universe)
         if not race_list:
             return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
 
         def formatter(race):
-            quote = strings.truncate_clean(race["quote"], 60)
             text_id = race["text_id"]
+            text = text_list[text_id]
+            quote = strings.truncate_clean(text["quote"], 60)
             return (
                 f"[{race[category]:,.2f} {category_title}]"
                 f"({urls.replay(username, race['number'], universe)})"

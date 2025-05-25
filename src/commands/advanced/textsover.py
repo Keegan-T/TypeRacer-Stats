@@ -2,9 +2,9 @@ from random import shuffle
 
 from discord.ext import commands
 
-import database.texts as texts
-import database.users as users
-from database.bot_users import get_user
+import database.main.texts as texts
+import database.main.users as users
+from database.bot.users import get_user
 from utils import errors, urls, strings
 from utils.embeds import Message, get_pages, is_embed
 

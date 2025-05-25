@@ -3,12 +3,12 @@ from datetime import datetime
 from discord.ext import commands
 
 import commands.recent as recent
-import database.races as races
-import database.texts as texts
-import database.users as users
+import database.main.races as races
+import database.main.texts as texts
+import database.main.users as users
 from api.users import get_stats
 from commands.account.download import run as download
-from database.bot_users import get_user
+from database.bot.users import get_user
 from utils import errors, urls, strings
 from utils.embeds import Page, Message, is_embed
 
@@ -99,6 +99,7 @@ async def run(ctx, user, username, text_id):
             description=description,
         ),
         universe=universe,
+        time_travel=False,
     )
 
     await message.send()

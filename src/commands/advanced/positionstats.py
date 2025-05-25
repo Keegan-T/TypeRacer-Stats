@@ -1,9 +1,9 @@
 from discord.ext import commands
 
-import database.races as races
-import database.users as users
+import database.main.races as races
+import database.main.users as users
 from commands.basic.stats import get_args
-from database.bot_users import get_user
+from database.bot.users import get_user
 from utils import errors, urls, strings
 from utils.embeds import Page, Message, Field, is_embed
 

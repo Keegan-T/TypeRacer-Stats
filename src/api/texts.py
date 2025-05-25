@@ -53,18 +53,23 @@ def get_text_list(universe):
     table = soup.find("table", class_="stats")
     rows = table.find_all("tr")[1:]
     for i, row in enumerate(rows):
+        print(f"Getting text {i:,} of {len(rows):,}")
         columns = row.find_all("td")
         text_id = int(columns[0].get_text()[1:])
         quote = columns[1].get_text().strip()
         if columns[6].get_text() == "0.00":
-            ghost = get_ghost(text_id, universe)
+            username, race_number = get_ghost(text_id, universe)
         else:
             link = columns[5].find("a")["href"].split("=")
             username = link[1].split("&")[0]
             race_number = link[2].split("&")[0]
-            ghost = urls.ghost(username, race_number, universe)
 
-        text_list.append((text_id, quote, 0, ghost))
+        text_list.append({
+            "text_id": text_id,
+            "quote": quote,
+            "username": username,
+            "race_number": race_number,
+        })
 
     return text_list
 
@@ -80,6 +85,5 @@ def get_ghost(text_id, universe):
     link = columns[2].find("a")["href"].split("=")
     username = link[1].split("&")[0]
     race_number = link[2].split("&")[0]
-    ghost = urls.ghost(username, race_number, universe)
 
-    return ghost
+    return username, race_number

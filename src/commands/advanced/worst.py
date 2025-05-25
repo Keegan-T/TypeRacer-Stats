@@ -1,7 +1,7 @@
 from discord.ext import commands
 
 from commands.advanced.best import get_args, run, categories
-from database.bot_users import get_user
+from database.bot.users import get_user
 from utils import embeds
 
 command = {

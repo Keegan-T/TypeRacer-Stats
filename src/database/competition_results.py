@@ -1,6 +1,7 @@
 import copy
+from collections import defaultdict
 
-from database import db
+from database.main import db
 
 
 async def get_competitions(start_date=None, end_date=None):
@@ -14,65 +15,64 @@ async def get_competitions(start_date=None, end_date=None):
         {end_string}
     """)
 
-    competitions = {}
+    competitions = defaultdict(lambda: {
+        "start_time": None,
+        "end_time": None,
+        "period": None,
+        "competitors": []
+    })
 
     for result in results:
-        id = result["id"]
-        competitor = {
+        key = (result["start_time"], result["end_time"], result["period"])
+        comp = competitions[key]
+        comp["start_time"], comp["end_time"], comp["period"] = key
+        comp["competitors"].append({
             "username": result["username"],
             "points": result["points"],
             "races": result["races"],
             "wpm_average": result["wpm_average"],
             "accuracy": result["accuracy"],
-        }
-
-        if id in competitions:
-            competitions[id]["competitors"].append(competitor)
-        else:
-            competitions[id] = {
-                "id": id,
-                "competitors": [competitor],
-                "type": result["type"],
-                "start_time": result["start_time"],
-                "end_time": result["end_time"],
-            }
+        })
 
     return competitions.values()
 
 
-def get_count():
-    count = db.fetch("SELECT COUNT(DISTINCT id) AS get_count FROM competition_results")[0]["get_count"]
+def get_competition_count():
+    count = db.fetch("""
+        SELECT COUNT(DISTINCT start_time || "-" || end_time || "-" || period) AS competition_count
+        FROM competition_results
+    """)[0]["competition_count"]
 
     return count
 
 
-def get_latest():
-    latest_list = db.fetch("""
-        SELECT * FROM (
-            SELECT id, type, start_time, end_time, ROW_NUMBER()
-            OVER (PARTITION BY type ORDER BY end_time DESC) AS row_num
-            FROM competition_results
-        ) AS latest
-        WHERE row_num = 1
-    """)
-
+def get_latest_competitions():
     latest = {}
-    for comp in latest_list:
-        latest[comp["type"]] = comp
+    for period in "day", "week", "month", "year":
+        end_time = db.fetch(f"""
+            SELECT end_time FROM competition_results
+            WHERE period = '{period}'
+            ORDER BY end_time DESC
+            LIMIT 1
+        """)[0]
+        latest[period] = end_time
 
     return latest
 
 
 def add_results(competition):
+    results = []
     for result in competition["competitors"]:
-        db.run("""
-            INSERT INTO competition_results
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, [
-            competition["id"], result["username"], result["points"], result["races"],
-            result["average_wpm"], result["accuracy"], competition["type"],
-            competition["start_time"], competition["end_time"]
-        ])
+        results.append((
+            competition["start_time"], competition["end_time"], competition["period"],
+            result["username"], result["points"], result["races"],
+            result["average_wpm"], result["accuracy"],
+        ))
+
+    db.run_many("""
+        INSERT INTO competition_results
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, results)
 
 
 async def get_awards(username=None, start_date=None, end_date=None):
@@ -89,14 +89,14 @@ async def get_awards(username=None, start_date=None, end_date=None):
 
     competitions = await get_competitions(start_date, end_date)
     for competition in competitions:
-        kind = competition["type"]
+        period = competition["period"]
         competitors = competition["competitors"]
         podium = sorted(competitors, key=lambda x: x["points"], reverse=True)[:3]
         for position, competitor in enumerate(podium):
             user = competitor["username"]
             if user not in awards:
                 awards[user] = copy.deepcopy(award_dict)
-            awards[user][kind][ranks[position]] += 1
+            awards[user][period][ranks[position]] += 1
             awards[user]["total"] += 1
 
     if username:

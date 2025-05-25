@@ -3,9 +3,9 @@ from random import shuffle
 from discord.ext import commands
 
 from config import prefix
-from database import users
-from database.bot_users import get_user
-from database.users import get_text_bests
+from database.main import users
+from database.bot.users import get_user
+from database.main.users import get_text_bests
 from utils import errors, urls, strings, dates
 from utils.embeds import Page, Message, is_embed
 

@@ -1,4 +1,4 @@
-import database.user_db as db
+import database.bot.db as db
 
 
 def get_banned():

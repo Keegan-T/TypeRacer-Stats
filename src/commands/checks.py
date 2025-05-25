@@ -1,5 +1,5 @@
 from config import bot_owner, bot_admins, supporters
-from database.banned import get_banned
+from database.bot.banned import get_banned
 
 
 def ban_check(ctx):

@@ -4,8 +4,8 @@ from discord.ext import commands
 
 import commands.recent as recent
 from config import prefix
-from database.bot_users import get_user
-from database.texts import get_texts
+from database.bot.users import get_user
+from database.main.texts import get_texts
 from utils import errors, colors, urls, strings
 from utils.embeds import Page, Message, get_pages
 
@@ -47,7 +47,7 @@ async def run(ctx, user, query):
     results = []
 
     if search_id:
-        text_id_match = next((text for text in text_list if str(text["id"]) == query), None)
+        text_id_match = next((text for text in text_list if str(text["text_id"]) == query), None)
         if text_id_match:
             results.append(text_id_match)
         else:
@@ -103,7 +103,7 @@ async def run(ctx, user, query):
         quote = strings.truncate_clean(result["quote"], max_chars)
         pages = Page(
             description=(
-                f"\n[#**{result['id']}**]({urls.trdata_text(result['id'], universe)})"
+                f"\n[#**{result['text_id']}**]({urls.trdata_text(result['text_id'], universe)})"
                 f"{' (Disabled)' * result['disabled']} - [Ghost]({result['ghost']})\n"
                 f'"{quote}"\n'
             )
@@ -111,6 +111,7 @@ async def run(ctx, user, query):
 
     else:
         def formatter(result):
+            print(result)
             description = ""
             quote = result["quote"]
             chars = max_chars - query_length
@@ -150,7 +151,7 @@ async def run(ctx, user, query):
                 substring += "..."
 
             description += (
-                f"\n[#{result['id']}]({urls.trdata_text(result['id'], universe)})"
+                f"\n[#{result['text_id']}]({urls.trdata_text(result['text_id'], universe)})"
                 f"{' (Disabled) ' * result['disabled']}"
             )
 
@@ -177,7 +178,7 @@ async def run(ctx, user, query):
 
     await message.send()
 
-    recent.text_id = results[0]["id"]
+    recent.text_id = results[0]["text_id"]
 
 
 def big_query():

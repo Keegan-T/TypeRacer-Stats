@@ -1,12 +1,11 @@
 from discord.ext import commands
 
 import commands.recent as recent
-import database.races_300 as races_300
 from api.races import get_race
 from api.users import get_stats
 from commands.basic.realspeed import get_args
 from config import prefix
-from database.bot_users import get_user
+from database.bot.users import get_user
 from graphs import match_graph
 from utils import errors, urls, strings
 from utils.embeds import Page, Message, is_embed
@@ -61,9 +60,6 @@ async def run(ctx, user, username, race_number, universe):
     description += strings.real_speed_description(race_info)
     description += strings.raw_speed_description(race_info)
     description += "Completed " + strings.discord_timestamp(race_info["timestamp"])
-
-    if universe == "play" and 300 <= race_info["adjusted"] <= 450 and not stats["disqualified"]:
-        await races_300.add_new_race(username, race_number, race_info)
 
     graph_title = f"Race Graph - {username} - Race #{race_number:,}"
     y_label = "Adjusted vs. Raw WPM"

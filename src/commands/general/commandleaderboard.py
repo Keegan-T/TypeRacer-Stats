@@ -5,7 +5,7 @@ from discord import Embed
 from discord.ext import commands
 
 from config import prefix
-from database.bot_users import get_user, get_commands, get_all_commands, get_total_commands, get_top_users
+from database.bot.users import get_user, get_commands, get_all_commands, get_total_commands, get_top_users
 from utils import errors, colors, strings
 
 command = {

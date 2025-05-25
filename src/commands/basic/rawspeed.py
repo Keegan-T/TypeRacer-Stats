@@ -2,7 +2,7 @@ from discord.ext import commands
 
 from commands.basic.realspeed import get_args, run
 from config import prefix
-from database.bot_users import get_user
+from database.bot.users import get_user
 from utils import embeds
 
 graph_commands = ["rawgraph", "rawg", "rawadjustedgraph", "rag"]

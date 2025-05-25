@@ -1,8 +1,8 @@
 from discord import Embed
 from discord.ext import commands
 
-import database.texts as texts
-from database.bot_users import get_user
+import database.main.texts as texts
+from database.bot.users import get_user
 from utils import urls
 
 command = {

@@ -2,14 +2,14 @@ from discord import Embed
 from discord.ext import commands
 
 import commands.recent as recent
-import database.races as races
-import database.text_results as top_tens
-import database.texts as texts
-import database.users as users
+import database.main.races as races
+import database.main.text_results as top_tens
+import database.main.texts as texts
+import database.main.users as users
 from api.users import get_stats
 from commands.account.download import run as download
 from config import prefix
-from database.bot_users import get_user
+from database.bot.users import get_user
 from graphs import improvement_graph
 from utils import errors, colors, urls, strings, embeds
 from utils.embeds import Message, Page
@@ -186,10 +186,8 @@ async def run(ctx, user, username, text_id=None, race_number=None):
 
     recent.text_id = text_id
 
-    if universe != "play" or user["end_date"]:
-        return
-
-    await top_10_display(ctx, username, text_id, recent_race)
+    if universe == "play" and not user["end_date"]:
+        await top_10_display(ctx, username, text_id, recent_race)
 
 
 def get_performance_stats(username, universe, text_id, wpm, difficulty):
@@ -237,7 +235,10 @@ async def top_10_display(ctx, username, text_id, recent_race):
         original_rank = top_10.index(existing_score) + 1
     await top_tens.update_results(text_id)
     top_10 = top_tens.get_top_n(text_id, 11)
-    top_10_score = next((score for score in top_10[:10] if score["id"] == recent_race["id"]), None)
+    top_10_score = next((
+        score for score in top_10[:10]
+        if score["username"] == recent_race["username"] and score["number"] == recent_race["number"]
+    ), None)
 
     if not top_10_score:
         return
@@ -250,7 +251,7 @@ async def top_10_display(ctx, username, text_id, recent_race):
     for i, race in enumerate(top_10):
         style = ""
         increase = ""
-        if race["id"] == recent_race["id"]:
+        if race["username"] == recent_race["username"] and race["number"] == recent_race["number"]:
             style = "**"
             if original_rank is not None and original_rank > i + 1:
                 increase = f"<:increase:1372466536693891142> {original_rank - (i + 1)}"
@@ -262,9 +263,12 @@ async def top_10_display(ctx, username, text_id, recent_race):
         if i > 9:
             style = "~~"
         user = race["username"]
+        accuracy_string = ""
+        if race["accuracy"]:
+            accuracy_string = f" ({race['accuracy']:.0%})"
         description += (
             f"{strings.rank(i + 1)} {style}{strings.escape_formatting(user)} - [{race['wpm']:,.2f} WPM]"
-            f"({urls.replay(user, race['number'])}){style} - "
+            f"({urls.replay(user, race['number'])}){accuracy_string}{style} - "
             f"{strings.discord_timestamp(race['timestamp'])} {increase}\n"
         )
 

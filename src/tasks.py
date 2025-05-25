@@ -4,25 +4,23 @@ from datetime import datetime, timezone
 import aiohttp
 from dateutil.relativedelta import relativedelta
 
-import database.competition_results as competition_results
-import database.important_users as important_users
-import database.texts as texts
-import database.users as users
+import database.main.competition_results as competition_results
+import database.main.texts as texts
+import database.main.users as users
 from api.competitions import get_competition
 from commands.account.download import run as download
 from commands.locks import import_lock
-from utils import strings
 from utils.logging import log
 
 
 async def import_competitions():
     log("Importing Competitions")
     grace_period = 21600
-    comps = competition_results.get_latest()
+    latest = competition_results.get_latest_competitions()
     utc = timezone.utc
     now = datetime.now(utc)
 
-    day_end = datetime.fromtimestamp(comps["day"]['end_time'], tz=utc)
+    day_end = datetime.fromtimestamp(latest["day"]["end_time"], tz=utc)
     offset = relativedelta(days=1, seconds=grace_period)
     day_check = day_end + offset
     while day_check < now:
@@ -32,7 +30,7 @@ async def import_competitions():
         competition_results.add_results(competition)
         day_check += relativedelta(days=1)
 
-    week_end = datetime.fromtimestamp(comps["week"]['end_time'], tz=utc)
+    week_end = datetime.fromtimestamp(latest["week"]["end_time"], tz=utc)
     offset = relativedelta(weeks=1, seconds=grace_period)
     week_check = week_end + offset
     while week_check < now:
@@ -42,7 +40,7 @@ async def import_competitions():
         competition_results.add_results(competition)
         week_check += relativedelta(weeks=1)
 
-    month_end = datetime.fromtimestamp(comps["month"]['end_time'], tz=utc)
+    month_end = datetime.fromtimestamp(latest["month"]["end_time"], tz=utc)
     offset = relativedelta(months=1, seconds=grace_period)
     month_check = month_end + offset
     while month_check < now:
@@ -52,7 +50,7 @@ async def import_competitions():
         competition_results.add_results(competition)
         month_check += relativedelta(months=1)
 
-    year_end = datetime.fromtimestamp(comps["year"]['end_time'], tz=utc)
+    year_end = datetime.fromtimestamp(latest["year"]["end_time"], tz=utc)
     offset = relativedelta(years=1, seconds=grace_period)
     year_check = year_end + offset
     while year_check < now:
@@ -71,9 +69,9 @@ async def import_competitions():
         if username not in awards_list.keys():
             continue
         awards = awards_list[username]
-        first = awards['day']['first'] + awards['week']['first'] + awards['month']['first'] + awards['year']['first']
-        second = awards['day']['second'] + awards['week']['second'] + awards['month']['second'] + awards['year']['second']
-        third = awards['day']['third'] + awards['week']['third'] + awards['month']['third'] + awards['year']['third']
+        first = awards["day"]["first"] + awards["week"]["first"] + awards["month"]["first"] + awards["year"]["first"]
+        second = awards["day"]["second"] + awards["week"]["second"] + awards["month"]["second"] + awards["year"]["second"]
+        third = awards["day"]["third"] + awards["week"]["third"] + awards["month"]["third"] + awards["year"]["third"]
         if user["awards_first"] != first or user["awards_second"] != second or user["awards_third"] != third:
             users.update_awards(username, first, second, third)
 
@@ -81,31 +79,25 @@ async def import_competitions():
 
 
 async def update_important_users():
-    user_list = important_users.get_users()
-    log(f"Updating {len(user_list)} Important Users")
+    log(f"Updating Important Users")
 
-    leaders = users.get_most("races", 10) + \
-              users.get_most_daily_races(10) + \
-              users.get_most("characters", 10) + \
-              users.get_most("seconds", 10) + \
-              users.get_most_total_points(10) + \
-              users.get_most_daily_points(10) + \
-              users.get_top_text_best(10) + \
-              users.get_most("text_wpm_total", 10) + \
-              users.get_most("texts_typed", 10) + \
-              await users.get_most_text_repeats(10) + \
-              users.get_most_awards(10)
-
-    for leader in leaders:
-        username = leader["username"]
-        if leader["username"] not in user_list:
-            log(f"Adding top 10 user {username} to daily imports")
-            important_users.add_user(username)
-            user_list.append(username)
+    leaders = (
+            users.get_most("races", 20)
+            + users.get_most_daily_races(20)
+            + users.get_most("characters", 20)
+            + users.get_most("seconds", 20)
+            + users.get_most_total_points(20)
+            + users.get_most_daily_points(20)
+            + users.get_top_text_best(20)
+            + users.get_most("text_wpm_total", 20)
+            + users.get_most("texts_typed", 20)
+            + users.get_most("text_repeat_times", 20)
+            + users.get_most_awards(20)
+    )
 
     await import_lock.acquire()
-    for username in user_list:
-        await download(username)
+    for user in leaders:
+        await download(user["username"])
     import_lock.release()
     log("Finished Updating Important Users")
 
@@ -115,7 +107,7 @@ async def import_top_ten_users():
     from api.users import get_stats
 
     unique_users = {}
-    text_ids = [str(text["id"]) for text in texts.get_texts(include_disabled=False)]
+    text_ids = [str(text["text_id"]) for text in texts.get_texts(get_disabled=False)]
     partitions = [text_ids[i:i + 100] for i in range(0, len(text_ids), 100)]
 
     for i in range(len(partitions)):
@@ -148,9 +140,9 @@ async def import_top_ten_users():
 
 async def update_top_tens():
     log(f"Updating Top Tens")
-    import database.text_results as text_results
-    from database.users import get_text_bests
-    from database.alts import get_alts
+    import database.main.text_results as text_results
+    from database.main.users import get_text_bests
+    from database.main.alts import get_alts
 
     user_list = await import_top_ten_users()
     alts = get_alts()
@@ -164,7 +156,10 @@ async def update_top_tens():
         for race in text_bests:
             text_id = race["text_id"]
             wpm = race["wpm"]
-            race = (username, text_id, race["number"], wpm, race["timestamp"])
+            race = (
+                text_id, username, race["number"], wpm, None,
+                race["accuracy"], race["timestamp"]
+            )
 
             if username in banned:
                 continue
@@ -186,18 +181,10 @@ async def update_top_tens():
                 top_10s[text_id] = sorted(top_10s[text_id], key=lambda x: x[3], reverse=True)[:10]
 
     results = []
-
     disabled_text_ids = texts.get_disabled_text_ids()
     for text_id, top_10 in top_10s.items():
-        if int(text_id) in disabled_text_ids:
-            continue
-        for score in top_10:
-            username = score[0]
-            number = score[2]
-            results.append((
-                strings.race_id(username, number), score[1],
-                username, number, score[3], score[4],
-            ))
+        if int(text_id) not in disabled_text_ids:
+            results += top_10
 
     log(f"Adding {len(results):,} results")
     text_results.add_results(results)

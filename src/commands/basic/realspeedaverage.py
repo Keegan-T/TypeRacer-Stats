@@ -6,7 +6,7 @@ from api.races import get_race_html_bulk, get_race_details
 from api.users import get_stats
 from commands.basic.realspeed import run as run_realspeed
 from config import prefix
-from database.bot_users import get_user
+from database.bot.users import get_user
 from utils import errors, colors, urls, strings, embeds
 from utils.errors import command_in_use
 

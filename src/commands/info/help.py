@@ -5,7 +5,7 @@ from discord import Embed
 from discord.ext import commands
 
 from config import prefix, bot_admins, bot_owner
-from database.bot_users import get_user
+from database.bot.users import get_user
 from utils import errors
 
 groups = ["account", "advanced", "basic", "general", "info", "admin", "owner"]

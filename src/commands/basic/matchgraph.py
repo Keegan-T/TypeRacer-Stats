@@ -6,7 +6,7 @@ from api.users import get_stats
 from commands.basic.realspeed import get_args
 from commands.locks import match_lock
 from config import prefix
-from database.bot_users import get_user
+from database.bot.users import get_user
 from graphs import match_graph
 from utils import errors, urls, strings
 from utils.embeds import Message, Page, is_embed

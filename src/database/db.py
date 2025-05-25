@@ -2,12 +2,19 @@ import sqlite3
 
 import aiosqlite
 
-file = "./data/typeracerstats.db"
+file = "./data/main.db"
+
 reader = sqlite3.connect(file)
-writer = sqlite3.connect(file)
 reader.row_factory = sqlite3.Row
+reader.execute("PRAGMA foreign_keys = ON")
+reader.execute("PRAGMA journal_mode = WAL")
+reader.execute("PRAGMA cache_size = -100000")
+
+writer = sqlite3.connect(file)
 writer.row_factory = sqlite3.Row
+writer.execute("PRAGMA foreign_keys = ON")
 writer.execute("PRAGMA journal_mode = WAL")
+writer.execute("PRAGMA cache_size = -100000")
 
 
 def fetch(query, params=[]):

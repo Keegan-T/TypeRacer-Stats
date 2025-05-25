@@ -2,7 +2,7 @@ from discord import Embed
 from discord.ext import commands
 
 from config import donate_link
-from database.bot_users import get_user
+from database.bot.users import get_user
 
 command = {
     "name": "support",
@@ -27,7 +27,8 @@ async def run(ctx, user):
         "TypeRacer Stats is hosted out of pocket to provide 24/7 availability for the community.\n"
         "One month of hosting costs $14.00 USD\n\n"
         f"[Click here to donate]({donate_link})\n"
-        f"Thank you for your support! <:support:1220863071086575716>"
+        "Supporters may request a custom background image for their graphs <:peepo:1375934647086616646>\n"
+        "Thank you for your support! <:support:1220863071086575716>"
     )
 
     embed = Embed(

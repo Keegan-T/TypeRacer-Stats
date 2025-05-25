@@ -2,14 +2,11 @@ import requests
 from discord import Embed
 from discord.ext import commands
 
-import database.races as races
-import database.texts as texts
-import database.users as users
+import database.main.texts as texts
 from api.texts import get_text_list
-from database.bot_users import get_user, update_universe
-from database.users import get_universe_list
+from database.bot.users import get_user, update_universe
+from database.main.users import get_universe_list
 from utils import colors, strings
-from utils.logging import log
 
 command = {
     "name": "setuniverse",
@@ -42,9 +39,9 @@ class SetUniverse(commands.Cog):
             if response.status_code == 404:
                 return await ctx.send(embed=unknown_universe())
             else:
-                if not texts.universe_exists(universe):
-                    await ctx.send(embed=creating_universe(user))
-                    create_universe(universe)
+                await ctx.send(embed=fetching_texts(user))
+                text_list = get_text_list(universe)
+                texts.add_texts(text_list, universe)
 
         await run(ctx, user, universe)
 
@@ -61,23 +58,10 @@ async def run(ctx, user, universe):
     await ctx.send(embed=embed)
 
 
-def create_universe(universe):
-    log(f"Creating universe: {universe}")
-
-    users.create_table(universe)
-    races.create_table(universe)
-
-    texts.create_table(universe)
-    text_list = get_text_list(universe)
-    texts.add_texts(text_list, universe)
-
-    log("Finished creating universe")
-
-
-def creating_universe(user):
+def fetching_texts(user):
     return Embed(
-        title="Creating Universe",
-        description="Initializing new universe",
+        title="New Universe",
+        description="Fetching universe texts",
         color=user["colors"]["embed"],
     )
 

@@ -12,8 +12,7 @@ from requests.exceptions import SSLError
 import records
 from commands.checks import ban_check
 from config import prefix, bot_token, staging, welcome_message, bot_owner, typeracer_stats_channel_id
-from database import bot_users
-from database.bot_users import update_commands
+from database.bot.users import get_user_ids, get_total_commands, update_commands
 from tasks import import_competitions, update_important_users, update_top_tens
 from utils import errors, colors
 from utils.logging import get_log_message, log, log_error
@@ -22,8 +21,8 @@ bot = commands.Bot(command_prefix=prefix, case_insensitive=True, intents=discord
 bot.remove_command("help")
 bot.add_check(ban_check)
 
-total_commands = sum(bot_users.get_total_commands().values())
-users = bot_users.get_user_ids()
+total_commands = sum(get_total_commands().values())
+users = get_user_ids()
 
 
 @bot.event

@@ -1,23 +1,21 @@
 from collections import defaultdict
 
 import api.texts as texts_api
-import database.modified_races as modified_races
-import database.texts as texts
-from database import db
-from database.alts import get_alts
+import database.main.modified_races as modified_races
+import database.main.texts as texts
+from database.main import deleted_races, db
+from database.main.alts import get_alts
 
 
 def add_results(results):
     db.run_many("""
         INSERT OR IGNORE INTO text_results
-        VALUES (?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     """, results)
 
 
 def get_count():
-    number = db.fetch("SELECT COUNT(DISTINCT text_id) FROM text_results")[0][0]
-
-    return number
+    return db.fetch("SELECT COUNT(DISTINCT text_id) FROM text_results")[0][0]
 
 
 def get_top_10s():
@@ -109,34 +107,33 @@ async def update_results(text_id):
     top_10_database = texts.get_top_10(text_id)
     for score in top_10_database:
         scores.append((
-            score["id"], text_id, score["username"],
-            score["number"], score["wpm"], score["timestamp"],
+            text_id, score["username"], score["number"], score["wpm"],
+            None, score["accuracy"], score["timestamp"],
         ))
 
     top_10_api = await texts_api.get_top_10(text_id)
-    modified_ids = modified_races.get_ids()
+    exclusions = modified_races.get_ids() | deleted_races.get_ids()
     for score in top_10_api:
         race, user = score
         username = user["id"][3:]
         number = race["gn"]
-        id = f"{username}|{number}"
-
-        if id in modified_ids:
+        if f"play|{username}|{number}" in exclusions:
             continue
 
         scores.append((
-            id, text_id, username,
-            number, race["wpm"], race["t"],
+            text_id, username, number, race["wpm"],
+            None, race.get("ac", None), race["t"],
         ))
 
     add_results(scores)
 
 
-def delete_result(id):
+def delete_result(username, race_number):
     db.run("""
         DELETE FROM text_results
-        WHERE id = ?
-    """, [id])
+        WHERE username = ?
+        AND number = ?
+    """, [username, race_number])
 
 
 def delete_results(text_id):

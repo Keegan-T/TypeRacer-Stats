@@ -5,7 +5,7 @@ import traceback
 import requests
 
 from config import bot_owner, staging, webhook
-from database.bot_users import get_user
+from database.bot.users import get_user
 
 start = 0
 

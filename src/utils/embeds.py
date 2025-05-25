@@ -3,7 +3,6 @@ import os
 from discord import Embed, ButtonStyle, File
 from discord.ui import View, Button
 
-from config import web_server
 from utils import urls, strings
 
 
@@ -28,7 +27,7 @@ class Field:
 
 
 class Message(View):
-    def __init__(self, ctx, user, pages, title=None, url=None, header="", footer="", content="", color=None, profile=None, universe=None, show_pfp=True):
+    def __init__(self, ctx, user, pages, title=None, url=None, header="", footer="", content="", color=None, profile=None, universe=None, show_pfp=True, time_travel=True):
         self.pages = pages if isinstance(pages, list) else [pages]
         self.page_count = len(self.pages)
         super().__init__(timeout=60 if self.page_count > 1 else 0.01)
@@ -36,8 +35,12 @@ class Message(View):
         self.ctx = ctx
         self.message = None
         self.user = user
-        self.content = content if content else strings.get_era_string(user)
-
+        if content:
+            self.content = content
+        elif time_travel:
+            self.content = strings.get_era_string(user)
+        else:
+            self.content = ""
         self.title = title
         self.url = url
         self.index = 0

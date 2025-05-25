@@ -4,14 +4,14 @@ from dateutil import parser
 from dateutil.relativedelta import relativedelta
 from discord.ext import commands
 
-import database.races as races
-import database.users as users
+import database.main.races as races
+import database.main.users as users
 from api.competitions import get_competition_info
 from api.users import get_stats
 from commands.account.download import run as download
 from commands.advanced.races import get_stats_fields
 from config import prefix
-from database.bot_users import get_user
+from database.bot.users import get_user
 from utils import errors, strings, dates, embeds
 from utils.embeds import Message, Page
 
@@ -151,6 +151,7 @@ async def run(ctx, user, username, date):
         title,
         profile=stats,
         universe=universe,
+        time_travel=False,
     )
 
     await message.send()

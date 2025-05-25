@@ -3,9 +3,9 @@ from datetime import datetime, timezone
 from dateutil.relativedelta import relativedelta
 from discord.ext import commands
 
-import database.races as races
-import database.users as users
-from database.bot_users import get_user
+import database.main.races as races
+import database.main.users as users
+from database.bot.users import get_user
 from utils import errors, strings, dates
 from utils.embeds import Page, Message, is_embed
 
@@ -57,7 +57,6 @@ async def run(ctx, user, username, n, time_period):
     stats = users.get_user(username, universe)
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
-    era_string = strings.get_era_string(user)
 
     all_history = await get_history(username, time_period, universe, user["start_date"], user["end_date"])
     history = [period for period in all_history if period[2] >= n]

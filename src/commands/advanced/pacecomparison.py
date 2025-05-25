@@ -3,8 +3,8 @@ from datetime import datetime, timezone
 from dateutil.relativedelta import relativedelta
 from discord.ext import commands
 
-from database import users, races
-from database.bot_users import get_user
+from database.main import races, users
+from database.bot.users import get_user
 from graphs import line_graph
 from utils import errors, strings, dates
 from utils.embeds import Page, Field, Message, is_embed
@@ -73,7 +73,10 @@ async def run(ctx, user, username1, username2, category, rate1, rate2=None):
         {"username": username2, "rate": rate2},
     ]
     for i in range(2):
-        race_list = await races.get_races(user_list[i]["username"], columns, user["start_date"], user["end_date"])
+        race_list = await races.get_races(
+            user_list[i]["username"], columns,
+            user["start_date"], user["end_date"], universe=universe,
+        )
         race_list.sort(key=lambda x: x["timestamp"])
 
         cumulative_race_list = []

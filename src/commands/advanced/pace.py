@@ -4,8 +4,8 @@ from dateutil.relativedelta import relativedelta
 from discord.ext import commands
 
 from commands.advanced.milestone import run as run_milestone
-from database import users, races
-from database.bot_users import get_user
+from database.main import races, users
+from database.bot.users import get_user
 from graphs import line_graph
 from utils import errors, strings, dates
 from utils.embeds import Page, is_embed, Message
@@ -69,7 +69,8 @@ async def run(ctx, user, username, number, category, rate):
         return await ctx.send(embed=errors.import_required(username, universe))
 
     race_list = await races.get_races(
-        username, ["number", "points", "timestamp"], user["start_date"], user["end_date"]
+        username, ["number", "points", "timestamp"],
+        user["start_date"], user["end_date"], universe=universe,
     )
     race_list.sort(key=lambda x: x["timestamp"])
 

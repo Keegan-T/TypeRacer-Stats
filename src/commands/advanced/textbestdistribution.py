@@ -4,11 +4,11 @@ from bisect import bisect_left
 from discord import Embed
 from discord.ext import commands
 
-import database.texts as texts
-import database.users as users
+import database.main.texts as texts
+import database.main.users as users
 from commands.basic.stats import get_args
 from config import prefix
-from database.bot_users import get_user
+from database.bot.users import get_user
 from utils import errors, embeds, strings
 
 command = {
@@ -47,7 +47,7 @@ async def run(ctx, user, username, binned):
     if era_string:
         stats = await users.time_travel_stats(stats, user)
 
-    text_list = texts.get_texts(include_disabled=False, universe=universe)
+    text_list = texts.get_texts(get_disabled=False, universe=universe)
 
     if era_string:
         text_bests = await users.get_text_bests_time_travel(username, universe, user)

@@ -1,8 +1,8 @@
 from discord.ext import commands
 
-import database.races as races
-import database.users as users
-from database.bot_users import get_user
+import database.main.races as races
+import database.main.users as users
+from database.bot.users import get_user
 from graphs import personal_best_graph
 from utils import errors, urls, strings
 from utils.embeds import Page, Message, is_embed

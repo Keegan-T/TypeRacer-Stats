@@ -1,4 +1,4 @@
-import database.db as db
+import database.main.db as db
 
 
 def get_records(category):

@@ -2,7 +2,7 @@ from discord import Embed
 from discord.ext import commands
 
 from config import bot_admins, supporters, bot_owner, bot_id
-from database.bot_users import get_user
+from database.bot.users import get_user
 
 command = {
     "name": "about",

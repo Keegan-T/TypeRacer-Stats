@@ -7,7 +7,7 @@ from api.races import get_race
 from api.users import get_stats
 from commands.basic.realspeed import get_args
 from config import prefix
-from database.bot_users import get_user
+from database.bot.users import get_user
 from graphs import match_graph
 from utils import errors, strings, urls, colors
 from utils.embeds import Page, Message, is_embed

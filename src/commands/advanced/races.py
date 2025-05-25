@@ -5,11 +5,11 @@ from dateutil.relativedelta import relativedelta
 from discord import Embed
 from discord.ext import commands
 
-import database.races as races
-import database.texts as texts
-import database.users as users
+import database.main.races as races
+import database.main.texts as texts
+import database.main.users as users
 from commands.locks import big_lock
-from database.bot_users import get_user
+from database.bot.users import get_user
 from utils import errors, colors, urls, strings, dates
 from utils.embeds import Message, Page, Field, is_embed
 

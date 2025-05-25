@@ -4,12 +4,12 @@ from datetime import datetime, timezone
 from dateutil.relativedelta import relativedelta
 from discord.ext import commands
 
-import database.races as races
-import database.texts as texts
-import database.users as users
+import database.main.races as races
+import database.main.texts as texts
+import database.main.users as users
 from api.users import get_stats
 from commands.account.download import run as download
-from database.bot_users import get_user
+from database.bot.users import get_user
 from utils import errors, urls, strings, dates
 from utils.embeds import Message, get_pages, is_embed
 from utils.stats import calculate_seconds
@@ -113,7 +113,7 @@ async def get_history(username, category, sort, universe, start_date, end_date):
         username, columns=columns, universe=universe, start_date=start_date, end_date=end_date
     )
     race_list.sort(key=lambda x: x[3])
-    text_list = texts.get_texts(as_dictionary=True, include_disabled=True, universe=universe)
+    text_list = texts.get_texts(as_dictionary=True, get_disabled=True, universe=universe)
     history = []
 
     for race in race_list:

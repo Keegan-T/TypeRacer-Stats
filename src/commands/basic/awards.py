@@ -1,10 +1,10 @@
 from discord.ext import commands
 
-import database.competition_results as competition_results
+import database.main.competition_results as competition_results
 from api.users import get_stats
 from commands.basic.stats import get_args
 from config import prefix
-from database.bot_users import get_user
+from database.bot.users import get_user
 from graphs import awards_graph
 from utils import errors
 from utils.embeds import Page, Message, is_embed, Field

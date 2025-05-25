@@ -2,7 +2,7 @@ import json
 
 from discord.ext import commands
 
-import database.user_db as db
+import database.bot.db as db
 from utils import dates
 from utils.colors import default_colors
 

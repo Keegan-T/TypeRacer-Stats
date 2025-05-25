@@ -3,8 +3,8 @@ import math
 from discord.ext import commands
 
 from commands.basic.stats import get_args
-from database import users, races
-from database.bot_users import get_user
+from database.main import races, users
+from database.bot.users import get_user
 from utils import errors, strings
 from utils.embeds import Page, Message, is_embed
 

@@ -4,8 +4,8 @@ from discord import Embed
 from discord.ext import commands
 
 from commands.checks import owner_check
-from database.bot_users import get_user
-from database.users import delete_user
+from database.bot.users import get_user
+from database.main.users import delete_user
 from utils import colors
 
 command = {

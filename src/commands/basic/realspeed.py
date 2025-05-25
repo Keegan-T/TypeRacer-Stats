@@ -2,15 +2,14 @@ from discord import Embed, File
 from discord.ext import commands
 
 import commands.recent as recent
-import database.modified_races as modified_races
-import database.races as races
-import database.races_300 as races_300
-import database.users as users
+import database.main.modified_races as modified_races
+import database.main.races as races
+import database.main.users as users
 from api.races import get_race
 from api.users import get_stats
 from commands.account.download import run as download
 from config import prefix
-from database.bot_users import get_user
+from database.bot.users import get_user
 from graphs import match_graph
 from graphs.core import remove_file
 from utils import errors, colors, urls, strings, embeds
@@ -115,9 +114,6 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
             speeds_string += strings.raw_speed_description(race_info)
         speeds_string += "Completed " + strings.discord_timestamp(race_info["timestamp"])
 
-        if universe == "play" and 300 <= adjusted <= 450 and not stats["disqualified"]:
-            await races_300.add_new_race(username, race_number, race_info)
-
     embed = Embed(
         title=f"{title.title()} - Race #{race_number:,}",
         description=description,
@@ -176,10 +172,10 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
         user = users.get_user(username)
         if not user or username == "slowtexts":
             return
-        modified_race = modified_races.get_race(username, race_number)
+        modified_race = modified_races.get_race(universe, username, race_number)
         if not modified_race:
             await download(stats=stats)
-            await races.correct_race(username, race_number, race_info)
+            await races.correct_race(universe, username, race_number, race_info)
             embed = Embed(
                 title="Reverse Lag Detected",
                 description="This score has been corrected in the database",

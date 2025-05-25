@@ -4,9 +4,9 @@ from statistics import mode
 import numpy as np
 from discord.ext import commands
 
-import database.races as races
-import database.users as users
-from database.bot_users import get_user
+import database.main.races as races
+import database.main.users as users
+from database.bot.users import get_user
 from graphs import histogram
 from utils import errors, colors, embeds, strings
 from utils.embeds import Page, Message

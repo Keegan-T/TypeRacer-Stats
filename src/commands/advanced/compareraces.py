@@ -7,9 +7,9 @@ from api.users import get_stats
 from commands import recent
 from commands.account.download import run as download
 from config import prefix
-from database import races
-from database.bot_users import get_user
-from database.texts import get_text
+from database.main import races
+from database.bot.users import get_user
+from database.main.texts import get_text
 from graphs import match_graph
 from utils import errors, urls, colors, strings
 from utils.embeds import Page, Message, is_embed
@@ -190,7 +190,7 @@ async def run(ctx, user, username1, username2, race_number1, race_number2, unive
         if not stats:
             stats = get_stats(username1, universe=universe)
         profile = stats
-    message = Message(ctx, user, page, profile=profile, universe=universe)
+    message = Message(ctx, user, page, profile=profile, universe=universe, time_travel=False)
 
     await message.send()
 

@@ -3,9 +3,9 @@ from discord.ext import commands
 
 import api.texts as texts_api
 import commands.recent as recent
-import database.text_results as top_tens
-import database.texts as texts
-from database.bot_users import get_user
+import database.main.text_results as top_tens
+import database.main.texts as texts
+from database.bot.users import get_user
 from utils import errors, urls, strings, embeds
 
 command = {
@@ -92,9 +92,12 @@ async def run(ctx, user, text_id):
 
     for i, race in enumerate(top_10):
         username = race["username"]
+        accuracy_string = ""
+        if race["accuracy"]:
+            accuracy_string = f" ({race['accuracy']:.0%})"
         embed.description += (
             f"{strings.rank(i + 1)} {strings.escape_formatting(username)} - [{race['wpm']:,.2f} WPM]"
-            f"({urls.replay(race['username'], race['number'])}) - "
+            f"({urls.replay(race['username'], race['number'])}){accuracy_string} - "
             f"{strings.discord_timestamp(race['timestamp'])}\n"
         )
 

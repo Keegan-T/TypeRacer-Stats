@@ -1,7 +1,7 @@
 from discord.ext import commands
 
-from database import users, text_results
-from database.bot_users import get_user
+from database.main import users, text_results
+from database.bot.users import get_user
 from utils import errors, strings, urls, dates
 from utils.embeds import Message, get_pages, is_embed
 from utils.stats import calculate_text_performances

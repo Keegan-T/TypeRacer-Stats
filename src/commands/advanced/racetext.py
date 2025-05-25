@@ -3,7 +3,7 @@ from discord.ext import commands
 from commands.advanced.text import run
 from commands.basic.realspeed import get_args
 from config import prefix
-from database.bot_users import get_user
+from database.bot.users import get_user
 from utils import embeds
 
 command = {

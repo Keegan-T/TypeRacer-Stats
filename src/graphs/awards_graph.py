@@ -13,24 +13,24 @@ def render(user, username, competitions):
         for i in range(3):
             if competitors[i]["username"] == username:
                 medal_list.append({
-                    "type": competition["type"],
+                    "period": competition["period"],
                     "timestamp": competition["start_time"],
                     "rank": i + 1,
                 })
                 break
 
     timestamps = [[], [], []]
-    types = [[], [], []]
+    periods = [[], [], []]
     for medal in medal_list:
         rank = medal["rank"]
-        type_index = {"day": 1, "week": 2, "month": 3, "year": 4}.get(medal["type"])
+        period_index = {"day": 1, "week": 2, "month": 3, "year": 4}.get(medal["period"])
         timestamps[rank - 1].append(medal["timestamp"])
-        types[rank - 1].append(type_index)
+        periods[rank - 1].append(period_index)
 
     fig, ax = plt.subplots()
-    ax.scatter(x=timestamps[0], y=types[0], color="#ffb600", zorder=3)
-    ax.scatter(x=timestamps[1], y=types[1], color="#c0c0c0", zorder=2)
-    ax.scatter(x=timestamps[2], y=types[2], color="#cd7f32", zorder=1)
+    ax.scatter(x=timestamps[0], y=periods[0], color="#ffb600", zorder=3)
+    ax.scatter(x=timestamps[1], y=periods[1], color="#c0c0c0", zorder=2)
+    ax.scatter(x=timestamps[2], y=periods[2], color="#cd7f32", zorder=1)
 
     first_year = datetime.fromtimestamp(1514764800).astimezone(timezone.utc)
     now = dates.floor_day(dates.now())

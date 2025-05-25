@@ -7,7 +7,7 @@ from discord.ext import commands
 
 import api.competitions as competitions_api
 from config import prefix
-from database.bot_users import get_user
+from database.bot.users import get_user
 from utils import errors, strings, dates, embeds, urls
 
 periods = ["day", "week", "month", "year"]

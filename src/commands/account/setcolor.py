@@ -2,7 +2,7 @@ from discord import Embed, File
 from discord.ext import commands
 
 from config import prefix, bot_owner
-from database.bot_users import get_user, update_colors
+from database.bot.users import get_user, update_colors
 from graphs import sample_graph
 from graphs.core import remove_file, plt
 from utils import errors, colors, strings

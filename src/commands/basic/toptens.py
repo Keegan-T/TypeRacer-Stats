@@ -3,12 +3,12 @@ import json
 from discord import Embed, File
 from discord.ext import commands
 
-import database.text_results as top_tens
-import database.users as users
+import database.main.text_results as top_tens
+import database.main.users as users
 from api.users import get_stats
 from commands.basic.stats import get_args
 from config import prefix
-from database.bot_users import get_user
+from database.bot.users import get_user
 from graphs.core import remove_file
 from utils import errors, urls, strings, embeds, dates
 
@@ -54,7 +54,7 @@ class TopTens(commands.Cog):
 
 async def export(ctx, username):
     top_10s = top_tens.get_top_10s()
-    unraced_text_ids = [text["id"] for text in users.get_unraced_texts(username)]
+    unraced_text_ids = [text["text_id"] for text in users.get_unraced_texts(username)]
     export_data = {
         "timestamp": dates.now().timestamp(),
         "1": [], "2": [], "3": [], "4": [], "5": [],
@@ -99,14 +99,11 @@ async def run(ctx, user, username, best):
         embed.description = "User does not rank in any top 10s"
         return await ctx.send(embed=embed)
 
-    texts_typed = users.get_texts_typed(username)
-    total_appearance_percent = (top_10_count / total_texts) * 100
-    typed_appearance_percent = (top_10_count / texts_typed) * 100
-
+    texts_typed = users.get_user(username)["texts_typed"]
     embed.description = (
         f"**Appearances:** {top_10_count:,}\n"
-        f"**Texts Typed:**  {texts_typed:,} ({typed_appearance_percent:,.2f}%)\n"
-        f"**Total Texts:** {total_texts:,} ({total_appearance_percent:,.2f}%)"
+        f"**Texts Typed:**  {texts_typed:,} ({(top_10_count / total_texts):.2%})\n"
+        f"**Total Texts:** {total_texts:,} ({(top_10_count / texts_typed):.2%})"
     )
 
     if best:

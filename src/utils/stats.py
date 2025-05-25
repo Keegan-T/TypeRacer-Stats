@@ -1,5 +1,5 @@
-from database import texts
-from database.texts import filter_disabled_texts
+from database.main import texts
+from database.main.texts import filter_disabled
 
 
 def calculate_points(quote, wpm):
@@ -25,7 +25,7 @@ def get_text_stats(text_bests):
         text_wpm_total += text_best["wpm"]
 
     texts_typed = len(text_bests)
-    text_best_average = text_wpm_total / texts_typed
+    text_best_average = text_wpm_total / texts_typed if texts_typed else 0
 
     text_stats = {
         "texts_typed": texts_typed,
@@ -45,7 +45,7 @@ def calculate_text_bests(race_list):
 
     text_bests = sorted(tb_dict.values(), key=lambda x: x["wpm"], reverse=True)
 
-    return filter_disabled_texts(text_bests)
+    return filter_disabled(text_bests)
 
 
 def time_travel_races(race_list, user):

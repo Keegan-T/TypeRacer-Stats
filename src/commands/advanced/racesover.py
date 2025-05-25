@@ -1,8 +1,8 @@
 from discord import Embed
 from discord.ext import commands
 
-import database.users as users
-from database.bot_users import get_user
+import database.main.users as users
+from database.bot.users import get_user
 from utils import errors, embeds, strings
 
 categories = ["wpm", "points"]
@@ -63,7 +63,7 @@ async def run(ctx, user, username, threshold, category, over=True):
         category_title = category.title()
 
     times = users.count_races_over(
-        username, category, threshold, over, universe, user["start_date"], user["end_date"]
+        username, threshold, category, over, universe, user["start_date"], user["end_date"]
     )
     percent = (times / stats["races"]) * 100
     description = (

@@ -1,9 +1,9 @@
 from discord.ext import commands
 
 from commands.advanced.compare import get_args
-from database import users
-from database.bot_users import get_user
-from database.users import get_text_bests
+from database.main import users
+from database.bot.users import get_user
+from database.main.users import get_text_bests
 from graphs import compare_graph
 from utils import errors, urls, strings, dates
 from utils.embeds import Page, Field, Message, is_embed

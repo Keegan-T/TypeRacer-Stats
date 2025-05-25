@@ -1,9 +1,9 @@
 from discord import Embed
 from discord.ext import commands
 
-import database.users as users
+import database.main.users as users
 from commands.checks import owner_check
-from database.bot_users import get_user
+from database.bot.users import get_user
 
 command = {
     "name": "databasestats",
@@ -25,13 +25,15 @@ class DatabaseStats(commands.Cog):
 
 
 async def run(ctx, user):
-    stats = users.get_database_stats()
+    race_count, text_count, user_count, universe_count = users.get_database_stats()
 
     embed = Embed(
         title="Database Stats",
         description=(
-            f"Users: {stats[0]:,}\n"
-            f"Races: {stats[1]:,}"
+            f"Races: {race_count:,}\n"
+            f"Texts: {text_count:,}\n"
+            f"Users: {user_count:,}\n"
+            f"Universes: {universe_count:,}"
         ),
         color=user["colors"]["embed"],
     )

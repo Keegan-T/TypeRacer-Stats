@@ -4,7 +4,7 @@ import requests
 from discord import Embed
 from discord.ext import commands
 
-from database.bot_users import get_user
+from database.bot.users import get_user
 from utils import errors, strings, colors
 
 command = {

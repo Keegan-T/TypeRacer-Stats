@@ -2,10 +2,10 @@ import math
 
 from discord.ext import commands
 
-import database.texts as texts
-import database.users as users
+import database.main.texts as texts
+import database.main.users as users
 from config import prefix
-from database.bot_users import get_user
+from database.bot.users import get_user
 from utils import errors, urls, strings
 from utils.embeds import get_pages, Message, is_embed
 

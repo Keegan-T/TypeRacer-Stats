@@ -1,12 +1,12 @@
 from discord import Embed
 from discord.ext import commands
 
-import database.races as races
-import database.users as users
+import database.main.races as races
+import database.main.users as users
 from commands.advanced.races import get_stats_fields
 from commands.locks import big_lock
-from database import texts
-from database.bot_users import get_user
+from database.main import texts
+from database.bot.users import get_user
 from utils import errors, colors, strings
 from utils.embeds import Message, Page, is_embed
 from utils.stats import get_top_disjoint_windows
@@ -72,7 +72,7 @@ async def run(ctx, user, username, number, category):
         await big_lock.acquire()
 
     text_list = texts.get_texts(universe=universe)
-    text_lengths = {text["id"]: len(text["quote"]) for text in text_list}
+    text_lengths = {text["text_id"]: len(text["quote"]) for text in text_list}
 
     columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
     race_list = await races.get_races(

@@ -46,7 +46,8 @@ category_aliases = [
     ["new", "newest"],
     ["textperformances", "tp"],
     ["all", "alltime"],
-    ["textsover", "to"]
+    ["textsover", "to"],
+    ["racesover", "ro"],
 ]
 
 username_aliases = {
@@ -354,8 +355,6 @@ def truncate_clean(text, max_chars):
 
 
 def text_description(text, universe="play"):
-    if "text_id" not in text:
-        text["text_id"] = text["id"]
     quote = text["quote"]
     words = len(quote.split(" "))
     chars = len(quote)

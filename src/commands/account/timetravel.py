@@ -4,7 +4,7 @@ from datetime import timezone
 from discord import Embed, Color
 from discord.ext import commands
 
-from database.bot_users import get_user, update_date_range
+from database.bot.users import get_user, update_date_range
 from utils import embeds, strings, dates, colors
 import random
 

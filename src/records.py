@@ -3,11 +3,10 @@ from datetime import datetime
 
 from discord import Embed
 
-import database.races_300 as races_300
-import database.users as users
+import database.main.club_races as club_races
+import database.main.users as users
 from config import records_channel
-from database.alts import get_alts
-from database.records import get_records
+from database.main.records import get_records
 from utils import colors, strings, urls
 from utils.logging import log
 
@@ -123,24 +122,6 @@ def speed_records():
     return embed
 
 
-def filter_alts(scores, alts):
-    top_scores = []
-    added_users = set()
-    i = 1
-
-    for score in scores:
-        username = score["username"]
-        alt_accounts = {username} | set(alts.get(username, []))
-
-        if not alt_accounts & added_users:
-            score["position"] = i
-            top_scores.append(score)
-            added_users.update(alt_accounts)
-            i += 1
-
-    return top_scores
-
-
 def format_club_scores(scores, filter):
     return [format_club_string(score) for score in scores if filter(score)]
 
@@ -161,10 +142,7 @@ def format_club_string(score):
 
 
 def get_club_scores():
-    scores = races_300.get_races_unique_usernames()
-    alts = get_alts()
-
-    top_scores = filter_alts(scores, alts)
+    top_scores = club_races.get_club_scores()
 
     embed_400 = Embed(
         title="˜”\\*°• 400 WPM Club •°\\*”˜",
@@ -290,19 +268,21 @@ def speedrun_records():
 async def text_records():
     embed = Embed(title="Text Records", color=colors.gold)
 
-    from database.texts import get_text_count
+    from database.main.texts import get_text_count
     text_count = get_text_count()
     min_texts = int(text_count * 0.2)
 
     text_bests = users.get_top_text_best(3)
     total_text_wpm = users.get_most("text_wpm_total", 3)
     most_texts = users.get_most_texts_typed(20)
-    max_quote = await users.get_most_text_repeats(3)
+    text_repeats = users.get_most("text_repeat_times", 3)
 
     text_completion_str = ""
-    for i, (user, texts_typed, min_repeats) in enumerate(most_texts):
+    for i, user in enumerate(most_texts):
+        texts_typed = user["texts_typed"]
         if texts_typed < text_count:
             break
+        min_repeats = user["min_repeats"]
         username = user["username"]
         repeat_string = f" ({min_repeats}x each)" if min_repeats > 1 else ""
         text_completion_str += f"{i + 1}. {get_flag(username)}{strings.escape_formatting(username)}{repeat_string}\n"
@@ -334,10 +314,10 @@ async def text_records():
     embed.add_field(
         name="Most Times Typed a Single Quote",
         value=format_leaderboard(
-            max_quote,
+            text_repeats,
             lambda user: (
-                f"[{user['max_quote_times']:,} times]"
-                f"({urls.trdata_text_races(user['username'], user['max_quote_id'])})"
+                f"[{user['text_repeat_times']:,} times]"
+                f"({urls.trdata_text_races(user['username'], user['text_repeat_id'])})"
             )
         ),
         inline=False,

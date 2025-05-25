@@ -1,9 +1,9 @@
 from discord import Embed
 from discord.ext import commands
 
-import database.texts as texts
+import database.main.texts as texts
 from commands.checks import owner_check
-from database.bot_users import get_user
+from database.bot.users import get_user
 from utils import errors
 
 command = {
@@ -37,7 +37,7 @@ async def run(ctx, user, text_id):
 
     status = "Disabled"
     if ctx.invoked_with in ["textdisable", "td"]:
-        texts.disable_text(text_id)
+        await texts.disable_text(text_id)
     else:
         status = "Enabled"
         await texts.enable_text(text_id)

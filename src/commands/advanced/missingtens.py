@@ -2,10 +2,10 @@ from random import shuffle
 
 from discord.ext import commands
 
-import database.text_results as text_results
-import database.texts as texts
-import database.users as users
-from database.bot_users import get_user
+import database.main.text_results as text_results
+import database.main.texts as texts
+import database.main.users as users
+from database.bot.users import get_user
 from utils import errors, urls, strings, colors
 from utils.embeds import Page, Message, get_pages, is_embed
 
@@ -121,6 +121,7 @@ async def run(ctx, user, username, sort):
         title=f"Missing Top Tens ({sort_title})",
         header=header,
         profile=stats,
+        time_travel=False,
     )
 
     await message.send()

@@ -2,8 +2,8 @@ from discord import Embed
 from discord.ext import commands
 
 from commands.checks import owner_check
-from database import records
-from database.bot_users import get_user
+from database.main import records
+from database.bot.users import get_user
 from records import update_all as update, update_section
 
 command = {

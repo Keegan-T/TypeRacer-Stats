@@ -4,21 +4,20 @@ import time
 from discord import Embed
 from discord.ext import commands
 
-import database.competition_results as competition_results
-import database.modified_races as modified_races
-import database.races as races
-import database.races_300 as races_300
-import database.text_results as text_results
-import database.texts as texts
-import database.users as users
+import database.main.club_races as club_races
+import database.main.competition_results as competition_results
+import database.main.races as races
+import database.main.text_results as text_results
+import database.main.texts as texts
+import database.main.users as users
 from api.races import get_races
 from api.texts import get_quote
 from api.users import get_stats, get_joined
 from commands.basic.stats import get_args
 from commands.locks import import_lock
-from database.bot_users import get_user
-from database.texts import update_text_difficulties
-from utils import errors, colors, urls, strings
+from database.bot.users import get_user
+from database.main import deleted_races, modified_races
+from utils import errors, colors, strings
 from utils.embeds import Page, Message, is_embed
 from utils.logging import log
 from utils.stats import calculate_points, calculate_seconds
@@ -76,7 +75,9 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, universe="play
     # Checking if user exists, preparing for update
     user, races_left, start_time = get_user_data(username, universe, stats)
     if not user:
-        if not await get_new_user_data(username, universe, stats, invoked, ctx):
+        if not await get_new_user_data(username, universe, stats):
+            if invoked:
+                await ctx.send(embed=errors.invalid_username())
             return
 
     new_races = races_left > 0
@@ -84,20 +85,29 @@ async def run(username=None, stats=None, ctx=None, bot_user=None, universe="play
         await send_start(ctx, bot_user, username, races_left, universe)
 
         # Processing races
-        race_list, new_texts = await process_races(
-            username, universe, start_time, stats, not user
-        )
+        race_list = await process_races(username, universe, start_time, stats, not user)
 
         # Updating database
         if not user:
-            users.add_user(username, universe)
+            users.create_user(username, stats["joined"], universe)
             if universe == "play":
                 await update_award_count(username)
 
-        races.add_races(race_list, universe)
-        users.update_text_stats(username, universe)
+        race_list.sort(key=lambda x: x[9])
+        races.add_races(race_list)
 
-    users.update_stats(stats, universe)
+    users.update_user(
+        username, stats["display_name"], stats["premium"],
+        stats["country"], stats["avatar"]
+    )
+    users.update_stats(
+        universe, username, stats["wpm_average"], stats["wpm_best"], stats["wpm_verified"],
+        stats["races"], stats["wins"], stats["points"], stats["points_retroactive"],
+        stats["seconds"], stats["characters"], stats["disqualified"]
+    )
+
+    if new_races:
+        users.update_text_stats(username, universe)
 
     if invoked:
         await send_completion(ctx, bot_user, username, races_left, universe)
@@ -115,9 +125,8 @@ def get_user_data(username, universe, stats):
 
     log(f"Updating data for {username} (Universe: {universe})")
     stats.update({
-        "joined": user["joined"],
         "wpm_best": user["wpm_best"],
-        "retroactive_points": user["points_retroactive"],
+        "points_retroactive": user["points_retroactive"],
         "seconds": user["seconds"],
         "characters": user["characters"],
         "last_updated": user["last_updated"],
@@ -126,24 +135,22 @@ def get_user_data(username, universe, stats):
     races_left -= user["races"]
     if stats["disqualified"]:
         text_results.delete_user_results(username)
-        races_300.delete_user_scores(username)
+        club_races.delete_user_scores(username)
 
     return user, races_left, start_time
 
 
-async def get_new_user_data(username, universe, stats, invoked, ctx):
+async def get_new_user_data(username, universe, stats):
     log(f"Importing new data for {username} (Universe: {universe})")
     play_user = users.get_user(username, "play")
     joined = play_user["joined"] if play_user else await get_joined(username)
 
     if not joined:
-        if invoked:
-            await ctx.send(embed=errors.invalid_username())
         return False
 
     stats.update({
         "joined": joined,
-        "retroactive_points": 0,
+        "points_retroactive": 0,
         "seconds": 0,
         "characters": 0,
     })
@@ -152,7 +159,8 @@ async def get_new_user_data(username, universe, stats, invoked, ctx):
 
 async def process_races(username, universe, start_time, stats, new_user):
     text_list = texts.get_texts(as_dictionary=True, universe=universe)
-    new_texts = False
+    modified_ids = modified_races.get_ids()
+    deleted_ids = deleted_races.get_ids()
     race_list = []
     end_time = time.time()
 
@@ -162,24 +170,36 @@ async def process_races(username, universe, start_time, stats, new_user):
             break
 
         for race in race_data:
-            # Skipping 0 WPM races
-            if race["wpm"] == 0.0 and universe == "play":
-                modified_races.add_cheated_race(username, race)
-                return None, text_list, False
+            number = race["gn"]
+
+            if universe == "play":
+                race_id = f"{universe}|{username}|{number}"
+                # Treating 0 WPM races as deleted
+                if race_id in deleted_ids:
+                    log(f"Skipping deleted race {race_id}")
+                    continue
+                elif race["wpm"] == 0.0:
+                    log(f"Adding deleted race {race_id}")
+                    deleted_races.add_race(universe, username, race["number"], race["wpm"])
+                    continue
+
+                # Restoring modified values
+                if race_id in modified_ids:
+                    modified_race = modified_races.get_race(universe, username, number)
+                    log(f"Using modified race {race_id}")
+                    race["wpm"] = modified_race["wpm_modified"]
 
             # Checking for new texts
             text_id = race["tid"]
             if text_id not in text_list:
-                log(f"New text found! #{text_id}")
+                log(f"New {universe} text found! #{text_id}")
                 text = {
-                    "id": text_id,
+                    "text_id": text_id,
                     "quote": get_quote(text_id),
-                    "disabled": 0,
-                    "ghost": urls.ghost(username, text_id, universe),
-                    "difficulty": None,
+                    "ghost_username": username,
+                    "ghost_number": number,
                 }
                 texts.add_text(text, universe)
-                new_texts = True
                 text_list[text_id] = text
 
                 if universe == "play":
@@ -192,7 +212,7 @@ async def process_races(username, universe, start_time, stats, new_user):
             if race["pts"] == 0:
                 points = calculate_points(quote, race["wpm"])
                 race["pts"] = points
-                stats["retroactive_points"] += points
+                stats["points_retroactive"] += points
 
             # Manually updating best WPM
             if race["wpm"] > stats["wpm_best"]:
@@ -204,32 +224,14 @@ async def process_races(username, universe, start_time, stats, new_user):
                 stats["characters"] += len(quote)
 
             race_list.append((
-                strings.race_id(username, race["gn"]), username, text_id, race["gn"],
-                race["wpm"], race["ac"], race["pts"], race["r"], race["np"], race["t"]
+                universe, username, number, text_id, race["wpm"],
+                race["ac"], race["pts"], race["r"], race["np"], race["t"],
+                None, None, None, None, None, None, None, None, None, None  # Waiting for logs API
             ))
 
         end_time = min(race_list, key=lambda r: r[9])[9] - 0.01
 
-    if new_texts:
-        update_text_difficulties(universe=universe)
-
-    return race_list, new_texts
-
-
-async def update_database(username, universe, stats, race_list, new_texts, new_races, new_user):
-    if new_texts:
-        update_text_difficulties(universe=universe)
-
-    if new_user:
-        users.add_user(username, universe)
-        if universe == "play":
-            await update_award_count(username)
-
-    users.update_stats(stats, universe)
-
-    if new_races:
-        races.add_races(race_list, universe)
-        users.update_text_stats(username, universe)
+    return race_list
 
 
 async def send_start(ctx, bot_user, username, races_left, universe):
@@ -241,6 +243,7 @@ async def send_start(ctx, bot_user, username, races_left, universe):
                             f"{strings.escape_formatting(username)}",
             ),
             universe=universe,
+            time_travel=False,
         )
         await message.send()
     log(f"Downloading {races_left:,} new races for {username}")
@@ -261,6 +264,7 @@ async def send_completion(ctx, bot_user, username, races_left, universe):
         ctx, bot_user, page,
         content=f"<@{ctx.author.id}>" if races_left > 1000 else "",
         universe=universe,
+        time_travel=False,
     )
 
     await message.send()

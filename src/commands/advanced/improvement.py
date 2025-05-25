@@ -1,14 +1,14 @@
 from discord.ext import commands
 
-import database.races as races
-import database.users as users
+import database.main.races as races
+import database.main.users as users
 import utils.stats
 from api.users import get_stats
 from commands.account.download import run as download
 from commands.advanced.races import get_args
 from commands.locks import big_lock
 from config import prefix
-from database.bot_users import get_user
+from database.bot.users import get_user
 from graphs import improvement_graph
 from utils import errors, strings, dates
 from utils.embeds import Page, Message, is_embed

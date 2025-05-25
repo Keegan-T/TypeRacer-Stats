@@ -3,21 +3,21 @@ import json
 from discord import Embed, File
 from discord.ext import commands
 
-import database.competition_results as competition_results
-import database.text_results as top_tens
-import database.texts as texts
-import database.users as users
+import database.main.competition_results as competition_results
+import database.main.text_results as top_tens
+import database.main.texts as texts
+import database.main.users as users
 from commands.locks import leaderboard_lock
 from config import prefix
-from database.alts import get_alts
-from database.bot_users import get_user
+from database.main.alts import get_alts
+from database.bot.users import get_user
 from graphs.core import remove_file
 from utils import errors, urls, strings, dates
 from utils.errors import command_in_use
 
 categories = [
     "races", "points", "awards", "textbests", "textstyped", "toptens",
-    "textrepeats", "totaltextwpm", "wpm", "racetime", "characters", "textsover",
+    "textrepeats", "totaltextwpm", "wpm", "racetime", "characters", "racesover", "textsover",
 ]
 command = {
     "name": "leaderboard",
@@ -90,8 +90,8 @@ async def run(ctx, user, category, secondary):
             third = leader["awards_third"]
             total = first + second + third
             leaders.append(f"{total:,} - :first_place: x{first:,} :second_place: x{second:,} :third_place: x{third:,}")
-        comp_count = competition_results.get_count()
-        embed.set_footer(text=f"Across {comp_count:,} competitions")
+        total_competitions = competition_results.get_competition_count()
+        embed.set_footer(text=f"Across {total_competitions:,} competitions")
 
     elif category == "textbests":
         text_count = texts.get_text_count()
@@ -122,12 +122,12 @@ async def run(ctx, user, category, secondary):
     elif category == "textstyped":
         title = "Texts Typed"
         leaderboard = users.get_most_texts_typed(limit)
-        for user, texts_typed, min_repeats in leaderboard:
+        for user in leaderboard:
+            min_repeats = user["min_repeats"]
             repeat_string = ""
             if min_repeats > 1:
                 repeat_string = f" ({min_repeats}x each)"
-            leaders.append(f"{texts_typed:,}{repeat_string}")
-        leaderboard = [results[0] for results in leaderboard]
+            leaders.append(f"{user['texts_typed']:,}{repeat_string}")
 
     elif category == "textrepeats":
         if secondary is not None:
@@ -145,11 +145,11 @@ async def run(ctx, user, category, secondary):
             embed.url = urls.trdata_text(text_id)
         else:
             title = "Text Repeats"
-            leaderboard = await users.get_most_text_repeats(limit)
+            leaderboard = users.get_most("text_repeat_times", limit)
             for leader in leaderboard:
                 leaders.append(
-                    f"{leader['max_quote_times']:,} times - [Text #{leader['max_quote_id']}]"
-                    f"({urls.trdata_text_races(leader['username'], leader['max_quote_id'])})"
+                    f"{leader['text_repeat_times']:,} times - [Text #{leader['text_repeat_id']}]"
+                    f"({urls.trdata_text_races(leader['username'], leader['text_repeat_times'])})"
                 )
 
     elif category == "totaltextwpm":
@@ -189,15 +189,25 @@ async def run(ctx, user, category, secondary):
         for leader in leaderboard:
             leaders.append(f"{leader['characters']:,}")
 
+    elif category == "racesover":
+        try:
+            wpm = float(secondary)
+        except ValueError:
+            return await ctx.send(embed=errors.invalid_number_format())
+        title = f"Races Over {wpm:,.0f} WPM"
+        leaderboard = await users.get_most_races_over(wpm)
+        for leader in leaderboard:
+            leaders.append(f"{leader['races_over']:,}")
+
     elif category == "textsover":
         try:
             wpm = float(secondary)
         except ValueError:
-            return
+            return await ctx.send(embed=errors.invalid_number_format())
         title = f"Texts Over {wpm:,.0f} WPM"
         leaderboard = await users.get_most_texts_over(wpm)
         for leader in leaderboard:
-            leaders.append(f"{leader['unique_texts']:,}")
+            leaders.append(f"{leader['texts_over']:,}")
 
     else:
         top = 10

@@ -1,9 +1,9 @@
 from discord import Embed
 from discord.ext import commands
 
-import database.races_300 as races_300
+import database.main.club_races as club_races
 from commands.checks import admin_check
-from database.bot_users import get_user
+from database.bot.users import get_user
 from records import update_section
 from utils import strings
 
@@ -34,7 +34,7 @@ class ClubRemove(commands.Cog):
                 color=user["colors"]["embed"],
             ))
 
-            races_300.delete_user_scores(username)
+            club_races.delete_user_scores(username)
 
         await update_section(self.bot, "club")
 
