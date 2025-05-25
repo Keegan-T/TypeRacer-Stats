@@ -1,39 +1,20 @@
+import codecs
 import re
 
 from utils.stats import calculate_wpm
 
 
-def escape_characters(string):
-    escapes = "".join([chr(char) for char in range(1, 32)])
-
-    return string.encode().decode("unicode-escape").translate(escapes)
-
-
 def split_log(log):
-    log = escape_characters(log)
-    quote = ""
+    quote = []
     delays = []
 
-    current_num = ""
-    i = 0
-    while i < len(log):
-        char = log[i]
-        if char.isdigit() or (char == "-" and log[i - 1] != "\t"):
-            current_num += char
+    for delay, escaped, char in re.findall(r"(-?\d+)|\x08(.)|(.)", log):
+        if delay:
+            delays.append(int(delay))
         else:
-            if char == "\t":
-                i += 1
-                quote += log[i]
-            else:
-                quote += char
-            if current_num:
-                delays.append(int(current_num))
-            current_num = ""
-        i += 1
+            quote.append(escaped or char)
 
-    delays.append(int(current_num))
-
-    return quote, delays
+    return "".join(quote), delays
 
 
 def distribute_start_lag(delays):
@@ -49,7 +30,8 @@ def distribute_start_lag(delays):
     return delays, lagged_chars > 1
 
 
-def get_log_details(typing_log, multiplier, typos=False):
+def get_log_details(typing_log, multiplier=12000, typos=False):
+    typing_log = codecs.decode(typing_log, "unicode_escape")
     separator = re.search(r"\|(\d+),(\d+),(\d+),0\+", typing_log)
     if not separator:
         first_half = typing_log
@@ -68,8 +50,6 @@ def get_log_details(typing_log, multiplier, typos=False):
 
     unlagged = calculate_wpm(delays, duration, multiplier)
     adjusted = calculate_wpm(delays, duration, multiplier, start)
-    keystroke_wpm = get_keystroke_wpm(delays, multiplier)
-    keystroke_wpm_adjusted = get_keystroke_wpm(delays, multiplier, adjusted=True)
 
     details = dict(
         quote=quote,
@@ -77,8 +57,6 @@ def get_log_details(typing_log, multiplier, typos=False):
         duration=duration,
         unlagged=unlagged,
         adjusted=adjusted,
-        keystroke_wpm=keystroke_wpm,
-        keystroke_wpm_adjusted=keystroke_wpm_adjusted,
         start=start,
         distributed=distributed,
     )
@@ -86,15 +64,13 @@ def get_log_details(typing_log, multiplier, typos=False):
     if not action_data:
         return details
 
+    actions = re.findall(r"\d+,(?:\d+[+\-$].?)+,", action_data)
     if typos:
-        details["typos"] = get_typos(quote, action_data)
+        details["typos"] = get_typos(quote, actions)
 
     # Raw Speeds
     raw_delays = []
-    action_data = escape_characters(action_data)
-    action_data = re.sub(r"\t\d", "a", action_data)
-
-    for keystroke in re.findall(r"\d+,(?:\d+[+\-$].?)+,", action_data):
+    for keystroke in actions:
         delay = int(keystroke.split(",")[0])
         chars = []
         for i, char in enumerate(re.findall(r"\d+[+\-$].?", keystroke)):
@@ -137,16 +113,12 @@ def get_log_details(typing_log, multiplier, typos=False):
     raw_duration = sum(raw_delays)
     raw_unlagged = calculate_wpm(raw_delays, raw_duration, multiplier)
     raw_adjusted = calculate_wpm(raw_delays, raw_duration, multiplier, raw_start)
-    keystroke_wpm_raw = get_keystroke_wpm(raw_delays, multiplier)
-    keystroke_wpm_raw_adjusted = get_keystroke_wpm(raw_delays, multiplier, adjusted=True)
     correction_time = duration - raw_duration
     correction_percent = correction_time / duration if duration else 0
 
     pauseless_duration = sum(pauseless_delays)
     pauseless_unlagged = calculate_wpm(pauseless_delays, pauseless_duration, multiplier)
     pauseless_adjusted = calculate_wpm(pauseless_delays, pauseless_duration, multiplier, pauseless_delays[0])
-    keystroke_wpm_pauseless = get_keystroke_wpm(pauseless_delays, multiplier)
-    keystroke_wpm_pauseless_adjusted = get_keystroke_wpm(pauseless_delays, multiplier, adjusted=True)
     pause_time = raw_duration - pauseless_duration
     pause_percent = pause_time / raw_duration if raw_duration else 0
 
@@ -155,16 +127,12 @@ def get_log_details(typing_log, multiplier, typos=False):
         raw_duration=raw_duration,
         raw_delays=raw_delays,
         raw_unlagged=raw_unlagged,
-        keystroke_wpm_raw=keystroke_wpm_raw,
-        keystroke_wpm_raw_adjusted=keystroke_wpm_raw_adjusted,
         raw_adjusted=raw_adjusted,
         correction_time=correction_time,
         correction_percent=correction_percent,
         pauseless_duration=pauseless_duration,
         pauseless_delays=pauseless_delays,
         pauseless_unlagged=pauseless_unlagged,
-        keystroke_wpm_pauseless=keystroke_wpm_pauseless,
-        keystroke_wpm_pauseless_adjusted=keystroke_wpm_pauseless_adjusted,
         pauseless_adjusted=pauseless_adjusted,
         pause_time=pause_time,
         pause_percent=pause_percent,
@@ -184,18 +152,14 @@ def get_keystroke_wpm(delays, multiplier, adjusted=False):
 
     for i, delay in enumerate(delays):
         duration += delay
-        wpm = multiplier * (i + 1) / duration
+        wpm = multiplier * (i + 1) / duration if duration else float("inf")
         average_wpm.append(wpm)
 
     return average_wpm
 
 
-def get_typos(quote, action_data):
-    action_data = escape_characters(action_data)
-    action_data = re.sub(r"\t\d", "a", action_data)
-    actions = re.findall(r"\d+,(?:\d+[+\-$].?)+,", action_data)
+def get_typos(quote, actions):
     action_list = [action.split(",", 1)[1] for action in actions]
-
     typos = []
     typo_flag = False
     quote_words = [word + " " for word in quote.split(" ")]
