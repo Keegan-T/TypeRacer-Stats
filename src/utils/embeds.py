@@ -236,7 +236,7 @@ class Message(View):
 
 
 def get_pages(data_list, formatter, page_count=10, per_page=10):
-    page_count = min(page_count, len(data_list) // per_page + 1)
+    page_count = min(page_count, ((len(data_list) - 1) // per_page) + 1)
     pages = []
     for i in range(page_count):
         description = ""
