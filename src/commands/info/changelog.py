@@ -18,7 +18,7 @@ class Changelog(commands.Cog):
         with open(changelog_path, "r", encoding="utf-8") as file:
             change_list = "".join(file.readlines()).split("\n\n")
 
-        description = "\n\n".join([change for change in change_list[::-1][:5]])
+        description = "\n\n".join([change for change in change_list[:5]])
 
         embed = Embed(
             title="TypeRacer Stats - Changelog",

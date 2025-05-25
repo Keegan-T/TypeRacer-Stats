@@ -1,25 +1,213 @@
-3/24/2024
-- Initial release
+5/21/2025
+- Added pages to -search
 
-3/25/2024
-- Added list of supporters to -about
-- Added locks to -raceline and -pointline
-- Added wpm as the default category for -textsover/under, -racesover/under
-- Fixed -positionstats calculating biggest loss incorrectly
-- Fixed -commandleaderboard not working for some unlisted commands
-- Fixed slow commands blocking other commands
-- Fixed ghost links not loading properly
+5/20/2025
+- Added pauses to -mistakes
 
-3/27/2024
-- Fixed users containing "me" not being parsed correctly
+5/15/2025
+- Added an increase indicator to leaderboard scores for -text
+- Added -leaderboard textsover
+- Added correction and pause markers to -rawcomparison
+- Added newest/oldest filters to -compare
 
-3/28/2024
-- Fixed -setcolor sample graphs not loading
-- Fixed -raceline not interpolating colormaps correctly
+5/14/2025
+- Added pause time to raw speeds
 
-3/29/2024
-- Heavily optimized database query speeds
-- Fixed graph not loading when running -setcolor reset
+5/13/2025
+- Added mistake count to -mistakes
+- Raised y-limit for graphs with slow starts
+- Added buttons to a lot of commands
+
+5/12/2025
+- Added buttons to -marathon
+
+5/11/2025
+- Added multiple typo markers within words for -mistakes
+- Added red highlight for banned users in -stats
+
+5/8/2025
+- Added buttons to -fastestcompletion
+- Added buttons to -histogram
+
+5/5/2025
+- Added -pace
+- Added -pacecompare
+
+5/4/2025
+- Added standard deviation to races display
+- Added buttons to -compare
+- Added performance percentile to -text
+
+5/3/2025
+- Added -thonk
+
+5/2/2025
+- Added -activity
+
+4/30/2025
+- Added pagination to -improvement
+- Added raw rankings to -matchgraph
+
+4/29/2025
+- Added pagination for -textperformances and -best
+- Added score display to -text personal bests
+
+4/27/2025
+- Added -textperformances
+
+4/26/2025
+- Added banned user detection for -updatetens
+
+4/18/2025
+- Added back -longestbreak
+
+4/12/2025
+- Added -textimprovements
+
+4/1/2025
+- Added -commandleaderboard users
+
+3/19/2025
+- Added -leaderboard toptens export
+
+1/24/2025
+- Added -toptens [username] export
+
+11/5/2024
+- Added average gain to -comparegraph
+
+11/2/2024
+- Removed banned users from -leaderboard textbests
+
+10/30/2024
+- Added text improvement count in -races and -textbestgraph texts
+
+10/21/2024
+- Added -calculator
+
+10/16/2024
+- Added -compareraces
+- Added a display for 11th place as users enter top 10 in -text
+
+10/13/2024
+- Added -updatetens
+
+10/12/2024
+- Added -whois
+
+10/9/2024
+- Added -define
+
+10/6/2024
+- Added -timetravel
+
+9/25/2024
+- Added -awardsgraph (sub-command of -awards)
+- Added -vr (Randomized -vs)
+
+9/23/2024
+- Added -mistakes
+- Raw speed now always takes the fastest character
+
+8/23/2024
+- Added auto importing to -improvement
+- Added best race WPM and sorting by category to -textsover/under
+
+7/25/2024
+- Added a limit of 20 displayed scores in -checksaves
+
+7/6/2024
+- Added new -textbests sorts (old, new, accuracy)
+
+7/3/2024
+- Added speed to -wpmsegments
+- Added option to hide grid in graphs
+- Added option to change raw speed color in graphs
+
+7/1/2024
+- Conquered the multiverse
+
+6/29/2024
+- Removed unchanging brackets and removed WPM cap from -textbestdistribution
+
+6/28/2024
+- Added quote length to -search results
+- Added -improvement shorthands (-improvement username day)
+- Truncated long segments in -wpmsegments
+
+6/27/2024
+- Optimized -improvement speeds
+- Added refresh to profile pictures
+
+6/22/2024
+- Added -textsline
+
+6/14/2024
+- Added -wpmsegments
+
+6/10/2024
+- Added sort options to -missingtens (best, worst, random)
+
+6/7/2024
+- Fixed case insensitivity not working on certain commands
+
+6/5/2024
+- Updated text best leaderboard requirement (from 1,500 texts to 20% of total texts)
+
+5/1/2024
+- Added total usage count to -commandleaderboard overall and per command
+- Added user count to -leaderboard toptens
+- Filtered alt accounts from the 300 WPM club
+
+4/24/2024
+- Added -missingtens
+- Fixed a bug where disabled texts entered top 10 counts
+- Fixed a bug where disqualified users entered top 10 counts
+
+4/20/2024
+- Added a system to filter alt accounts from top 10s
+
+4/15/2024
+- Added banned status to -stats
+- Added total command usage to -commandleaderboard [user]
+- Added -searchid [text_id] to search for text IDs instead grouping it with similar results
+- Added -miniday that will only show basic stats
+- Added better text count to -compare
+- Added handshake texts to -compare
+- Added a list of disabled texts in -disabledtexts
+- Fixed -realspeedaverage not accepting comma formatted numbers
+- Fixed incorrect correction times for quotes with "|" in them
+- Fixed graph font not loading
+
+4/13/2024
+- Added -changelog
+- Mitigated database locking issues
+- Shortened welcome message
+- Fixed users showing up twice in top 10s
+
+4/7/2024
+- Fixed #typeracer-records not updating
+
+4/5/2024
+- Updated some error messages to be more clear
+- Fixed -rawspeedaverage correction percentage being calculated incorrectly
+- Fixed -fastestcompletion erroring when a user's full race range is inputted
+
+4/2/2024
+- Fixed -textbestdistribution block text formatting (thanks discord)
+
+4/1/2024
+- Added link to text in -unraced
+- Updated -textbests to show top 10 best texts instead of 5 best & 5 worst
+- Added -textbests [username] worst to show top 10 worst texts
+
+3/31/2024
+- Added -rawcomparison
+- Added -timeimprovement
+- Fixed -import notifying users of a completed import too early
+- Fixed -matchgraph not sending an error for old races
+- Fixed -raceline date range being incorrect
+- Removed color in -textbestdistribution due to glitching
 
 3/30/2024
 - Mounted #typeracer-records
@@ -34,213 +222,25 @@
 - Fixed -matchgraph links going to the wrong universe
 - Fixed WPM being measured incorrectly for Asian languages
 
-3/31/2024
-- Added -rawcomparison
-- Added -timeimprovement
-- Fixed -import notifying users of a completed import too early
-- Fixed -matchgraph not sending an error for old races
-- Fixed -raceline date range being incorrect
-- Removed color in -textbestdistribution due to glitching
+3/29/2024
+- Heavily optimized database query speeds
+- Fixed graph not loading when running -setcolor reset
 
-4/1/2024
-- Added link to text in -unraced
-- Updated -textbests to show top 10 best texts instead of 5 best & 5 worst
-- Added -textbests [username] worst to show top 10 worst texts
+3/28/2024
+- Fixed -setcolor sample graphs not loading
+- Fixed -raceline not interpolating colormaps correctly
 
-4/2/2024
-- Fixed -textbestdistribution block text formatting (thanks discord)
+3/27/2024
+- Fixed users containing "me" not being parsed correctly
 
-4/5/2024
-- Updated some error messages to be more clear
-- Fixed -rawspeedaverage correction percentage being calculated incorrectly
-- Fixed -fastestcompletion erroring when a user's full race range is inputted
+3/25/2024
+- Added list of supporters to -about
+- Added locks to -raceline and -pointline
+- Added wpm as the default category for -textsover/under, -racesover/under
+- Fixed -positionstats calculating biggest loss incorrectly
+- Fixed -commandleaderboard not working for some unlisted commands
+- Fixed slow commands blocking other commands
+- Fixed ghost links not loading properly
 
-4/7/2024
-- Fixed #typeracer-records not updating
-
-4/13/2024
-- Added -changelog
-- Mitigated database locking issues
-- Shortened welcome message
-- Fixed users showing up twice in top 10s
-
-4/15/2024
-- Added banned status to -stats
-- Added total command usage to -commandleaderboard [user]
-- Added -searchid [text_id] to search for text IDs instead grouping it with similar results
-- Added -miniday that will only show basic stats
-- Added better text count to -compare
-- Added handshake texts to -compare
-- Added a list of disabled texts in -disabledtexts
-- Fixed -realspeedaverage not accepting comma formatted numbers
-- Fixed incorrect correction times for quotes with "|" in them
-- Fixed graph font not loading
-
-4/20/2024
-- Added a system to filter alt accounts from top 10s
-
-4/24/2024
-- Added -missingtens
-- Fixed a bug where disabled texts entered top 10 counts
-- Fixed a bug where disqualified users entered top 10 counts
-
-5/1/2024
-- Added total usage count to -commandleaderboard overall and per command
-- Added user count to -leaderboard toptens
-- Filtered alt accounts from the 300 WPM club
-
-6/5/2024
-- Updated text best leaderboard requirement (from 1,500 texts to 20% of total texts)
-
-6/7/2024
-- Fixed case insensitivity not working on certain commands
-
-6/10/2024
-- Added sort options to -missingtens (best, worst, random)
-
-6/14/2024
-- Added -wpmsegments
-
-6/22/2024
-- Added -textsline
-
-6/27/2024
-- Optimized -improvement speeds
-- Added refresh to profile pictures
-
-6/28/2024
-- Added quote length to -search results
-- Added -improvement shorthands (-improvement username day)
-- Truncated long segments in -wpmsegments
-
-6/29/2024
-- Removed unchanging brackets and removed WPM cap from -textbestdistribution
-
-7/1/2024
-- Conquered the multiverse
-
-7/3/2024
-- Added speed to -wpmsegments
-- Added option to hide grid in graphs
-- Added option to change raw speed color in graphs
-
-7/6/2024
-- Added new -textbests sorts (old, new, accuracy)
-
-7/25/2024
-- Added a limit of 20 displayed scores in -checksaves
-
-8/23/2024
-- Added auto importing to -improvement
-- Added best race WPM and sorting by category to -textsover/under
-
-9/23/2024
-- Added -mistakes
-- Raw speed now always takes the fastest character
-
-9/25/2024
-- Added -awardsgraph (sub-command of -awards)
-- Added -vr (Randomized -vs)
-
-10/6/2024
-- Added -timetravel
-
-10/9/2024
-- Added -define
-
-10/12/2024
-- Added -whois
-
-10/13/2024
-- Added -updatetens
-
-10/16/2024
-- Added -compareraces
-- Added a display for 11th place as users enter top 10 in -text
-
-10/21/2024
-- Added -calculator
-
-10/30/2024
-- Added text improvement count in -races and -textbestgraph texts
-
-11/2/2024
-- Removed banned users from -leaderboard textbests
-
-11/5/2024
-- Added average gain to -comparegraph
-
-1/24/2025
-- Added -toptens [username] export
-
-3/19/2025
-- Added -leaderboard toptens export
-
-4/1/2025
-- Added -commandleaderboard users
-
-4/12/2025
-- Added -textimprovements
-
-4/18/2025
-- Added back -longestbreak
-
-4/26/2025
-- Added banned user detection for -updatetens
-
-4/27/2025
-- Added -textperformances
-
-4/29/2025
-- Added pagination for -textperformances and -best
-- Added score display to -text personal bests
-
-4/30/2025
-- Added pagination to -improvement
-- Added raw rankings to -matchgraph
-
-5/2/2025
-- Added -activity
-
-5/3/2025
-- Added -thonk
-
-5/4/2025
-- Added standard deviation to races display
-- Added buttons to -compare
-- Added performance percentile to -text
-
-5/5/2025
-- Added -pace
-- Added -pacecompare
-
-5/8/2025
-- Added buttons to -fastestcompletion
-- Added buttons to -histogram
-
-5/11/2025
-- Added multiple typo markers within words for -mistakes
-- Added red highlight for banned users in -stats
-
-5/12/2025
-- Added buttons to -marathon
-
-5/13/2025
-- Added mistake count to -mistakes
-- Raised y-limit for graphs with slow starts
-- Added buttons to a lot of commands
-
-5/14/2025
-- Added pause time to raw speeds
-
-5/15/2025
-- Added an increase indicator to leaderboard scores for -text
-- Added -leaderboard textsover
-- Added correction and pause markers to -rawcomparison
-- Added newest/oldest filters to -compare
-
-5/20/2025
-- Added pauses to -mistakes
-
-5/21/2025
-- Added pages to -search
+3/24/2024
+- Initial release
