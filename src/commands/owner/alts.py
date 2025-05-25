@@ -1,10 +1,11 @@
 from discord import Embed
 from discord.ext import commands
 
-import database.alts as alts
+import database.main.alts as alts
+from api.users import get_stats
 from commands.checks import owner_check
-from database.bot_users import get_user
-from utils import strings
+from database.bot.users import get_user
+from utils import strings, errors
 
 command = {
     "name": "alts",
@@ -13,7 +14,7 @@ command = {
     "usages": [
         "alts",
         "alts username",
-        "alts add username",
+        "alts add new_username existing_username",
         "alts remove username",
     ]
 }
@@ -40,34 +41,39 @@ class Alts(commands.Cog):
 
 
 async def display_all(ctx, user):
-    alt_list = alts.get_alts()
-
-    groups = {frozenset(group) for group in alt_list.values()}
+    groups = alts.get_groups()
     description = ""
     for group in groups:
-        description += ", ".join(sorted(group)) + "\n\n"
+        usernames = group["usernames"].split(",")
+        usernames.sort()
+        usernames = ", ".join(usernames)
+        description += usernames + "\n\n"
 
     await send_embed(ctx, user, description)
 
 
 async def display(ctx, user, username):
-    alt_list = alts.get_alts()
-
-    groups = {frozenset(group) for group in alt_list.values()}
-    description = "\n".join(", ".join(group) for group in groups if username in group)
-    if not description:
+    alt_list = alts.get_username_alts(username)
+    if not alt_list:
         description = "This account has no alts"
+    else:
+        description = ", ".join(alt_list)
 
     await send_embed(ctx, user, description)
 
 
-async def add(ctx, user, main_username, alt_username):
-    alts.add_alt(main_username, alt_username)
+async def add(ctx, user, new_username, existing_username):
+    stats = get_stats(new_username)
+    if not stats:
+        return await ctx.send(embed=errors.invalid_username())
+    success = alts.add_alt(new_username, existing_username)
+    if not success:
+        alt_list = ", ".join(alts.get_username_alts(new_username))
+        description = f"{new_username} is already part of:\n{alt_list}"
+        return await send_embed(ctx, user, description)
 
-    alt_list = alts.get_alts()
-    group = alt_list[main_username]
-    description = f"Added {alt_username} to:\n" + ", ".join(group)
-
+    alt_list = ", ".join(alts.get_username_alts(new_username))
+    description = f"Added {new_username} to:\n{alt_list}"
     await send_embed(ctx, user, description)
 
 
