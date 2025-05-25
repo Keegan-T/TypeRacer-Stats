@@ -111,7 +111,6 @@ async def run(ctx, user, query):
 
     else:
         def formatter(result):
-            print(result)
             description = ""
             quote = result["quote"]
             chars = max_chars - query_length
