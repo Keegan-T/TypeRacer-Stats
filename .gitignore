@@ -10,4 +10,5 @@ src/data/typeracerstats.db-wal
 src/data/message.txt
 src/sandbox.py
 src/commands/template.txt
+/src/data/*
 venv/
