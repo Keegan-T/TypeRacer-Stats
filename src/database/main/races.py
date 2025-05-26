@@ -129,4 +129,10 @@ async def delete_race(username, race_number, universe="play"):
         AND number = ?
     """, [universe, username, race_number])
 
+    db.run("""
+        DELETE FROM text_results
+        WHERE username = ?
+        AND number = ?
+    """, [username, race_number])
+
     correct_best_wpm(username, universe)
