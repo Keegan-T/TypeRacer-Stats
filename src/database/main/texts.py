@@ -215,8 +215,14 @@ def filter_disabled(text_list):
 
 
 def update_text_difficulties(universe="play"):
-    text_list = db.fetch("SELECT quote FROM texts")
+    text_list = db.fetch("""
+        SELECT * FROM texts
+        JOIN text_universes USING(text_id)
+        WHERE universe = 'play'
+        AND disabled = 0
+    """)
+    text_list = [dict(text) for text in text_list]
     text_list = set_difficulties(text_list)
 
     results = [(text["difficulty"], text["text_id"]) for text in text_list]
-    db.run_many(f"UPDATE texts SET difficulty = ? WHERE id = ?", results)
+    db.run_many(f"UPDATE texts SET difficulty = ? WHERE text_id = ?", results)
