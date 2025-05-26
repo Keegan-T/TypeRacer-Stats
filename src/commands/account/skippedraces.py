@@ -114,7 +114,7 @@ async def run(ctx, user, username):
     races.add_races(found_races)
 
     skipped_groups = []
-    for group in group_numbers([r[3] for r in found_races], proximity=1):
+    for group in group_numbers([r[2] for r in found_races], proximity=1):
         first, last = min(group), max(group)
         if first == last:
             skipped_groups.append(f"{first:,}")
