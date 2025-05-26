@@ -333,6 +333,7 @@ def escape_formatting(string):
         .replace("`", "")
     )
 
+
 def escape_url(string):
     return urllib.parse.quote_plus(string)
 
@@ -341,9 +342,11 @@ def truncate_clean(text, max_chars):
     if len(text) <= max_chars:
         return escape_formatting(text)
     if len(text.split(" ")) == 1:
-        return text[:max_chars] + "..."
+        return escape_formatting(text[:max_chars] + "...")
 
     substring = text[:max_chars]
+    if " " not in substring:
+        return escape_formatting(substring[:max_chars] + "...")
     while True:
         if substring[-2].isalnum() and not substring[-1].isalnum():
             break
