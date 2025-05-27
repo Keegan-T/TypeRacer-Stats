@@ -1,6 +1,7 @@
 5/26/2025
 - Added accuracy to top tens
 - Added -words (alias of -segments)
+- Added -leaderboard captcha
 
 5/21/2025
 - Added pages to -search

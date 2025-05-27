@@ -39,7 +39,7 @@ def invalid_choice(param, choices):
     return Embed(
         title="Invalid Argument",
         description=f"Parameter `{param}` can only be:\n" +
-                    "\n".join([f"`{choice}`" for choice in choices]),
+                    ", ".join([f"`{choice}`" for choice in choices]),
         color=error,
     )
 
@@ -233,12 +233,14 @@ def embed_limit_exceeded():
         color=error,
     )
 
+
 def same_username():
     return Embed(
         title="Same Username",
         description="Must input two unique usernames to compare",
         color=error,
     )
+
 
 def no_common_texts(universe):
     embed = Embed(

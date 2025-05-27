@@ -194,7 +194,7 @@ async def disable_text(text_id):
     await _toggle_text(text_id, 1)
 
 
-def get_text_repeat_leaderboard(text_id):
+def get_text_repeat_leaderboard(text_id, limit):
     leaderboard = db.fetch("""
         SELECT races.username, country, COUNT(*) AS times
         FROM races
@@ -202,8 +202,8 @@ def get_text_repeat_leaderboard(text_id):
         WHERE text_id = ?
         GROUP BY races.username
         ORDER BY times DESC
-        LIMIT 10
-    """, [text_id])
+        LIMIT ?
+    """, [text_id, limit])
 
     return leaderboard
 

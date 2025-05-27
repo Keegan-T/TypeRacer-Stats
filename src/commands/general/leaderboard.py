@@ -1,6 +1,6 @@
 import json
 
-from discord import Embed, File
+from discord import File
 from discord.ext import commands
 
 import database.main.competition_results as competition_results
@@ -9,15 +9,16 @@ import database.main.texts as texts
 import database.main.users as users
 from commands.locks import leaderboard_lock
 from config import prefix
-from database.main.alts import get_alts
 from database.bot.users import get_user
+from database.main.alts import get_alts
 from graphs.core import remove_file
 from utils import errors, urls, strings, dates
+from utils.embeds import Page, Message
 from utils.errors import command_in_use
 
 categories = [
-    "races", "points", "awards", "textbests", "textstyped", "toptens",
-    "textrepeats", "totaltextwpm", "wpm", "racetime", "characters", "racesover", "textsover",
+    "races", "points", "awards", "textbests", "textstyped", "toptens", "textrepeats",
+    "totaltextwpm", "wpm", "racetime", "characters", "captcha", "racesover", "textsover",
 ]
 command = {
     "name": "leaderboard",
@@ -63,206 +64,317 @@ class Leaderboard(commands.Cog):
 
 
 async def run(ctx, user, category, secondary):
-    limit = 10
-    leaders = []
-    leaderboard_string = ""
-
-    embed = Embed(color=user["colors"]["embed"])
+    page = Page()
+    url = None
 
     if category == "races":
         title = "Races"
-        leaderboard = users.get_most("races", limit)
-        for leader in leaderboard:
-            leaders.append(f"{leader['races']:,}")
+        description = leaderboard_races()
 
     elif category == "points":
         title = "Points"
-        leaderboard = users.get_most_total_points(limit)
-        for leader in leaderboard:
-            leaders.append(f"{leader['points_total']:,.0f}")
+        description = leaderboard_points()
 
     elif category == "awards":
         title = "Awards"
-        leaderboard = users.get_most_awards(limit)
-        for leader in leaderboard:
-            first = leader["awards_first"]
-            second = leader["awards_second"]
-            third = leader["awards_third"]
-            total = first + second + third
-            leaders.append(f"{total:,} - :first_place: x{first:,} :second_place: x{second:,} :third_place: x{third:,}")
+        description = leaderboard_awards()
         total_competitions = competition_results.get_competition_count()
-        embed.set_footer(text=f"Across {total_competitions:,} competitions")
+        page.footer = f"Across {total_competitions:,} competitions"
 
     elif category == "textbests":
+        title = "Text Bests"
+        description = leaderboard_text_bests()
         text_count = texts.get_text_count()
         min_texts = int(text_count * 0.2)
-        title = "Text Bests"
-        leaderboard = users.get_top_text_best(limit * 2)
-
-        alts = get_alts()
-        filtered_leaderboard = []
-        unique_usernames = set()
-
-        for leader in leaderboard:
-            username = leader["username"]
-            if username in alts and any(alt in unique_usernames for alt in alts[username]):
-                continue
-            unique_usernames.add(username)
-            filtered_leaderboard.append(leader)
-            leaders.append(f"{leader['text_best_average']:,.2f} WPM")
-            if len(filtered_leaderboard) == limit:
-                break
-
-        leaderboard = filtered_leaderboard
-
-        for leader in leaderboard:
-            leaders.append(f"{leader['text_best_average']:,.2f} WPM")
-        embed.set_footer(text=f"Minimum {min_texts:,} Texts Typed (20%)")
+        page.footer = f"Minimum {min_texts:,} Texts Typed (20%)"
 
     elif category == "textstyped":
         title = "Texts Typed"
-        leaderboard = users.get_most_texts_typed(limit)
-        for user in leaderboard:
-            min_repeats = user["min_repeats"]
-            repeat_string = ""
-            if min_repeats > 1:
-                repeat_string = f" ({min_repeats}x each)"
-            leaders.append(f"{user['texts_typed']:,}{repeat_string}")
+        description = leaderboard_texts_typed()
 
     elif category == "textrepeats":
-        if secondary is not None:
+        if secondary is None:
+            title = "Text Repeats"
+            description = leaderboard_text_repeats()
+        else:
             text_id = secondary
             text = texts.get_text(text_id)
             if not text:
                 return await ctx.send(embed=errors.unknown_text())
             title = f"Text #{text_id} Repeats"
-            leaderboard = texts.get_text_repeat_leaderboard(text_id)
-            for leader in leaderboard:
-                leaders.append(
-                    f"[{leader['times']:,} times]"
-                    f"({urls.trdata_text_races(leader['username'], text_id)})"
-                )
-            embed.url = urls.trdata_text(text_id)
-        else:
-            title = "Text Repeats"
-            leaderboard = users.get_most("text_repeat_times", limit)
-            for leader in leaderboard:
-                leaders.append(
-                    f"{leader['text_repeat_times']:,} times - [Text #{leader['text_repeat_id']}]"
-                    f"({urls.trdata_text_races(leader['username'], leader['text_repeat_times'])})"
-                )
+            description = leaderboard_text_id_repeats(text_id)
+            url = urls.trdata_text(text_id)
 
     elif category == "totaltextwpm":
         title = "Total Text WPM"
-        leaderboard = users.get_most("text_wpm_total", limit)
-        for leader in leaderboard:
-            leaders.append(f"{leader['text_wpm_total']:,.0f} WPM ({leader['texts_typed']:,} texts)")
+        description = leaderboard_total_text_wpm()
 
     elif category == "wpm":
         title = "Best WPM"
-        leaderboard = users.get_most("wpm_best", limit * 2)
-        alts = get_alts()
-        filtered_leaderboard = []
-        unique_usernames = set()
-
-        for leader in leaderboard:
-            username = leader["username"]
-            if username in alts and any(alt in unique_usernames for alt in alts[username]):
-                continue
-            unique_usernames.add(username)
-            filtered_leaderboard.append(leader)
-            leaders.append(f"{leader['wpm_best']:,.2f} WPM")
-            if len(filtered_leaderboard) == limit:
-                break
-
-        leaderboard = filtered_leaderboard
+        description = leaderboard_wpm()
 
     elif category == "racetime":
         title = "Race Time"
-        leaderboard = users.get_most("seconds", limit)
-        for leader in leaderboard:
-            leaders.append(f"{strings.format_duration_short(leader['seconds'])}")
+        description = leaderboard_race_time()
 
     elif category == "characters":
         title = "Characters Typed"
-        leaderboard = users.get_most("characters", limit)
-        for leader in leaderboard:
-            leaders.append(f"{leader['characters']:,}")
+        description = leaderboard_characters()
 
-    elif category == "racesover":
+    elif category == "captcha":
+        title = "Captcha WPM"
+        description = leaderboard_captcha()
+
+    elif category in ["racesover", "textsover"]:
         try:
             wpm = float(secondary)
         except ValueError:
             return await ctx.send(embed=errors.invalid_number_format())
-        title = f"Races Over {wpm:,.0f} WPM"
-        leaderboard = await users.get_most_races_over(wpm)
-        for leader in leaderboard:
-            leaders.append(f"{leader['races_over']:,}")
 
-    elif category == "textsover":
-        try:
-            wpm = float(secondary)
-        except ValueError:
-            return await ctx.send(embed=errors.invalid_number_format())
-        title = f"Texts Over {wpm:,.0f} WPM"
-        leaderboard = await users.get_most_texts_over(wpm)
-        for leader in leaderboard:
-            leaders.append(f"{leader['texts_over']:,}")
+        if category == "racesover":
+            title = f"Races Over {wpm:,.0f} WPM"
+            description = await leaderboard_races_over(wpm)
+
+        elif category == "textsover":
+            title = f"Texts Over {wpm:,.0f} WPM"
+            description = await leaderboard_texts_over(wpm)
 
     else:
-        top = 10
+        n = 10
         if category.isnumeric():
-            top = int(category)
-
-        leaderboard, text_count = top_tens.get_top_n_counts(top)
+            n = int(category)
 
         if secondary == "export":
-            export_data = {
-                "timestamp": dates.now().timestamp(),
-                "total_texts": text_count,
-                "users": []
-            }
+            return await export_top_n(ctx, n)
 
-            for i, leader in enumerate(leaderboard):
-                username, appearances = leader
-                export_data["users"].append({
-                    "username": username,
-                    "appearances": appearances,
-                })
+        title = f"Top {n} Appearances"
+        description, text_count, user_count = leaderboard_top_n(n)
+        page.footer = f"{text_count:,} total texts\n{user_count:,} total users"
 
-            file_name = f"top_{top}_appearances.json"
-            json_data = json.dumps(export_data)
-            with open(file_name, "w") as file:
-                file.write(json_data)
+    page.title = title + " Leaderboard"
+    page.description = description
 
-            await ctx.send(file=File(file_name))
+    message = Message(
+        ctx, user, page,
+        url=url,
+    )
 
-            remove_file(file_name)
-            return
+    await message.send()
 
-        title = f"Top {top} Appearances"
 
-        for i, leader in enumerate(leaderboard[:10]):
-            rank = strings.rank(i + 1)
-            username = strings.escape_formatting(leader[0])
-            leaderboard_string += f"{rank} {username} - {leader[1]:,}\n"
+def filter_users(user_list):
+    countries = users.get_countries()
+    alts = get_alts()
+    filtered = []
+    added_users = set()
 
-        embed.set_footer(
-            text=f"{text_count:,} total texts\n"
-                 f"{len(leaderboard):,} total users"
+    i = 0
+    for user in user_list:
+        user = dict(user)
+        username = user["username"]
+        alt_accounts = {username} | set(alts.get(username, []))
+
+        if not alt_accounts & added_users:
+            user["country"] = countries.get(username, None)
+            filtered.append(user)
+            added_users.update(alt_accounts)
+            i += 1
+            if i == 10:
+                break
+
+    return filtered
+
+
+def user_rank(user, i):
+    flag = f":flag_{user['country']}: " if user['country'] else ""
+    return f"{strings.rank(i + 1)} {flag}{user['username']}"
+
+
+def leaderboard_races():
+    leaders = filter_users(users.get_most("races", 20))
+    description = ""
+    for i, leader in enumerate(leaders):
+        description += f"{user_rank(leader, i)} - {leader['races']:,}\n"
+
+    return description
+
+
+def leaderboard_points():
+    leaders = filter_users(users.get_most_total_points(20))
+    description = ""
+    for i, leader in enumerate(leaders):
+        description += f"{user_rank(leader, i)} - {leader['points_total']:,.0f}\n"
+
+    return description
+
+
+def leaderboard_awards():
+    leaders = filter_users(users.get_most_awards(20))
+    description = ""
+    for i, leader in enumerate(leaders):
+        first = leader["awards_first"]
+        second = leader["awards_second"]
+        third = leader["awards_third"]
+        total = first + second + third
+        description += (
+            f"{user_rank(leader, i)} - {total:,} - :first_place: x{first:,} "
+            f":second_place: x{second:,} :third_place: x{third:,}\n"
         )
 
-    if category != "toptens" and not category.isnumeric():
-        for i, leader in enumerate(leaderboard):
-            rank = strings.rank(i + 1)
-            username = strings.escape_formatting(leader["username"])
-            flag = f":flag_{leader['country']}: " if leader['country'] else ""
-            leaderboard_string += f"{rank} {flag}{username} - {leaders[i]}\n"
+    return description
 
-    embed.title = f"{title} Leaderboard"
-    embed.description = leaderboard_string
 
-    await ctx.send(embed=embed)
+def leaderboard_text_bests():
+    leaders = filter_users(users.get_top_text_best(20))
+    description = ""
+    for i, leader in enumerate(leaders):
+        description += f"{user_rank(leader, i)} - {leader['text_best_average']:,.2f} WPM\n"
+
+    return description
+
+
+def leaderboard_texts_typed():
+    leaders = filter_users(users.get_most_texts_typed(20))
+    description = ""
+    for i, leader in enumerate(leaders):
+        min_repeats = leader["min_repeats"]
+        repeat_string = ""
+        if min_repeats > 1:
+            repeat_string = f" ({min_repeats}x each)"
+        description += f"{user_rank(leader, i)} - {leader['texts_typed']:,}{repeat_string}\n"
+
+    return description
+
+
+def leaderboard_text_repeats():
+    leaders = filter_users(users.get_most("text_repeat_times", 20))
+    description = ""
+    for i, leader in enumerate(leaders):
+        description += (
+            f"{user_rank(leader, i)} - "
+            f"{leader['text_repeat_times']:,} times - [Text #{leader['text_repeat_id']}]"
+            f"({urls.trdata_text_races(leader['username'], leader['text_repeat_times'])})\n"
+        )
+
+    return description
+
+
+def leaderboard_text_id_repeats(text_id):
+    leaders = filter_users(texts.get_text_repeat_leaderboard(text_id, 20))
+    description = ""
+    for i, leader in enumerate(leaders):
+        description += (
+            f"{user_rank(leader, i)} - "
+            f"[{leader['times']:,} times]"
+            f"({urls.trdata_text_races(leader['username'], text_id)})\n"
+        )
+
+    return description
+
+
+def leaderboard_total_text_wpm():
+    leaders = filter_users(users.get_most("text_wpm_total", 20))
+    description = ""
+    for i, leader in enumerate(leaders):
+        description += (
+            f"{user_rank(leader, i)} - "
+            f"{leader['text_wpm_total']:,.0f} WPM ({leader['texts_typed']:,} texts)\n"
+        )
+
+    return description
+
+
+def leaderboard_wpm():
+    leaders = filter_users(users.get_most("wpm_best", 20))
+    description = ""
+    for i, leader in enumerate(leaders):
+        description += f"{user_rank(leader, i)} - {leader['wpm_best']:,.2f} WPM\n"
+
+    return description
+
+
+def leaderboard_race_time():
+    leaders = filter_users(users.get_most("seconds", 20))
+    description = ""
+    for i, leader in enumerate(leaders):
+        description += f"{user_rank(leader, i)} - {strings.format_duration_short(leader['seconds'])}\n"
+
+    return description
+
+
+def leaderboard_characters():
+    leaders = filter_users(users.get_most("characters", 20))
+    description = ""
+    for i, leader in enumerate(leaders):
+        description += f"{user_rank(leader, i)} - {leader['characters']:,}\n"
+
+    return description
+
+def leaderboard_captcha():
+    leaders = filter_users(users.get_most("wpm_verified", 20))
+    description = ""
+    for i, leader in enumerate(leaders):
+        description += f"{user_rank(leader, i)} - {leader['wpm_verified']:,.2f} WPM\n"
+
+    return description
+
+
+async def leaderboard_races_over(wpm):
+    leaders = filter_users(await users.get_most_races_over(wpm, 20))
+    description = ""
+    for i, leader in enumerate(leaders):
+        description += f"{user_rank(leader, i)} - {leader['races_over']:,}\n"
+
+    return description
+
+
+async def leaderboard_texts_over(wpm):
+    leaders = filter_users(await users.get_most_texts_over(wpm, 20))
+    description = ""
+    for i, leader in enumerate(leaders):
+        description += f"{user_rank(leader, i)} - {leader['texts_over']:,}\n"
+
+    return description
+
+
+def leaderboard_top_n(n):
+    countries = users.get_countries()
+    leaders, text_count = top_tens.get_top_n_counts(n)
+    description = ""
+    for i, leader in enumerate(leaders[:10]):
+        leader = {
+            "username": leader[0],
+            "count": leader[1],
+            "country": countries.get(leader[0], None),
+        }
+        description += f"{user_rank(leader, i)} - {leader["count"]:,}\n"
+
+    return description, text_count, len(leaders)
+
+
+async def export_top_n(ctx, n):
+    leaders, text_count = top_tens.get_top_n_counts(n)
+    export_data = {
+        "timestamp": dates.now().timestamp(),
+        "total_texts": text_count,
+        "users": []
+    }
+
+    for i, leader in enumerate(leaders):
+        username, appearances = leader
+        export_data["users"].append({
+            "username": username,
+            "appearances": appearances,
+        })
+
+    file_name = f"top_{n}_appearances.json"
+    json_data = json.dumps(export_data)
+    with open(file_name, "w") as file:
+        file.write(json_data)
+
+    await ctx.send(file=File(file_name))
+
+    remove_file(file_name)
 
 
 async def setup(bot):
