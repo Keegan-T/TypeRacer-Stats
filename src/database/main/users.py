@@ -361,9 +361,8 @@ def get_unraced_texts(username, universe="play"):
 
     user_texts = set([text["text_id"] for text in user_texts])
     text_list = get_texts(get_disabled=False, universe=universe)
-    text_ids = [text["text_id"] for text in text_list]
 
-    return [text_id for text_id in text_ids if text_id not in user_texts]
+    return [text for text in text_list if text["text_id"] not in user_texts]
 
 
 def count_races_over(username, threshold, category, over, universe, start_date=None, end_date=None):

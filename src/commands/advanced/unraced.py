@@ -62,8 +62,8 @@ async def run(ctx, user, username, category):
     elif category in ["easy", "hard"]:
         unraced.sort(key=lambda x: x["difficulty"], reverse=category == "hard")
 
-    def formatter(text_id):
-        text = text_list[text_id]
+    def formatter(text):
+        text_id = text["text_id"]
         return (
             f"[Text #{text_id}]({urls.trdata_text(text_id, universe)}) - [Ghost]({text['ghost']})\n"
             f'"{strings.truncate_clean(text["quote"], 500)}"\n\n'
