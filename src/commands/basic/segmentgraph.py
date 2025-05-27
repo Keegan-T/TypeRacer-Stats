@@ -2,6 +2,7 @@ from discord.ext import commands
 
 from api.races import get_race, get_universe_multiplier
 from api.users import get_stats
+from commands import recent
 from commands.basic.realspeed import get_args
 from database.bot.users import get_user
 from graphs import segment_graph
@@ -154,6 +155,8 @@ async def run(ctx, user, username, race_number, universe):
     )
 
     await message.send()
+
+    recent.text_id = race_info["text_id"]
 
 
 async def setup(bot):
