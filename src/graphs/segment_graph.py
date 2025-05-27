@@ -2,7 +2,7 @@ from graphs import bar_graph
 from graphs.core import plt, color_graph, universe_title, file_name
 
 
-def render(user, segments, title, universe):
+def render(user, segments, title, x_label, universe):
     fig, ax = plt.subplots()
     x = range(1, len(segments) + 1)
     y = []
@@ -18,14 +18,16 @@ def render(user, segments, title, universe):
         raw_y.append(raw_wpm)
 
     color = user["colors"]["line"]
+    no_gap = len(x) > 200
+    width = 1 if no_gap else 0.8
     if color in plt.colormaps():
-        bar_graph.apply_cmap(ax, user, x, y, raw_y)
+        bar_graph.apply_cmap(ax, user, x, y, raw_y, width)
     else:
-        ax.bar(x, y, color=color)
-        ax.bar(x, raw_y, color=user["colors"]["raw"], zorder=0)
+        ax.bar(x, y, color=color, width=width)
+        ax.bar(x, raw_y, color=user["colors"]["raw"], zorder=0, width=width)
 
     ax.set_ylabel("WPM")
-    ax.set_xlabel("Segments")
+    ax.set_xlabel(x_label)
     plt.grid()
     ax.set_title(universe_title(title, universe))
 

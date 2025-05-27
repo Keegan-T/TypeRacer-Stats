@@ -1,4 +1,3 @@
-from discord import Embed, File
 from discord.ext import commands
 
 from api.races import get_race, get_universe_multiplier
@@ -6,12 +5,13 @@ from api.users import get_stats
 from commands.basic.realspeed import get_args
 from database.bot.users import get_user
 from graphs import segment_graph
-from graphs.core import remove_file
-from utils import errors, urls, strings, embeds
+from utils import errors, urls, strings
+from utils.embeds import Page, Message, is_embed, Field
+from utils.stats import calculate_wpm
 
 command = {
     "name": "segmentgraph",
-    "aliases": ["segments", "seg", "sg", "wpmsegments", "ws"],
+    "aliases": ["segments", "seg", "sg", "wpmsegments", "ws", "wordgraph", "words", "wg"],
     "description": "Displays a bar graph of WPM segments over a race",
     "parameters": "[username] <race_number>",
     "usages": ["segmentgraph keegant 420"],
@@ -27,7 +27,7 @@ class SegmentGraph(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username, race_number, universe = result
@@ -46,74 +46,114 @@ async def run(ctx, user, username, race_number, universe):
     if not race_info:
         return await ctx.send(embed=errors.race_not_found(username, race_number, universe))
 
-    embed = Embed(
-        title=f"WPM Segments - Race #{race_number:,}",
-        color=user["colors"]["embed"],
-        url=urls.replay(username, race_number, universe, stats["disqualified"]),
-    )
-    embeds.add_profile(embed, stats)
-    embeds.add_universe(embed, universe)
-
-    quote = race_info["quote"]
-    text_segments = strings.get_segments(quote)
     if "delays" not in race_info:
         return await ctx.send(embed=errors.logs_not_found(username, race_number, universe))
+
+    def format_segment(segment):
+        segment_text = segment["text"]
+        if len(segment_text) > 100:
+            segment_text = f"{segment_text[:100]}..."
+
+        wpm = segment["wpm"]
+        raw_wpm = segment["raw_wpm"]
+        wpm_text = f"**{wpm:,.2f}**"
+        if raw_wpm > wpm:
+            wpm_text = f"**[{wpm:,.2f}](http://a \"{raw_wpm:,.2f} Raw\")**"
+        return f"{wpm_text} - {strings.escape_formatting(segment_text)}"
+
+    quote = race_info["quote"]
     delays = race_info["delays"]
     raw_delays = race_info["raw_delays"]
+    text_segments = strings.get_segments(quote)
     multiplier = get_universe_multiplier(universe)
     segments = []
 
-    index = 0
+    i = 0
     for text in text_segments:
-        segment_delays = delays[index:len(text) + index]
-        segment_raw_delays = raw_delays[index:len(text) + index]
-        try:
-            wpm = multiplier * len(text) / sum(segment_delays)
-        except ZeroDivisionError:
-            wpm = float("inf")
-        try:
-            raw_wpm = multiplier * len(text) / sum(segment_raw_delays)
-        except ZeroDivisionError:
-            raw_wpm = float("inf")
+        segment_delays = delays[i:len(text) + i]
+        raw_segment_delays = raw_delays[i:len(text) + i]
+        wpm = calculate_wpm(segment_delays, sum(segment_delays), multiplier)
+        raw_wpm = calculate_wpm(raw_segment_delays, sum(raw_segment_delays), multiplier)
         segments.append({
             "text": text,
             "wpm": wpm,
             "raw_wpm": raw_wpm,
         })
-        index += len(text)
+        i += len(text)
 
-    text_id = race_info["text_id"]
-    words = len(quote.split(" "))
-    chars = len(quote)
     description = (
-        f"**Text** - [#{text_id}]"
-        f"({urls.trdata_text(text_id)}) - "
-        f"{words:,} words - {chars:,} characters\n\n"
+        f"{strings.text_description(race_info).split("\n")[0]}\n\n"
         f"**Speed:** {race_info['unlagged']:,.2f} WPM "
         f"({race_info['accuracy']:.1%} Accuracy)\n"
-        f"**Raw Speed:** {race_info['raw_unlagged']:,.2f} WPM\n\n"
+        f"**Raw Speed:** {race_info['raw_unlagged']:,.2f} WPM"
     )
-    for segment in segments:
-        segment_text = strings.escape_formatting(segment["text"]).replace("-", "\\-")
-        if len(segment_text) > 100:
-            segment_text = f"{segment_text[:100]}..."
-        description += f"**{segment['wpm']:,.2f} WPM"
-        if segment["wpm"] < segment["raw_wpm"]:
-            description += f" ({segment['raw_wpm']:,.2f} Raw)"
-        description += f":** {segment_text}\n"
+    timestamp_string = f"Completed {strings.discord_timestamp(race_info['timestamp'])}"
+    segment_description = (
+        f"{description}\n\n"
+        f"**WPM - Segment**\n"
+    )
+    segment_description += "\n".join(format_segment(segment) for segment in segments)
+    segment_description += "\n\n" + timestamp_string
 
-    description += f"\nCompleted {strings.discord_timestamp(race_info['timestamp'])}"
-    embed.description = description
+    word_segments = []
+    words = quote.split()
+    i = 0
+    for word in words:
+        chars = len(word)
+        word_delays = delays[i + 1:i + chars]
+        raw_word_delays = raw_delays[i + 1:i + chars]
+        wpm = calculate_wpm(word_delays, sum(word_delays), multiplier)
+        raw_wpm = calculate_wpm(raw_word_delays, sum(raw_word_delays), multiplier)
+        word_segments.append({
+            "text": word,
+            "wpm": wpm,
+            "raw_wpm": raw_wpm,
+        })
+        i += chars + 1
 
-    title = f"WPM Segments - {username} - Race #{race_number:,}"
-    file_name = segment_graph.render(user, segments, title, universe)
+    word_segments = [word for word in word_segments if word["wpm"] != float("inf")]
+    fastest = sorted(word_segments, key=lambda x: -x["wpm"])
+    slowest = fastest[::-1]
 
-    embed.set_image(url=f"attachment://{file_name}")
-    file = File(file_name, filename=file_name)
+    segment_page = Page(
+        title=f"WPM Segments - Race #{race_number:,}",
+        description=segment_description,
+        render=lambda: segment_graph.render(
+            user, segments, f"WPM Segments - {username} - Race #{race_number:,}",
+            "Words", universe
+        ),
+        button_name="Segments",
+    )
 
-    await ctx.send(embed=embed, file=file)
+    word_page = Page(
+        title=f"Words - Race #{race_number:,}",
+        description=description + "\n\n" + timestamp_string,
+        fields=[
+            Field(
+                name="Fastest",
+                value="\n".join(format_segment(word) for word in fastest[:10]),
+            ),
+            Field(
+                name="Slowest",
+                value="\n".join(format_segment(word) for word in slowest[:10]),
+            )
+        ],
+        render=lambda: segment_graph.render(
+            user, word_segments, f"Words - {username} - Race #{race_number:,}",
+            "Words", universe
+        ),
+        button_name="Words",
+        default=ctx.invoked_with in ["wordgraph", "words", "wg"],
+    )
 
-    remove_file(file_name)
+    message = Message(
+        ctx, user, [segment_page, word_page],
+        url=urls.replay(username, race_number, universe, stats["disqualified"]),
+        profile=stats,
+        universe=universe,
+    )
+
+    await message.send()
 
 
 async def setup(bot):

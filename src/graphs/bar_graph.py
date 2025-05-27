@@ -32,10 +32,10 @@ def render(user, username, activity, universe):
     return file
 
 
-def apply_cmap(ax, user, labels, values, top_values=None):
+def apply_cmap(ax, user, labels, values, top_values=None, width=0.8):
     cmap = plt.get_cmap(user["colors"]["line"])
 
-    bars = ax.bar(labels, values, alpha=0)
+    bars = ax.bar(labels, values, alpha=0, width=width)
     original_ylim = ax.get_ylim()
 
     extent = [ax.get_xlim()[0], ax.get_xlim()[1], 0, max(values)]
@@ -72,17 +72,18 @@ def apply_cmap(ax, user, labels, values, top_values=None):
         ax.set_ylim(top=max_y * 1.05)
         original_ylim = (0.0, max_y * 1.05)
 
-    for i in range(len(labels) - 1):
-        left = labels[i] + bar_width / 2
-        right = labels[i + 1] - bar_width / 2
-        rect = patches.Rectangle(
-            (left, 0),
-            right - left, original_ylim[1],
-            color=graph_background
-        )
-        ax.add_patch(rect)
+    if width == 0.8:
+        for i in range(len(labels) - 1):
+            left = labels[i] + bar_width / 2
+            right = labels[i + 1] - bar_width / 2
+            rect = patches.Rectangle(
+                (left, 0),
+                right - left, original_ylim[1],
+                color=graph_background
+            )
+            ax.add_patch(rect)
 
-    bars = ax.bar(labels, values, alpha=0)
+    bars = ax.bar(labels, values, alpha=0, width=width)
     for bar in bars:
         bar_height = bar.get_height()
         bar_left = bar.get_x()
