@@ -33,7 +33,7 @@ class WhoIs(commands.Cog):
 
 
 async def run(ctx, user, user_id):
-    user_info = bot_users.get_user(user_id, auto_add=False)
+    user_info = users.get_user(user_id, auto_add=False)
     if not user_info:
         return await ctx.send(embed=errors.unknown_user(user_id))
 
