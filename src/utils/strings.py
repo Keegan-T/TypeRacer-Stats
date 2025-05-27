@@ -53,6 +53,7 @@ category_aliases = [
 username_aliases = {
     "hfs": "hospitalforsouls2",
     "mj": "mononym_jisoo",
+    "mmm": "mmmmmmmmwmmmmmmmmmmmmmmmmmmmm",
 }
 
 rank_emojis = [
