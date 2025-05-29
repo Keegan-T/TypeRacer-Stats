@@ -4,7 +4,7 @@ import traceback
 
 import requests
 
-from config import bot_owner, staging, webhook
+from config import bot_owner, staging, message_webhook, error_webhook
 from database.bot.users import get_user
 
 start = 0
@@ -41,14 +41,20 @@ def get_log_message(message):
     return f"{message_link} {mention}{linked_account}: `{content}`"
 
 
+def send_log(webhook, message, file=None):
+    payload = {"content": message}
+
+    if file:
+        return requests.post(webhook, data=payload, files={"file": file})
+
+    return requests.post(webhook, json=payload)
+
+
 def log(message, file=None):
     if staging:
         return print(message)
 
-    if file:
-        return requests.post(webhook, data={"content": message}, files={"file": file})
-
-    requests.post(webhook, json={"content": message})
+    send_log(message_webhook, message, file)
 
 
 def log_error(command_message, error):
@@ -64,7 +70,7 @@ def log_error(command_message, error):
             temp_file.write(traceback_string)
             temp_file.flush()
             temp_file.seek(0)
-            log(log_message, temp_file)
+            send_log(error_webhook, log_message, temp_file)
 
     log_message += f"```ansi\n\u001B[2;31m{traceback_string}\u001B[0m```"
-    log(log_message)
+    send_log(error_webhook, log_message)

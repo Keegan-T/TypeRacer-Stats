@@ -13,7 +13,8 @@ else:
     bot_token = os.getenv("staging_token")
     staging = True
     records_channel = 1199677882730029086
-webhook = os.getenv("webhook")
+message_webhook = os.getenv("message_webook")
+error_webhook = os.getenv("error_webhook")
 
 prefix = "-"
 welcome_message = (
