@@ -55,7 +55,7 @@ async def run(ctx, user, username, race_number, universe):
         race_number = stats["races"] + race_number
 
     race_info = await get_race(username, race_number, universe=universe, get_typos=True)
-    if not race_info or "unlagged" not in race_info:
+    if not race_info or "typos" not in race_info:
         return await ctx.send(embed=errors.logs_not_found(username, race_number, universe))
 
     typos = race_info["typos"]

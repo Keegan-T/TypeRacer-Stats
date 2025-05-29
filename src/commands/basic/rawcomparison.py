@@ -53,7 +53,7 @@ async def run(ctx, user, username, race_number, universe):
         race_number = stats["races"] + race_number
 
     race_info = await get_race(username, race_number, get_typos=True, universe=universe)
-    if not race_info or "unlagged" not in race_info:
+    if not race_info or "raw_unlagged" not in race_info:
         return await ctx.send(embed=errors.logs_not_found(username, race_number, universe))
 
     description = strings.text_description(race_info) + "\n\n"

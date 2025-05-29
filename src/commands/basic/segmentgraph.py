@@ -47,7 +47,7 @@ async def run(ctx, user, username, race_number, universe):
     if not race_info:
         return await ctx.send(embed=errors.race_not_found(username, race_number, universe))
 
-    if "delays" not in race_info:
+    if "raw_unlagged" not in race_info:
         return await ctx.send(embed=errors.logs_not_found(username, race_number, universe))
 
     def format_segment(segment):

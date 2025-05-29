@@ -61,7 +61,7 @@ def get_log_details(typing_log, multiplier=12000, typos=False):
         distributed=distributed,
     )
 
-    if not action_data:
+    if not action_data or duration == 0:
         return details
 
     actions = re.findall(r"\d+,(?:\d+[+\-$].?)+,", action_data)
