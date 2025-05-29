@@ -5,8 +5,8 @@ from discord.ext import commands
 import database.main.texts as texts
 import database.main.users as users
 from database.bot.users import get_user
-from utils import errors, urls, strings
-from utils.embeds import Message, get_pages, is_embed
+from utils import errors, urls, strings, colors
+from utils.embeds import Page, Message, get_pages, is_embed
 
 categories = ["wpm", "points", "times"]
 command = {
@@ -115,11 +115,19 @@ async def run(ctx, user, username, threshold, category, over=True, random=False)
             f'"{strings.truncate_clean(text_list[text_id]["quote"], 60)}"\n\n'
         )
 
-    pages = get_pages(race_list, formatter, page_count=10, per_page=10)
+    title = (
+        f"Texts {'Over' if over else 'Under'} {threshold:,} "
+        f"{category_title}{' (Randomized)' * random}"
+    )
+
+    if race_list:
+        pages = get_pages(race_list, formatter, page_count=10, per_page=10)
+    else:
+        pages = Page()
+
     message = Message(
         ctx, user, pages,
-        title=f"Texts {'Over' if over else 'Under'} {threshold:,} "
-              f"{category_title}{' (Randomized)' * random}",
+        title=title,
         header=header,
         profile=stats,
         universe=universe,
