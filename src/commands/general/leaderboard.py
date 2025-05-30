@@ -128,7 +128,7 @@ async def run(ctx, user, category, secondary):
     elif category in ["racesover", "textsover"]:
         try:
             wpm = float(secondary)
-        except ValueError:
+        except (ValueError, TypeError):
             return await ctx.send(embed=errors.invalid_number_format())
 
         if category == "racesover":
