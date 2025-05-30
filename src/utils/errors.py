@@ -251,3 +251,15 @@ def no_common_texts(universe):
     add_universe(embed, universe)
 
     return embed
+
+
+def no_valid_windows(universe):
+    embed = Embed(
+        title="No Windows Found",
+        description="No valid windows found in this range\n"
+                    f"Try running `{prefix}skippedraces`",
+        color=error,
+    )
+    add_universe(embed, universe)
+
+    return embed

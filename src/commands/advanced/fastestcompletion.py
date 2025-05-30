@@ -107,6 +107,9 @@ async def run(ctx, user, username, number, category):
                 total_points -= race_list[start_index][4]
                 start_index += 1
 
+    if not windows:
+        return await ctx.send(embed=errors.no_valid_windows(universe))
+
     windows.sort(key=lambda x: x[2])
     top_windows = get_top_disjoint_windows(windows, 10)
 
