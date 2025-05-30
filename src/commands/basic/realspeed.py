@@ -121,7 +121,7 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
         color=color
     )
 
-    if race_info["distributed"]:
+    if race_info.get("distributed", None):
         embed.set_footer(text="Adjusted speed recalculated to account for lag at the start of the race")
 
     embeds.add_profile(embed, stats)
