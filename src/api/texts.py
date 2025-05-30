@@ -67,8 +67,8 @@ def get_text_list(universe):
         text_list.append({
             "text_id": text_id,
             "quote": quote,
-            "username": username,
-            "race_number": race_number,
+            "ghost_username": username,
+            "ghost_number": race_number,
         })
 
     return text_list

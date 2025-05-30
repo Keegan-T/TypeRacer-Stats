@@ -21,23 +21,23 @@ def add_texts(text_list, universe):
         VALUES (?, ?, ?)
     """, [(text["text_id"], text["quote"], difficulty) for text in text_list])
 
-    db.run("""
+    db.run_many("""
         INSERT OR IGNORE INTO text_universes
-        VALUES (?, ?, ?, ?)
-    """, [(universe, text["text_id"], text["username"], text["race_number"]) for text in text_list])
+        VALUES (?, ?, ?, ?, ?)
+    """, [(universe, text["text_id"], text["ghost_username"], text["ghost_number"], 0) for text in text_list])
 
 
 def add_text(text, universe):
     difficulty = 0
-    db.run_many(f"""
+    db.run(f"""
         INSERT OR IGNORE INTO texts
         VALUES (?, ?, ?)
     """, [text["text_id"], text["quote"], difficulty])
 
     db.run("""
         INSERT OR IGNORE INTO text_universes
-        VALUES (?, ?, ?, ?)
-    """, [universe, text["text_id"], text["username"], text["race_number"]])
+        VALUES (?, ?, ?, ?, ?)
+    """, [universe, text["text_id"], text["ghost_username"], text["ghost_number"], 0])
 
 
 def get_texts(as_dictionary=False, get_disabled=True, universe="play"):
