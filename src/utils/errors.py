@@ -209,10 +209,19 @@ def large_query_in_progress():
     )
 
 
-def connection_error():
+def typeracer_connection_error():
     return Embed(
         title="Connection Error",
-        description="Failed to connect to the the TypeRacer servers\n"
+        description="Failed to connect to the TypeRacer servers\n"
+                    "Please try again later",
+        color=error,
+    )
+
+
+def discord_connection_error():
+    return Embed(
+        title="Connection Error",
+        description="Failed to connect to the Discord servers\n"
                     "Please try again later",
         color=error,
     )

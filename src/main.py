@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 import discord
 from aiohttp import ClientConnectionError
-from discord import Embed
+from discord import Embed, DiscordServerError
 from discord.ext import commands, tasks
 from requests.exceptions import SSLError
 
@@ -46,9 +46,10 @@ async def on_command_error(ctx, error):
 
     elif isinstance(error, commands.CommandInvokeError):
         if isinstance(error.original, (ConnectionError, ClientConnectionError, SSLError)):
-            log_error("Connection Error", error)
-            return await ctx.send(embed=errors.connection_error())
-        if "Embed size exceeds maximum size" in str(error):
+            return await ctx.send(embed=errors.typeracer_connection_error())
+        elif isinstance(error.original, DiscordServerError):
+            return await ctx.send(embed=errors.discord_connection_error())
+        elif "or fewer in length" in str(error):
             return await ctx.send(embed=errors.embed_limit_exceeded())
 
         if isinstance(error.original, discord.Forbidden):
