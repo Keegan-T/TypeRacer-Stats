@@ -295,10 +295,21 @@ def update_awards(username, first, second, third):
     """, [first, second, third, username])
 
 
-async def delete_user(username):
-    db.run("DELETE FROM users WHERE username = ?", [username])
-    db.run("DELETE FROM races WHERE username = ?", [username])
-    db.run("DELETE FROM text_results WHERE username = ?", [username])
+async def delete_user(username, universe):
+    db.run("""
+        DELETE FROM user_stats
+        WHERE universe = ?
+        AND username = ?
+    """, [universe, username])
+
+    db.run("""
+        DELETE FROM races
+        WHERE universe = ?
+        AND username = ?
+    """, [universe, username])
+
+    if universe == "play":
+        db.run("DELETE FROM text_results WHERE username = ?", [username])
 
 
 def get_text_bests(username, race_stats=False, universe="play", until=None):

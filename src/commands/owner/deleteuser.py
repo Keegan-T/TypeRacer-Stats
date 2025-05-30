@@ -7,6 +7,7 @@ from commands.checks import owner_check
 from database.bot.users import get_user
 from database.main.users import delete_user
 from utils import colors
+from utils.embeds import add_universe
 
 command = {
     "name": "deleteuser",
@@ -29,6 +30,7 @@ class DeleteUser(commands.Cog):
         if not args:
             return
         username = args[0]
+        universe = user["universe"]
 
         embed = Embed(
             title="Are You Sure?",
@@ -36,6 +38,7 @@ class DeleteUser(commands.Cog):
                         f'Please type "confirm" to proceed with deletion',
             color=colors.warning,
         )
+        add_universe(embed, universe)
         await ctx.send(embed=embed)
 
         def check(message):
@@ -46,20 +49,21 @@ class DeleteUser(commands.Cog):
         except asyncio.TimeoutError:
             return
         else:
-            await run(ctx, user, username)
+            await run(ctx, user, username, universe)
 
 
 async def setup(bot):
     await bot.add_cog(DeleteUser(bot))
 
 
-async def run(ctx, user, username):
-    await delete_user(username)
+async def run(ctx, user, username, universe):
+    await delete_user(username, universe)
 
     embed = Embed(
         title=f"User Deleted",
         description=f"User `{username}` has been removed from the database",
         color=user["colors"]["embed"],
     )
+    add_universe(embed, universe)
 
     await ctx.send(embed=embed)
