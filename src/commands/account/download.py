@@ -171,23 +171,22 @@ async def process_races(username, universe, start_time, stats, new_user):
 
         for race in race_data:
             number = race["gn"]
+            race_id = f"{universe}|{username}|{number}"
 
-            if universe == "play":
-                race_id = f"{universe}|{username}|{number}"
-                # Treating 0 WPM races as deleted
-                if race_id in deleted_ids:
-                    log(f"Skipping deleted race {race_id}")
-                    continue
-                elif race["wpm"] == 0.0:
-                    log(f"Adding deleted race {race_id}")
-                    deleted_races.add_race(universe, username, race["number"], race["wpm"])
-                    continue
+            # Treating 0 WPM races as deleted
+            if race_id in deleted_ids:
+                log(f"Skipping deleted race {race_id}")
+                continue
+            elif race["wpm"] == 0.0:
+                log(f"Adding deleted race {race_id}")
+                deleted_races.add_race(universe, username, race["number"], race["wpm"])
+                continue
 
-                # Restoring modified values
-                if race_id in modified_ids:
-                    modified_race = modified_races.get_race(universe, username, number)
-                    log(f"Using modified race {race_id}")
-                    race["wpm"] = modified_race["wpm_modified"]
+            # Restoring modified values
+            if race_id in modified_ids:
+                modified_race = modified_races.get_race(universe, username, number)
+                log(f"Using modified race {race_id}")
+                race["wpm"] = modified_race["wpm_modified"]
 
             # Checking for new texts
             text_id = race["tid"]
