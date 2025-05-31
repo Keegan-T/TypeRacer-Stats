@@ -3,7 +3,7 @@ from discord.ext import commands
 import database.main.races as races
 import database.main.users as users
 from commands.advanced.races import get_stats_fields
-from commands.locks import big_lock
+from commands.locks import LargeQueryLock
 from database.bot.users import get_user
 from utils import errors, strings
 from utils.embeds import Page, Message, is_embed
@@ -56,60 +56,54 @@ async def run(ctx, user, username, category, seconds):
         return await ctx.send(embed=errors.import_required(username, universe))
     era_string = strings.get_era_string(user)
 
-    if stats["races"] > 100_000:
-        if big_lock.locked():
-            return await ctx.send(embed=errors.large_query_in_progress())
-        await big_lock.acquire()
+    async with LargeQueryLock(stats["races"] > 100_000):
+        columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
+        race_list = await races.get_races(
+            username, columns=columns, universe=universe, start_date=user["start_date"], end_date=user["end_date"]
+        )
+        if not race_list:
+            return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
+        race_list.sort(key=lambda x: x[7])
 
-    columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
-    race_list = await races.get_races(
-        username, columns=columns, universe=universe, start_date=user["start_date"], end_date=user["end_date"]
-    )
-    if not race_list:
-        if big_lock.locked():
-            big_lock.release()
-        return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
-    race_list.sort(key=lambda x: x[7])
+        windows = []
+        start_index = 0
 
-    windows = []
-    start_index = 0
+        if category == "races":
+            current_session = 1
+            for i in range(1, len(race_list)):
+                time_difference = race_list[i][7] - race_list[i - 1][7]
+                if time_difference < seconds:
+                    current_session += 1
+                else:
+                    end_index = i - 1
+                    windows.append((start_index, end_index, current_session))
+                    start_index = i
+                    current_session = 1
 
-    if category == "races":
-        current_session = 1
-        for i in range(1, len(race_list)):
-            time_difference = race_list[i][7] - race_list[i - 1][7]
-            if time_difference < seconds:
-                current_session += 1
-            else:
-                end_index = i - 1
-                windows.append((start_index, end_index, current_session))
-                start_index = i
-                current_session = 1
+        else:
+            current_session = 0
+            for i in range(1, len(race_list)):
+                time_difference = race_list[i][7] - race_list[i - 1][7]
+                if time_difference < seconds:
+                    current_session += time_difference
+                else:
+                    end_index = i - 1
+                    windows.append((start_index, end_index, current_session))
+                    start_index = i
+                    current_session = 0
 
-    else:
-        current_session = 0
-        for i in range(1, len(race_list)):
-            time_difference = race_list[i][7] - race_list[i - 1][7]
-            if time_difference < seconds:
-                current_session += time_difference
-            else:
-                end_index = i - 1
-                windows.append((start_index, end_index, current_session))
-                start_index = i
-                current_session = 0
+        end_index = len(race_list) - 1
+        windows.append((start_index, end_index, current_session))
+        windows.sort(key=lambda x: -x[2])
+        top_windows = get_top_disjoint_windows(windows, 10)
 
-    end_index = len(race_list) - 1
-    windows.append((start_index, end_index, current_session))
-    windows.sort(key=lambda x: -x[2])
-    top_windows = get_top_disjoint_windows(windows, 10)
-
-    best = top_windows[0]
-    race_range = race_list[best[0]:best[1] + 1]
-    start_time = race_range[0]["timestamp"]
-    end_time = race_range[-1]["timestamp"]
-    fields, footer = get_stats_fields(
-        username, race_range, start_time, end_time, universe
-    )
+        best = top_windows[0]
+        race_range = race_list[best[0]:best[1] + 1]
+        start_time = race_range[0]["timestamp"]
+        end_time = race_range[-1]["timestamp"]
+        fields, footer = get_stats_fields(
+            username, race_range, start_time, end_time, universe
+        )
 
     interval = f" ({strings.format_duration_short(seconds, False)} interval)"
     title = f"{'Longest' if category == 'time' else 'Highest Race'} Session"
@@ -151,9 +145,6 @@ async def run(ctx, user, username, category, seconds):
     )
 
     await message.send()
-
-    if big_lock.locked():
-        big_lock.release()
 
 
 async def setup(bot):

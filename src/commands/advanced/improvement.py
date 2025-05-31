@@ -6,7 +6,7 @@ import utils.stats
 from api.users import get_stats
 from commands.account.download import run as download
 from commands.advanced.races import get_args
-from commands.locks import big_lock
+from commands.locks import LargeQueryLock
 from config import prefix
 from database.bot.users import get_user
 from graphs import improvement_graph
@@ -57,82 +57,77 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
     stats = users.get_user(username, universe)
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
-
-    if stats["races"] > 100_000:
-        if big_lock.locked():
-            return await ctx.send(embed=errors.large_query_in_progress())
-        await big_lock.acquire()
-
     era_string = strings.get_era_string(user)
 
-    api_stats = get_stats(username, universe=universe)
-    await download(stats=api_stats, universe=universe)
-    if era_string:
-        api_stats = await users.time_travel_stats(api_stats, user)
+    async with LargeQueryLock(stats["races"] > 100_000):
+        api_stats = get_stats(username, universe=universe)
+        await download(stats=api_stats, universe=universe)
+        if era_string:
+            api_stats = await users.time_travel_stats(api_stats, user)
 
-    if start_number and not end_number:
-        end_number = api_stats["races"]
+        if start_number and not end_number:
+            end_number = api_stats["races"]
 
-    if start_date and not end_date:
-        end_date = dates.now()
+        if start_date and not end_date:
+            end_date = dates.now()
 
-    start_date, end_date = dates.time_travel_dates(user, start_date, end_date)
+        start_date, end_date = dates.time_travel_dates(user, start_date, end_date)
 
-    title = "WPM Improvement"
-    columns = ["wpm", "timestamp"]
-    if start_date is None and start_number is None:
-        timeframe = f" (All-Time)"
-        title += " - All-Time"
-        race_list = await races.get_races(username, columns=columns, universe=universe)
+        title = "WPM Improvement"
+        columns = ["wpm", "timestamp"]
+        if start_date is None and start_number is None:
+            timeframe = f" (All-Time)"
+            title += " - All-Time"
+            race_list = await races.get_races(username, columns=columns, universe=universe)
 
-    elif start_date is None:
-        end_number = min(end_number, api_stats["races"])
-        timeframe = f" {start_number:,} - {end_number:,}"
-        title += f" - Races{timeframe}"
-        race_list = await races.get_races(
-            username, columns=columns, start_number=start_number,
-            end_number=end_number, universe=universe
-        )
+        elif start_date is None:
+            end_number = min(end_number, api_stats["races"])
+            timeframe = f" {start_number:,} - {end_number:,}"
+            title += f" - Races{timeframe}"
+            race_list = await races.get_races(
+                username, columns=columns, start_number=start_number,
+                end_number=end_number, universe=universe
+            )
 
-    else:
-        timeframe = f" ({strings.get_display_date_range(start_date, end_date)})"
-        title += f" - {strings.get_display_date_range(start_date, end_date)}"
-        race_list = await races.get_races(
-            username, columns=columns, start_date=start_date.timestamp(),
-            end_date=end_date.timestamp(), universe=universe
-        )
+        else:
+            timeframe = f" ({strings.get_display_date_range(start_date, end_date)})"
+            title += f" - {strings.get_display_date_range(start_date, end_date)}"
+            race_list = await races.get_races(
+                username, columns=columns, start_date=start_date.timestamp(),
+                end_date=end_date.timestamp(), universe=universe
+            )
 
-    if era_string:
-        race_list = utils.stats.time_travel_races(race_list, user)
+        if era_string:
+            race_list = utils.stats.time_travel_races(race_list, user)
 
-    if len(race_list) == 0:
-        return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
+        if len(race_list) == 0:
+            return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
 
-    race_list.sort(key=lambda x: x[1])
-    wpm = []
-    timestamps = []
-    best = 0
-    average = 0
-    recent_average = 0
-    race_count = len(race_list)
-    worst = float("inf")
-    moving = min(max(race_count // 15, 1), 500)
+        race_list.sort(key=lambda x: x[1])
+        wpm = []
+        timestamps = []
+        best = 0
+        average = 0
+        recent_average = 0
+        race_count = len(race_list)
+        worst = float("inf")
+        moving = min(max(race_count // 15, 1), 500)
 
-    for race in race_list:
-        race_wpm = race[0]
-        wpm.append(race_wpm)
-        timestamps.append(race[1])
-        if race_wpm > best:
-            best = race_wpm
-        if race_wpm < worst:
-            worst = race_wpm
-        average += race_wpm
+        for race in race_list:
+            race_wpm = race[0]
+            wpm.append(race_wpm)
+            timestamps.append(race[1])
+            if race_wpm > best:
+                best = race_wpm
+            if race_wpm < worst:
+                worst = race_wpm
+            average += race_wpm
 
-    for race in race_list[::-1][:moving]:
-        recent_average += race[0]
+        for race in race_list[::-1][:moving]:
+            recent_average += race[0]
 
-    average /= race_count
-    recent_average /= moving
+        average /= race_count
+        recent_average /= moving
 
     description = (
         f"**Races:** {race_count:,}\n"
@@ -166,9 +161,6 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
     )
 
     await message.send()
-
-    if big_lock.locked():
-        big_lock.release()
 
 
 async def setup(bot):

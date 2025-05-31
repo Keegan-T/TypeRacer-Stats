@@ -51,6 +51,8 @@ async def on_command_error(ctx, error):
             return await ctx.send(embed=errors.discord_connection_error())
         elif "or fewer in length" in str(error):
             return await ctx.send(embed=errors.embed_limit_exceeded())
+        elif "Large query" in str(error):
+            return await ctx.send(embed=errors.large_query_in_progress())
 
         if isinstance(error.original, discord.Forbidden):
             return log(f"Failed to send a message in <#{ctx.channel.id}>. Missing permissions.")

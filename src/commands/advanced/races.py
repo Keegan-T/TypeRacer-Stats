@@ -8,7 +8,7 @@ from discord.ext import commands
 import database.main.races as races
 import database.main.texts as texts
 import database.main.users as users
-from commands.locks import big_lock
+from commands.locks import LargeQueryLock
 from database.bot.users import get_user
 from utils import errors, colors, urls, strings, dates
 from utils.embeds import Message, Page, Field, is_embed
@@ -119,68 +119,62 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
 
-    if stats["races"] > 100_000:
-        if big_lock.locked():
-            return await ctx.send(embed=errors.large_query_in_progress())
-        await big_lock.acquire()
+    async with LargeQueryLock(stats["races"] > 100_000):
+        era_string = strings.get_era_string(user)
+        if era_string:
+            stats = await users.time_travel_stats(stats, user)
 
-    era_string = strings.get_era_string(user)
-    if era_string:
-        stats = await users.time_travel_stats(stats, user)
+        if start_number and not end_number:
+            end_number = stats["races"]
 
-    if start_number and not end_number:
-        end_number = stats["races"]
+        if start_date and not end_date:
+            end_date = dates.now()
 
-    if start_date and not end_date:
-        end_date = dates.now()
+        start_date, end_date = dates.time_travel_dates(user, start_date, end_date)
+        user_start, user_end = user["start_date"], user["end_date"]
 
-    start_date, end_date = dates.time_travel_dates(user, start_date, end_date)
-    user_start, user_end = user["start_date"], user["end_date"]
-
-    title = "Race Stats - "
-    columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
-    if start_date is None and start_number is None:
-        title += "All-Time"
-        start = stats["joined"]
-        end = dates.now().timestamp()
-        if user_start: start = max(start, user_start)
-        if user_end: end = min(end, user_end)
-        race_list = await races.get_races(
-            username, columns, None if start == stats["joined"] else start,
-            None if end == dates.now().timestamp() else end, universe=universe
-        )
-
-    elif start_date is None:
-        end_number = min(end_number, stats["races"])
-        title += f"Races {start_number:,} - {end_number:,}"
-        race_list = await races.get_races(
-            username, columns, start_number=start_number,
-            end_number=end_number, universe=universe,
-            start_date=user_start, end_date=user_end
-        )
-        if race_list:
-            start = race_list[0][7]
-            end = race_list[-1][7] + 0.01
-
-    else:
-        start = start_date.timestamp()
-        if start < stats["joined"]:
+        title = "Race Stats - "
+        columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
+        if start_date is None and start_number is None:
+            title += "All-Time"
             start = stats["joined"]
-            start_date = datetime.fromtimestamp(stats["joined"], tz=timezone.utc)
-        end = end_date.timestamp()
-        title += strings.get_display_date_range(start_date, end_date)
-        race_list = await races.get_races(
-            username, columns, start_date.timestamp(),
-            end_date.timestamp(), universe=universe
-        )
+            end = dates.now().timestamp()
+            if user_start: start = max(start, user_start)
+            if user_end: end = min(end, user_end)
+            race_list = await races.get_races(
+                username, columns, None if start == stats["joined"] else start,
+                None if end == dates.now().timestamp() else end, universe=universe
+            )
 
-    if not race_list:
-        if big_lock.locked():
-            big_lock.release()
-        return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
-    race_list.sort(key=lambda x: x[7])
+        elif start_date is None:
+            end_number = min(end_number, stats["races"])
+            title += f"Races {start_number:,} - {end_number:,}"
+            race_list = await races.get_races(
+                username, columns, start_number=start_number,
+                end_number=end_number, universe=universe,
+                start_date=user_start, end_date=user_end
+            )
+            if race_list:
+                start = race_list[0][7]
+                end = race_list[-1][7] + 0.01
 
-    fields, footer = get_stats_fields(username, race_list, start, end, universe)
+        else:
+            start = start_date.timestamp()
+            if start < stats["joined"]:
+                start = stats["joined"]
+                start_date = datetime.fromtimestamp(stats["joined"], tz=timezone.utc)
+            end = end_date.timestamp()
+            title += strings.get_display_date_range(start_date, end_date)
+            race_list = await races.get_races(
+                username, columns, start_date.timestamp(),
+                end_date.timestamp(), universe=universe
+            )
+
+        if not race_list:
+            return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
+        race_list.sort(key=lambda x: x[7])
+
+        fields, footer = get_stats_fields(username, race_list, start, end, universe)
 
     page = Page(title, fields=fields, footer=footer)
 
@@ -191,9 +185,6 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
     )
 
     await message.send()
-
-    if big_lock.locked():
-        big_lock.release()
 
 
 def get_stats_fields(username, race_list, start_time, end_time, universe="play", detailed=True):
