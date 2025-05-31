@@ -112,7 +112,7 @@ async def correct_race(universe, username, race_number, race):
 
 
 async def delete_race(username, race_number, universe="play"):
-    log(f"Deleting race {username}|{race_number}")
+    log(f"Deleting race {universe}|{username}|{race_number}")
 
     db.run("""
         INSERT OR IGNORE INTO deleted_races (universe, username, number, wpm_registered)
@@ -129,10 +129,11 @@ async def delete_race(username, race_number, universe="play"):
         AND number = ?
     """, [universe, username, race_number])
 
-    db.run("""
-        DELETE FROM text_results
-        WHERE username = ?
-        AND number = ?
-    """, [username, race_number])
+    if universe == "play":
+        db.run("""
+            DELETE FROM text_results
+            WHERE username = ?
+            AND number = ?
+        """, [username, race_number])
 
     correct_best_wpm(username, universe)

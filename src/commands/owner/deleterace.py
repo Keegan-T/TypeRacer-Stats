@@ -7,6 +7,7 @@ from commands.checks import owner_check
 from database.bot.users import get_user
 from database.main.races import delete_race
 from utils import colors
+from utils.embeds import add_universe
 
 command = {
     "name": "deleterace",
@@ -30,6 +31,7 @@ class DeleteRace(commands.Cog):
             return
         username = args[0]
         race_number = args[1]
+        universe = user["universe"]
 
         embed = Embed(
             title="Are You Sure?",
@@ -37,6 +39,7 @@ class DeleteRace(commands.Cog):
                         f'Please type "confirm" to proceed with deletion',
             color=colors.warning,
         )
+        add_universe(embed, universe)
         await ctx.send(embed=embed)
 
         def check(message):
@@ -47,20 +50,21 @@ class DeleteRace(commands.Cog):
         except asyncio.TimeoutError:
             return
         else:
-            await run(ctx, user, username, race_number)
+            await run(ctx, user, username, race_number, universe)
 
 
 async def setup(bot):
     await bot.add_cog(DeleteRace(bot))
 
 
-async def run(ctx, user, username, race_number):
-    await delete_race(username, race_number)
+async def run(ctx, user, username, race_number, universe):
+    await delete_race(username, race_number, universe)
 
     embed = Embed(
         title=f"Race Deleted",
         description=f"Race `{username}|{race_number}` has been removed from the database",
         color=user["colors"]["embed"],
     )
+    add_universe(embed, universe)
 
     await ctx.send(embed=embed)
