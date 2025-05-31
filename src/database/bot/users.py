@@ -143,7 +143,7 @@ def update_universe(id, universe):
     """, [universe, id])
 
 
-def update_commands(user_id, command):
+def update_commands(user_id, command, value=None):
     user_id = str(user_id)
 
     user_commands = db.fetch("""
@@ -153,7 +153,9 @@ def update_commands(user_id, command):
 
     user_commands = json.loads(user_commands)
 
-    if command in user_commands:
+    if value is not None:
+      user_commands[command] = value
+    elif command in user_commands:
         user_commands[command] += 1
     else:
         user_commands[command] = 1

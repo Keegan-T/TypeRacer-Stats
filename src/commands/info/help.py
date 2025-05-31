@@ -16,7 +16,14 @@ command = {
     "parameters": "<command>",
     "usages": ["help", "help stats"],
 }
-
+command_dict = {}
+for group in groups:
+    for file in os.listdir(f"./commands/{group}"):
+        if file.endswith(".py") and not file.startswith("_"):
+            module = importlib.import_module(f"commands.{group}.{file[:-3]}")
+            command_info = module.command
+            for alias in [command_info["name"]] + command_info["aliases"]:
+                command_dict[alias] = command_info
 
 class Help(commands.Cog):
     def __init__(self, bot):
@@ -27,15 +34,6 @@ class Help(commands.Cog):
         user = get_user(ctx)
         if not args:
             return await help_main(ctx, user)
-
-        command_dict = {}
-        for group in groups:
-            for file in os.listdir(f"./commands/{group}"):
-                if file.endswith(".py") and not file.startswith("_"):
-                    module = importlib.import_module(f"commands.{group}.{file[:-3]}")
-                    command_info = module.command
-                    for alias in [command_info["name"]] + command_info["aliases"]:
-                        command_dict[alias] = command_info
 
         command_name = args[0]
         if command_name not in command_dict:
