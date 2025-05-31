@@ -1,3 +1,6 @@
+5/31/2025
+- Added accuracy to -racehistory
+
 5/26/2025
 - Added accuracy to top tens
 - Added -words (alias of -segments)
