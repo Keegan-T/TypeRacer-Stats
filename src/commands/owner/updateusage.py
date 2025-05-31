@@ -2,7 +2,7 @@ from discord import Embed
 from discord.ext import commands
 
 from commands.checks import owner_check
-from commands.info.help import command_dict
+from commands.info.help import get_command_dict
 from database.bot import users
 from database.bot.users import get_user
 from utils import colors, errors, strings
@@ -33,15 +33,12 @@ class UpdateUsage(commands.Cog):
             return await ctx.send(embed=Embed(title="Invalid User", color=colors.error))
 
         command_name = args[1]
+        command_dict = get_command_dict()
         if command_name not in command_dict:
             return await ctx.send(embed=errors.invalid_command())
 
         new_number = int(args[2])
         await run(ctx, user, user_id, command_dict[command_name]["name"], new_number)
-
-
-async def setup(bot):
-    await bot.add_cog(UpdateUsage(bot))
 
 
 async def run(ctx, user, user_id, command_name, new_number):
@@ -54,3 +51,7 @@ async def run(ctx, user, user_id, command_name, new_number):
     )
 
     await ctx.send(embed=embed)
+
+
+async def setup(bot):
+    await bot.add_cog(UpdateUsage(bot))
