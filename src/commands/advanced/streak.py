@@ -40,9 +40,9 @@ class Streak(commands.Cog):
         less_than = False
         if len(args) > 2 and strings.get_category(["wpm", "accuracy"], args[2]):
             args[1], args[2] = args[2], args[1]
-            if args[2].startswith("<"):
-                args[2] = args[2][1:]
-                less_than = True
+        if args[2].startswith("<"):
+            args[2] = args[2][1:]
+            less_than = True
 
         result = get_args(user, args, command)
         if is_embed(result):
