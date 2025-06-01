@@ -167,7 +167,7 @@ def find_race(username, race_number, timestamp, universe="play"):
 async def get_match(username, race_number, universe="play"):
     match = await get_race(username, race_number, get_opponents=True, universe=universe)
 
-    if not match or isinstance(match, int) or "unlagged" not in match:
+    if not match or isinstance(match, int) or "raw_unlagged" not in match:
         return None
 
     user = {

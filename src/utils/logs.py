@@ -61,7 +61,7 @@ def get_log_details(typing_log, multiplier=12000, typos=False):
         distributed=distributed,
     )
 
-    if not action_data or duration == 0:
+    if not action_data:
         return details
 
     actions = re.findall(r"\d+,(?:\d+[+\-$].?)+,", action_data)
@@ -86,6 +86,8 @@ def get_log_details(typing_log, multiplier=12000, typos=False):
             else:
                 raw_delays.pop()
 
+    if sum(raw_delays) == 0:
+        return details
     raw_delays = distribute_start_lag(raw_delays)[0]
 
     # Removing trailing delays
