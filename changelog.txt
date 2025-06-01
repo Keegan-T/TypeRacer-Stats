@@ -1,4 +1,5 @@
 6/1/2025
+- Added -streak
 - Added -textbestsline
 - Changed -line functions to take dates at the end
 - Added reverse option to -racehistory
