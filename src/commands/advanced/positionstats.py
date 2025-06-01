@@ -67,11 +67,10 @@ async def run(ctx, user, username):
         if racers > most_racers[2]:
             most_racers = (number, rank, racers)
 
-        if rank == 1:
+        if rank == 1 and racers > 1:
             if racers > biggest_win[2]:
                 biggest_win = (number, rank, racers)
-            if racers > 1:
-                wins += 1
+            wins += 1
             current_win_streak += 1
         else:
             if current_win_streak > win_streak[0]:
