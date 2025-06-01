@@ -184,11 +184,14 @@ async def run(ctx, user, usernames, column="number"):
     if not lines:
         return await ctx.send(embed=no_data(universe), content=era_string)
 
-    kind = "Races"
-    if column == "points":
+    if column == "number":
+        kind = "Races"
+    elif column == "points":
         kind = "Points"
     elif column == "text_id":
         kind = "Texts Typed"
+    else:
+        kind = "Text Best Average"
     title = f"{kind} Over Time"
     if len(lines) == 1:
         title += f" - {lines[0][0]}"
