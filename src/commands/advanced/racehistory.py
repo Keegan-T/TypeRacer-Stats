@@ -19,7 +19,8 @@ sorts = ["date", "points", "races", "time", "wpm", "accuracy"]
 command = {
     "name": "racehistory",
     "aliases": ["rh"],
-    "description": "Displays race history for a time period and sort",
+    "description": "Displays race history for a time period and sort\n"
+                   "Add `least` at the end to sort in reverse order",
     "parameters": "[username] <period> <sort>",
     "defaults": {
         "time_period": "races",
@@ -31,6 +32,7 @@ command = {
         "racehistory keegant week points",
         "racehistory keegant month races",
         "racehistory keegant year time",
+        "racehistory keegant day accuracy worst",
     ],
 }
 
@@ -42,13 +44,17 @@ class RaceHistory(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def racehistory(self, ctx, *args):
         user = get_user(ctx)
+        reverse = True
+        if args and args[-1] in ["worst", "least", "oldest", "old", "reverse"]:
+            reverse = False
+            args = args[:-1]
 
         result = get_args(user, args, command)
         if is_embed(result):
             return await ctx.send(embed=result)
 
         username, time_period, sort = result
-        await run(ctx, user, username, time_period, sort)
+        await run(ctx, user, username, time_period, sort, reverse)
 
 
 def get_args(user, args, info):
@@ -57,7 +63,7 @@ def get_args(user, args, info):
     return strings.parse_command(user, params, args, info)
 
 
-async def run(ctx, user, username, time_period, sort):
+async def run(ctx, user, username, time_period, sort, reverse):
     universe = user["universe"]
     db_stats = users.get_user(username, universe)
     if not db_stats:
@@ -70,8 +76,8 @@ async def run(ctx, user, username, time_period, sort):
         columns = ["number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
         race_list = await races.get_races(
             username, columns=columns, order_by="timestamp",
-            limit=200, reverse=True, universe=universe,
-            start_date=user["start_date"], end_date=user["end_date"]
+            limit=200, reverse=reverse, universe=universe,
+            start_date=user["start_date"], end_date=user["end_date"],
         )
 
         def formatter(race):
@@ -94,8 +100,9 @@ async def run(ctx, user, username, time_period, sort):
             )
 
         sort_title = {"wpm": "WPM"}.get(sort, sort.title())
-        title = f"Race History - {time_period.title()}s (By {sort_title})"
-        history = await get_history(username, time_period, sort, universe, user["start_date"], user["end_date"])
+        reverse_title = "" if reverse else ("Oldest " if sort == "date" else "Least ")
+        title = f"Race History - {time_period.title()}s (By {reverse_title}{sort_title})"
+        history = await get_history(username, time_period, sort, universe, user["start_date"], user["end_date"], reverse)
         pages = get_pages(history, formatter, page_count=20, per_page=5)
 
     message = Message(
@@ -108,7 +115,7 @@ async def run(ctx, user, username, time_period, sort):
     await message.send()
 
 
-async def get_history(username, category, sort, universe, start_date, end_date):
+async def get_history(username, category, sort, universe, start_date, end_date, reverse):
     sort_key = {"points": 3, "races": 2, "time": 5, "wpm": 4, "accuracy": 6}.get(sort, 0)
     columns = ["text_id", "wpm", "points", "timestamp", "accuracy"]
     race_list = await races.get_races(
@@ -162,7 +169,7 @@ async def get_history(username, category, sort, universe, start_date, end_date):
         stats[4] = stats[4] / stats[2]
         stats[6] = stats[6] / stats[2]
 
-    history = sorted(history, key=lambda x: x[sort_key], reverse=True)
+    history = sorted(history, key=lambda x: x[sort_key], reverse=reverse)
 
     return history
 

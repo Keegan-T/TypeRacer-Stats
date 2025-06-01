@@ -1,6 +1,7 @@
 6/1/2025
 - Added -textbestsline
 - Changed -line functions to take dates at the end
+- Added reverse option to -racehistory
 
 5/31/2025
 - Added accuracy to -racehistory
