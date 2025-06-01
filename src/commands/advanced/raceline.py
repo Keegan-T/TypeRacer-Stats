@@ -18,11 +18,11 @@ command = {
     "name": "raceline",
     "aliases": ["rl"],
     "description": "Displays a graph of user's races over time",
-    "parameters": "<date> [username] <username_2> ... <username_10> <date>",
+    "parameters": "[username] <username_2> ... <username_10> <start_date> <end_date>",
     "usages": [
         "raceline keegant",
-        "raceline 2022-04-20 keegant",
-        "raceline 4/20/22 keegant 1/1/24",
+        "raceline keegant 2022-04-20",
+        "raceline keegant 4/20/22 1/1/24",
         "raceline keegant mark40511 charlieog wordracer888 deroche1",
     ],
 }
@@ -39,99 +39,113 @@ class RaceLine(commands.Cog):
 
         async with locks.line_lock:
             user = get_user(ctx)
+            args, user = dates.set_command_date_range(args, user)
 
             result = get_args(user, args, command)
             if embeds.is_embed(result):
                 return await ctx.send(embed=result)
 
-            usernames, start_date, end_date = result
-            if len(usernames) > 10:
-                return await ctx.send(embed=too_many_usernames())
-
-            await run(ctx, user, usernames, start_date, end_date)
+            await run(ctx, user, result)
 
 
 def get_args(user, args, info):
-    args = [arg.lower() for arg in args]
+    usernames = [arg.lower() for arg in args]
     username = user["username"]
-    start_date = datetime.fromtimestamp(0, timezone.utc)
-    end_date = datetime.now(timezone.utc)
+    if not usernames or "me" in usernames:
+        if not username:
+            return errors.missing_argument(info)
 
-    if len(args) < 2:
-        if not args or args[0] == "me":
-            if not username:
-                return errors.missing_argument(info)
-            usernames = [username]
-        else:
-            usernames = [args[0]]
-
-    else:
-        usernames = list(args)
-
-        try:
-            start_date = dates.floor_day(parser.parse(usernames[0]))
-            usernames = usernames[1:]
-        except ValueError:
-            pass
-
-        try:
-            end_date = dates.floor_day(parser.parse(usernames[-1]))
-            usernames = usernames[:-1]
-        except ValueError:
-            pass
-
+    if not usernames:
+        usernames = [username]
     if username:
         usernames = [username if name == "me" else name for name in usernames]
 
     unique_usernames = []
     for username in usernames:
+        username = strings.username_aliases.get(username, username)
         if not users.get_user(username, user["universe"]):
             return errors.import_required(username)
         if username not in unique_usernames:
             unique_usernames.append(username)
 
-    return unique_usernames, start_date, end_date
+    return unique_usernames
 
 
 async def get_lines(usernames, start_date, end_date, column="number", universe="play"):
     lines = []
     min_timestamp = float("inf")
     columns = [column, "timestamp"]
+    text_bests = column == "text_best_average"
+    if text_bests:
+        columns = ["text_id", "timestamp", "wpm"]
     disabled_text_ids = get_disabled_text_ids()
     for username in usernames:
         race_list = await races.get_races(
             username, columns=columns, start_date=start_date.timestamp(),
-            end_date=end_date.timestamp(), universe=universe)
-        race_list.sort(key=lambda r: r[1])
+            end_date=end_date.timestamp(), universe=universe
+        )
+        race_list.sort(key=lambda r: r["timestamp"])
         if len(race_list) < 2:
             continue
-        x, y = [race_list[0][1]], [0]
+        x, y = [], []
         race_count = race_list[-1][0]
         point_count = 0
         unique_texts = set()
+        max_average = 0
+        text_ids = {}
+        wpm_total = 0
+        wpm_count = 0
 
         for i, race in enumerate(race_list):
-            text_id, timestamp = race
+            text_id = race[0]
+            timestamp = race[1]
             if timestamp < min_timestamp:
                 min_timestamp = timestamp
 
-            x.append(timestamp)
+            if not text_bests:
+                x.append(timestamp)
 
             if column == "number":
                 y.append(race[0] - race_list[0][0] + 1)
             elif column == "points":
-                y.append(point_count)
                 point_count += race[0]
-            else:
-                y.append(len(unique_texts))
+                y.append(point_count)
+            elif column == "text_id":
                 if text_id not in disabled_text_ids:
                     unique_texts.add(text_id)
+                y.append(len(unique_texts))
+            else:
+                if race[2] in disabled_text_ids:
+                    continue
+                wpm = race[2]
+                if text_ids.get(text_id, False):
+                    if wpm > text_ids[text_id]:
+                        improvement = wpm - text_ids[text_id]
+                        wpm_total += improvement
+                        text_ids[text_id] = wpm
+                        x.append(timestamp)
+                        average = wpm_total / wpm_count
+                        if average > max_average:
+                            max_average = average
+                        y.append(average)
+                else:
+                    wpm_total += wpm
+                    wpm_count += 1
+                    text_ids[text_id] = wpm
+                    x.append(timestamp)
+                    average = wpm_total / wpm_count
+                    if average > max_average:
+                        max_average = average
+                    y.append(average)
 
-        max_value = race_count
-        if column == "points":
+        if column == "number":
+            max_value = race_count
+        elif column == "points":
             max_value = point_count
         elif column == "text_id":
             max_value = len(unique_texts)
+        else:
+            max_value = max_average
 
         lines.append((username, x, y, max_value, min_timestamp))
 
@@ -150,10 +164,20 @@ async def get_lines(usernames, start_date, end_date, column="number", universe="
     return lines
 
 
-async def run(ctx, user, usernames, start_date, end_date, column="number"):
+async def run(ctx, user, usernames, column="number"):
+    if len(usernames) > 10:
+        return await ctx.send(embed=too_many_usernames())
+
     universe = user["universe"]
     era_string = strings.get_era_string(user)
-    start_date, end_date = dates.time_travel_dates(user, start_date, end_date)
+    if user["start_date"]:
+        start_date = datetime.fromtimestamp(user["start_date"])
+    else:
+        start_date = datetime.fromtimestamp(0, timezone.utc)
+    if user["end_date"]:
+        end_date = datetime.fromtimestamp(user["end_date"])
+    else:
+        end_date = datetime.now(timezone.utc)
 
     lines = await get_lines(usernames, start_date, end_date, column, universe=universe)
 

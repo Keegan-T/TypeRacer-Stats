@@ -3,18 +3,18 @@ from discord.ext import commands
 import commands.locks as locks
 from commands.advanced.raceline import get_args, run
 from database.bot.users import get_user
-from utils import embeds
+from utils import embeds, dates
 from utils.errors import command_in_use
 
 command = {
     "name": "pointline",
     "aliases": ["pl"],
     "description": "Displays a graph of user's points over time",
-    "parameters": "<date> [username] <username_2> ... <username_10> <date>",
+    "parameters": "[username] <username_2> ... <username_10> <start_date> <end_date>",
     "usages": [
         "pointline keegant",
-        "pointline 2022-04-20 keegant",
-        "pointline 4/20/22 keegant 1/1/24",
+        "pointline keegant 2022-04-20",
+        "pointline keegant 4/20/22 1/1/24",
         "pointline keegant mark40511 charlieog wordracer888 deroche1",
     ],
 }
@@ -31,13 +31,13 @@ class PointLine(commands.Cog):
 
         async with locks.line_lock:
             user = get_user(ctx)
+            args, user = dates.set_command_date_range(args, user)
 
             result = get_args(user, args, command)
             if embeds.is_embed(result):
                 return await ctx.send(embed=result)
 
-            usernames, start_date, end_date = result
-            await run(ctx, user, usernames, start_date, end_date, column="points")
+            await run(ctx, user, result, column="points")
 
 
 async def setup(bot):
