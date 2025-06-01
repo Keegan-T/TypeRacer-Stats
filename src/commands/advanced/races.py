@@ -260,7 +260,7 @@ def get_stats_fields(username, race_list, start_time, end_time, universe="play",
             worst_race = race
 
         break_time = race[7] - previous_race[7]
-        if break_time > longest_break["time"]:
+        if break_time >= longest_break["time"]:
             longest_break = {
                 "time": break_time,
                 "start_race": {"timestamp": previous_race[7], "number": previous_race[1]},
