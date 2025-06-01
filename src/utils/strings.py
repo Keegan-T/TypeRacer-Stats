@@ -54,6 +54,7 @@ username_aliases = {
     "hfs": "hospitalforsouls2",
     "mj": "mononym_jisoo",
     "mmm": "mmmmmmmmwmmmmmmmmmmmmmmmmmmmm",
+    "e6": "e6f4e37l",
 }
 
 rank_emojis = [
