@@ -179,7 +179,7 @@ async def process_races(username, universe, start_time, stats, new_user):
                 continue
             elif race["wpm"] == 0.0:
                 log(f"Adding deleted race {race_id}")
-                deleted_races.add_race(universe, username, race["number"], race["wpm"])
+                deleted_races.add_race(universe, username, number, race["wpm"])
                 continue
 
             # Restoring modified values
