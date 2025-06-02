@@ -95,7 +95,7 @@ async def update_important_users():
             + users.get_most_awards(20)
     )
 
-    async with import_lock():
+    async with import_lock:
         for user in leaders:
             await download(user["username"])
     log("Finished Updating Important Users")
