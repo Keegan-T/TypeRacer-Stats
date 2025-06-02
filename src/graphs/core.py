@@ -12,8 +12,8 @@ from matplotlib.legend_handler import HandlerLine2D
 from matplotlib.legend_handler import HandlerLineCollection
 from matplotlib.lines import Line2D
 
-from config import bot_owner, root_dir
-from utils import dates
+from config import bot_owner
+from utils import dates, files
 from utils.colors import graph_palette
 
 rcParams["axes.prop_cycle"] = plt.cycler(color=graph_palette)
@@ -184,7 +184,7 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
             text.set_color(colors["text"])
 
     if int(user["id"]) == bot_owner:
-        apply_background_image(ax, os.path.join(root_dir, "assets", "backgrounds", "galaxy.png"))
+        apply_background_image(ax, files.path("../assets/backgrounds/galaxy.png"))
 
 
 def apply_background_image(ax, image_path):
@@ -222,11 +222,3 @@ def filter_palette(line_color):
         color for color in graph_palette
         if color_distance(line_color, color) > 0.2
     ]
-
-
-# Deprecated
-def remove_file(file_name):
-    try:
-        os.remove(file_name)
-    except (FileNotFoundError, PermissionError):
-        return

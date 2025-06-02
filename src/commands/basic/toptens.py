@@ -9,8 +9,7 @@ from api.users import get_stats
 from commands.basic.stats import get_args
 from config import prefix
 from database.bot.users import get_user
-from graphs.core import remove_file
-from utils import errors, urls, strings, embeds, dates
+from utils import errors, urls, strings, embeds, dates, files
 
 command = {
     "name": "toptens",
@@ -80,7 +79,7 @@ async def export(ctx, username):
 
     await ctx.send(file=File(file_name))
 
-    remove_file(file_name)
+    files.remove_file(file_name)
 
 
 async def run(ctx, user, username, best):

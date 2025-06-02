@@ -11,8 +11,7 @@ from commands.locks import leaderboard_lock
 from config import prefix
 from database.bot.users import get_user
 from database.main.alts import get_alts
-from graphs.core import remove_file
-from utils import errors, urls, strings, dates
+from utils import errors, urls, strings, dates, files
 from utils.embeds import Page, Message
 from utils.errors import command_in_use
 
@@ -374,7 +373,7 @@ async def export_top_n(ctx, n):
 
     await ctx.send(file=File(file_name))
 
-    remove_file(file_name)
+    files.remove_file(file_name)
 
 
 async def setup(bot):

@@ -4,8 +4,8 @@ from discord.ext import commands
 from config import prefix, bot_owner
 from database.bot.users import get_user, update_colors
 from graphs import sample_graph
-from graphs.core import remove_file, plt
-from utils import errors, colors, strings
+from graphs.core import plt
+from utils import errors, colors, strings, files
 
 elements = {
     "embed": "Embed",
@@ -128,7 +128,7 @@ async def run(ctx, user, element, color):
     embed.set_image(url=f"attachment://{file_name}")
     await ctx.send(embed=embed, file=file)
 
-    remove_file(file_name)
+    files.remove_file(file_name)
 
 
 async def view(ctx, user):
@@ -168,7 +168,7 @@ async def reset(ctx, user):
     embed.set_image(url=f"attachment://{file_name}")
     await ctx.send(embed=embed, file=file)
 
-    remove_file(file_name)
+    files.remove_file(file_name)
 
 
 def invalid_color():

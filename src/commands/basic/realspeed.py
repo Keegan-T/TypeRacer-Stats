@@ -11,8 +11,7 @@ from commands.account.download import run as download
 from config import prefix
 from database.bot.users import get_user
 from graphs import match_graph
-from graphs.core import remove_file
-from utils import errors, colors, urls, strings, embeds
+from utils import errors, colors, urls, strings, embeds, files
 
 graph_commands = ["realspeedgraph", "rsg", "rg", "adjustedgraph", "ag", "ag*"]
 command = {
@@ -161,7 +160,7 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
 
         await ctx.send(embed=embed, file=file)
 
-        remove_file(file_name)
+        files.remove_file(file_name)
 
     else:
         await ctx.send(embed=embed)

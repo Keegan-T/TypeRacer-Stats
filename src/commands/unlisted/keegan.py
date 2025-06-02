@@ -1,11 +1,10 @@
-import os
-
 from discord import Embed
 from discord.ext import commands
 
-from config import bot_owner, root_dir
+from config import bot_owner
+from utils import files
 
-message_path = os.path.join(root_dir, "src", "data", "message.txt")
+message_path = "data/message.txt"
 command = {
     "name": "keegan",
     "aliases": ["keegant", "kegnat", "kt"],
@@ -27,11 +26,8 @@ class Keegan(commands.Cog):
 
 
 async def run(ctx):
-    with open(message_path, "r", encoding="utf-8") as file:
-        message = "".join(file.readlines())
-
     embed = Embed(
-        description=message,
+        description=files.read_file(message_path),
         color=0,
     )
 
@@ -39,8 +35,7 @@ async def run(ctx):
 
 
 async def update_message(ctx, message):
-    with open(message_path, "w", encoding="utf-8") as file:
-        file.writelines(message)
+    files.write_file(message_path, message)
 
     await run(ctx)
 

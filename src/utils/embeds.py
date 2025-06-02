@@ -3,7 +3,7 @@ import os
 from discord import Embed, ButtonStyle, File
 from discord.ui import View, Button
 
-from utils import urls, strings
+from utils import urls, strings, files
 
 
 class Page:
@@ -27,7 +27,8 @@ class Field:
 
 
 class Message(View):
-    def __init__(self, ctx, user, pages, title=None, url=None, header="", footer="", content="", color=None, profile=None, universe=None, show_pfp=True, time_travel=True):
+    def __init__(self, ctx, user, pages, title=None, url=None, header="", footer="", content="",
+                 color=None, profile=None, universe=None, show_pfp=True, time_travel=True):
         self.pages = pages if isinstance(pages, list) else [pages]
         self.page_count = len(self.pages)
         super().__init__(timeout=60 if self.page_count > 1 else 0.01)
@@ -232,10 +233,7 @@ class Message(View):
         if len(self.pages) > 1:
             await self.message.edit(view=None)
         for file in self.cache.values():
-            try:
-                os.remove(file)
-            except (FileNotFoundError, PermissionError):
-                return
+            files.remove_file(file)
 
 
 def get_pages(data_list, formatter, page_count=10, per_page=10):

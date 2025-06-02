@@ -10,8 +10,7 @@ import database.main.users as users
 from database.bot.users import get_user
 from database.main.texts import get_disabled_text_ids
 from graphs import line_graph
-from graphs.core import remove_file
-from utils import errors, colors, strings, dates, embeds
+from utils import errors, colors, strings, dates, embeds, files
 from utils.errors import command_in_use
 
 command = {
@@ -212,7 +211,7 @@ async def run(ctx, user, usernames, column="number"):
     file = File(file_name, filename=file_name)
     await ctx.send(file=file, content=era_string)
 
-    remove_file(file_name)
+    files.remove_file(file_name)
 
 
 def too_many_usernames():

@@ -3,8 +3,7 @@ import random
 from discord import File
 from discord.ext import commands
 
-from graphs.core import remove_file
-from utils import embeds, strings
+from utils import embeds, strings, files
 from utils.thonk import generate_thonk
 
 command = {
@@ -41,7 +40,7 @@ async def run(ctx, seed):
     file = File(file_name, filename=file_name)
     await ctx.send(content=f"-# Seed: {seed}", file=file)
 
-    remove_file(file_name)
+    files.remove_file(file_name)
 
 async def setup(bot):
     await bot.add_cog(Thonk(bot))
