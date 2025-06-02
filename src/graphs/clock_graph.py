@@ -50,41 +50,34 @@ def render(user, username, activity, universe, offset=0):
 def apply_cmap(ax, user, activity, offset):
     cmap = plt.get_cmap(user["colors"]["line"])
 
+    offset = offset % 24
+    activity = activity[-offset:] + activity[:-offset]
+
     num_bars = len(activity)
-    theta_locations = np.linspace(0, 2 * np.pi, num_bars, endpoint=False)
-    bar_width = 2 * np.pi / 24
-    for i in range(len(theta_locations)):
-        theta_locations[i] += bar_width / 2
-        theta_locations[i] += np.deg2rad(offset * 360 / num_bars)
+    bar_width = 2 * np.pi / num_bars
+    samples_per_bar = 50
+    num_samples = num_bars * samples_per_bar
+    theta_edges = np.linspace(0, 2 * np.pi, num_samples + 1)
+    expanded_activity = np.repeat(activity, samples_per_bar)
     max_activity = max(activity) * 1.05
 
-    theta_grid = np.linspace(0, 2 * np.pi, 1000)
-    r_grid = np.linspace(0, 1, 100)
-    Theta, R = np.meshgrid(theta_grid, r_grid)
-    values = R
-    mask = np.ones_like(values)
+    r_grid = np.linspace(0, 1, 300)
+    Theta, R = np.meshgrid(theta_edges, r_grid)
+    mask = np.ones_like(Theta)
 
-    bar_width = (2 * np.pi / num_bars)
-    for angle, val in zip(theta_locations, activity):
-        angle_min = angle - bar_width / 2
-        angle_max = angle + bar_width / 2
-
-        if angle_min < 0:
-            angle_mask = (Theta >= angle_min + 2 * np.pi) | (Theta <= angle_max)
-        elif angle_max > 2 * np.pi:
-            angle_mask = (Theta >= angle_min) | (Theta <= angle_max - 2 * np.pi)
-        else:
-            angle_mask = (Theta >= angle_min) & (Theta <= angle_max)
-
-        radial_extent = val / max_activity
-        radial_mask = (R <= radial_extent)
-
+    for i in range(num_samples):
+        angle_min = theta_edges[i]
+        angle_max = theta_edges[i + 1]
+        radial_extent = expanded_activity[i] / max_activity
+        angle_mask = (Theta >= angle_min) & (Theta <= angle_max)
+        radial_mask = R <= radial_extent
         mask[angle_mask & radial_mask] = 0
 
-    masked_values = np.ma.masked_array(values, mask)
+    masked_values = np.ma.masked_array(R, mask)
     ax.pcolormesh(Theta, R, masked_values, cmap=cmap, shading="auto")
 
-    for angle, val in zip(theta_locations, activity):
+    bar_centers = np.linspace(0, 2 * np.pi, num_bars, endpoint=False) + bar_width / 2
+    for angle, val in zip(bar_centers, activity):
         ax.bar(
             angle, val / max_activity, width=bar_width, bottom=0,
             edgecolor=user["colors"]["graphbackground"], facecolor="none", linewidth=0.1
