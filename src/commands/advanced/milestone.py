@@ -1,4 +1,3 @@
-from discord import Embed
 from discord.ext import commands
 
 import commands.recent as recent
@@ -6,9 +5,10 @@ import database.main.races as races
 import database.main.texts as texts
 import database.main.users as users
 from api.races import get_race
-from commands.basic.race import add_stats
+from commands.basic.race import get_stat_fields
 from database.bot.users import get_user
-from utils import errors, urls, embeds, strings, dates
+from utils import errors, urls, strings
+from utils.embeds import Page, Message, is_embed
 
 categories = ["races", "points", "wpm", "texts"]
 command = {
@@ -37,7 +37,7 @@ class Milestone(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username, milestone, category = result
@@ -61,23 +61,21 @@ async def run(ctx, user, username, milestone, category):
         return await ctx.send(embed=errors.import_required(username, universe))
     era_string = strings.get_era_string(user)
 
-    category_title = "WPM"
-    if category != "wpm":
-        category_title = category.title()
-
-    embed = Embed(title=f"Milestone - {milestone:,} {category_title}", color=user["colors"]["embed"])
-    embeds.add_profile(embed, stats, universe)
-    embeds.add_universe(embed, universe)
+    category_title = {"wpm": "WPM"}.get(category, category.title())
+    page = Page(title=f"Milestone - {milestone:,} {category_title}")
 
     milestone_number = users.get_milestone_number(
         username, milestone, category, universe, user["start_date"], user["end_date"]
     )
     if not milestone_number:
-        embed.description = "User has not achieved this milestone"
-        return await ctx.send(embed=embed, content=era_string)
+        page.description = "User has not achieved this milestone"
+        return await ctx.send(
+            embed=Message(ctx, user, page, profile=stats, universe=universe),
+            content=era_string,
+        )
 
-    embed.title += f" - Race #{milestone_number:,}"
-    embed.url = urls.replay(username, milestone_number, universe)
+    page.title += f" - Race #{milestone_number:,}"
+    url = urls.replay(username, milestone_number, universe)
 
     race_info = await get_race(username, milestone_number, universe=universe)
     if not race_info:
@@ -86,17 +84,20 @@ async def run(ctx, user, username, milestone, category):
         text = text_list[race_info["text_id"]]
         race_info["quote"] = text["quote"]
 
-    add_stats(embed, race_info, universe)
+    description, field = get_stat_fields(race_info, universe)
     time_taken = strings.format_duration_short(race_info["timestamp"] - stats["joined"])
-    fields = list(embed.fields)
-    field = {
-        "name": fields[0].name,
-        "value": fields[0].value + "\nTook " + time_taken,
-    }
-    embed.clear_fields()
-    embed.add_field(**field)
+    field.value += "\nTook " + time_taken
+    page.description = description
+    page.fields = [field]
 
-    await ctx.send(embed=embed, content=era_string)
+    message = Message(
+        ctx, user, page,
+        url=url,
+        profile=stats,
+        universe=universe,
+    )
+
+    await message.send()
 
     recent.text_id = race_info["text_id"]
 

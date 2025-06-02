@@ -1,14 +1,13 @@
 from datetime import datetime
 
-from discord import Embed
 from discord.ext import commands
 
 from api.users import get_latest_race
 from api.users import get_stats
 from commands.basic.stats import get_args
 from database.bot.users import get_user
-from utils import errors, embeds
-from utils import strings
+from utils import errors, strings
+from utils.embeds import Page, Field, Message, is_embed
 
 command = {
     "name": "lastonline",
@@ -28,7 +27,7 @@ class LastOnline(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username = result
@@ -41,25 +40,32 @@ async def run(ctx, user, username=None):
         return await ctx.send(embed=errors.invalid_username())
 
     universe = user["universe"]
-
-    embed = Embed(color=user["colors"]["embed"])
-    embeds.add_profile(embed, stats)
-    embeds.add_universe(embed, universe)
+    page = Page()
 
     latest_race = get_latest_race(username, universe)
     if not latest_race:
-        embed.description = "User has never played"
+        page.description = "User has never played"
 
     else:
         last_online = latest_race["t"]
         duration = datetime.now().timestamp() - last_online
+        page.fields = [
+            Field(
+                name="Last Online",
+                value=(
+                    f"{strings.format_duration_short(duration)} ago"
+                    f"\n{strings.discord_timestamp(last_online)}"
+                )
+            )
+        ]
 
-        embed.add_field(
-            name="Last Online",
-            value=f"{strings.format_duration_short(duration)} ago\n<t:{int(last_online)}:f>"
-        )
+    message = Message(
+        ctx, user, page,
+        profile=stats,
+        universe=universe,
+    )
 
-    await ctx.send(embed=embed)
+    await message.send()
 
 
 async def setup(bot):

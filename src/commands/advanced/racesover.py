@@ -1,9 +1,9 @@
-from discord import Embed
 from discord.ext import commands
 
 import database.main.users as users
 from database.bot.users import get_user
-from utils import errors, embeds, strings
+from utils import errors, strings
+from utils.embeds import Page, Message, is_embed
 
 categories = ["wpm", "points"]
 command = {
@@ -30,7 +30,7 @@ class RacesOver(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username, threshold, category = result
@@ -58,29 +58,28 @@ async def run(ctx, user, username, threshold, category, over=True):
     if stats["races"] == 0:
         return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
 
-    category_title = "WPM"
-    if category != "wpm":
-        category_title = category.title()
-
+    category_title = {"wpm": "WPM"}.get(category, category.title())
     times = users.count_races_over(
         username, threshold, category, over, universe, user["start_date"], user["end_date"]
     )
-    percent = (times / stats["races"]) * 100
     description = (
         f"**{times:,}** of **{stats['races']:,}** races are "
         f"{'above' if over else 'below'} {threshold:,} {category_title} "
-        f"({percent:,.2f}%)"
+        f"({times / stats["races"]:.2%})"
     )
 
-    embed = Embed(
+    page = Page(
         title=f"Races {'Over' if over else 'Under'} {threshold:,} {category_title}",
         description=description,
-        color=user["colors"]["embed"],
     )
-    embeds.add_profile(embed, stats, universe)
-    embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed, content=era_string)
+    message = Message(
+        ctx, user, page,
+        profile=stats,
+        universe=universe,
+    )
+
+    await message.send()
 
 
 async def setup(bot):

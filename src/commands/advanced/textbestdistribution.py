@@ -1,7 +1,6 @@
 import math
 from bisect import bisect_left
 
-from discord import Embed
 from discord.ext import commands
 
 import database.main.texts as texts
@@ -9,7 +8,8 @@ import database.main.users as users
 from commands.basic.stats import get_args
 from config import prefix
 from database.bot.users import get_user
-from utils import errors, embeds, strings
+from utils import errors, strings
+from utils.embeds import Page, Message, is_embed
 
 command = {
     "name": "textbestdistribution",
@@ -30,7 +30,7 @@ class TextBestDistribution(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username = result
@@ -112,7 +112,7 @@ async def run(ctx, user, username, binned):
         f"**Gain Until {next_milestone} Average:** {required_wpm_gain:,.0f} WPM"
     )
 
-    breakdown = (
+    brackets_string = (
             f"{'Bracket':<{spacing[0] + 5}}"
             + f" | {'Count' if binned else 'Over':>{spacing[1]}}"
             + f" | {'Done':>{spacing[2]}}"
@@ -126,19 +126,21 @@ async def run(ctx, user, username, binned):
                 + f" | {bracket[2]:>{spacing[2]}}"
                 + f" | {bracket[3]:>{spacing[3]}}" * (not binned)
         )
-        breakdown += f"{bracket_str}\n"
+        brackets_string += f"{bracket_str}\n"
+    description += f"\n\n**Distribution:**\n```\n{brackets_string}```"
 
-    description += f"\n\n**Distribution:**\n```\n{breakdown}```"
-
-    embed = Embed(
+    page = Page(
         title=f"Text Best Distribution",
         description=description,
-        color=user["colors"]["embed"],
     )
-    embeds.add_profile(embed, stats, universe)
-    embeds.add_universe(embed, universe)
 
-    await ctx.send(embed=embed, content=era_string)
+    message = Message(
+        ctx, user, page,
+        profile=stats,
+        universe=universe,
+    )
+
+    await message.send()
 
 
 async def setup(bot):

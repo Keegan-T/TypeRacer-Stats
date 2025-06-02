@@ -9,7 +9,8 @@ from api.users import get_stats
 from commands.basic.realspeed import get_args
 from config import prefix
 from database.bot.users import get_user
-from utils import errors, urls, strings, embeds
+from utils import errors, urls, strings
+from utils.embeds import Page, Field, Message, is_embed
 
 command = {
     "name": "race",
@@ -37,7 +38,7 @@ class Race(commands.Cog):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
-        if embeds.is_embed(result):
+        if is_embed(result):
             return await ctx.send(embed=result)
 
         username, race_number, universe = result
@@ -63,24 +64,27 @@ async def run(ctx, user, username, race_number, universe):
         race_info["quote"] = quote
         race_info["lagged"] = race_info["wpm"]
 
-    embed = Embed(
+    description, field = get_stat_fields(race_info, universe)
+    page = Page(
         title=f"Race #{race_number:,}",
-        url=urls.replay(username, race_number, universe),
-        color=user["colors"]["embed"],
+        description=description,
+        fields=field
     )
-    embeds.add_profile(embed, stats)
-    embeds.add_universe(embed, universe)
 
-    add_stats(embed, race_info, universe)
+    message = Message(
+        ctx, user, page,
+        url=urls.replay(username, race_number, universe),
+        profile=stats,
+        universe=universe,
+    )
 
-    await ctx.send(embed=embed)
+    await message.send()
 
     recent.text_id = race_info["text_id"]
 
 
-def add_stats(embed, race_info, universe):
-    embed.description = strings.text_description(race_info, universe)
-
+def get_stat_fields(race_info, universe):
+    description = strings.text_description(race_info, universe)
     rank = race_info["rank"]
     racers = race_info["racers"]
     outcome = "Loss"
@@ -103,7 +107,13 @@ def add_stats(embed, race_info, universe):
         f"Completed {strings.discord_timestamp(race_info['timestamp'])}"
     )
 
-    embed.add_field(name="Stats", value=stats_string, inline=False)
+    field = Field(
+        name="Stats",
+        value=stats_string,
+        inline=False,
+    )
+
+    return description, field
 
 
 async def setup(bot):
