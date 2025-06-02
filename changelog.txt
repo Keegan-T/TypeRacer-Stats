@@ -1,6 +1,7 @@
 6/2/2025
 - Added how long it took to -milestone
 - Added UTC offset parameter to -clock
+- Added -leaderboard wins
 
 6/1/2025
 - Added -streak

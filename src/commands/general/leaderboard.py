@@ -16,7 +16,7 @@ from utils.embeds import Page, Message
 from utils.errors import command_in_use
 
 categories = [
-    "races", "points", "awards", "textbests", "textstyped", "toptens", "textrepeats",
+    "races", "wins", "points", "awards", "textbests", "textstyped", "toptens", "textrepeats",
     "totaltextwpm", "wpm", "racetime", "characters", "captcha", "racesover", "textsover",
 ]
 command = {
@@ -69,6 +69,10 @@ async def run(ctx, user, category, secondary):
     if category == "races":
         title = "Races"
         description = leaderboard_races()
+
+    elif category == "wins":
+        title = "Wins"
+        description = leaderboard_wins()
 
     elif category == "points":
         title = "Points"
@@ -198,6 +202,15 @@ def leaderboard_races():
     return description
 
 
+def leaderboard_wins():
+    leaders = filter_users(users.get_most("wins", 20))
+    description = ""
+    for i, leader in enumerate(leaders):
+        description += f"{user_rank(leader, i)} - {leader['wins']:,}\n"
+
+    return description
+
+
 def leaderboard_points():
     leaders = filter_users(users.get_most_total_points(20))
     description = ""
@@ -308,6 +321,7 @@ def leaderboard_characters():
         description += f"{user_rank(leader, i)} - {leader['characters']:,}\n"
 
     return description
+
 
 def leaderboard_captcha():
     leaders = filter_users(users.get_most("wpm_verified", 20))
