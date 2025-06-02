@@ -27,7 +27,7 @@ async def run(ctx, user):
         "TypeRacer Stats is hosted out of pocket to provide 24/7 availability for the community.\n"
         "One month of hosting costs $14.00 USD\n\n"
         f"[Click here to donate]({donate_link})\n"
-        "Supporters may request a custom background image for their graphs <:peepo:1375934647086616646>\n"
+        "Supporters of $5+ may request a custom background image for their graphs <:peepo:1375934647086616646>\n"
         "Thank you for your support! <:support:1220863071086575716>"
     )
 
