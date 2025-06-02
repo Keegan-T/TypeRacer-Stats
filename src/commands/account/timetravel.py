@@ -4,6 +4,7 @@ from datetime import timezone
 from discord import Embed, Color
 from discord.ext import commands
 
+from config import prefix
 from database.bot.users import get_user, update_date_range
 from utils import embeds, strings, dates, colors
 import random
@@ -43,6 +44,7 @@ command = {
     "name": "timetravel",
     "aliases": ["tt"],
     "description": "Set a date range to view stats for any time period\n"
+                   f"Use `{prefix}timetravel` to return to the present\n"
                    "Most commands also accept dates as direct parameters",
     "parameters": "[date_1] <date_2>",
     "usages": [

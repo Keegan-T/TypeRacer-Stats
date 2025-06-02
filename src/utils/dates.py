@@ -71,8 +71,10 @@ def time_travel_dates(user, start_date, end_date):
 
 
 def parse_date(string):
-    if string in ["now", "present"]:
+    if string in ["now", "present", "today"]:
         date = now()
+    elif string == "until":
+        date = datetime.fromtimestamp(0, tz=timezone.utc)
     else:
         try:
             date = parser.parse(string).replace(tzinfo=timezone.utc)
@@ -114,11 +116,7 @@ def set_command_date_range(args, user):
 
             return args, user
 
-        if arg == "now":
-            date = _now
-        elif arg == "until":
-            date = datetime.fromtimestamp(0, tz=timezone.utc)
-        elif arg.isalpha() or arg.isnumeric():
+        if (arg.isalpha() or arg.isnumeric()) and arg not in ["now", "present", "today", "until"]:
             date = None
         else:
             date = parse_date(arg)
