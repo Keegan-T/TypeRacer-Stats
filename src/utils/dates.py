@@ -114,7 +114,11 @@ def set_command_date_range(args, user):
 
             return args, user
 
-        if arg.isalpha() or arg.isnumeric():
+        if arg == "now":
+            date = _now
+        elif arg == "until":
+            date = datetime.fromtimestamp(0, tz=timezone.utc)
+        elif arg.isalpha() or arg.isnumeric():
             date = None
         else:
             date = parse_date(arg)
@@ -134,9 +138,7 @@ def set_command_date_range(args, user):
     args = args[:-dates]
 
     if start_date:
-        start_date = start_date
         if end_date:
-            end_date = end_date
             if start_date.timestamp() > end_date.timestamp():
                 start_date, end_date = end_date, start_date
             if floor_day(end_date) >= floor_day(_now):
