@@ -45,6 +45,8 @@ async def run(ctx, user, username):
         username, columns=["timestamp"], universe=universe,
         start_date=user["start_date"], end_date=user["end_date"]
     )
+    if not race_list:
+        return await ctx.send(embed=errors.no_races_in_range(universe))
 
     daily = [0] * 24
     weekly = [0] * 7
