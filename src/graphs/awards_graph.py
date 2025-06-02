@@ -28,9 +28,9 @@ def render(user, username, competitions):
         periods[rank - 1].append(period_index)
 
     fig, ax = plt.subplots()
-    ax.scatter(x=timestamps[0], y=periods[0], color="#ffb600", zorder=3)
-    ax.scatter(x=timestamps[1], y=periods[1], color="#c0c0c0", zorder=2)
-    ax.scatter(x=timestamps[2], y=periods[2], color="#cd7f32", zorder=1)
+    ax.scatter(x=timestamps[0], y=periods[0], color="#ffb600", zorder=30)
+    ax.scatter(x=timestamps[1], y=periods[1], color="#c0c0c0", zorder=20)
+    ax.scatter(x=timestamps[2], y=periods[2], color="#cd7f32", zorder=10)
 
     first_year = datetime.fromtimestamp(1514764800).astimezone(timezone.utc)
     now = dates.floor_day(dates.now())
