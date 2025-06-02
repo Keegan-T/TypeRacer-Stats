@@ -42,7 +42,7 @@ class CheckSaves(commands.Cog):
 
 
 def get_args(user, args, info):
-    params = "username text_id:3621293"
+    params = "username text_id"
 
     return strings.parse_command(user, params, args, info)
 
@@ -55,6 +55,14 @@ async def run(ctx, user, username, text_id):
 
     api_stats = get_stats(username, universe=universe)
     await download(stats=api_stats, universe=universe)
+
+    if text_id is None:
+        if ctx.author.id == 108328502591250432:
+            text_id = 3621293
+        else:
+            race_number = api_stats["races"]
+            race = races.get_race(username, race_number, universe)
+            text_id = race["text_id"] if race else 3621293
 
     text = texts.get_text(text_id, universe)
     if text is None:
