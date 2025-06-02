@@ -15,7 +15,7 @@ command = {
     "name": "textbestdistribution",
     "aliases": ["tbd", "bd"],
     "description": "Displays a WPM distribution of a user's text bests\n"
-                   f"Use `{prefix}textbestdistribution [username]` bin to display binned brackets",
+                   f"Use `{prefix}textbestdistribution [username] bin` to display binned brackets",
     "parameters": "[username]",
     "usages": ["textbestdistribution keegant"],
 }
