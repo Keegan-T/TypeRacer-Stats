@@ -1,8 +1,10 @@
+import re
 from datetime import datetime, timezone
 
 from discord.ext import commands
 
 from commands.basic.stats import get_args
+from config import prefix
 from database.main import races, users
 from database.bot.users import get_user
 from graphs import clock_graph, bar_graph
@@ -12,7 +14,8 @@ from utils.embeds import Page, Message, is_embed
 command = {
     "name": "activity",
     "aliases": ["act", "clock"],
-    "description": "Displays your daily and weekly active typing periods",
+    "description": "Displays your daily and weekly active typing periods\n"
+                   f"Use `{prefix}activity me utc-[offset]` to set the timezone offset",
     "parameters": "[username]",
     "usages": ["activity"],
 }
@@ -26,16 +29,19 @@ class Activity(commands.Cog):
     async def activity(self, ctx, *args):
         user = get_user(ctx)
         args, user = dates.set_command_date_range(args, user)
+        offset = 0
+        if len(args) > 1 and re.match(r"^utc[+-](?:[0-9]|1[0-2]|2[0-3])$", args[1].lower()):
+            offset = int(args[1][3:])
 
         result = get_args(user, args, command)
         if is_embed(result):
             return await ctx.send(embed=result)
 
         username = result
-        await run(ctx, user, username)
+        await run(ctx, user, username, offset)
 
 
-async def run(ctx, user, username):
+async def run(ctx, user, username, offset):
     universe = user["universe"]
     stats = users.get_user(username, universe)
     if not stats:
@@ -97,7 +103,7 @@ async def run(ctx, user, username):
             title="Daily Typing Activity",
             description=daily_description,
             button_name="Daily",
-            render=lambda: clock_graph.render(user, username, daily, universe),
+            render=lambda: clock_graph.render(user, username, daily, universe, offset),
         ),
         Page(
             title="Weekly Typing Activity",

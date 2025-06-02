@@ -4,19 +4,21 @@ from matplotlib import pyplot as plt
 from graphs.core import color_graph, universe_title, file_name
 
 
-def render(user, username, activity, universe):
+def render(user, username, activity, universe, offset=0):
     color = user["colors"]["line"]
     fig = plt.figure()
     ax = fig.add_subplot(111, polar=True)
 
+    num_bars = len(activity)
+    theta = np.linspace(0, 2 * np.pi, num_bars, endpoint=False)
+    bar_width = 2 * np.pi / num_bars
+    theta += bar_width / 2
+    theta += np.deg2rad(offset * 360 / num_bars)
+
     if color in plt.colormaps():
-        apply_cmap(ax, user, activity)
+        apply_cmap(ax, user, activity, offset)
     else:
-        num_bars = len(activity)
-        theta = np.linspace(0, 2 * np.pi, num_bars, endpoint=False)
-        bar_width = 2 * np.pi / num_bars
-        theta += bar_width / 2
-        ax.bar(theta, activity, width=2 * np.pi / num_bars, bottom=0, color=color)
+        ax.bar(theta, activity, width=bar_width, bottom=0, color=color)
 
     ax.set_theta_zero_location("N")
     ax.set_theta_direction(-1)
@@ -25,7 +27,14 @@ def render(user, username, activity, universe):
     ax.set_xticklabels([f"{h}" for h in range(24)])
     ax.set_yticklabels([])
     ax.set_yticks([])
-    title = f"Daily Activity (UTC) - {username}"
+
+    offset_string = "(UTC)"
+    if offset < 0:
+        offset_string = f"(UTC{offset})"
+    elif offset > 0:
+        offset_string = f"(UTC+{offset})"
+    title = f"Daily Activity {offset_string} - {username}"
+
     ax.set_title(universe_title(title, universe))
     plt.tight_layout()
 
@@ -38,7 +47,7 @@ def render(user, username, activity, universe):
     return file
 
 
-def apply_cmap(ax, user, activity):
+def apply_cmap(ax, user, activity, offset):
     cmap = plt.get_cmap(user["colors"]["line"])
 
     num_bars = len(activity)
@@ -46,6 +55,7 @@ def apply_cmap(ax, user, activity):
     bar_width = 2 * np.pi / 24
     for i in range(len(theta_locations)):
         theta_locations[i] += bar_width / 2
+        theta_locations[i] += np.deg2rad(offset * 360 / num_bars)
     max_activity = max(activity) * 1.05
 
     theta_grid = np.linspace(0, 2 * np.pi, 1000)
