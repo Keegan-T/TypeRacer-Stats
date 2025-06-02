@@ -8,7 +8,7 @@ import database.main.users as users
 from api.races import get_race
 from commands.basic.race import add_stats
 from database.bot.users import get_user
-from utils import errors, urls, embeds, strings
+from utils import errors, urls, embeds, strings, dates
 
 categories = ["races", "points", "wpm", "texts"]
 command = {
@@ -87,6 +87,14 @@ async def run(ctx, user, username, milestone, category):
         race_info["quote"] = text["quote"]
 
     add_stats(embed, race_info, universe)
+    time_taken = strings.format_duration_short(race_info["timestamp"] - stats["joined"])
+    fields = list(embed.fields)
+    field = {
+        "name": fields[0].name,
+        "value": fields[0].value + "\nTook " + time_taken,
+    }
+    embed.clear_fields()
+    embed.add_field(**field)
 
     await ctx.send(embed=embed, content=era_string)
 

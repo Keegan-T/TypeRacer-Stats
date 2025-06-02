@@ -100,7 +100,7 @@ def add_stats(embed, race_info, universe):
         f"**Points:** {race_info['points']:,.2f}\n"
         f"**Race Time:** {strings.format_duration_short(seconds, False)}\n"
         f"**Outcome:** {outcome} ({rank}/{racers})\n\n"
-        f"Completed <t:{int(race_info['timestamp'])}:R>"
+        f"Completed {strings.discord_timestamp(race_info['timestamp'])}"
     )
 
     embed.add_field(name="Stats", value=stats_string, inline=False)
