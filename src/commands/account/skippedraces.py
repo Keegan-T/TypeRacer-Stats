@@ -5,7 +5,7 @@ from api.users import get_stats
 from commands.basic.stats import get_args
 from commands.locks import skip_lock
 from database.bot.users import get_user
-from database.main import races, deleted_races
+from database.main import races, deleted_races, users
 from utils import strings, errors
 from utils.embeds import Page, Message, is_embed
 
@@ -112,6 +112,7 @@ async def run(ctx, user, username):
         return await message.send()
 
     races.add_races(found_races)
+    users.update_text_stats(username, universe)
 
     skipped_groups = []
     for group in group_numbers([r[2] for r in found_races], proximity=1):
