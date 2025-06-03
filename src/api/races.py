@@ -160,6 +160,10 @@ async def get_race_details(html, get_opponents=False, universe="play", get_typos
 def find_race(username, race_number, timestamp, universe="play"):
     url = urls.games(username, timestamp - 5, timestamp + 5, 20, universe)
     response = requests.get(url)
+    if response.status_code == 404:
+        return None
+    elif response.status_code != 200:
+        raise ConnectionError
     races = json.loads(response.text)
     return next((race for race in races if race["gn"] == race_number), None)
 
