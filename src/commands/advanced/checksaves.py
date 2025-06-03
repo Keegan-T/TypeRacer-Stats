@@ -42,9 +42,16 @@ class CheckSaves(commands.Cog):
 
 
 def get_args(user, args, info):
-    params = "username text_id"
+    params = "username"
+    username = strings.parse_command(user, params, args, info)[0]
+    text_id = None
+    if len(args) > 1:
+        if args[1] == "^":
+            text_id = recent.text_id
+        else:
+            text_id = args[1]
 
-    return strings.parse_command(user, params, args, info)
+    return username, text_id
 
 
 async def run(ctx, user, username, text_id):
