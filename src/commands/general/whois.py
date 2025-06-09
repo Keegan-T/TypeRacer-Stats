@@ -23,11 +23,11 @@ class WhoIs(commands.Cog):
         user = get_user(ctx)
 
         if not args:
-            return await ctx.send(embed=errors.missing_argument(command))
-
-        user_id = strings.get_discord_id(args[0])
-        if not user_id:
-            return await ctx.send(embed=Embed(title="Invalid User", color=colors.error))
+            user_id = ctx.author.id
+        else:
+            user_id = strings.get_discord_id(args[0])
+            if not user_id:
+                return await ctx.send(embed=Embed(title="Invalid User", color=colors.error))
 
         await run(ctx, user, str(user_id))
 
