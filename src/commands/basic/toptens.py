@@ -101,8 +101,8 @@ async def run(ctx, user, username, best):
     texts_typed = users.get_user(username)["texts_typed"]
     embed.description = (
         f"**Appearances:** {top_10_count:,}\n"
-        f"**Texts Typed:**  {texts_typed:,} ({(top_10_count / total_texts):.2%})\n"
-        f"**Total Texts:** {total_texts:,} ({(top_10_count / texts_typed):.2%})"
+        f"**Texts Typed:**  {texts_typed:,} ({(top_10_count / texts_typed):.2%})\n"
+        f"**Total Texts:** {total_texts:,} ({(top_10_count / total_texts):.2%})"
     )
 
     if best:
