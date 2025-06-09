@@ -1,7 +1,7 @@
 from discord.ext import commands
 
-import commands.recent as recent
 import database.main.races as races
+import database.bot.recent_text_ids as recent
 import database.main.texts as texts
 import database.main.users as users
 from api.races import get_race
@@ -36,7 +36,7 @@ class Milestone(commands.Cog):
     async def milestone(self, ctx, *args):
         user = get_user(ctx)
 
-        result = get_args(user, args, command)
+        result = get_args(user, args, command, ctx.channel.id)
         if is_embed(result):
             return await ctx.send(embed=result)
 
@@ -45,10 +45,10 @@ class Milestone(commands.Cog):
         await run(ctx, user, username, milestone, category)
 
 
-def get_args(user, args, info):
+def get_args(user, args, info, channel_id):
     params = f"username [int] category:{'|'.join(categories)}"
 
-    return strings.parse_command(user, params, args, info)
+    return strings.parse_command(user, params, args, info, channel_id)
 
 
 async def run(ctx, user, username, milestone, category):
@@ -99,7 +99,7 @@ async def run(ctx, user, username, milestone, category):
 
     await message.send()
 
-    recent.text_id = race_info["text_id"]
+    recent.update_recent(ctx.channel.id, race_info["text_id"])
 
 
 async def setup(bot):

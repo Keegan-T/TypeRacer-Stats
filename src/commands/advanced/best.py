@@ -1,7 +1,7 @@
 from discord.ext import commands
 
-import commands.recent as recent
 import database.main.races as races
+import database.bot.recent_text_ids as recent
 import database.main.texts as texts
 import database.main.users as users
 from database.bot.users import get_user
@@ -35,7 +35,7 @@ class Best(commands.Cog):
         user = get_user(ctx)
         args, user = dates.set_command_date_range(args, user)
 
-        result = get_args(user, args, command)
+        result = get_args(user, args, command, ctx.channel.id)
         if is_embed(result):
             return await ctx.send(embed=result)
 
@@ -43,15 +43,15 @@ class Best(commands.Cog):
         await run(ctx, user, username, category, text_id)
 
 
-def get_args(user, args, info):
+def get_args(user, args, info, channel_id):
     text_id = None
 
-    if len(args) == 2 and args[1].isnumeric():
+    if len(args) == 2 and args[1].isnumeric() or args[1] == "^":
         params = "username text_id"
     else:
         params = f"username category:{'|'.join(categories)}"
 
-    result = strings.parse_command(user, params, args, info)
+    result = strings.parse_command(user, params, args, info, channel_id)
     if is_embed(result):
         return result
 
@@ -87,7 +87,7 @@ async def run(ctx, user, username, category, text_id, reverse=True):
         race_list = races.get_text_races(username, text_id, universe, user["start_date"], user["end_date"])
         race_list.sort(key=lambda x: x["wpm"], reverse=reverse)
         race_list = race_list[:100]
-        recent.text_id = text_id
+        recent.update_recent(ctx.channel.id, text_id)
 
         if not race_list:
             description = (

@@ -1,8 +1,8 @@
 from discord import Embed
 from discord.ext import commands
 
-import commands.recent as recent
 import database.main.races as races
+import database.bot.recent_text_ids as recent
 import database.main.text_results as top_tens
 import database.main.texts as texts
 import database.main.users as users
@@ -37,7 +37,7 @@ class Text(commands.Cog):
     async def text(self, ctx, *args):
         user = get_user(ctx)
 
-        result = get_args(user, args, command)
+        result = get_args(user, args, command, ctx.channel.id)
         if embeds.is_embed(result):
             return await ctx.send(embed=result)
 
@@ -47,14 +47,14 @@ class Text(commands.Cog):
         await run(ctx, user, username, text_id)
 
 
-def get_args(user, args, info):
+def get_args(user, args, info, channel_id):
     # Shorthand (-text ^)
     if len(args) == 1 and args[0] == "^" and user["username"]:
-        return user["username"], recent.text_id
+        return user["username"], recent.get_recent(channel_id)
 
     params = "username text_id:-1"
 
-    return strings.parse_command(user, params, args, info)
+    return strings.parse_command(user, params, args, info, channel_id)
 
 
 async def run(ctx, user, username, text_id=None, race_number=None):
@@ -105,7 +105,6 @@ async def run(ctx, user, username, text_id=None, race_number=None):
             f"{text_description}\n\nUser has no races on this text\n"
             f"[Race this text]({text['ghost']})"
         )
-        recent.text_id = text_id
         message = Message(
             ctx, user, Page(description=description),
             title,
@@ -114,7 +113,9 @@ async def run(ctx, user, username, text_id=None, race_number=None):
             profile=db_stats,
             universe=universe
         )
-        return await message.send()
+        await message.send()
+        recent.update_recent(ctx.channel.id, text_id)
+        return
 
     times_typed = len(race_list)
     recent_race = race_list[-1]
@@ -184,7 +185,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
 
     await message.send()
 
-    recent.text_id = text_id
+    recent.update_recent(ctx.channel.id, text_id)
 
     if universe == "play" and not user["end_date"]:
         await top_10_display(ctx, username, text_id, recent_race)

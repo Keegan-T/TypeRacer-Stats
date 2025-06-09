@@ -25,7 +25,7 @@ class Worst(commands.Cog):
     async def worst(self, ctx, *args):
         user = get_user(ctx)
 
-        result = get_args(user, args, command)
+        result = get_args(user, args, command, ctx.channel.id)
         if embeds.is_embed(result):
             return await ctx.send(embed=result)
 

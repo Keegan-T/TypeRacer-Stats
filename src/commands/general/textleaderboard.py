@@ -2,7 +2,7 @@ from discord import Embed
 from discord.ext import commands
 
 import api.texts as texts_api
-import commands.recent as recent
+import database.bot.recent_text_ids as recent
 import database.main.text_results as top_tens
 import database.main.texts as texts
 from database.bot.users import get_user
@@ -29,7 +29,7 @@ class TextLeaderboard(commands.Cog):
     async def textleaderboard(self, ctx, *args):
         user = get_user(ctx)
 
-        result = get_args(user, args, command)
+        result = get_args(user, args, command, ctx.channel.id)
         if embeds.is_embed(result):
             return await ctx.send(embed=result)
 
@@ -37,10 +37,10 @@ class TextLeaderboard(commands.Cog):
         await run(ctx, user, text_id)
 
 
-def get_args(user, args, info):
+def get_args(user, args, info, channel_id):
     params = "text_id"
 
-    result = strings.parse_command(user, params, args, info)
+    result = strings.parse_command(user, params, args, info, channel_id)
     if embeds.is_embed(result):
         return result
 
@@ -106,7 +106,7 @@ async def run(ctx, user, text_id):
 
     await ctx.send(embed=embed)
 
-    recent.text_id = text_id
+    recent.update_recent(ctx.channel.id, text_id)
 
 
 async def setup(bot):

@@ -1,8 +1,8 @@
 from discord.ext import commands
 
+import database.bot.recent_text_ids as recent
 from api.races import get_race, get_universe_multiplier
 from api.users import get_stats
-from commands import recent
 from commands.basic.realspeed import get_args
 from database.bot.users import get_user
 from graphs import segment_graph
@@ -27,7 +27,7 @@ class SegmentGraph(commands.Cog):
     async def segmentgraph(self, ctx, *args):
         user = get_user(ctx)
 
-        result = get_args(user, args, command)
+        result = get_args(user, args, command, ctx.channel.id)
         if is_embed(result):
             return await ctx.send(embed=result)
 
@@ -156,7 +156,7 @@ async def run(ctx, user, username, race_number, universe):
 
     await message.send()
 
-    recent.text_id = race_info["text_id"]
+    recent.update_recent(ctx.channel.id, race_info["text_id"])
 
 
 async def setup(bot):

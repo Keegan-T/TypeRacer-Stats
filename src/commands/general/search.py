@@ -2,7 +2,7 @@ import Levenshtein
 from discord import Embed
 from discord.ext import commands
 
-import commands.recent as recent
+import database.bot.recent_text_ids as recent
 from config import prefix
 from database.bot.users import get_user
 from database.main.texts import get_texts
@@ -177,7 +177,7 @@ async def run(ctx, user, query):
 
     await message.send()
 
-    recent.text_id = results[0]["text_id"]
+    recent.update_recent(ctx.channel.id, results[0]["text_id"])
 
 
 def big_query():

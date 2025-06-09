@@ -2,7 +2,7 @@ import re
 import urllib.parse
 from datetime import datetime, timezone
 
-import commands.recent as recent
+import database.bot.recent_text_ids as recent
 from utils import errors, urls, dates
 
 category_aliases = [
@@ -98,7 +98,8 @@ def get_category(options, param):
     return None
 
 
-def parse_command(user, params, args, command):
+def parse_command(user, params, args, command, channel_id=None):
+    recent_text_id = recent.get_recent(channel_id)
     args = [arg.lower() for arg in args]
     params = params.split(" ")
     return_args = []
@@ -122,7 +123,7 @@ def parse_command(user, params, args, command):
                 if param_name in ["duration", "number", "int", "text_id"]:
                     choice = int(choice)
             elif param_name == "text_id":
-                choice = recent.text_id
+                choice = recent_text_id
             return_args.append(choice)
 
 
@@ -157,7 +158,7 @@ def parse_command(user, params, args, command):
 
         elif param_name == "text_id":
             if missing or args[i] == "^":
-                text_id = recent.text_id
+                text_id = recent_text_id
             else:
                 text_id = args[i]
 

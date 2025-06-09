@@ -1,8 +1,7 @@
-from discord import Embed
 from discord.ext import commands
 
-import commands.recent as recent
 import database.main.races as races
+import database.bot.recent_text_ids as recent
 import database.main.texts as texts
 from api.races import get_race
 from api.users import get_stats
@@ -37,7 +36,7 @@ class Race(commands.Cog):
     async def race(self, ctx, *args):
         user = get_user(ctx)
 
-        result = get_args(user, args, command)
+        result = get_args(user, args, command, ctx.channel.id)
         if is_embed(result):
             return await ctx.send(embed=result)
 
@@ -80,7 +79,7 @@ async def run(ctx, user, username, race_number, universe):
 
     await message.send()
 
-    recent.text_id = race_info["text_id"]
+    recent.update_recent(ctx.channel.id, race_info["text_id"])
 
 
 def get_stat_fields(race_info, universe):

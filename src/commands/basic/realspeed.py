@@ -1,9 +1,9 @@
 from discord import Embed, File
 from discord.ext import commands
 
-import commands.recent as recent
 import database.main.modified_races as modified_races
 import database.main.races as races
+import database.bot.recent_text_ids as recent
 import database.main.users as users
 from api.races import get_race
 from api.users import get_stats
@@ -40,7 +40,7 @@ class RealSpeed(commands.Cog):
     async def realspeed(self, ctx, *args):
         user = get_user(ctx)
 
-        result = get_args(user, args, command)
+        result = get_args(user, args, command, ctx.channel.id)
         if embeds.is_embed(result):
             return await ctx.send(embed=result)
 
@@ -48,11 +48,11 @@ class RealSpeed(commands.Cog):
         await run(ctx, user, username, race_number, ctx.invoked_with in graph_commands, universe)
 
 
-def get_args(user, args, info):
+def get_args(user, args, info, channel_id):
     params = "username int:0"
     universe = user["universe"]
 
-    result = strings.parse_command(user, params, args, info)
+    result = strings.parse_command(user, params, args, info, channel_id)
     if embeds.is_embed(result):
         return result
 
@@ -165,7 +165,7 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
     else:
         await ctx.send(embed=embed)
 
-    recent.text_id = race_info["text_id"]
+    recent.update_recent(ctx.channel.id, race_info["text_id"])
 
     if universe == "play" and reverse_lag:
         user = users.get_user(username)

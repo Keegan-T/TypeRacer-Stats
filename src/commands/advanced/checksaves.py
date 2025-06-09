@@ -2,8 +2,8 @@ from datetime import datetime
 
 from discord.ext import commands
 
-import commands.recent as recent
 import database.main.races as races
+import database.bot.recent_text_ids as recent
 import database.main.texts as texts
 import database.main.users as users
 from api.users import get_stats
@@ -33,7 +33,7 @@ class CheckSaves(commands.Cog):
     async def checksaves(self, ctx, *args):
         user = get_user(ctx)
 
-        result = get_args(user, args, command)
+        result = get_args(user, args, command, ctx.channel.id)
         if is_embed(result):
             return await ctx.send(embed=result)
 
@@ -41,13 +41,13 @@ class CheckSaves(commands.Cog):
         await run(ctx, user, username, text_id)
 
 
-def get_args(user, args, info):
+def get_args(user, args, info, channel_id):
     params = "username"
     username = strings.parse_command(user, params, args, info)[0]
     text_id = None
     if len(args) > 1:
         if args[1] == "^":
-            text_id = recent.text_id
+            text_id = recent.get_recent(channel_id)
         else:
             text_id = args[1]
 
@@ -119,7 +119,7 @@ async def run(ctx, user, username, text_id):
 
     await message.send()
 
-    recent.text_id = text_id
+    recent.update_recent(ctx.channel.id, text_id)
 
 
 async def setup(bot):

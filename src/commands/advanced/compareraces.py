@@ -1,14 +1,14 @@
 from discord import Embed
 from discord.ext import commands
 
+import database.bot.recent_text_ids as recent
 from api import users
 from api.races import get_race
 from api.users import get_stats
-from commands import recent
 from commands.account.download import run as download
 from config import prefix
-from database.main import races
 from database.bot.users import get_user
+from database.main import races
 from database.main.texts import get_text
 from graphs import match_graph
 from utils import errors, urls, colors, strings
@@ -40,7 +40,7 @@ class CompareRaces(commands.Cog):
     async def compareraces(self, ctx, *args):
         user = get_user(ctx)
 
-        result = get_args(user, args, command)
+        result = get_args(user, args, command, ctx.channel.id)
         if is_embed(result):
             return await ctx.send(embed=result)
 
@@ -52,7 +52,7 @@ class CompareRaces(commands.Cog):
         await run(ctx, user, username1, username2, race_number1, race_number2, universe)
 
 
-def get_args(user, args, info):
+def get_args(user, args, info, channel_id):
     try:
         username2 = None
         if len(args) == 0:
@@ -84,7 +84,7 @@ def get_args(user, args, info):
                 raise ValueError
 
         if text_id == "^":
-            text_id = recent.text_id
+            text_id = recent.get_recent(channel_id)
 
         text = get_text(text_id, user["universe"])
         if not text:
@@ -194,7 +194,7 @@ async def run(ctx, user, username1, username2, race_number1, race_number2, unive
 
     await message.send()
 
-    recent.text_id = race_info1["text_id"]
+    recent.update_recent(ctx.channel.id, race_info1["text_id"])
 
 
 async def run_text(ctx, user, username, username2, text_id, universe):

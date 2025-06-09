@@ -1,6 +1,6 @@
 from discord.ext import commands
 
-import commands.recent as recent
+import database.bot.recent_text_ids as recent
 from api.races import get_match
 from api.users import get_stats
 from commands.basic.realspeed import get_args
@@ -41,7 +41,7 @@ class MatchGraph(commands.Cog):
         async with match_lock:
             user = get_user(ctx)
 
-            result = get_args(user, args, command)
+            result = get_args(user, args, command, ctx.channel.id)
             if is_embed(result):
                 return await ctx.send(embed=result)
 
@@ -127,7 +127,7 @@ async def run(ctx, user, username, race_number, universe):
 
     await message.send()
 
-    recent.text_id = match["text_id"]
+    recent.update_recent(ctx.channel.id, match["text_id"])
 
 
 async def setup(bot):
