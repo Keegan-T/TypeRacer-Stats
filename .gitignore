@@ -12,3 +12,4 @@ src/sandbox.py
 src/commands/template.txt
 /src/data/*
 venv/
+/src/database/*/init.py
