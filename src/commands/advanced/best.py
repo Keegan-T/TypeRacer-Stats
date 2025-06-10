@@ -46,7 +46,7 @@ class Best(commands.Cog):
 def get_args(user, args, info, channel_id):
     text_id = None
 
-    if len(args) == 2 and args[1].isnumeric() or args[1] == "^":
+    if len(args) == 2 and (args[1].isnumeric() or args[1] == "^"):
         params = "username text_id"
     else:
         params = f"username category:{'|'.join(categories)}"
