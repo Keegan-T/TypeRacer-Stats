@@ -1,6 +1,7 @@
 from discord.ext import commands
 
 from commands.advanced.textsover import run, get_args
+from config import prefix
 from database.bot.users import get_user
 from utils import embeds
 
@@ -8,8 +9,8 @@ command = {
     "name": "textsunder",
     "aliases": ["tu", "tur"],
     "description": "Displays the number of texts a user has less than a category threshold\n"
-                   "Add `random` as a parameter to randomize the order in which races are displayed",
-    "parameters": "[username] [threshold] <category>",
+                   f"Use `{prefix}-tur` to randomize the results",
+    "parameters": "[username] [threshold] <category> <sort>",
     "defaults": {
         "category": "wpm",
     },
@@ -33,9 +34,10 @@ class TextsUnder(commands.Cog):
         if embeds.is_embed(result):
             return await ctx.send(embed=result)
 
-        username, threshold, category = result
-        random = args[-1] in ["random", "rand", "r"] or ctx.invoked_with.lower() == "tur"
-        await run(ctx, user, username, threshold, category, over=False, random=random)
+        username, threshold, category, sort = result
+        if ctx.invoked_with.lower() == "tur":
+            sort = "random"
+        await run(ctx, user, username, threshold, category, sort, over=False)
 
 
 async def setup(bot):

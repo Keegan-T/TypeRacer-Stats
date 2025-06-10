@@ -1,3 +1,6 @@
+6/10/2025
+- Added sort options to -textsover and -textsunder
+
 6/9/2025
 - Separated recent text IDs per channel
 

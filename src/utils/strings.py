@@ -48,6 +48,8 @@ category_aliases = [
     ["all", "alltime"],
     ["textsover", "to"],
     ["racesover", "ro"],
+    ["random", "rand", "r"],
+    ["length", "len"],
 ]
 
 username_aliases = {

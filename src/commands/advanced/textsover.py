@@ -5,23 +5,26 @@ from discord.ext import commands
 import database.main.texts as texts
 import database.main.users as users
 from database.bot.users import get_user
-from utils import errors, urls, strings, colors
+from utils import errors, urls, strings
 from utils.embeds import Page, Message, get_pages, is_embed
 
 categories = ["wpm", "points", "times"]
+sorts = ["wpm", "length", "times", "random"]
 command = {
     "name": "textsover",
     "aliases": ["to"],
     "description": "Displays the number of texts a user has greater than or equal to a category threshold\n"
                    "Add `random` as a parameter to randomize the order in which texts are displayed",
-    "parameters": "[username] [threshold] <category>",
+    "parameters": f"[username] [threshold] <category:{'|'.join(categories)}> <sort:{'|'.join(sorts)}>",
     "defaults": {
         "category": "wpm",
+        "sort": "wpm",
     },
     "usages": [
         "textsover joshua728 1000 points",
-        "textsover charlieog 5000 times",
+        "textsover charlieog 10000 times",
         "textsover keegant 200 wpm random",
+        "textsover zak389 150 wpm length",
     ],
 }
 
@@ -38,18 +41,17 @@ class TextsOver(commands.Cog):
         if is_embed(result):
             return await ctx.send(embed=result)
 
-        username, threshold, category = result
-        random = args[-1] in ["random", "rand", "r"]
-        await run(ctx, user, username, threshold, category, random=random)
+        username, threshold, category, sort = result
+        await run(ctx, user, username, threshold, category, sort)
 
 
 def get_args(user, args, info):
-    params = f"username [number] category:{'|'.join(categories)}"
+    params = f"username [number] category:{'|'.join(categories)} sort:{'|'.join(sorts)}"
 
     return strings.parse_command(user, params, args, info)
 
 
-async def run(ctx, user, username, threshold, category, over=True, random=False):
+async def run(ctx, user, username, threshold, category, sort, over=True):
     universe = user["universe"]
     stats = users.get_user(username, universe)
     if not stats:
@@ -87,10 +89,21 @@ async def run(ctx, user, username, threshold, category, over=True, random=False)
         final.append(text)
     race_list = final
 
-    if random:
+    if sort == "random":
         shuffle(race_list)
+        sort_title = " (Randomized)"
+    elif sort == "length":
+        race_list.sort(
+            key=lambda x: len(text_list[x["text_id"]]["quote"]),
+            reverse=ctx.invoked_with.lower() not in ["textsunder", "tu"]
+        )
+        sort_title = " (By Length)"
+    elif sort == "times":
+        race_list.sort(key=lambda x: x["times"], reverse=True)
+        sort_title = " (By Times Typed)"
     else:
         race_list.sort(key=lambda x: x[category], reverse=True)
+        sort_title = ""
 
     category_title = {"wpm": "WPM"}.get(category, category)
     race_count = len(race_list)
@@ -111,13 +124,14 @@ async def run(ctx, user, username, threshold, category, over=True, random=False)
             f"[#{text_id}]({urls.trdata_text(text_id, universe)}) - "
             f"[{race['wpm']:,.2f} WPM]({urls.replay(username, race['number'], universe)}) - "
             f"**{race['times']:,} time{'s' * (race['times'] != 1)}** - "
+            f"{len(text_list[text_id]["quote"]):,} chars - "
             f"[Ghost]({text_list[text_id]['ghost']})\n"
             f'"{strings.truncate_clean(text_list[text_id]["quote"], 60)}"\n\n'
         )
 
     title = (
         f"Texts {'Over' if over else 'Under'} {threshold:,} "
-        f"{category_title}{' (Randomized)' * random}"
+        f"{category_title}{sort_title}"
     )
 
     if race_list:
