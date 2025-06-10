@@ -231,6 +231,7 @@ async def get_match(username, race_number, universe="play"):
 
     rankings.sort(key=lambda x: x["wpm"], reverse=True)
     raw_rankings.sort(key=lambda x: x["wpm"], reverse=True)
+    pauseless_rankings.sort(key=lambda x: x["wpm"], reverse=True)
 
     return {
         "quote": match["quote"],
