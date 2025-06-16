@@ -69,10 +69,8 @@ async def run(ctx, user, username, milestone, category):
     )
     if not milestone_number:
         page.description = "User has not achieved this milestone"
-        return await ctx.send(
-            embed=Message(ctx, user, page, profile=stats, universe=universe),
-            content=era_string,
-        )
+        message = Message(ctx, user, page, profile=stats, universe=universe)
+        return await message.send()
 
     page.title += f" - Race #{milestone_number:,}"
     url = urls.replay(username, milestone_number, universe)
