@@ -66,6 +66,22 @@ def calculate_performance(wpm, difficulty):
     return wpm ** 1.5 * difficulty ** 1.2
 
 
+def calculate_total_performance(text_bests, text_list):
+    scores = []
+    for race in text_bests:
+        text_id, wpm = race
+        difficulty = text_list[text_id]["difficulty"]
+        performance = calculate_performance(wpm, difficulty)
+        scores.append({**race, "performance": performance})
+
+    scores.sort(key=lambda x: -x["performance"])
+    total_performance = 0
+    for i, score in enumerate(scores):
+        total_performance += score["performance"] * (0.95 ** i)
+
+    return total_performance
+
+
 def calculate_text_performances(text_bests, universe="play"):
     text_dict = texts.get_texts(True, False, universe)
     min_difficulty = min(text["difficulty"] for text in text_dict.values())

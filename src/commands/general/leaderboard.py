@@ -17,7 +17,7 @@ from utils.errors import command_in_use
 
 categories = [
     "races", "wins", "points", "awards", "textbests", "textstyped", "toptens", "textrepeats",
-    "totaltextwpm", "wpm", "racetime", "characters", "captcha", "racesover", "textsover",
+    "totaltextwpm", "wpm", "racetime", "characters", "captcha", "racesover", "textsover", "performance"
 ]
 command = {
     "name": "leaderboard",
@@ -142,6 +142,10 @@ async def run(ctx, user, category, secondary):
             title = f"Texts Over {wpm:,.0f} WPM"
             description = await leaderboard_texts_over(wpm)
 
+    elif category == "performance":
+        title = "Performance"
+        description = await leaderboard_performance()
+
     else:
         n = 10
         if category.isnumeric():
@@ -182,7 +186,7 @@ def filter_users(user_list):
             filtered.append(user)
             added_users.update(alt_accounts)
             i += 1
-            if i == 10:
+            if i == 20:
                 break
 
     return filtered
@@ -194,7 +198,7 @@ def user_rank(user, i):
 
 
 def leaderboard_races():
-    leaders = filter_users(users.get_most("races", 20))
+    leaders = filter_users(users.get_most("races", 30))
     description = ""
     for i, leader in enumerate(leaders):
         description += f"{user_rank(leader, i)} - {leader['races']:,}\n"
@@ -203,7 +207,7 @@ def leaderboard_races():
 
 
 def leaderboard_wins():
-    leaders = filter_users(users.get_most("wins", 20))
+    leaders = filter_users(users.get_most("wins", 30))
     description = ""
     for i, leader in enumerate(leaders):
         description += f"{user_rank(leader, i)} - {leader['wins']:,}\n"
@@ -212,7 +216,7 @@ def leaderboard_wins():
 
 
 def leaderboard_points():
-    leaders = filter_users(users.get_most_total_points(20))
+    leaders = filter_users(users.get_most_total_points(30))
     description = ""
     for i, leader in enumerate(leaders):
         description += f"{user_rank(leader, i)} - {leader['points_total']:,.0f}\n"
@@ -221,7 +225,7 @@ def leaderboard_points():
 
 
 def leaderboard_awards():
-    leaders = filter_users(users.get_most_awards(20))
+    leaders = filter_users(users.get_most_awards(30))
     description = ""
     for i, leader in enumerate(leaders):
         first = leader["awards_first"]
@@ -237,7 +241,7 @@ def leaderboard_awards():
 
 
 def leaderboard_text_bests():
-    leaders = filter_users(users.get_top_text_best(20))
+    leaders = filter_users(users.get_top_text_best(30))
     description = ""
     for i, leader in enumerate(leaders):
         description += f"{user_rank(leader, i)} - {leader['text_best_average']:,.2f} WPM\n"
@@ -246,7 +250,7 @@ def leaderboard_text_bests():
 
 
 def leaderboard_texts_typed():
-    leaders = filter_users(users.get_most_texts_typed(20))
+    leaders = filter_users(users.get_most_texts_typed(30))
     description = ""
     for i, leader in enumerate(leaders):
         min_repeats = leader["min_repeats"]
@@ -259,7 +263,7 @@ def leaderboard_texts_typed():
 
 
 def leaderboard_text_repeats():
-    leaders = filter_users(users.get_most("text_repeat_times", 20))
+    leaders = filter_users(users.get_most("text_repeat_times", 30))
     description = ""
     for i, leader in enumerate(leaders):
         description += (
@@ -272,7 +276,7 @@ def leaderboard_text_repeats():
 
 
 def leaderboard_text_id_repeats(text_id):
-    leaders = filter_users(texts.get_text_repeat_leaderboard(text_id, 20))
+    leaders = filter_users(texts.get_text_repeat_leaderboard(text_id, 30))
     description = ""
     for i, leader in enumerate(leaders):
         description += (
@@ -285,7 +289,7 @@ def leaderboard_text_id_repeats(text_id):
 
 
 def leaderboard_total_text_wpm():
-    leaders = filter_users(users.get_most("text_wpm_total", 20))
+    leaders = filter_users(users.get_most("text_wpm_total", 30))
     description = ""
     for i, leader in enumerate(leaders):
         description += (
@@ -297,7 +301,7 @@ def leaderboard_total_text_wpm():
 
 
 def leaderboard_wpm():
-    leaders = filter_users(users.get_most("wpm_best", 20))
+    leaders = filter_users(users.get_most("wpm_best", 30))
     description = ""
     for i, leader in enumerate(leaders):
         description += f"{user_rank(leader, i)} - {leader['wpm_best']:,.2f} WPM\n"
@@ -306,7 +310,7 @@ def leaderboard_wpm():
 
 
 def leaderboard_race_time():
-    leaders = filter_users(users.get_most("seconds", 20))
+    leaders = filter_users(users.get_most("seconds", 30))
     description = ""
     for i, leader in enumerate(leaders):
         description += f"{user_rank(leader, i)} - {strings.format_duration_short(leader['seconds'])}\n"
@@ -315,7 +319,7 @@ def leaderboard_race_time():
 
 
 def leaderboard_characters():
-    leaders = filter_users(users.get_most("characters", 20))
+    leaders = filter_users(users.get_most("characters", 30))
     description = ""
     for i, leader in enumerate(leaders):
         description += f"{user_rank(leader, i)} - {leader['characters']:,}\n"
@@ -324,7 +328,7 @@ def leaderboard_characters():
 
 
 def leaderboard_captcha():
-    leaders = filter_users(users.get_most("wpm_verified", 20))
+    leaders = filter_users(users.get_most("wpm_verified", 50))
     description = ""
     for i, leader in enumerate(leaders):
         description += f"{user_rank(leader, i)} - {leader['wpm_verified']:,.2f} WPM\n"
@@ -333,7 +337,7 @@ def leaderboard_captcha():
 
 
 async def leaderboard_races_over(wpm):
-    leaders = filter_users(await users.get_most_races_over(wpm, 20))
+    leaders = filter_users(await users.get_most_races_over(wpm, 30))
     description = ""
     for i, leader in enumerate(leaders):
         description += f"{user_rank(leader, i)} - {leader['races_over']:,}\n"
@@ -342,10 +346,22 @@ async def leaderboard_races_over(wpm):
 
 
 async def leaderboard_texts_over(wpm):
-    leaders = filter_users(await users.get_most_texts_over(wpm, 20))
+    leaders = filter_users(await users.get_most_texts_over(wpm, 30))
     description = ""
     for i, leader in enumerate(leaders):
         description += f"{user_rank(leader, i)} - {leader['texts_over']:,}\n"
+
+    return description
+
+
+async def leaderboard_performance():
+    leaders = filter_users(await users.get_most_performance())
+    description = ""
+    for i, leader in enumerate(leaders):
+        description += (
+            f"{user_rank(leader, i)} - {leader['performance']:,.0f} "
+            f"({leader['text_best_average']:,.2f} TB, {leader['texts_typed']:,} texts)\n"
+        )
 
     return description
 
@@ -354,7 +370,7 @@ def leaderboard_top_n(n):
     countries = users.get_countries()
     leaders, text_count = top_tens.get_top_n_counts(n)
     description = ""
-    for i, leader in enumerate(leaders[:10]):
+    for i, leader in enumerate(leaders[:20]):
         leader = {
             "username": leader[0],
             "count": leader[1],

@@ -50,6 +50,7 @@ category_aliases = [
     ["racesover", "ro"],
     ["random", "rand", "r"],
     ["length", "len"],
+    ["performance", "pf"],
 ]
 
 username_aliases = {
@@ -71,6 +72,15 @@ rank_emojis = [
     "<:9th:1219163722455453707>",
     "<:10th:1219163725223694336>",
     "<:11th:1292341426557943878>",
+    "<:12th:1384880520592097472>",
+    "<:13th:1384880519065505912>",
+    "<:14th:1384880518033702983>",
+    "<:15th:1384880516989194260>",
+    "<:16th:1384880515395616788>",
+    "<:17th:1384880513785004104>",
+    "<:18th:1384880512279117934>",
+    "<:19th:1384880510723162153>",
+    "<:20th:1384880508999041178>",
 ]
 
 
@@ -409,7 +419,7 @@ def discord_timestamp(timestamp, style="R"):
 
 
 def rank(number):
-    if 1 <= number <= 11:
+    if 1 <= number <= 20:
         return rank_emojis[number - 1]
 
     return str(number)

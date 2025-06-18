@@ -1,3 +1,7 @@
+6/18/2025
+- Added -leaderboard performance
+- Expanded -leaderboard to 20 places
+
 6/10/2025
 - Added sort options to -textsover and -textsunder
 

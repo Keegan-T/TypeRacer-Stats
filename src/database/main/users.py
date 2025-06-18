@@ -2,6 +2,7 @@ import time
 
 from database.main import texts, db
 from database.main.texts import filter_disabled, get_disabled_text_ids
+from utils import stats
 from utils.stats import get_text_stats, calculate_text_bests
 from utils.strings import get_date_query_string
 
@@ -244,6 +245,25 @@ async def get_most_races_over(wpm, limit=10):
             break
 
     return filtered
+
+
+async def get_most_performance():
+    text_list = texts.get_texts(as_dictionary=True)
+    user_list = db.fetch("""
+        SELECT * FROM user_stats
+        WHERE universe = "play"
+        AND text_best_average > 170
+        AND disqualified = 0
+    """)
+
+    top = []
+    for i, user in enumerate(user_list):
+        text_bests = get_text_bests(user["username"])
+        performance = stats.calculate_total_performance(text_bests, text_list)
+        top.append({**user, "performance": performance})
+    top.sort(key=lambda x: -x["performance"])
+
+    return top
 
 
 def update_user(username, display_name, premium, country, avatar):
