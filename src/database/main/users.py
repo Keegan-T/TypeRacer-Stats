@@ -249,7 +249,7 @@ async def get_most_races_over(wpm, limit=10):
 
 async def get_most_performance():
     text_list = texts.get_texts(as_dictionary=True)
-    user_list = db.fetch_async("""
+    user_list = await db.fetch_async("""
         SELECT * FROM user_stats
         WHERE universe = "play"
         AND text_best_average > 170
