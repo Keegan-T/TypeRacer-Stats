@@ -143,7 +143,7 @@ async def run(ctx, user, category, secondary):
             description = await leaderboard_texts_over(wpm)
 
     elif category == "performance":
-        title = "Performance"
+        title = "Weighted Performance"
         description = await leaderboard_performance()
 
     else:
