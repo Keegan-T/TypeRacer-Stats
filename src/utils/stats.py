@@ -69,7 +69,8 @@ def calculate_performance(wpm, difficulty):
 def calculate_total_performance(text_bests, text_list):
     scores = []
     for race in text_bests:
-        text_id, wpm = race
+        text_id = race["text_id"]
+        wpm = race["wpm"]
         difficulty = text_list[text_id]["difficulty"]
         performance = calculate_performance(wpm, difficulty)
         scores.append({**race, "performance": performance})

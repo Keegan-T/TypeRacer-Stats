@@ -1,10 +1,10 @@
 from discord.ext import commands
 
-from database.main import users, text_results
 from database.bot.users import get_user
+from database.main import users, text_results, texts
 from utils import errors, strings, urls, dates
 from utils.embeds import Message, get_pages, is_embed
-from utils.stats import calculate_text_performances
+from utils.stats import calculate_text_performances, calculate_total_performance
 
 command = {
     "name": "textperformances",
@@ -116,11 +116,14 @@ async def run(ctx, user, username, sort):
     texts_typed = len(text_bests)
     total = sum([text["performance"] for text in text_bests])
     average = total / texts_typed
+    text_list = texts.get_texts(as_dictionary=True)
+    performance = calculate_total_performance(text_bests, text_list)
 
     header = (
+        f"**Weighted Performance:** {performance:,.0f}\n"
         f"**Text Performance Average:** {average:,.0f} Score\n"
-        f"**Texts Typed:** {texts_typed:,}\n"
-        f"**Text Performance Total:** {total:,.0f} Score\n\n"
+        f"**Text Performance Total:** {total:,.0f} Score\n"
+        f"**Texts Typed:** {texts_typed:,}\n\n"
     )
 
     pages = get_pages(text_bests, formatter, page_count=20, per_page=5)
