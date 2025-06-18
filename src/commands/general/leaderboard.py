@@ -105,7 +105,7 @@ async def run(ctx, user, category, secondary):
             if not text:
                 return await ctx.send(embed=errors.unknown_text())
             title = f"Text #{text_id} Repeats"
-            description = leaderboard_text_id_repeats(text_id)
+            description = await leaderboard_text_id_repeats(text_id)
             url = urls.trdata_text(text_id)
 
     elif category == "totaltextwpm":
@@ -275,8 +275,8 @@ def leaderboard_text_repeats():
     return description
 
 
-def leaderboard_text_id_repeats(text_id):
-    leaders = filter_users(texts.get_text_repeat_leaderboard(text_id, 30))
+async def leaderboard_text_id_repeats(text_id):
+    leaders = filter_users(await texts.get_text_repeat_leaderboard(text_id, 30))
     description = ""
     for i, leader in enumerate(leaders):
         description += (

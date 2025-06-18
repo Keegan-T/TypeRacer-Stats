@@ -194,8 +194,8 @@ async def disable_text(text_id):
     await _toggle_text(text_id, 1)
 
 
-def get_text_repeat_leaderboard(text_id, limit):
-    leaderboard = db.fetch("""
+async def get_text_repeat_leaderboard(text_id, limit):
+    leaderboard = await db.fetch_async("""
         SELECT races.username, country, COUNT(*) AS times
         FROM races
         JOIN users ON users.username = races.username
