@@ -116,7 +116,7 @@ async def run(ctx, user, username, sort):
     texts_typed = len(text_bests)
     total = sum([text["performance"] for text in text_bests])
     average = total / texts_typed
-    text_list = texts.get_texts(as_dictionary=True)
+    text_list = texts.get_texts(as_dictionary=True, universe=universe)
     performance = calculate_total_performance(text_bests, text_list)
 
     header = (
