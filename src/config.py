@@ -19,7 +19,7 @@ error_webhook = os.getenv("error_webhook")
 prefix = "-"
 welcome_message = (
     f"### Welcome to TypeRacer Stats!\n"
-    f"Run `{prefix}link [typeracer_username]` to start using the bot\n"
+    f"Run `{prefix}link YOUR_TYPERACER_USERNAME` to start using the bot\n"
 )
 
 bot_owner = 155481579005804544
