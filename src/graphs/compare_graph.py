@@ -3,7 +3,7 @@ import numpy as np
 from graphs.core import plt, color_graph, file_name
 
 
-def render(user, user1, user2):
+def render(user, user1, user2, universe):
     username1, data1 = user1
     username2, data2 = user2
     fig, (ax1, ax2) = plt.subplots(1, 2)
@@ -46,7 +46,7 @@ def render(user, user1, user2):
 
     plt.subplots_adjust(wspace=0, hspace=0)
 
-    fig.suptitle(f"Text Bests Comparison", color=user["colors"]["text"])
+    fig.suptitle(f"Text Bests Comparison{(' | Universe: ' + universe) * (universe != 'play')}", color=user["colors"]["text"])
     fig.text(0.5, 0.025, "Number of Texts", ha="center", color=user["colors"]["text"])
 
     file = file_name(f"compare_{username1}_{username2}")

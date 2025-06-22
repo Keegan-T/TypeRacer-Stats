@@ -148,13 +148,14 @@ async def run(ctx, user, username1, username2):
             Field(strings.escape_formatting(username1), stats1),
             Field(strings.escape_formatting(username2), stats2),
         ],
-        render=lambda: compare_graph.render(user, (username1, data1), (username2, data2)),
+        render=lambda: compare_graph.render(user, (username1, data1), (username2, data2), universe),
     )
 
     message = Message(
         ctx, user, page,
         title="Text Best Comparison",
         url=urls.trdata_compare(username1, username2),
+        universe=universe,
     )
 
     await message.send()
