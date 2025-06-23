@@ -133,7 +133,7 @@ def get_user_data(username, universe, stats):
     })
     start_time = user["last_updated"] - 60 * 15
     races_left -= user["races"]
-    if stats["disqualified"]:
+    if stats["disqualified"] and universe == "play":
         text_results.delete_user_results(username)
         club_races.delete_user_scores(username)
 
