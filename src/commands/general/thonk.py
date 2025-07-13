@@ -21,6 +21,7 @@ class Thonk(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def thonk(self, ctx, *args):
         seed = None if not args else " ".join(args)
+        seed = seed.replace("http://", "").replace("https://", "")
         await run(ctx, seed)
 
 def get_args(user, args, info):
