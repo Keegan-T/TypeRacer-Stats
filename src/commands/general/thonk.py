@@ -23,7 +23,7 @@ class Thonk(commands.Cog):
         if args is None:
             seed = None
         else:
-            seed = " ".join(args).replace("http://", "").replace("https://", "")
+            seed = " ".join(args).replace("`", "")
         await run(ctx, seed)
 
 def get_args(user, args, info):
@@ -41,7 +41,7 @@ async def run(ctx, seed):
     generate_thonk(file_name, seed)
 
     file = File(file_name, filename=file_name)
-    await ctx.send(content=f"-# Seed: {seed}", file=file)
+    await ctx.send(content=f"-# Seed: `{seed}`", file=file)
 
     files.remove_file(file_name)
 
