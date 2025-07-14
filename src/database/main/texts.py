@@ -1,3 +1,5 @@
+import re
+
 from database.main import db
 from database.main.alts import get_alts
 from utils import urls
@@ -121,42 +123,28 @@ def get_top_10(text_id):
     return top_10
 
 
-def update_slow_ghosts():
-    return  # Disabled until needed
-    texts = get_texts(get_disabled=False)
-    ghosts = {}
+def update_quotes_and_ghosts():
+    with open("./data/slow_ghosts.txt", "r") as f:
+        lines = f.readlines()
 
-    with open("./data/slow_ghosts.txt", "r") as slow_ghosts:
-        lines = slow_ghosts.readlines()
+    for line in lines:
+        text_id, link, quote, _ = line.strip().split("|")
+        username, race_number = re.findall(r"ghost=%7Ctr%3A(\w+)%7C(\d+)", line)[0]
 
-    for ghost in lines:
-        text_id, username, race_number = ghost.strip().split(",")
-        ghosts[text_id] = (username, race_number)
+        db.run("""
+            UPDATE texts
+            SET quote = ?
+            WHERE text_id = ?
+        """, [quote, text_id])
 
-    slow_texts = db.fetch("""
-        SELECT * FROM races
-        WHERE username = 'slowtexts'
-        AND wpm < 100
-    """)
+        db.run("""
+            UPDATE text_universes
+            SET ghost_username = ?, ghost_number = ?
+            WHERE universe = "play"
+            AND text_id = ?
+        """, [username, race_number, text_id])
 
-    for text in texts:
-        text_id = text["text_id"]
-        if str(text_id) not in ghosts:
-            race = next((race for race in slow_texts if race["text_id"] == text_id), None)
-            if not race:
-                community_worst = db.fetch("""
-                    SELECT username, number
-                    FROM races
-                    WHERE text_id = ?
-                    ORDER BY wpm ASC
-                    LIMIT 1
-                """, [text_id])
-                if community_worst:
-                    race = community_worst
-
-            if race:
-                link = urls.ghost(race["username"], race["number"])
-                db.run("UPDATE texts SET ghost = ? WHERE id = ?", [link, text_id])
+    update_text_difficulties("play")
 
 
 async def _toggle_text(text_id, state):
