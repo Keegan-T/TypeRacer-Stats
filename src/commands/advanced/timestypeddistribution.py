@@ -12,20 +12,20 @@ from utils import errors, strings, urls
 from utils.embeds import Page, Message, is_embed
 
 command = {
-    "name": "unraceddistribution",
+    "name": "timestypeddistribution",
     "aliases": ["urd"],
     "description": "Displays a distribution of a user's texts by times typed",
     "parameters": "[username]",
-    "usages": ["unraceddistribution charlieog"],
+    "usages": ["timestypeddistribution charlieog"],
 }
 
 
-class UnracedDistribution(commands.Cog):
+class TimesTypedDistribution(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command(aliases=command["aliases"])
-    async def unraceddistribution(self, ctx, *args):
+    async def timestypeddistribution(self, ctx, *args):
         user = get_user(ctx)
 
         result = get_args(user, args, command)
@@ -144,7 +144,7 @@ async def run(ctx, user, username):
     description += f"\n**Distribution:**\n```text\n{breakdown}```"
 
     page = Page(
-        title=f"Unraced Distribution",
+        title=f"Times Typed Distribution",
         description=description,
     )
 
@@ -158,4 +158,4 @@ async def run(ctx, user, username):
 
 
 async def setup(bot):
-    await bot.add_cog(UnracedDistribution(bot))
+    await bot.add_cog(TimesTypedDistribution(bot))

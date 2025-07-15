@@ -1,5 +1,5 @@
 7/14/2025
-- Added -unraceddistribution
+- Added -timestypeddistribution
 
 6/18/2025
 - Added -leaderboard performance
