@@ -13,7 +13,7 @@ from utils.embeds import Page, Message, is_embed
 
 command = {
     "name": "timestypeddistribution",
-    "aliases": ["urd"],
+    "aliases": ["ttd"],
     "description": "Displays a distribution of a user's texts by times typed",
     "parameters": "[username]",
     "usages": ["timestypeddistribution charlieog"],
