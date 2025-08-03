@@ -1,17 +1,20 @@
 import random
 
+from discord import File
 from discord.ext import commands
 
 import database.main.texts as texts
 import database.main.users as users
+from config import prefix
 from database.bot.users import get_user
-from utils import errors, colors, urls, strings
+from utils import errors, colors, urls, strings, files
 from utils.embeds import Page, Message, get_pages, is_embed
 
 command = {
     "name": "unraced",
     "aliases": ["ur"],
-    "description": "Displays 5 texts a user has not yet raced",
+    "description": "Displays 5 texts a user has not yet raced\n"
+                   f"`{prefix}unraced [username] export` will attach a file with links to all unraced texts",
     "parameters": "[username] <category>",
     "defaults": {
         "category": "random"
@@ -34,13 +37,32 @@ class Unraced(commands.Cog):
             return await ctx.send(embed=result)
 
         username, category = result
+        if category == "export":
+            return await export(ctx, user, username)
+
         await run(ctx, user, username, category)
 
 
 def get_args(user, args, info):
-    params = f"username category:random|short|long|easy|hard"
+    params = f"username category:random|short|long|easy|hard|export"
 
     return strings.parse_command(user, params, args, info)
+
+
+async def export(ctx, user, username):
+    universe = user["universe"]
+    stats = users.get_user(username, universe)
+    if not stats:
+        return await ctx.send(embed=errors.import_required(username, universe))
+
+    unraced = users.get_unraced_texts(username, universe)
+    links = "\n".join(text["ghost"] for text in unraced)
+    file_name = f"{username}_unraced.txt"
+    with open(file_name, "w") as file:
+        file.write(links)
+
+    await ctx.send(file=File(file_name))
+    files.remove_file(file_name)
 
 
 async def run(ctx, user, username, category):
@@ -49,7 +71,6 @@ async def run(ctx, user, username, category):
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
 
-    text_list = texts.get_texts(as_dictionary=True, get_disabled=False, universe=universe)
     unraced = users.get_unraced_texts(username, universe)
     text_count = texts.get_text_count(universe)
     unraced_count = len(unraced)
