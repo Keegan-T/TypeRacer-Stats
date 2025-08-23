@@ -13,9 +13,10 @@ from utils.embeds import Page, Message, is_embed
 
 command = {
     "name": "activity",
-    "aliases": ["act", "clock"],
+    "aliases": ["act", "clock", "clock*"],
     "description": "Displays your daily and weekly active typing periods\n"
-                   f"Use `{prefix}activity me utc-[offset]` to set the timezone offset",
+                   f"Use `{prefix}activity me utc-[offset]` to set the timezone offset\n"
+                   f"Use `{prefix}clock*` to see the exact amount of races for each time period",
     "parameters": "[username]",
     "usages": ["activity"],
 }
@@ -56,6 +57,7 @@ async def run(ctx, user, username, offset):
 
     daily = [0] * 24
     weekly = [0] * 7
+    days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
     for race in race_list:
         dt = datetime.fromtimestamp(race["timestamp"], timezone.utc)
@@ -70,33 +72,46 @@ async def run(ctx, user, username, offset):
     weekly_max_index = weekly.index(max(weekly))
     weekly_min_index = weekly.index(min(weekly))
 
-    def hour_timestamp(hour):
-        return strings.discord_timestamp(
-            dates.now().replace(hour=hour, minute=0, second=0, microsecond=0).timestamp(), "t"
+    def timestamp_range(hour):
+        timestamp = lambda h: strings.discord_timestamp(
+            dates.now().replace(hour=h, minute=0, second=0, microsecond=0).timestamp(), "t"
         )
+
+        return timestamp(hour) + " - " + timestamp((hour + 1) % 24)
 
     def daily_activity_description(index):
-        hours = (hour_timestamp(index % 24), hour_timestamp((index + 1) % 24))
-        return (
-            f"{hours[0]} - {hours[1]}\n"
-            f"{daily[index]:,} / {race_count:,} races ({(daily[index] / race_count) * 100:,.2f}%)"
-        )
+        return f"{timestamp_range(index)}\n{daily[index]:,} races ({daily[index] / race_count:.2%})"
 
     def weekly_activity_description(index):
-        day = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][index]
-        return (
-            f"{day}\n"
-            f"{weekly[index]:,} / {race_count:,} races ({(weekly[index] / race_count) * 100:,.2f}%)"
+        return f"{days[index]}\n{weekly[index]:,} races ({weekly[index] / race_count:.2%})"
+
+    if ctx.invoked_with == "clock*":
+        daily_description = (
+            f"**Races:** {race_count:,}\n" + "\n".join(
+                f"{timestamp_range(index)}: {daily[index]:,} races ({daily[index] / race_count:.2%})"
+                for i in range(24)
+                for index in [(i - offset) % 24]
+            )
         )
 
-    daily_description = (
-        f"**Most Active:** {daily_activity_description(daily_max_index)}\n\n"
-        f"**Least Active:** {daily_activity_description(daily_min_index)}"
-    )
-    weekly_description = (
-        f"**Most Active:** {weekly_activity_description(weekly_max_index)}\n\n"
-        f"**Least Active:** {weekly_activity_description(weekly_min_index)}"
-    )
+        weekly_description = (
+            f"**Races:** {race_count:,}\n" + "\n".join(
+                f"**{days[index]}:** {weekly[index]:,} races ({weekly[index] / race_count:.2%})"
+                for index in range(0, 7)
+            )
+        )
+
+    else:
+        daily_description = (
+            f"**Races:** {race_count:,}\n\n"
+            f"**Most Active:** {daily_activity_description(daily_max_index)}\n\n"
+            f"**Least Active:** {daily_activity_description(daily_min_index)}"
+        )
+        weekly_description = (
+            f"**Races:** {race_count:,}\n\n"
+            f"**Most Active:** {weekly_activity_description(weekly_max_index)}\n\n"
+            f"**Least Active:** {weekly_activity_description(weekly_min_index)}"
+        )
 
     pages = [
         Page(
