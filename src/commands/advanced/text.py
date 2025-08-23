@@ -149,9 +149,15 @@ async def run(ctx, user, username, text_id=None, race_number=None):
                 score_display += f"\n{get_score_string(rank, percentile, performance)}"
 
             color = colors.success
-            stats_string += get_stats_string(username, universe, average, previous_best, worst, recent_race, previous=True)
+            stats_string += get_stats_string(
+                username, universe, average,
+                previous_best, worst, recent_race, previous=True
+            )
         else:
-            stats_string += get_stats_string(username, universe, average, best, worst, recent_race, previous=False)
+            stats_string += get_stats_string(
+                username, universe, average,
+                best, worst, recent_race, previous=False
+            )
 
     else:
         color = colors.success
@@ -204,12 +210,16 @@ def get_performance_stats(username, universe, text_id, wpm, difficulty):
 
 
 def get_score_string(rank, percentile, performance):
+    percentile_string = (
+        f"(Top {percentile:.2%})" if percentile < 0.5 else
+        f"(Bottom {1 - percentile:.2%})"
+    )
     return (
         f":small_blue_diamond: {performance:,.0f} Score "
         f"[(?)](https://discord.com/channels/175964903033667585/746460695670816798 "
         f"\"Score is a measure of performance on a quote, based on difficulty and WPM.\n"
         f"Run -textperformances to see your best quotes!\") - "
-        f"Your #{rank:,} (Top {percentile:.2%})"
+        f"Your #{rank:,} {percentile_string}"
     )
 
 
