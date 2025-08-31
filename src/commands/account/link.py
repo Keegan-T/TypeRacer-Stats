@@ -10,11 +10,11 @@ from utils import errors, embeds, urls
 
 command = {
     "name": "link",
-    "aliases": ["register", "l"],
+    "aliases": ["l", "unlink"],
     "description": "Links your Discord account to a given TypeRacer username\n"
                    "Once linked, you no longer need to type your username after commands",
     "parameters": "[typeracer_username]",
-    "usages": ["link keegant"],
+    "usages": ["link keegant", "unlink"],
 }
 
 
@@ -25,6 +25,8 @@ class Link(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def link(self, ctx, *args):
         user = get_user(ctx)
+        if ctx.invoked_with == "unlink":
+            return await unlink(ctx, user)
 
         result = get_args(user, args, command)
         if embeds.is_embed(result):
@@ -61,6 +63,17 @@ async def run(ctx, user, username):
     if new_user and stats["races"] > 0:
         async with import_lock:
             await download(ctx=ctx, bot_user=user, stats=stats)
+
+
+async def unlink(ctx, user):
+    update_username(ctx.author.id, None)
+    embed = Embed(
+        title="Account Unlinked",
+        description=f"<@{ctx.author.id}> is no longer linked",
+        color=user["colors"]["embed"],
+    )
+
+    await ctx.send(embed=embed)
 
 
 async def setup(bot):
