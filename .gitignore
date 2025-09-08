@@ -3,13 +3,9 @@ __pycache__/
 **/__pycache__/
 .env
 /assets
-src/data/users.db
-src/data/typeracerstats.db
-src/data/typeracerstats.db-shm
-src/data/typeracerstats.db-wal
-src/data/message.txt
-src/sandbox.py
 src/commands/template.txt
 /src/data/*
-venv/
 /src/database/*/init.py
+src/xtra
+src/sandbox.py
+venv/
