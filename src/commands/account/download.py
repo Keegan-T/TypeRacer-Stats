@@ -19,7 +19,6 @@ from commands.stats.stats import get_args
 from commands.locks import import_lock
 from database.bot.users import get_user
 from database.main import deleted_races, typing_logs
-from database.main.db import writer
 from utils import errors, colors, strings, logs, dates
 from utils.embeds import Page, Message, is_embed
 from utils.logging import log
@@ -89,7 +88,6 @@ async def run(username=None, racer={}, ctx=None, bot_user=None, universe="play")
     races_left = total_races - imported_races
     if races_left > 0:
         log(f"**Importing data for {username} (Universe: {universe})**")
-        writer.execute("BEGIN")
         await send_start(ctx, bot_user, username, races_left, universe)
 
         recent_races = await get_recent_races(username, universe, start_time)
