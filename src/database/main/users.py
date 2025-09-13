@@ -17,8 +17,8 @@ def create_user_data(racer):
 def create_user_stats(racer):
     db.run("""
         INSERT INTO user_stats
-        (universe, username, points_retroactive, total_time, characters)
-        VALUES (?, ?, ?, ?, ?)
+        (universe, username, points_retroactive, total_time, characters, last_accessed)
+        VALUES (?, ?, ?, ?, ?, datetime('now'))
     """, [racer["universe"], racer["username"], 0, 0, 0])
 
 
