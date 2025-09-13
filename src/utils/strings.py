@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 import database.bot.recent_text_ids as recent
 from utils import errors, urls, dates
+from utils.embeds import Field
 
 category_aliases = [
     ["races", "r"],
@@ -58,6 +59,7 @@ username_aliases = {
     "mj": "mononym_jisoo",
     "mmm": "mmmmmmmmwmmmmmmmmmmmmmmmmmmmm",
     "e6": "e6f4e37l",
+    "tj": "timjeffery44",
 }
 
 rank_emojis = [
@@ -264,7 +266,7 @@ def get_era_string(user):
 
 
 # Formats seconds into: XXd XXh XXm XXs
-def format_duration_short(seconds, round_seconds=True):
+def format_duration(seconds, round_seconds=True):
     if round_seconds:
         seconds = round(seconds)
     if seconds == 0: return "0s"
@@ -386,23 +388,59 @@ def text_description(text, universe="play"):
 
 def real_speed_description(race):
     return (
-        f"**Lagged:** {race['lagged']:,.2f} WPM ({race['lag']:,.2f} WPM lag)\n"
-        f"**Unlagged:** {race['unlagged']:,.2f} WPM ({race['ping']:,.0f}ms ping)\n"
-        f"**Adjusted:** {race['adjusted']:,.3f} WPM ({race['start']:,.0f}ms start)\n"
-        f"**Race Time:** {format_duration_short(race['duration'] / 1000, False)}\n\n"
+        f"**Unlagged:** {race['unlagged']:,.2f} WPM / "
+        f"**Adjusted:** {race['adjusted']:,.2f} WPM\n"
+        f"**Start:** {race['start']:,.0f}ms / **Ping:** {race['ping']:,.0f}ms / "
+        f"**Race Time:** {format_duration(race['duration'] / 1000, False)}\n\n"
     )
 
 
 def raw_speed_description(race):
+    pauseless = (
+                    f"**Pauseless:** {race['pauseless_adjusted']:,.2f} WPM\n"
+                    f"**Pause Time**: {format_duration(race['pause_time'] / 1000, False)} "
+                    f"({race['pause_percent']:.2%})\n\n"
+                ) * (race["raw_adjusted"] != race["pauseless_adjusted"])
     return (
-        f"**Raw Unlagged:** {race['raw_unlagged']:,.2f} WPM\n"
-        f"**Raw Adjusted:** {race['raw_adjusted']:,.3f} WPM\n"
-        f"**Pauseless:** {race['pauseless_adjusted']:,.2f} WPM\n"
-        f"**Correction Time:** {format_duration_short(race['correction_time'] / 1000, False)} "
-        f"({race['correction_percent']:.2%})\n"
-        f"**Pause Time**: {format_duration_short(race['pause_time'] / 1000, False)} "
-        f"({race['pause_percent']:.2%})\n\n"
+        f"**Raw Unlagged:** {race['raw_unlagged']:,.2f} WPM / "
+        f"**Raw Adjusted:** {race['raw_adjusted']:,.2f} WPM\n"
+        f"**Correction Time:** {format_duration(race['correction_time'] / 1000, False)} "
+        f"({race['correction_percent']:.2%})\n\n"
+        f"{pauseless}"
     )
+
+
+def real_speed_fields(race, raw=True):
+    fields = [
+        Field(
+            name="Stats",
+            value=(
+                f"**Speed:** {race['unlagged']:,.2f} WPM\n"
+                f"**Adjusted:** {race['adjusted']:,.2f} WPM\n"
+                f"**Accuracy:** {race['accuracy']:.2%}\n"
+                f"**Start:** {race['start'] / 1000:,.3f}s\n"
+                f"**Race Time:** {format_duration(race['duration'] / 1000, False)}\n"
+            ),
+        )
+    ]
+
+    if raw:
+        fields.append(
+            Field(
+                name="Raw Stats",
+                value=(
+                    f"**Speed:** {race['raw_unlagged']:,.2f} WPM\n"
+                    f"**Adjusted:** {race['raw_adjusted']:,.2f} WPM\n"
+                    f"**Correction:** {format_duration(race['correction_time'] / 1000, False)} "
+                    f"({race['correction_percent']:.2%})\n"
+                    f"**Pauseless:** {race['pauseless_adjusted']:,.2f} WPM\n"
+                    f"**Pause Time**: {format_duration(race['pause_time'] / 1000, False)} "
+                    f"({race['pause_percent']:.2%})\n\n"
+                )
+            )
+        )
+
+    return fields
 
 
 def get_discord_id(string):
@@ -536,3 +574,13 @@ def get_file_name(title, user, username):
     file_name += f"_{username}.png"
 
     return file_name
+
+
+def strip_quote(quote):
+    return (
+        quote
+        .replace("  ", " ")
+        .replace("\r\n", " ")
+        .replace("\n\r", " ")
+        .replace("\t", " ")
+    )

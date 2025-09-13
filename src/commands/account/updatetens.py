@@ -71,7 +71,7 @@ class UpdateTens(commands.Cog):
 async def run(ctx, user, username):
     api_stats = get_stats(username)
     if api_stats["disqualified"]:
-        await download(stats=api_stats)
+        await download(racer=api_stats)
         text_results.delete_user_results(username)
         return await ctx.send(embed=Embed(
             title="Top Tens Update Request",

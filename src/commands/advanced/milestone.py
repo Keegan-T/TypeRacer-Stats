@@ -4,8 +4,7 @@ import database.main.races as races
 import database.bot.recent_text_ids as recent
 import database.main.texts as texts
 import database.main.users as users
-from api.races import get_race
-from commands.basic.race import get_stat_fields
+from commands.advanced.race import get_stat_fields
 from database.bot.users import get_user
 from utils import errors, urls, strings
 from utils.embeds import Page, Message, is_embed
@@ -59,7 +58,6 @@ async def run(ctx, user, username, milestone, category):
     stats = users.get_user(username, universe)
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
-    era_string = strings.get_era_string(user)
 
     category_title = {"wpm": "WPM"}.get(category, category.title())
     page = Page(title=f"Milestone - {milestone:,} {category_title}")
@@ -75,7 +73,7 @@ async def run(ctx, user, username, milestone, category):
     page.title += f" - Race #{milestone_number:,}"
     url = urls.replay(username, milestone_number, universe)
 
-    race_info = await get_race(username, milestone_number, universe=universe)
+    race_info = races.get_race(username, milestone_number, universe, get_log=True)
     if not race_info:
         text_list = texts.get_texts(as_dictionary=True, universe=universe)
         race_info = dict(races.get_race(username, milestone_number, universe))
@@ -83,7 +81,7 @@ async def run(ctx, user, username, milestone, category):
         race_info["quote"] = text["quote"]
 
     description, field = get_stat_fields(race_info, universe)
-    time_taken = strings.format_duration_short(race_info["timestamp"] - stats["joined"])
+    time_taken = strings.format_duration(race_info["timestamp"] - stats["joined"])
     field.value += "\nTook " + time_taken
     page.description = description
     page.fields = [field]

@@ -12,7 +12,7 @@ from commands.account.download import run as download
 from database.bot.users import get_user
 from utils import errors, urls, strings, dates
 from utils.embeds import Message, get_pages, is_embed
-from utils.stats import calculate_seconds
+from utils.stats import calculate_ms
 
 periods = ["races", "day", "week", "month", "year"]
 sorts = ["date", "points", "races", "time", "wpm", "accuracy"]
@@ -70,7 +70,7 @@ async def run(ctx, user, username, time_period, sort, reverse):
         return await ctx.send(embed=errors.import_required(username, universe))
 
     api_stats = get_stats(username, universe=universe)
-    await download(stats=api_stats, universe=universe)
+    await download(racer=api_stats, universe=universe)
 
     if time_period == "races":
         columns = ["number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
@@ -83,8 +83,8 @@ async def run(ctx, user, username, time_period, sort, reverse):
         def formatter(race):
             return (
                 f"[#{race['number']:,}]({urls.replay(username, race['number'], universe)}) - "
-                f"{race['wpm']:,.2f} WPM - {math.floor(race['accuracy'] * 100):,.0f}% - {race['points']:,.0f} pts - "
-                f"{race['rank']}/{race['racers']} - <t:{int(race['timestamp'])}:R>\n"
+                f"{race['wpm']:,.2f} WPM - {math.floor(race['accuracy'] * 100):.0f}% - {race['points']:,.0f} pts - "
+                f"{race['rank']}/{race['racers']} - {strings.discord_timestamp(race['timestamp'])}\n"
             )
 
         title = "Race History"
@@ -95,7 +95,7 @@ async def run(ctx, user, username, time_period, sort, reverse):
             return (
                 f"**{period[1]}**\n"
                 f"{period[2]:,} Races / {period[3]:,.0f} Points / "
-                f"{strings.format_duration_short(period[5])}\n"
+                f"{strings.format_duration(period[5])}\n"
                 f"{period[4]:,.2f} WPM ({period[6]:.2%} Accuracy)\n\n"
             )
 
@@ -127,7 +127,7 @@ async def get_history(username, category, sort, universe, start_date, end_date, 
 
     for race in race_list:
         text_id, wpm, points, timestamp, accuracy = race
-        seconds = calculate_seconds(text_list[text_id]["quote"], wpm)
+        seconds = calculate_ms(text_list[text_id]["quote"], wpm)
 
         if len(history) == 0 or timestamp > history[-1][1]:
             if category == "day":

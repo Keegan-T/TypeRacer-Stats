@@ -62,7 +62,7 @@ async def run(ctx, user, username):
 
     if new_user and stats["races"] > 0:
         async with import_lock:
-            await download(ctx=ctx, bot_user=user, stats=stats)
+            await download(ctx=ctx, bot_user=user, racer=stats)
 
 
 async def unlink(ctx, user):

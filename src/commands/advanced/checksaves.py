@@ -61,7 +61,7 @@ async def run(ctx, user, username, text_id):
         return await ctx.send(embed=errors.import_required(username, universe))
 
     api_stats = get_stats(username, universe=universe)
-    await download(stats=api_stats, universe=universe)
+    await download(racer=api_stats, universe=universe)
 
     if text_id is None:
         if ctx.author.id == 108328502591250432:
@@ -94,7 +94,7 @@ async def run(ctx, user, username, text_id):
     available_saves = max(max_saves - recent_saves, 0)
 
     if available_saves == 0:
-        description += f"\n\nNext save available <t:{int(recent_scores[-1]['timestamp'] + 86400)}:R>\n"
+        description += f"\n\nNext save available {strings.discord_timestamp(recent_scores[-1]['timestamp'] + 86400)}\n"
     else:
         description += f"\n\n{available_saves:,} save{'s' * (available_saves != 1)} available now\n"
 
@@ -104,8 +104,8 @@ async def run(ctx, user, username, text_id):
             description += f"[Truncated {len(recent_scores) - 20} Scores]\n"
         for score in recent_scores[:20][::-1]:
             description += (
-                f"{strings.format_duration_short(now - score['timestamp'])} ago - "
-                f"[{score['wpm']:,} WPM]({urls.replay(username, score['number'], universe)})\n"
+                f"{strings.format_duration(now - score['timestamp'])} ago - "
+                f"[{score['wpm_adjusted']:,.2f} WPM]({urls.replay(username, score['number'], universe)})\n"
             )
 
     message = Message(

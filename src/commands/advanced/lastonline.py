@@ -2,10 +2,13 @@ from datetime import datetime
 
 from discord.ext import commands
 
+from api.core import date_to_timestamp
 from api.users import get_latest_race
 from api.users import get_stats
+from commands.account.download import run as download
 from commands.basic.stats import get_args
 from database.bot.users import get_user
+from database.main import races, users
 from utils import errors, strings
 from utils.embeds import Page, Field, Message, is_embed
 
@@ -35,29 +38,35 @@ class LastOnline(commands.Cog):
 
 
 async def run(ctx, user, username=None):
-    stats = get_stats(username)
-    if not stats:
-        return await ctx.send(embed=errors.invalid_username())
-
     universe = user["universe"]
+    stats = get_stats(username, universe=universe)
+
     page = Page()
+    if stats["races"] > 0:
+        db_stats = users.get_user(username, universe)
+        if not db_stats:
+            return await ctx.send(embed=errors.import_required(username, universe))
 
-    latest_race = get_latest_race(username, universe)
-    if not latest_race:
-        page.description = "User has never played"
+        await download(racer=stats, universe=universe)
+        last_online = (await races.get_races(
+            username, columns=["timestamp"], order_by="timestamp", universe=universe,
+            reverse=True, limit=1
+        ))[0][0]
+        if not last_online:
+            return await ctx.send(embed=errors.import_required(username, universe))
 
-    else:
-        last_online = latest_race["t"]
         duration = datetime.now().timestamp() - last_online
         page.fields = [
             Field(
                 name="Last Online",
                 value=(
-                    f"{strings.format_duration_short(duration)} ago"
-                    f"\n{strings.discord_timestamp(last_online)}"
+                    f"{strings.format_duration(duration)} ago"
+                    f"\n{strings.discord_timestamp(last_online, 'f')}"
                 )
             )
         ]
+    else:
+        page.description = "User has never played"
 
     message = Message(
         ctx, user, page,

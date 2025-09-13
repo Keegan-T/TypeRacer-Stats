@@ -4,7 +4,7 @@ from discord import Embed
 from discord.ext import commands
 
 import database.main.users as users
-from api.users import get_stats, get_joined
+from api.users import get_racer
 from database.bot.users import get_user
 from utils import errors, embeds, strings, dates, colors
 
@@ -49,30 +49,19 @@ def get_args(user, args, info):
 async def run(ctx, user, username):
     universe = user["universe"]
     era_string = strings.get_era_string(user)
-    stats = get_stats(username, universe=universe)
+    stats = await get_racer(username, universe=universe)
     if not stats:
         return await ctx.send(embed=errors.invalid_username())
 
     db_stats = users.get_user(username, universe)
-    if universe == "play" and db_stats:
-        stats["wpm_best"] = db_stats["wpm_best"]
+    if db_stats:
         stats["points"] += db_stats["points_retroactive"]
-        joined = db_stats["joined"]
-    else:
-        play_user = users.get_user(username, "play")
-        if play_user:
-            joined = play_user["joined"]
-        else:
-            joined = await get_joined(username)
-        if not joined:
-            return await ctx.send(embed=errors.invalid_username())
-
     if era_string:
         if not db_stats:
             return await ctx.send(embed=errors.import_required(username, universe, time_travel=True))
         stats = await users.time_travel_stats(stats, user)
 
-    join_date = datetime.fromtimestamp(joined, tz=timezone.utc)
+    join_date = datetime.fromtimestamp(stats["joined_at"], tz=timezone.utc)
     now = dates.now()
 
     anniversary = ""
@@ -82,21 +71,24 @@ async def run(ctx, user, username):
     embed = Embed(color=user["colors"]["embed"])
 
     general_string = (
-        f"{'**Name: **' + stats['display_name'] if stats['display_name'] else ''}\n"
+        f"{'**Name: **' + stats['name'] if stats['name'] else ''}\n"
         f"**Joined:** {join_date.strftime('%b. %d, %Y')}{anniversary}\n"
         f"**Membership:** {'Premium' if stats['premium'] else 'Basic'}"
     )
-    if stats["disqualified"]:
+
+    if stats.get("keyboard", None):
+        general_string += f"\n**Layout:** {stats['keyboard']}"
+    if stats["dqd"]:
         embed.color = colors.error
         general_string += "\n**Status:** Banned"
 
     stats_string = (
-            f"**Races:** {stats['races']:,}\n"
-            f"**Wins:** {stats['wins']:,}\n"
+            f"**Races:** {stats['total_races']:,}\n"
+            f"**Wins:** {stats['total_wins']:,}\n"
             f"**Points:** {stats['points']:,.0f}\n"
-            f"**Average:** {stats['wpm_average']:,.2f} WPM\n"
-            f"**Best:** {stats['wpm_best']:,.2f} WPM\n" +
-            f"**Captcha Speed:** {stats['wpm_verified']:,.2f} WPM" * (not era_string)
+            f"**Average:** {stats['avg_wpm']:,.2f} WPM\n"
+            f"**Best:** {stats['best_wpm']:,.2f} WPM\n" +
+            f"**Captcha Speed:** {stats['cert_wpm']:,.2f} WPM" * (not era_string)
     )
 
     embed.add_field(name="General", value=general_string, inline=False)

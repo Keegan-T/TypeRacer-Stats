@@ -3,11 +3,12 @@ from collections import defaultdict
 from discord.ext import commands
 
 import database.bot.recent_text_ids as recent
-from api.races import get_race
 from api.users import get_stats
+from commands.account.download import run as download
 from commands.basic.realspeed import get_args
 from config import prefix
 from database.bot.users import get_user
+from database.main import users, races
 from graphs import match_graph
 from utils import errors, strings, urls, colors
 from utils.embeds import Page, Message, is_embed
@@ -25,7 +26,6 @@ command = {
     "usages": [
         "mistakes keegant 100000",
         "mistakes keegant -1",
-        "mistakes https://data.typeracer.com/pit/result?id=|tr:keegant|1000000",
     ],
 }
 
@@ -47,45 +47,48 @@ class Mistakes(commands.Cog):
 
 
 async def run(ctx, user, username, race_number, universe):
+    db_stats = users.get_user(username, universe)
+    if not db_stats:
+        return await ctx.send(embed=errors.import_required(username, universe))
+
     stats = get_stats(username, universe=universe)
-    if not stats:
-        return await ctx.send(embed=errors.invalid_username())
+    await download(racer=stats, universe=universe)
 
     if race_number < 1:
         race_number = stats["races"] + race_number
 
-    race_info = await get_race(username, race_number, universe=universe, get_typos=True)
-    if not race_info or "typos" not in race_info:
+    race = races.get_race(username, race_number, universe, get_log=True, get_keystrokes=True, get_typos=True)
+    if not race or "typos" not in race:
         return await ctx.send(embed=errors.logs_not_found(username, race_number, universe))
 
-    typos = race_info["typos"]
+    typos = race["typos"]
     markers = defaultdict(str)
     for typo in typos:
         markers[typo[1]] += "\\❌"
 
-    quote = race_info["quote"]
-    race_info["quote"] = get_marked_quote(quote, markers)
-    typo_description = strings.text_description(race_info) + "\n\n"
+    quote = race["quote"]
+    race["quote"] = get_marked_quote(quote, markers)
+    typo_description = strings.text_description(race) + "\n\n"
 
-    pauses = race_info["pauses"]
+    pauses = race["pauses"]
     for pause in pauses:
         markers[pause] += "\\⏸️"
-    race_info["quote"] = get_marked_quote(quote, markers)
-    pause_description = strings.text_description(race_info) + "\n\n"
+    race["quote"] = get_marked_quote(quote, markers)
+    pause_description = strings.text_description(race) + "\n\n"
 
-    speed_string = strings.real_speed_description(race_info)
+    speed_string = strings.real_speed_description(race)
     typo_count = len(typos)
     pause_count = len(pauses)
     typo_string = f"**Mistakes:** {typo_count:,}\n"
     pause_string = f"**Pauses:** {pause_count:,}\n"
-    completed_string = f"\nCompleted {strings.discord_timestamp(race_info['timestamp'])}"
+    completed_string = f"\nCompleted {strings.discord_timestamp(race['timestamp'])}"
     typo_description += speed_string + typo_string + completed_string
     pause_description += speed_string + typo_string + pause_string + completed_string
 
     title = f"Race Graph - {username} - Race #{race_number:,}"
     rankings = [{
         "username": username,
-        "keystroke_wpm": race_info["keystroke_wpm_adjusted"]
+        "keystroke_wpm": race["keystroke_wpm_adjusted"]
     }]
     y_label = "Adjusted WPM"
 
@@ -99,7 +102,7 @@ async def run(ctx, user, username, race_number, universe):
         description=pause_description,
         render=lambda: match_graph.render(
             user, rankings, title, y_label, universe,
-            typos=typos, markers=[[], race_info["pauses"]]
+            typos=typos, markers=[[], race["pauses"]]
         ),
         button_name="With Pauses",
         default=ctx.invoked_with in ["pauses", "xp"],
@@ -120,7 +123,7 @@ async def run(ctx, user, username, race_number, universe):
 
     await message.send()
 
-    recent.update_recent(ctx.channel.id, race_info["text_id"])
+    recent.update_recent(ctx.channel.id, race["text_id"])
 
 
 def get_marked_quote(quote, markers):

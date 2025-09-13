@@ -5,13 +5,11 @@ from config import prefix
 from database.bot.users import get_user
 from utils import embeds
 
-graph_commands = ["rawgraph", "rawg", "rawadjustedgraph", "rag"]
 command = {
     "name": "rawspeed",
-    "aliases": ["raw"] + graph_commands,
+    "aliases": ["raw"],
     "description": "Displays raw speeds for a given user's race, subtracting correction time\n"
-                   f"`{prefix}rawspeed [username] <-n> will return raw speeds for n races ago`\n"
-                   f"`{prefix}rawgraph` will add a graph of the race",
+                   f"`{prefix}rawspeed [username] <-n> will return raw speeds for n races ago`\n",
     "parameters": "[username] <race_number>",
     "defaults": {
         "race_number": "the user's most recent race number",
@@ -19,7 +17,6 @@ command = {
     "usages": [
         "rawspeed keegant 100000",
         "rawspeed keegant -1",
-        "rawspeed https://data.typeracer.com/pit/result?id=|tr:keegant|1000000",
     ],
 }
 
@@ -37,7 +34,7 @@ class RawSpeed(commands.Cog):
             return await ctx.send(embed=result)
 
         username, race_number, universe = result
-        await run(ctx, user, username, race_number, ctx.invoked_with.lower() in graph_commands, universe, raw=True)
+        await run(ctx, user, username, race_number, False, universe, raw=True)
 
 
 async def setup(bot):

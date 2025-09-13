@@ -61,7 +61,7 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
 
     async with LargeQueryLock(stats["races"] > 100_000):
         api_stats = get_stats(username, universe=universe)
-        await download(stats=api_stats, universe=universe)
+        await download(racer=api_stats, universe=universe)
         if era_string:
             api_stats = await users.time_travel_stats(api_stats, user)
 

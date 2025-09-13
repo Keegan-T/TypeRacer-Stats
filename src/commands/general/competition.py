@@ -152,7 +152,7 @@ async def run(ctx, user, period, sort, date):
         description += (
             f"{rank} {bold}{flag} {strings.escape_formatting(username)} - {competitor['points']:,} / "
             f"{competitor['races']:,} - {competitor['average_wpm']} WPM "
-            f"({competitor['accuracy'] * 100:,.1f}% Acc){bold}\n"
+            f"({competitor['accuracy']:.1%} Acc){bold}\n"
         )
 
     end_timestamp = competition["end_timestamp"]
@@ -161,7 +161,7 @@ async def run(ctx, user, period, sort, date):
     end_string = "Ends "
     if end_timestamp < now:
         end_string = "Ended "
-    description += f"\n{end_string} <t:{int(end_timestamp)}:R>\n"
+    description += f"\n{end_string} {strings.discord_timestamp(end_timestamp)}\n"
 
     embed = Embed(
         title=title,

@@ -3,9 +3,11 @@ from discord.ext import commands
 
 import database.main.races as races
 import database.main.users as users
+from commands.advanced.fastestcompletion import get_start_time
 from commands.advanced.races import get_stats_fields
 from commands.locks import LargeQueryLock
 from database.bot.users import get_user
+from database.main import texts
 from utils import errors, colors, strings
 from utils.embeds import Page, Message, is_embed
 from utils.stats import get_top_disjoint_windows
@@ -62,7 +64,13 @@ async def run(ctx, user, username, category, seconds):
     era_string = strings.get_era_string(user)
 
     async with LargeQueryLock(stats["races"] > 100_000):
-        columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
+        text_list = texts.get_texts(universe=universe)
+        text_lengths = {text["text_id"]: len(text["quote"]) for text in text_list}
+
+        columns = [
+            "text_id", "number", "wpm", "accuracy", "points", "characters", "rank", "racers",
+            "timestamp", "wpm_raw", "start_time", "total_time", "correction_time", "pause_time",
+        ]
         race_list = await races.get_races(
             username, columns=columns, universe=universe,
             start_date=user["start_date"], end_date=user["end_date"]
@@ -70,7 +78,7 @@ async def run(ctx, user, username, category, seconds):
         if not race_list:
             return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
 
-        race_list.sort(key=lambda x: x[7])
+        race_list.sort(key=lambda x: x["timestamp"])
 
         windows = []
         if category == "races":
@@ -78,7 +86,9 @@ async def run(ctx, user, username, category, seconds):
             end_index = 0
             race_count = len(race_list)
             while start_index < race_count:
-                while end_index < race_count and race_list[end_index][7] - race_list[start_index][7] <= seconds:
+                start_race = race_list[start_index]
+                start_time = get_start_time(start_race, text_lengths)
+                while end_index < race_count and race_list[end_index]["timestamp"] - start_time <= seconds:
                     end_index += 1
                 count = end_index - start_index
                 if count > 0:
@@ -89,10 +99,10 @@ async def run(ctx, user, username, category, seconds):
             start_index = 0
             total_points = 0
             for end_index in range(len(race_list)):
-                end_time = race_list[end_index][7]
-                total_points += race_list[end_index][4]
-                while start_index <= end_index and end_time - race_list[start_index][7] > seconds:
-                    total_points -= race_list[start_index][4]
+                end_time = race_list[end_index]["timestamp"]
+                total_points += race_list[end_index]["points"]
+                while start_index <= end_index and end_time - get_start_time(race_list[start_index], text_lengths) > seconds:
+                    total_points -= race_list[start_index]["points"]
                     start_index += 1
                 windows.append((start_index, end_index, total_points))
 
@@ -115,12 +125,13 @@ async def run(ctx, user, username, category, seconds):
         end_number = race_list[window[1]]["number"]
         description += f"{i + 1}. {amount:,.0f} (Races {start_number:,} - {end_number:,})\n"
 
-    period_string = strings.format_duration_short(seconds, False)
+    period_string = strings.format_duration(seconds, False)
     category = category[:-1].title()
 
     pages = [
         Page(
             title=f"Best {category} Marathons ({period_string} period)",
+            description=f"{top_windows[0][2]:,.0f} {category}s",
             fields=fields,
             footer=footer,
             button_name="Best",

@@ -1,11 +1,13 @@
 from discord.ext import commands
 
+from api.core import date_to_timestamp
 from api.races import get_races
 from api.users import get_stats
+from commands.account.download import process_races
 from commands.basic.stats import get_args
 from commands.locks import skip_lock
 from database.bot.users import get_user
-from database.main import races, deleted_races, users
+from database.main import races, deleted_races, users, typing_logs
 from utils import strings, errors
 from utils.embeds import Page, Message, is_embed
 
@@ -46,6 +48,9 @@ async def run(ctx, user, username):
         return await ctx.send(embed=errors.invalid_username())
     universe = user["universe"]
 
+    db_stats = users.get_user(username, universe)
+    if not db_stats:
+        return await ctx.send(embed=errors.import_required(username, universe))
     race_list = await races.get_races(username, columns=["number", "timestamp"], universe=universe)
     if not race_list:
         return await ctx.send(embed=errors.no_races(universe))
@@ -89,15 +94,13 @@ async def run(ctx, user, username):
         start_time = prev_race["timestamp"] - 10
         end_time = next_race["timestamp"] + 10
 
-        race_range = await get_races(username, start_time, end_time, last - first + 10, universe)
-        for race in race_range:
-            if race["gn"] in group and race["wpm"] != 0 \
-                    and f"{universe}|{username}|{race['gn']}" not in deleted_ids:
-                found_races.append((
-                    universe, username, race["gn"], race["tid"], race["wpm"],
-                    race["ac"], race["pts"], race["r"], race["np"], race["t"],
-                    None, None, None, None, None, None, None, None, None, None  # Waiting for logs API
-                ))
+        recent_races = await get_races(username, start_time, end_time, last - first + 10, universe)
+        for race in recent_races:
+            number = race["rn"]
+            if number in group and race["wpm"] != 0 and f"{universe}|{username}|{number}" not in deleted_ids:
+                found_races.append(race)
+        for i in range(len(found_races)):
+            found_races[i]["t"] = date_to_timestamp(found_races[i]["t"])
 
     if not found_races:
         message = Message(
@@ -111,11 +114,16 @@ async def run(ctx, user, username):
 
         return await message.send()
 
-    races.add_races(found_races)
+    new_races, log_list, points_retroactive, total_time, characters = await process_races(
+        found_races, universe, username, 0
+    )
+    races.add_races(new_races)
+    typing_logs.add_logs(log_list)
+    users.update_user_aggregate_stats(username, universe, points_retroactive, total_time, characters)
     users.update_text_stats(username, universe)
 
     skipped_groups = []
-    for group in group_numbers([r[2] for r in found_races], proximity=1):
+    for group in group_numbers([r["rn"] for r in found_races], proximity=1):
         first, last = min(group), max(group)
         if first == last:
             skipped_groups.append(f"{first:,}")

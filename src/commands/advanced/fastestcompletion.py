@@ -5,8 +5,8 @@ import database.main.races as races
 import database.main.users as users
 from commands.advanced.races import get_stats_fields
 from commands.locks import LargeQueryLock
-from database.main import texts
 from database.bot.users import get_user
+from database.main import texts
 from utils import errors, colors, strings
 from utils.embeds import Message, Page, is_embed
 from utils.stats import get_top_disjoint_windows
@@ -70,11 +70,15 @@ async def run(ctx, user, username, number, category):
         text_list = texts.get_texts(universe=universe)
         text_lengths = {text["text_id"]: len(text["quote"]) for text in text_list}
 
-        columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
+        columns = [
+            "text_id", "number", "wpm", "accuracy", "points", "characters", "rank", "racers",
+            "timestamp", "wpm_raw", "start_time", "total_time", "correction_time", "pause_time",
+        ]
         race_list = await races.get_races(
-            username, columns=columns, universe=universe, start_date=user["start_date"], end_date=user["end_date"]
+            username, columns=columns, universe=universe,
+            start_date=user["start_date"], end_date=user["end_date"]
         )
-        race_list.sort(key=lambda x: x[7])
+        race_list.sort(key=lambda x: x["timestamp"])
 
         windows = []
         race_count = len(race_list)
@@ -84,23 +88,23 @@ async def run(ctx, user, username, number, category):
             for start_index in range(race_count - number + 1):
                 end_index = start_index + number
                 start_race = race_list[start_index]
-                start_time = start_race[7] - (text_lengths[start_race[0]] * 12) / start_race[2]
+                start_time = get_start_time(start_race, text_lengths)
                 end_race = race_list[end_index - 1]
-                duration = end_race[7] - start_time
+                duration = end_race["timestamp"] - start_time
                 windows.append([start_index, end_index, duration])
 
         else:
             start_index = 0
             total_points = 0
             for end_index in range(race_count):
-                total_points += race_list[end_index][4]
+                total_points += race_list[end_index]["points"]
                 while total_points >= number:
                     start_race = race_list[start_index]
-                    start_time = start_race[7] - (text_lengths[start_race[0]] * 12) / start_race[2]
-                    end_time = race_list[end_index][7]
+                    start_time = get_start_time(start_race, text_lengths)
+                    end_time = race_list[end_index]["timestamp"]
                     duration = end_time - start_time
                     windows.append((start_index, end_index + 1, duration))
-                    total_points -= race_list[start_index][4]
+                    total_points -= race_list[start_index]["points"]
                     start_index += 1
 
         if not windows:
@@ -123,14 +127,14 @@ async def run(ctx, user, username, number, category):
         start_number = race_list[window[0]]["number"]
         end_number = race_list[window[1] - 1]["number"]
         description += (
-            f"{i + 1}. {strings.format_duration_short(duration, False)} "
+            f"{i + 1}. {strings.format_duration(duration, False)} "
             f"(Races {start_number:,} - {end_number:,})\n"
         )
 
     pages = [
         Page(
             title=f"Fastest Completion ({number:,} {category.title()})",
-            description=f"{strings.format_duration_short(fastest[2], False)}",
+            description=f"{strings.format_duration(fastest[2], False)}",
             fields=fields,
             footer=footer,
             button_name="Fastest",
@@ -148,6 +152,16 @@ async def run(ctx, user, username, number, category):
     )
 
     await message.send()
+
+
+def get_start_time(start_race, text_lengths):
+    race_time = start_race["total_time"] / 1000
+    if race_time:
+        start_time = start_race["timestamp"] - race_time
+    else:
+        start_time = start_race["timestamp"] = (text_lengths[start_race["text_id"]] * 12) / start_race["wpm"]
+
+    return start_time
 
 
 def no_milestone(category, universe):

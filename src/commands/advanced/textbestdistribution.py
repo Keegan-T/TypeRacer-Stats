@@ -98,7 +98,7 @@ async def run(ctx, user, username, binned):
     average = stats["text_best_average"]
     texts_typed = stats["texts_typed"]
     text_count = len(text_list)
-    texts_typed_percentage = (texts_typed / text_count) * 100
+    texts_typed_percentage = texts_typed / text_count
     bold = "**" if texts_typed_percentage == 100 else ""
     total_text_wpm = stats["text_wpm_total"]
     next_milestone = 5 * math.ceil(average / 5)
@@ -107,7 +107,7 @@ async def run(ctx, user, username, binned):
     description = (
         f"**Text Best Average:** {average:,.2f} WPM\n"
         f"**Texts Typed:** {texts_typed:,} of {text_count:,} "
-        f"({bold}{texts_typed_percentage:.2f}%{bold})\n"
+        f"({bold}{texts_typed_percentage:.2%}{bold})\n"
         f"**Text WPM Total:** {total_text_wpm:,.0f} WPM\n"
         f"**Gain Until {next_milestone} Average:** {required_wpm_gain:,.0f} WPM"
     )

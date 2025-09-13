@@ -5,6 +5,7 @@ import api.texts as texts_api
 import database.bot.recent_text_ids as recent
 import database.main.text_results as top_tens
 import database.main.texts as texts
+from api.core import date_to_timestamp
 from database.bot.users import get_user
 from utils import errors, urls, strings, embeds
 
@@ -71,24 +72,26 @@ async def run(ctx, user, text_id):
     text_id = int(text_id)
     disabled_text_ids = texts.get_disabled_text_ids()
 
-    if text_id in disabled_text_ids or universe != "play":
-        top_10 = await texts_api.get_top_10(text_id, universe)
-        for i, score in enumerate(top_10):
-            race, user = score
-            username = user["id"][3:]
-            embed.description += (
-                f"{strings.rank(i + 1)} {strings.escape_formatting(username)} - [{race['wpm']:,.2f} WPM]"
-                f"({urls.replay(username, race['gn'], universe)}) - "
-                f"{strings.discord_timestamp(race['t'])}\n"
-            )
+    if universe != "play":
+        top_10 = texts_api.get_trdata_top_10(text_id, universe)
+
+    else:
         if text_id in disabled_text_ids:
+            top_10 = await texts_api.get_top_results(text_id)
+            for i, race in enumerate(top_10):
+                username = race["user"]
+                embed.description += (
+                    f"{strings.rank(i + 1)} {strings.escape_formatting(username)} - [{race['wpm']:,.2f} WPM]"
+                    f"({urls.replay(username, race['rn'], universe)}) - "
+                    f"{strings.discord_timestamp(date_to_timestamp(race['t']))}\n"
+                )
             embed.set_footer(text="This text has been disabled")
-        embeds.add_universe(embed, universe)
+            embeds.add_universe(embed, universe)
 
-        return await ctx.send(embed=embed)
+            return await ctx.send(embed=embed)
 
-    await top_tens.update_results(text_id)
-    top_10 = top_tens.get_top_n(text_id)
+        await top_tens.update_results(text_id)
+        top_10 = top_tens.get_top_n(text_id)
 
     for i, race in enumerate(top_10):
         username = race["username"]

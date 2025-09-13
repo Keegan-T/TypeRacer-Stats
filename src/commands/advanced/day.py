@@ -76,7 +76,7 @@ async def run(ctx, user, username, date):
         date = datetime.now(timezone.utc)
 
     api_stats = get_stats(username, universe=universe)
-    await download(stats=api_stats, universe=universe)
+    await download(racer=api_stats, universe=universe)
 
     command_name = strings.get_category([
         "day", "yesterday", "miniday", "miniyesterday",
@@ -130,9 +130,12 @@ async def run(ctx, user, username, date):
     start_time = start_date.timestamp()
     end_time = end_date.timestamp()
 
-    columns = ["text_id", "number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
+    columns = [
+        "text_id", "number", "wpm", "accuracy", "points", "characters", "rank", "racers",
+        "timestamp", "wpm_raw", "start_time", "total_time", "correction_time", "pause_time",
+    ]
     race_list = await races.get_races(username, columns, start_time, end_time, universe=universe)
-    race_list.sort(key=lambda x: x[7])
+    race_list.sort(key=lambda x: x["timestamp"])
 
     if not race_list:
         page = Page(description="No races completed")

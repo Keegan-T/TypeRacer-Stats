@@ -1,9 +1,10 @@
+from discord import Embed
 from discord.ext import commands
 
 from api.users import get_stats
 from commands.basic.stats import get_args
 from database.bot.users import get_user
-from utils import errors, embeds, urls
+from utils import errors, embeds, urls, colors
 
 command = {
     "name": "profilepicture",
@@ -35,8 +36,19 @@ async def run(ctx, username):
     if not stats:
         return await ctx.send(embed=errors.invalid_username())
 
+    if not stats["has_pic"]:
+        return await ctx.send(embed=no_profile_picture())
+
     await ctx.send(content=f"{urls.profile_picture(username)}&refresh=1")
 
 
 async def setup(bot):
     await bot.add_cog(ProfilePicture(bot))
+
+
+def no_profile_picture():
+    return Embed(
+        title="No Profile Picture",
+        description="User does not have a profile picture",
+        color=colors.error,
+    )

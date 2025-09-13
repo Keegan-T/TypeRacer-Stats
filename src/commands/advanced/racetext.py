@@ -19,7 +19,6 @@ command = {
     "usages": [
         "racetext keegant 100000",
         "racetext keegant -1",
-        "racetext https://data.typeracer.com/pit/result?id=|tr:keegant|1000000",
     ],
 }
 

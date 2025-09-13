@@ -1,26 +1,27 @@
 from discord import Embed
 from discord.ext import commands
 
-import commands.locks as locks
-from api.races import get_race_html_bulk, get_race_details
+from api.races import get_universe_multiplier
 from api.users import get_stats
+from commands.account.download import run as download
 from commands.basic.realspeed import run as run_realspeed
 from config import prefix
 from database.bot.users import get_user
-from utils import errors, colors, urls, strings, embeds
-from utils.errors import command_in_use
+from database.main import users, races
+from utils import errors, colors, strings, embeds
+from utils.embeds import Page, Message
+from utils.strings import real_speed_fields
 
 command = {
     "name": "realspeedaverage",
-    "aliases": ["rsa", "realspeedaverageraces", "rsar", "rsa*"],
+    "aliases": ["rsa"],
     "description": "Displays unlagged and adjusted speeds over a race interval\n"
-                   "Capped at 10 races\n"
-                   f"`{prefix}realspeedaverage [username] <n>` returns the average for the last n races\n"
-                   f"`{prefix}realspeedaverageraces` will list the speeds of each individual race",
+                   "Capped at 1000 races\n"
+                   f"`{prefix}realspeedaverage [username] <n>` returns the average for the last n races",
     "parameters": "[username] <first_race> <last_race>",
     "usages": [
         "realspeedaverage keegant 5",
-        "realspeedaverage keegant 101 110"
+        "realspeedaverage keegant 1 1000"
     ],
 }
 
@@ -30,23 +31,16 @@ class RealSpeedAverage(commands.Cog):
         self.bot = bot
 
     @commands.command(aliases=command["aliases"])
-    @commands.cooldown(1, 20, commands.BucketType.user)
     async def realspeedaverage(self, ctx, *args):
-        if locks.average_lock.locked():
-            self.realspeedaverage.reset_cooldown(ctx)
-            return await ctx.send(embed=command_in_use())
+        user = get_user(ctx)
 
-        async with locks.average_lock:
-            user = get_user(ctx)
+        result = get_args(user, args, command)
+        if embeds.is_embed(result):
+            return await ctx.send(embed=result)
 
-            result = get_args(user, args, command)
-            if embeds.is_embed(result):
-                self.realspeedaverage.reset_cooldown(ctx)
-                return await ctx.send(embed=result)
-
-            username, start_number, end_number = result
-            universe = user["universe"]
-            await run(ctx, user, username, start_number, end_number, universe)
+        username, start_number, end_number = result
+        universe = user["universe"]
+        await run(ctx, user, username, start_number, end_number, universe)
 
 
 def get_args(user, args, info):
@@ -66,182 +60,112 @@ def get_args(user, args, info):
 
 async def run(ctx, user, username, start_number, end_number, universe, raw=False):
     if start_number == 0 or end_number == 0:
-        ctx.command.reset_cooldown(ctx)
         return await ctx.send(embed=errors.greater_than(0))
 
-    stats = get_stats(username, universe=universe)
-    if not stats:
-        ctx.command.reset_cooldown(ctx)
-        return await ctx.send(embed=errors.invalid_username())
+    db_stats = users.get_user(username, universe)
+    if not db_stats:
+        return await ctx.send(embed=errors.import_required(username, universe))
 
-    race_count = stats["races"]
+    profile = get_stats(username, universe=universe)
+    await download(racer=profile, universe=universe)
+
+    total_races = profile["races"]
     if end_number is None:
-        end_number = race_count
+        end_number = total_races
         if start_number:
-            start_number = race_count - start_number + 1
+            start_number = total_races - start_number + 1
         else:
-            start_number = race_count - 9
+            start_number = total_races - 9
 
-    if end_number - start_number > 9:
-        ctx.command.reset_cooldown(ctx)
-        return await ctx.send(embed=max_range())
-
-    race_count = end_number - start_number + 1
-
-    if race_count == 1:
-        ctx.command.reset_cooldown(ctx)
+    if end_number - start_number + 1 == 1:
         return await run_realspeed(ctx, user, username, start_number, False, universe, raw=raw)
 
-    lagged = 0
-    unlagged = 0
-    adjusted = 0
-    lag = 0
-    ping = 0
-    start = 0
-    ms = 0
-    accuracy = 0
-    raw_unlagged = 0
-    raw_adjusted = 0
-    pauseless = 0
-    correction = 0
-    correction_percent = 0
-    pause_time = 0
-    pause_percent = 0
-    reverse_lag = False
-    races = "**Races**\n"
+    race_list = await races.get_races(
+        username, columns=["*"], start_number=start_number, end_number=end_number
+    )
 
-    links = []
-    for i in range(start_number, end_number + 1):
-        links.append(urls.replay(username, i, universe))
+    stats = dict(
+        unlagged=0,
+        adjusted=0,
+        start=0,
+        ping=0,
+        duration=0,
+        accuracy=0,
+        raw_unlagged=0,
+        raw_adjusted=0,
+        correction_time=0,
+        correction_percent=0,
+        pauseless_adjusted=0,
+        pause_percent=0,
+        pause_time=0,
+    )
 
-    race_htmls = await get_race_html_bulk(links)
-    race_list = [await get_race_details(html, universe=universe) for html in race_htmls]
-
-    missed_races = []
+    race_display = "**Races**\n"
+    multiplier = get_universe_multiplier(universe)
 
     for i, race in enumerate(race_list):
-        race_number = start_number + i
-        if not race or "unlagged" not in race:
-            missed_races.append(i)
-            continue
+        number = race["number"]
+        chars = race["characters"]
+        stats["unlagged"] += race["wpm_unlagged"]
+        stats["adjusted"] += race["wpm_adjusted"]
+        stats["ping"] += (multiplier * chars) / race["wpm"] - race["total_time"]
+        stats["start"] += race["start_time"]
+        stats["duration"] += race["total_time"]
+        stats["accuracy"] += race["accuracy"]
 
-        lagged += race["lagged"]
-        unlagged += race["unlagged"]
-        adjusted += race["adjusted"]
-        lag += race["lag"]
-        ping += race["ping"]
-        start += race["start"]
-        ms += race["duration"]
-        accuracy += race["accuracy"]
+        raw_unlagged = (multiplier * chars) / (race["start_time"] + (multiplier * (chars - 1) / race["wpm_raw"]))
+        stats["raw_unlagged"] += raw_unlagged
+        stats["raw_adjusted"] += race["wpm_raw"]
+        stats["pauseless_adjusted"] += race["wpm_pauseless"]
+        stats["correction_time"] += race["correction_time"]
+        stats["correction_percent"] += race["correction_time"] / race["total_time"]
+        stats["pause_time"] += race["pause_time"]
+        stats["pause_percent"] += race["pause_time"] / race["total_time"]
+
         if raw:
-            raw_unlagged += race["raw_unlagged"]
-            raw_adjusted += race["raw_adjusted"]
-            pauseless += race["pauseless_adjusted"]
-            correction += race["correction_time"]
-            pause_time += race["pause_time"]
-            correction_percent += race["correction_time"] / race["duration"]
-            pause_percent += race["pause_time"] / race["duration"]
+            race_display = f"#{number:,} - {raw_unlagged:,.2f} / {race['wpm_raw']:,.2f}\n"
+        else:
+            race_display = f"#{number:,} - {race['wpm_unlagged']:,.2f} / {race['wpm_adjusted']:,.2f}\n"
 
-        flag = ""
-        if race["lagged"] > round(race["unlagged"], 2):
-            reverse_lag = True
-            flag = " :triangular_flag_on_post:"
+    race_count = len(race_list)
 
-        races += (
-            f"[#{race_number:,}]({urls.replay(username, race_number, universe)}){flag}\n"
-            f"**Lagged:** {race['lagged']:,.2f} WPM ({race['lag']:,.2f} WPM lag)\n"
-            f"**Unlagged:** {race['unlagged']:,.2f} WPM ({race['ping']:,.0f}ms ping)\n"
-            f"**Adjusted:** {race['adjusted']:,.3f} WPM ({race['start']:,.0f}ms start)\n"
-            f"**Race Time:** {strings.format_duration_short(race['duration'] / 1000, False)}\n\n"
-        )
+    stats["unlagged"] /= race_count
+    stats["adjusted"] /= race_count
+    stats["ping"] /= race_count
+    stats["start"] /= race_count
+    stats["duration"] /= race_count
+    stats["accuracy"] /= race_count
 
-    if lagged == 0:
-        return await ctx.send(embed=missing_information())
+    stats["raw_unlagged"] /= race_count
+    stats["raw_adjusted"] /= race_count
+    stats["pauseless_adjusted"] /= race_count
+    stats["correction_time"] /= race_count
+    stats["correction_percent"] /= race_count
+    stats["pause_time"] /= race_count
+    stats["pause_percent"] /= race_count
 
-    race_count -= len(missed_races)
+    if ctx.invoked_with in ["rsa", "rawsa"] or race_count <= 20:
+        race_display = ""
 
-    lagged /= race_count
-    unlagged /= race_count
-    adjusted /= race_count
-    lag /= race_count
-    ping /= race_count
-    start /= race_count
-    ms /= race_count
-    accuracy /= race_count
-
-    real_speeds = (
-        f"**Lagged:** {lagged:,.2f} WPM\n"
-        f"**Unlagged:** {unlagged:,.2f} WPM\n"
-        f"**Adjusted:** {adjusted:,.3f} WPM\n"
-        f"**Race Time:** {strings.format_duration_short(ms / 1000, False)}\n"
-        f"**Accuracy:** {accuracy:.2%}\n\n"
-    )
-
-    if raw:
-        raw_unlagged /= race_count
-        raw_adjusted /= race_count
-        pauseless /= race_count
-        correction /= race_count
-        correction_percent /= race_count
-        pause_time /= race_count
-        pause_percent /= race_count
-        real_speeds += (
-            f"**Raw Unlagged:** {raw_unlagged:,.2f} WPM\n"
-            f"**Raw Adjusted:**  {raw_adjusted:,.3f} WPM\n"
-            f"**Pauseless:**  {pauseless:,.2f} WPM\n"
-            f"**Correction Time:** {strings.format_duration_short(correction / 1000, False)} "
-            f"({correction_percent:.2%})\n"
-            f"**Pause Time:** {strings.format_duration_short(pause_time / 1000, False)} "
-            f"({pause_percent:.2%})\n\n"
-        )
-
-    real_speeds += (
-        f"**Lag:** {lag:,.2f} WPM\n"
-        f"**Ping:** {ping:,.0f}ms\n"
-        f"**Start:** {start:,.0f}ms\n"
-    )
-
-    if ctx.invoked_with in ["realspeedaverageraces", "rsar", "rsa*"]:
-        real_speeds = races + "**Averages**\n" + real_speeds
-
-    if reverse_lag:
-        real_speeds = ":triangular_flag_on_post: Reverse Lag Detected :triangular_flag_on_post:\n\n" + real_speeds
-
-    embed = Embed(
+    page = Page(
         title=f"{'Raw' if raw else 'Real'} Speed Average\nRaces {start_number:,} - {end_number:,}",
-        description=real_speeds,
-        color=user["colors"]["embed"],
+        description=race_display,
+        fields=real_speed_fields(stats, raw)
     )
 
-    if reverse_lag:
-        embed.color = colors.error
+    message = Message(
+        ctx, user, page,
+        profile=profile,
+        universe=universe,
+    )
 
-    embeds.add_profile(embed, stats)
-    embeds.add_universe(embed, universe)
-
-    await ctx.send(embed=embed)
+    await message.send()
 
 
 def missing_information():
     return Embed(
         title="Missing Race Information",
         description="All races in this range have missing information",
-        color=colors.error,
-    )
-
-
-def rate_limit_execeded():
-    return Embed(
-        title="Rate Limit Exceeded",
-        description="Reached the rate limit, please wait before trying again",
-        color=colors.error,
-    )
-
-
-def max_range():
-    return Embed(
-        title="Too Many Races",
-        description="Can only check the average of up to 10 races at once",
         color=colors.error,
     )
 

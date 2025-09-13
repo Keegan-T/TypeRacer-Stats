@@ -80,6 +80,8 @@ async def run(ctx, user, username, category):
     )
 
     accuracy_values = [int(race[1] * 100) for race in race_list if race[1] > 0]
+    accuracy_values_precise = [round(race[1] * 100, 1) for race in race_list if race[1] > 0]
+
 
     if not accuracy_values:
         accuracy_page = Page(
@@ -90,7 +92,7 @@ async def run(ctx, user, username, category):
             button_name="Accuracy",
         )
     else:
-        distribution_stats = get_distribution_stats(accuracy_values, "%")
+        distribution_stats = get_distribution_stats(accuracy_values_precise, "%")
         values = np.array(accuracy_values)
         values = values[values >= 90]
         bins = np.arange(min(values), 102, 1)
@@ -98,8 +100,6 @@ async def run(ctx, user, username, category):
             title="Accuracy Histogram",
             description=distribution_stats,
             default=category == "accuracy",
-            footer="Due to accuracy being rounded in the API, data is not exactly as it appears\n"
-                   "(i.e., data in the 99% bin include values 98.5% - 99.5%)",
             button_name="Accuracy",
             render=lambda: histogram.render(
                 user, username, accuracy_values, "Accuracy", "Accuracy %", bins, universe

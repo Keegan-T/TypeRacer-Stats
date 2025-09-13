@@ -65,7 +65,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
     era_string = strings.get_era_string(user)
 
     api_stats = get_stats(username, universe=universe)
-    await download(stats=api_stats, universe=universe)
+    await download(racer=api_stats, universe=universe)
     if era_string:
         api_stats = await users.time_travel_stats(api_stats, user)
 
@@ -118,7 +118,8 @@ async def run(ctx, user, username, text_id=None, race_number=None):
         return
 
     times_typed = len(race_list)
-    recent_race = race_list[-1]
+    recent_race = dict(race_list[-1])
+    recent_race["wpm"] = recent_race["wpm_adjusted"]
     stats_string = f"**Times Typed:** {times_typed:,}\n"
     score_display = ""
     average = 0
@@ -126,14 +127,16 @@ async def run(ctx, user, username, text_id=None, race_number=None):
     previous_best = {}
     worst = {}
     for race in race_list:
+        race = dict(race)
+        race["wpm"] = race["wpm_adjusted"]
         wpm = race["wpm"]
         average += wpm
         if wpm > best.get("wpm", 0):
-            best = dict(race)
-            if race != race_list[-1]:
-                previous_best = dict(race)
+            best = race
+            if race["number"] != recent_race["number"]:
+                previous_best = race
         if wpm < worst.get("wpm", float("inf")):
-            worst = dict(race)
+            worst = race
     average /= times_typed
 
     if times_typed > 1:
@@ -178,7 +181,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
     page = Page(description=description)
     if graph:
         title = f"WPM Improvement - {username} - Text #{text_id}"
-        wpm = [race["wpm"] for race in race_list]
+        wpm = [race["wpm_adjusted"] for race in race_list]
         page.render = lambda: improvement_graph.render(user, wpm, title, universe=universe)
 
     message = Message(

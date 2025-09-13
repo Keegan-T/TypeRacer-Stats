@@ -6,9 +6,9 @@ def calculate_points(quote, wpm):
     return (wpm / 60) * len(quote.split(" "))
 
 
-def calculate_seconds(quote, wpm):
+def calculate_ms(quote, wpm):
     if wpm == 0: return 0
-    return (len(quote) * 12) / wpm
+    return round((len(quote) * 12000) / wpm)
 
 
 def calculate_wpm(delays, duration, multiplier, start=None):
@@ -39,6 +39,8 @@ def get_text_stats(text_bests):
 def calculate_text_bests(race_list):
     tb_dict = {}
     for race in race_list:
+        race = dict(race)
+        race["wpm"] = race["wpm_adjusted"]
         text_id = race["text_id"]
         if text_id not in tb_dict or race["wpm"] > tb_dict[text_id]["wpm"]:
             tb_dict[text_id] = race

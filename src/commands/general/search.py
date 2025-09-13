@@ -155,8 +155,8 @@ async def run(ctx, user, query):
             )
 
             if no_matches:
-                similarity = (1 - (result["leven"]["distance"] / query_length)) * 100
-                description += f" - {similarity:,.2f}% Match"
+                similarity = 1 - (result["leven"]["distance"] / query_length)
+                description += f" - {similarity:.2%} Match"
 
             description += (
                 f' - {len(quote):,} characters - [Ghost]({result["ghost"]})\n'

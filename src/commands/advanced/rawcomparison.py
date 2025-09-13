@@ -1,14 +1,16 @@
 from discord.ext import commands
 
 import database.bot.recent_text_ids as recent
-from api.races import get_race
 from api.users import get_stats
+from commands.account.download import run as download
 from commands.basic.realspeed import get_args
 from config import prefix
 from database.bot.users import get_user
+from database.main import users, races
 from graphs import match_graph
 from utils import errors, urls, strings
 from utils.embeds import Page, Message, is_embed
+from utils.strings import real_speed_fields
 
 command = {
     "name": "rawcomparison",
@@ -23,7 +25,6 @@ command = {
     "usages": [
         "rawcomparison poem 222222",
         "rawcomparison storm -1",
-        "rawcomparison https://data.typeracer.com/pit/result?id=|tr:keegant|1000000",
     ],
 }
 
@@ -45,67 +46,68 @@ class RawComparison(commands.Cog):
 
 
 async def run(ctx, user, username, race_number, universe):
-    stats = get_stats(username, universe=universe)
-    if not stats:
-        return await ctx.send(embed=errors.invalid_username())
+    db_stats = users.get_user(username, universe)
+    if not db_stats:
+        return await ctx.send(embed=errors.import_required(username, universe))
 
-    elif race_number < 1:
+    stats = get_stats(username, universe=universe)
+    await download(racer=stats, universe=universe)
+
+    if race_number < 1:
         race_number = stats["races"] + race_number
 
-    race_info = await get_race(username, race_number, get_typos=True, universe=universe)
-    if not race_info or "raw_unlagged" not in race_info:
+    race = races.get_race(username, race_number, universe, get_log=True, get_keystrokes=True, get_typos=True)
+    if not race or not race.get("keystroke_wpm_adjusted", None):
         return await ctx.send(embed=errors.logs_not_found(username, race_number, universe))
 
-    description = strings.text_description(race_info) + "\n\n"
-    description += strings.real_speed_description(race_info)
-    description += strings.raw_speed_description(race_info)
-    description += "Completed " + strings.discord_timestamp(race_info["timestamp"])
-
+    description = "Completed " + strings.discord_timestamp(race["timestamp"]) + "\n\n" + strings.text_description(race)
     graph_title = f"Race Graph - {username} - Race #{race_number:,}"
     y_label = "Adjusted vs. Raw WPM"
     adjusted_ranking = {
         "username": "Adjusted",
-        "keystroke_wpm": race_info["keystroke_wpm_adjusted"],
+        "keystroke_wpm": race["keystroke_wpm_adjusted"],
     }
 
     def render_raw():
         rankings = [
             {
                 "username": "Raw Adjusted",
-                "keystroke_wpm": race_info["keystroke_wpm_raw_adjusted"],
+                "keystroke_wpm": race["keystroke_wpm_raw_adjusted"],
             },
             adjusted_ranking
         ]
 
         return match_graph.render(
             user, rankings, graph_title, y_label, universe,
-            markers=[race_info["typos"], []]
+            markers=[race["typos"], []]
         )
 
     def render_pauseless():
         rankings = [
             {
                 "username": "Pauseless",
-                "keystroke_wpm": race_info["keystroke_wpm_pauseless_adjusted"],
+                "keystroke_wpm": race["keystroke_wpm_pauseless_adjusted"],
             },
             adjusted_ranking,
         ]
 
         return match_graph.render(
             user, rankings, graph_title, y_label, universe,
-            markers=[race_info["typos"], race_info["pauses"]]
+            markers=[race["typos"], race["pauses"]]
         )
 
     pages = [
         Page(
             title=f"Real vs. Raw Speed - Race #{race_number:,}",
-            description=description,
+            description = description,
+            fields=real_speed_fields(race),
             button_name="Raw",
             render=render_raw,
         ),
         Page(
             title=f"Real vs. Pauseless Speed - Race #{race_number:,}",
             description=description,
+            fields=real_speed_fields(race),
             button_name="Pauseless",
             render=render_pauseless,
             default=ctx.invoked_with in ["pauseless", "p"],
@@ -115,14 +117,14 @@ async def run(ctx, user, username, race_number, universe):
     message = Message(
         ctx, user, pages,
         url=urls.replay(username, race_number, universe, stats["disqualified"]),
-        footer="Adjusted speed recalculated to account for lag at the start of the race" * race_info["distributed"],
+        footer="Adjusted speed recalculated to account for lag at the start of the race" * race["distributed"],
         profile=stats,
         universe=universe,
     )
 
     await message.send()
 
-    recent.update_recent(ctx.channel.id, race_info["text_id"])
+    recent.update_recent(ctx.channel.id, race["text_id"])
 
 
 async def setup(bot):

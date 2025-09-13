@@ -59,7 +59,7 @@ async def run(ctx, user, username):
     breaks.sort(key=lambda x: x[1], reverse=True)
 
     description = (
-        f"{strings.format_duration_short(math.floor(breaks[0][1]))}\n"
+        f"{strings.format_duration(math.floor(breaks[0][1]))}\n"
         f"Starting on race {race_list[breaks[0][0]]['number']:,}"
     )
 
@@ -69,7 +69,7 @@ async def run(ctx, user, username):
         top_description += (
             f"**{strings.discord_timestamp(start_race['timestamp'], 'D')} - "
             f"{strings.discord_timestamp(end_race['timestamp'], 'D')}**\n"
-            f"{i + 1}. {strings.format_duration_short(math.floor(_break[1]))}"
+            f"{i + 1}. {strings.format_duration(math.floor(_break[1]))}"
             f" (Starting on Race {start_race['number']:,})\n\n"
         )
 

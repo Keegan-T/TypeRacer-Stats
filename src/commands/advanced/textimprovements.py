@@ -55,7 +55,7 @@ async def run(ctx, user, username, sort):
     era_string = strings.get_era_string(user)
 
     api_stats = get_stats(username, universe=universe)
-    await download(stats=api_stats, universe=universe)
+    await download(racer=api_stats, universe=universe)
 
     race_list = await races.get_races(
         username, columns=["text_id", "number", "wpm", "timestamp"], universe=universe,

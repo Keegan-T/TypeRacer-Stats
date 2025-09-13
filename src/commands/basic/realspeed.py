@@ -1,19 +1,17 @@
-from discord import Embed, File
 from discord.ext import commands
 
-import database.main.modified_races as modified_races
-import database.main.races as races
 import database.bot.recent_text_ids as recent
-import database.main.users as users
-from api.races import get_race
 from api.users import get_stats
 from commands.account.download import run as download
 from config import prefix
 from database.bot.users import get_user
+from database.main import users, races
 from graphs import match_graph
-from utils import errors, colors, urls, strings, embeds, files
+from utils import errors, urls, strings, embeds
+from utils.embeds import Page, Message
+from utils.strings import real_speed_fields
 
-graph_commands = ["realspeedgraph", "rsg", "rg", "adjustedgraph", "ag", "ag*"]
+graph_commands = ["realspeedgraph", "rg", "adjustedgraph", "ag", "ag*"]
 command = {
     "name": "realspeed",
     "aliases": ["rs"] + graph_commands,
@@ -27,7 +25,6 @@ command = {
     "usages": [
         "realspeed keegant 100000",
         "realspeed keegant -1",
-        "realspeed https://data.typeracer.com/pit/result?id=|tr:keegant|1000000",
     ],
 }
 
@@ -75,112 +72,64 @@ def get_args(user, args, info, channel_id):
 
 
 async def run(ctx, user, username, race_number, graph, universe, raw=False):
+    db_stats = users.get_user(username, universe)
+    if not db_stats:
+        return await ctx.send(embed=errors.import_required(username, universe))
+
     stats = get_stats(username, universe=universe)
-    if not stats:
-        return await ctx.send(embed=errors.invalid_username())
+    await download(racer=stats, universe=universe)
 
     if race_number < 1:
         race_number = stats["races"] + race_number
 
-    race_info = await get_race(username, race_number, universe=universe)
-    if not race_info:
+    race = races.get_race(username, race_number, universe, get_log=True, get_keystrokes=True, get_typos=True)
+    if not race:
         return await ctx.send(embed=errors.race_not_found(username, race_number, universe))
+    if raw and not race.get("raw_adjusted", None):
+        return await ctx.send(embed=errors.raw_speeds_unavailable(username, race_number, universe))
 
-    title = f"{'Raw' if raw else 'Real'} speeds"
-    color = user["colors"]["embed"]
-    lagged = race_info["lagged"]
-    description = strings.text_description(race_info)
+    description = f"Completed {strings.discord_timestamp(race['timestamp'])}" + "\n\n" + strings.text_description(race)
+    footer = ""
+    if race.get("distributed", None):
+        footer = "Adjusted speed recalculated to account for lag at the start of the race"
 
-    reverse_lag = False
-    if "unlagged" not in race_info:
-        speeds_string = (
-            f"**Lagged:** {lagged:,.2f} WPM\n\n"
-            f"{title} not available for this race\n\n"
-            f"Completed {strings.discord_timestamp(race_info['timestamp'])}"
-        )
-
-    else:
-        unlagged = race_info["unlagged"]
-        adjusted = race_info["adjusted"]
-
-        if lagged > round(unlagged, 2):
-            reverse_lag = True
-            description = "\U0001F6A9 Reverse Lagged Score \U0001F6A9\n\n" + description
-            color = colors.error
-
-        speeds_string = strings.real_speed_description(race_info)
-        if raw:
-            speeds_string += strings.raw_speed_description(race_info)
-        speeds_string += "Completed " + strings.discord_timestamp(race_info["timestamp"])
-
-    embed = Embed(
-        title=f"{title.title()} - Race #{race_number:,}",
-        description=description,
-        url=urls.replay(username, race_number, universe, stats["disqualified"]),
-        color=color
-    )
-
-    if race_info.get("distributed", None):
-        embed.set_footer(text="Adjusted speed recalculated to account for lag at the start of the race")
-
-    embeds.add_profile(embed, stats)
-    embeds.add_universe(embed, universe)
-
-    embed.description += f"\n\n{speeds_string}"
-
-    title = f"Race Graph - {username} - Race #{race_number:,}"
-
+    render = None
     if graph:
+        if not race.get("keystroke_wpm", None):
+            return await ctx.send(embed=errors.logs_not_found(username, race_number, universe))
         ranking = {"username": username}
-
-        if raw:
-            if ctx.invoked_with in ["rawadjustedgraph", "rag"]:
-                y_label = "Raw Adjusted WPM"
-                ranking["keystroke_wpm"] = race_info["keystroke_wpm_raw_adjusted"]
-
-            else:
-                y_label = "Raw WPM"
-                ranking["keystroke_wpm"] = race_info["keystroke_wpm_raw"]
-
-        elif ctx.invoked_with in ["adjustedgraph", "ag", "ag*"]:
+        if ctx.invoked_with in ["adjustedgraph", "ag", "ag*"]:
             y_label = "Adjusted WPM"
-            ranking["keystroke_wpm"] = race_info["keystroke_wpm_adjusted"]
+            ranking["keystroke_wpm"] = race["keystroke_wpm_adjusted"]
 
         else:
             y_label = "WPM"
-            ranking["keystroke_wpm"] = race_info["keystroke_wpm"]
+            ranking["keystroke_wpm"] = race["keystroke_wpm"]
 
-        file_name = match_graph.render(
-            user, [ranking], title, y_label, universe,
-            limit_y="*" not in ctx.invoked_with
-        )
-
-        embed.set_image(url=f"attachment://{file_name}")
-        file = File(file_name, filename=file_name)
-
-        await ctx.send(embed=embed, file=file)
-
-        files.remove_file(file_name)
-
-    else:
-        await ctx.send(embed=embed)
-
-    recent.update_recent(ctx.channel.id, race_info["text_id"])
-
-    if universe == "play" and reverse_lag:
-        user = users.get_user(username)
-        if not user or username == "slowtexts":
-            return
-        modified_race = modified_races.get_race(universe, username, race_number)
-        if not modified_race:
-            await download(stats=stats)
-            await races.correct_race(universe, username, race_number, race_info)
-            embed = Embed(
-                title="Reverse Lag Detected",
-                description="This score has been corrected in the database",
-                color=colors.error,
+        def render():
+            return match_graph.render(
+                user, [ranking], f"Race Graph - {username} - Race #{race_number:,}",
+                y_label, universe, limit_y="*" not in ctx.invoked_with
             )
-            await ctx.send(embed=embed)
+
+    page = Page(
+        title=f"{'Raw' if raw else 'Real'} Speeds - Race #{race_number:,}",
+        description=description,
+        fields=real_speed_fields(race, raw),
+        render=render,
+    )
+
+    message = Message(
+        ctx, user, page,
+        url=urls.replay(username, race_number, universe, stats["disqualified"]),
+        footer=footer,
+        profile=stats,
+        universe=universe,
+    )
+
+    await message.send()
+
+    recent.update_recent(ctx.channel.id, race["text_id"])
 
 
 async def setup(bot):

@@ -129,6 +129,18 @@ def logs_not_found(username, race_number, universe="play"):
     )
 
 
+def raw_speeds_unavailable(username, race_number, universe="play"):
+    race_id = f"{username}|{race_number}"
+    if universe != "play":
+        race_id = f"{universe}|" + race_id
+
+    return Embed(
+        title="Raw Speeds Not Found",
+        description=f"Raw speed details for race `{race_id}` are unavailable",
+        color=error,
+    )
+
+
 def invalid_duration_format():
     return Embed(
         title="Invalid Duration",

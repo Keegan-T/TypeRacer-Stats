@@ -1,12 +1,14 @@
 from discord.ext import commands
 
 import database.bot.recent_text_ids as recent
-from api.races import get_match
+from api.races import get_race_by_id
 from api.users import get_stats
+from commands.account.download import run as download
 from commands.basic.realspeed import get_args
 from commands.locks import match_lock
 from config import prefix
 from database.bot.users import get_user
+from database.main import races, users, texts
 from graphs import match_graph
 from utils import errors, urls, strings
 from utils.embeds import Message, Page, is_embed
@@ -24,7 +26,6 @@ command = {
     "usages": [
         "matchgraph keegant 1000000",
         "realspeed keegant -1",
-        "matchgraph https://data.typeracer.com/pit/result?id=play|tr:poem|200000"
     ],
 }
 
@@ -51,18 +52,23 @@ class MatchGraph(commands.Cog):
 
 
 async def run(ctx, user, username, race_number, universe):
+    db_stats = users.get_user(username, universe)
+    if not db_stats:
+        return await ctx.send(embed=errors.import_required(username, universe))
+
     stats = get_stats(username, universe=universe)
-    if not stats:
-        return await ctx.send(embed=errors.invalid_username())
+    await download(racer=stats, universe=universe)
 
     if race_number < 1:
         race_number = stats["races"] + race_number
 
-    match = await get_match(username, race_number, universe)
-    if not match:
+    race = races.get_race(username, race_number, universe)
+    if not race or not race["wpm_raw"]:
         return await ctx.send(embed=errors.logs_not_found(username, race_number, universe))
+    race_id = race["race_id"]
+    match = await get_race_by_id(race_id)
 
-    text_description = strings.text_description(match)
+    text_description = strings.text_description(texts.get_text(race["text_id"]))
     description = text_description + "\n\n**Rankings**\n"
     raw_description = text_description + "\n\n**Raw Rankings**\n"
     pauseless_description = text_description + "\n\n**Pauseless Rankings**\n"
@@ -72,8 +78,8 @@ async def run(ctx, user, username, race_number, universe):
         description += (
             f"{i + 1}. {racer_username} - "
             f"[{race['wpm']:,.2f} WPM]"
-            f"({urls.replay(race['username'], race['race_number'], universe)}) "
-            f"({race['accuracy'] * 100:,.1f}% Acc, "
+            f"({urls.replay(race['username'], race['number'], universe)}) "
+            f"({race['accuracy']:.2%} Acc, "
             f"{race['start']:,.0f}ms start)\n"
         )
 
@@ -82,7 +88,7 @@ async def run(ctx, user, username, race_number, universe):
         raw_description += (
             f"{i + 1}. {racer_username} - "
             f"[{race['wpm']:,.2f} WPM]"
-            f"({urls.replay(race['username'], race['race_number'], universe)}) "
+            f"({urls.replay(race['username'], race['number'], universe)}) "
             f"({race['correction_percent']:.1%} Corr, "
             f"{race['pause_percent']:.1%} Pause)\n"
         )
@@ -92,7 +98,7 @@ async def run(ctx, user, username, race_number, universe):
         pauseless_description += (
             f"{i + 1}. {racer_username} - "
             f"[{race['wpm']:,.2f} WPM]"
-            f"({urls.replay(race['username'], race['race_number'], universe)}) "
+            f"({urls.replay(race['username'], race['number'], universe)}) "
             f"({race['correction_percent']:.1%} Corr, "
             f"{race['pause_percent']:.1%} Pause)\n"
         )

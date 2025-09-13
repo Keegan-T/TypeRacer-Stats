@@ -1,10 +1,12 @@
 from discord.ext import commands
 
 import database.bot.recent_text_ids as recent
-from api.races import get_race, get_universe_multiplier
+from api.races import get_universe_multiplier
 from api.users import get_stats
+from commands.account.download import run as download
 from commands.basic.realspeed import get_args
 from database.bot.users import get_user
+from database.main import users, races
 from graphs import segment_graph
 from utils import errors, urls, strings
 from utils.embeds import Page, Message, is_embed, Field
@@ -36,19 +38,19 @@ class SegmentGraph(commands.Cog):
 
 
 async def run(ctx, user, username, race_number, universe):
+    db_stats = users.get_user(username, universe)
+    if not db_stats:
+        return await ctx.send(embed=errors.import_required(username, universe))
+
     stats = get_stats(username, universe=universe)
-    if not stats:
-        return await ctx.send(embed=errors.invalid_username())
+    await download(racer=stats, universe=universe)
 
     if race_number < 1:
         race_number = stats["races"] + race_number
 
-    race_info = await get_race(username, race_number, universe=universe)
-    if not race_info:
+    race = races.get_race(username, race_number, universe, get_log=True)
+    if not race or not race["wpm_raw"]:
         return await ctx.send(embed=errors.race_not_found(username, race_number, universe))
-
-    if "raw_unlagged" not in race_info:
-        return await ctx.send(embed=errors.logs_not_found(username, race_number, universe))
 
     def format_segment(segment):
         segment_text = segment["text"]
@@ -62,9 +64,9 @@ async def run(ctx, user, username, race_number, universe):
             wpm_text = f"**[{wpm:,.2f}](http://a \"{raw_wpm:,.2f} Raw\")**"
         return f"{wpm_text} - {strings.escape_formatting(segment_text)}"
 
-    quote = race_info["quote"]
-    delays = race_info["delays"]
-    raw_delays = race_info["raw_delays"]
+    quote = race["quote"]
+    delays = race["delays"]
+    raw_delays = race["raw_delays"]
     text_segments = strings.get_segments(quote)
     multiplier = get_universe_multiplier(universe)
     segments = []
@@ -83,12 +85,12 @@ async def run(ctx, user, username, race_number, universe):
         i += len(text)
 
     description = (
-        f"{strings.text_description(race_info).split("\n")[0]}\n\n"
-        f"**Speed:** {race_info['unlagged']:,.2f} WPM "
-        f"({race_info['accuracy']:.1%} Accuracy)\n"
-        f"**Raw Speed:** {race_info['raw_unlagged']:,.2f} WPM"
+        f"{strings.text_description(race).split("\n")[0]}\n\n"
+        f"**Speed:** {race['unlagged']:,.2f} WPM "
+        f"({race['accuracy']:.1%} Accuracy)\n"
+        f"**Raw Speed:** {race['raw_unlagged']:,.2f} WPM"
     )
-    timestamp_string = f"Completed {strings.discord_timestamp(race_info['timestamp'])}"
+    timestamp_string = f"Completed {strings.discord_timestamp(race['timestamp'])}"
     segment_description = (
         f"{description}\n\n"
         f"**WPM - Segment**\n"
@@ -156,7 +158,7 @@ async def run(ctx, user, username, race_number, universe):
 
     await message.send()
 
-    recent.update_recent(ctx.channel.id, race_info["text_id"])
+    recent.update_recent(ctx.channel.id, race["text_id"])
 
 
 async def setup(bot):

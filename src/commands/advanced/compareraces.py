@@ -2,13 +2,12 @@ from discord import Embed
 from discord.ext import commands
 
 import database.bot.recent_text_ids as recent
-from api import users
-from api.races import get_race
-from api.users import get_stats
+from api.users import get_stats, get_latest_race
 from commands.account.download import run as download
 from config import prefix
 from database.bot.users import get_user
 from database.main import races
+from database.main import users
 from database.main.texts import get_text
 from graphs import match_graph
 from utils import errors, urls, colors, strings
@@ -22,9 +21,8 @@ command = {
                    f"your best and most recent race for a given text ID\n"
                    f"Use `{prefix}compareraces [username1] [text_id] [username2]`\n"
                    f"to compare 2 given users best race on a given text ID",
-    "parameters": "[username1|number1/link] [username2|number2/link]",
+    "parameters": "[username|link] <text_id> [username2|link]",
     "usages": [
-        "compareraces keegant|100000 keegant|1003398",
         "compareraces me 3810446",
         "compareraces zak389 3550141 arenasnow",
     ],
@@ -40,7 +38,7 @@ class CompareRaces(commands.Cog):
     async def compareraces(self, ctx, *args):
         user = get_user(ctx)
 
-        result = get_args(user, args, command, ctx.channel.id)
+        result = await get_args(user, args, command, user["universe"], ctx.channel.id)
         if is_embed(result):
             return await ctx.send(embed=result)
 
@@ -52,74 +50,54 @@ class CompareRaces(commands.Cog):
         await run(ctx, user, username1, username2, race_number1, race_number2, universe)
 
 
-def get_args(user, args, info, channel_id):
-    try:
-        username2 = None
-        if len(args) == 0:
-            username = user["username"]
-            race = users.get_latest_race(username, user["universe"])
-            text_id = race["tid"] if race else None
+async def get_args(user, args, info, universe, channel_id):
+    username = user["username"]
+    text_id = None
+    username2 = None
 
-        elif len(args) == 1:
-            username = user["username"] if args[0] == "me" else args[0]
-            race = users.get_latest_race(username, user["universe"])
-            text_id = race["tid"] if race else None
+    if len(args) >= 0:
+        if args and args[0] != "me":
+            username = args[0]
+        username = strings.username_aliases.get(username, username)
+        db_stats = users.get_user(username, universe)
+        if not db_stats:
+            return errors.import_required(username, universe)
+        await download(username)
+        text_id = races.get_latest_text_id(username, universe)
+    if len(args) >= 2:
+        text_id = args[1]
+    if len(args) == 3:
+        username2 = user["username"] if args[2] == "me" else args[2]
+        username2 = strings.username_aliases.get(username2, username2)
+        db_stats = users.get_user(username2, universe)
+        if not db_stats:
+            return errors.import_required(username2, universe)
+        await download(username2)
 
-        else:
-            username = user["username"] if args[0] == "me" else args[0]
-            text_id = args[1]
-            if len(args) == 3:
-                username2 = user["username"] if args[2] == "me" else args[2]
+    if text_id == "^":
+        text_id = recent.get_recent(channel_id)
 
-        if text_id is None:
-            raise ValueError
+    text = get_text(text_id, user["universe"])
+    if not text:
+        return errors.unknown_text(universe)
 
-        stats = users.get_stats(username, universe=user["universe"])
-        if not stats:
-            raise ValueError
+    if not users.get_user(username, universe):
+        return errors.import_required(username, universe)
 
-        if username2:
-            stats = users.get_stats(username2, universe=user["universe"])
-            if not stats:
-                raise ValueError
+    if username2:
+        if not users.get_user(username2, universe):
+            return errors.import_required(username2, universe)
 
-        if text_id == "^":
-            text_id = recent.get_recent(channel_id)
-
-        text = get_text(text_id, user["universe"])
-        if not text:
-            raise ValueError
-
-        return username, username2, int(text_id), user["universe"]
-    except ValueError:
-        pass
-
-    # Links
-    race_info1 = urls.get_url_info(args[0])
-    if race_info1:
-        username1, race_number1, universe = race_info1
-        race_info2 = urls.get_url_info(args[1])
-        if race_info2:
-            username2, race_number2, _ = race_info2
-            return username1, username2, race_number1, race_number2, universe
-
-    # Strings
-    try:
-        username1, race_number1 = args[0].split("|")
-        username2, race_number2 = args[1].split("|")
-        universe = user["universe"]
-        return username1, username2, int(race_number1), int(race_number2), universe
-    except ValueError:
-        return errors.invalid_argument(info)
+    return username, username2, int(text_id), user["universe"]
 
 
 async def run(ctx, user, username1, username2, race_number1, race_number2, universe, stats=None):
-    race_info1 = await get_race(username1, race_number1, universe=universe)
-    if not race_info1 or "unlagged" not in race_info1:
+    race_info1 = races.get_race(username1, race_number1, universe, get_log=True, get_keystrokes=True)
+    if not race_info1["log"]:
         return await ctx.send(embed=errors.logs_not_found(username1, race_number1, universe))
 
-    race_info2 = await get_race(username2, race_number2, universe=universe)
-    if not race_info2 or "unlagged" not in race_info2:
+    race_info2 = races.get_race(username2, race_number2, universe, get_log=True, get_keystrokes=True)
+    if not race_info2["log"]:
         return await ctx.send(embed=errors.logs_not_found(username2, race_number2, universe))
 
     if race_info1["text_id"] != race_info2["text_id"]:
@@ -133,27 +111,27 @@ async def run(ctx, user, username1, username2, race_number1, race_number2, unive
     if not text:
         return await ctx.send(embed=errors.unknown_text(universe))
 
-    unlagged1 = race_info1["unlagged"]
-    unlagged2 = race_info2["unlagged"]
+    adjusted1 = race_info1["adjusted"]
+    adjusted2 = race_info2["adjusted"]
 
-    if not stats and unlagged1 < unlagged2:
+    if not stats and adjusted1 < adjusted2:
         username1, username2 = username2, username1
         race_number1, race_number2 = race_number2, race_number1
         race_info1, race_info2 = race_info2, race_info1
-        unlagged1, unlagged2 = unlagged2, unlagged1
+        adjusted1, adjusted2 = adjusted2, adjusted1
 
-    accuracy1 = race_info1["accuracy"] * 100
-    accuracy2 = race_info2["accuracy"] * 100
+    accuracy1 = race_info1["accuracy"]
+    accuracy2 = race_info2["accuracy"]
     timestamp1 = race_info1["timestamp"]
     timestamp2 = race_info2["timestamp"]
 
     description = (
         f"{strings.escape_formatting(username1)} - "
-        f"[{unlagged1:,.2f} WPM]({urls.replay(username1, race_number1, universe)}) "
-        f"({accuracy1:,.1f}%) {strings.discord_timestamp(timestamp1)}\nvs.\n"
+        f"[{adjusted1:,.2f} WPM]({urls.replay(username1, race_number1, universe)}) "
+        f"({accuracy1:,.2%}) {strings.discord_timestamp(timestamp1)}\nvs.\n"
         f"{strings.escape_formatting(username2)} - "
-        f"[{unlagged2:,.2f} WPM]({urls.replay(username2, race_number2, universe)}) "
-        f"({accuracy2:,.1f}%) {strings.discord_timestamp(timestamp2)}\n"
+        f"[{adjusted2:,.2f} WPM]({urls.replay(username2, race_number2, universe)}) "
+        f"({accuracy2:,.2%}) {strings.discord_timestamp(timestamp2)}\n"
     )
 
     if stats:
@@ -167,11 +145,11 @@ async def run(ctx, user, username1, username2, race_number1, race_number2, unive
     rankings = [
         {
             "username": username1,
-            "keystroke_wpm": race_info1["keystroke_wpm"],
+            "keystroke_wpm": race_info1["keystroke_wpm_adjusted"],
         },
         {
             "username": username2,
-            "keystroke_wpm": race_info2["keystroke_wpm"],
+            "keystroke_wpm": race_info2["keystroke_wpm_adjusted"],
         }
     ]
 
@@ -199,7 +177,7 @@ async def run(ctx, user, username1, username2, race_number1, race_number2, unive
 
 async def run_text(ctx, user, username, username2, text_id, universe):
     stats = get_stats(username, universe=universe)
-    await download(stats=stats, universe=universe)
+    await download(racer=stats, universe=universe)
 
     race_list = races.get_text_races(username, text_id, universe)
 
@@ -207,9 +185,8 @@ async def run_text(ctx, user, username, username2, text_id, universe):
         if not race_list:
             return await ctx.send(embed=no_text_races(username))
 
-        stats2 = get_stats(username2, universe=universe)
-        await download(stats=stats2, universe=universe)
-
+        # stats2 = get_stats(username2, universe=universe)
+        # await download(racer=stats2, universe=universe)
         race_list2 = races.get_text_races(username2, text_id, universe)
         if not race_list2:
             return await ctx.send(embed=no_text_races(username2))

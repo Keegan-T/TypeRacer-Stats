@@ -15,7 +15,7 @@ command = {
     "aliases": ["tb"],
     "description": "Displays a user's text best average and their best texts\n"
                    "Providing `n` will display the average of the user's top n texts\n"
-                   f"`{prefix}textbests [username] worst` will show the user's worst quotes",
+                   f"`{prefix}textbests [username] worst` will show the user's worst quotes\n",
     "parameters": "[username] <n/category>",
     "usages": [
         "textbests keegant",
@@ -24,6 +24,7 @@ command = {
         "textbests keegant new",
         "textbests keegant accuracy",
         "textbests charlieog 100",
+        "textbests keegant raw",
     ],
 }
 
@@ -36,12 +37,17 @@ class TextBests(commands.Cog):
     async def textbests(self, ctx, *args):
         user = get_user(ctx)
 
+        raw = False
+        if args and args[-1] == "raw":
+            raw = True
+            args = args[:-1]
+
         result = get_args(user, args, command)
         if is_embed(result):
             return await ctx.send(embed=result)
 
         username, sort, n = result
-        await run(ctx, user, username, sort, n)
+        await run(ctx, user, username, sort, n, raw)
 
 
 def get_args(user, args, info):
@@ -68,7 +74,7 @@ def get_args(user, args, info):
     return username, sort, n
 
 
-async def run(ctx, user, username, sort, n):
+async def run(ctx, user, username, sort, n, raw):
     if n < 1:
         return await ctx.send(embed=errors.greater_than(0))
 
@@ -82,9 +88,9 @@ async def run(ctx, user, username, sort, n):
 
     text_list = texts.get_texts(as_dictionary=True, universe=universe)
     if era_string:
-        text_bests = await users.get_text_bests_time_travel(username, universe, user, race_stats=True)
+        text_bests = await users.get_text_bests_time_travel(username, universe, user, race_stats=True, raw=raw)
     else:
-        text_bests = users.get_text_bests(username, universe=universe, race_stats=True)
+        text_bests = users.get_text_bests(username, universe=universe, race_stats=True, raw=raw)
 
     if len(text_bests) == 0:
         return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
@@ -112,18 +118,14 @@ async def run(ctx, user, username, sort, n):
     def formatter(text):
         text_id = text["text_id"]
         quote = strings.truncate_clean(text_list[text_id]["quote"], 60)
-        race_stat = (
-            f"{text['accuracy'] * 100}% Accuracy - " if sort == "accuracy"
-            else f"Race #{text['number']:,} - "
-        )
         return (
-            f"[{text['wpm']:,.2f} WPM]({urls.replay(username, text['number'], universe)}) - "
-            f"{race_stat}"
+            f"[{text['wpm']:,.2f} WPM]({urls.replay(username, text['number'], universe)})"
+            f" ({text['accuracy']:.2%}) - "
             f"[Text #{text_id}]({urls.trdata_text(text_id, universe)}) - "
             f'{strings.discord_timestamp(text["timestamp"])}\n"{quote}"\n\n'
         )
 
-    title = f"Text Bests"
+    title = f"Text Bests{' (Raw Speed)' * raw}"
     if n < stats["texts_typed"]:
         title += f" (Top {n:,} Texts)"
     elif sort == "worst":

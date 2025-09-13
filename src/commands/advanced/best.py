@@ -71,7 +71,7 @@ async def run(ctx, user, username, category, text_id, reverse=True):
         return await ctx.send(embed=errors.import_required(username, universe))
     era_string = strings.get_era_string(user)
 
-    category_title = "WPM" if category == "wpm" else "Points"
+    category_title = {"wpm": "WPM"}.get(category, category.title())
     sort_title = "Best" if reverse else "Worst"
     title = f"{sort_title} Races"
     header = ""
@@ -85,7 +85,7 @@ async def run(ctx, user, username, category, text_id, reverse=True):
         text = text_list[text_id]
         text["text_id"] = text_id
         race_list = races.get_text_races(username, text_id, universe, user["start_date"], user["end_date"])
-        race_list.sort(key=lambda x: x["wpm"], reverse=reverse)
+        race_list.sort(key=lambda x: x["wpm_adjusted"], reverse=reverse)
         race_list = race_list[:100]
         recent.update_recent(ctx.channel.id, text_id)
 
@@ -108,7 +108,7 @@ async def run(ctx, user, username, category, text_id, reverse=True):
 
         def formatter(race):
             return (
-                f"[{race['wpm']:,.2f} WPM]"
+                f"[{race['wpm_adjusted']:,.2f} WPM]"
                 f"({urls.replay(username, race['number'], universe)})"
                 f" - Race #{race['number']:,} - "
                 f"{strings.discord_timestamp(race['timestamp'])}\n"
@@ -117,8 +117,9 @@ async def run(ctx, user, username, category, text_id, reverse=True):
         header = strings.text_description(text, universe) + "\n\n"
 
     else:
+        columns = ["text_id", "number", "wpm", "points", "timestamp"]
         race_list = await races.get_races(
-            username, order_by=category, reverse=reverse, limit=100,
+            username, columns=columns, order_by=category, reverse=reverse, limit=100,
             universe=universe, start_date=user["start_date"], end_date=user["end_date"]
         )
         text_list = texts.get_texts(as_dictionary=True, universe=universe)

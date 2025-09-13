@@ -103,7 +103,7 @@ async def run(ctx, user, username1, username2):
 
     gap2 = (
         f"**Biggest Gap:** +{max_gap2[1] - max_gap2[2]:,.2f} WPM \n"
-        f"({max_gap2[1]} WPM vs. {max_gap2[2]} WPM)\n"
+        f"({max_gap2[1]:,.2f} WPM vs. {max_gap2[2]:,.2f} WPM)\n"
         f"{same_text}"
     )
 
@@ -112,7 +112,7 @@ async def run(ctx, user, username1, username2):
         description = "\U0001F3C6 **TOTAL DOMINATION** \U0001F3C6"
         gap2 = (
             f"**Closest:** -{min_gap1[1] - min_gap1[2]:,.2f} WPM \n"
-            f"({min_gap1[2]} WPM vs. {min_gap1[1]} WPM)\n"
+            f"({min_gap1[2]:,.2f} WPM vs. {min_gap1[1]:,.2f} WPM)\n"
             f"{same_text}"
         )
 
@@ -131,7 +131,7 @@ async def run(ctx, user, username1, username2):
         f"**Gain:** +{gain1:,.2f} WPM\n"
         f"**Average Gain:** +{average_gain1:,.2f} WPM\n"
         f"**Biggest Gap:** +{max_gap1[1] - max_gap1[2]:,.2f} WPM\n"
-        f"({max_gap1[1]} WPM vs. {max_gap1[2]} WPM)\n"
+        f"({max_gap1[1]:,.2f} WPM vs. {max_gap1[2]:,.2f} WPM)\n"
         f"{same_text}"
     )
 

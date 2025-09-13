@@ -310,10 +310,10 @@ def leaderboard_wpm():
 
 
 def leaderboard_race_time():
-    leaders = filter_users(users.get_most("seconds", 30))
+    leaders = filter_users(users.get_most("total_time", 30))
     description = ""
     for i, leader in enumerate(leaders):
-        description += f"{user_rank(leader, i)} - {strings.format_duration_short(leader['seconds'])}\n"
+        description += f"{user_rank(leader, i)} - {strings.format_duration(leader['total_time'] / 1000)}\n"
 
     return description
 
