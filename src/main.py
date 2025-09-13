@@ -1,7 +1,6 @@
 import asyncio
 import glob
 import os
-from datetime import datetime, timezone
 
 import discord
 from aiohttp import ClientConnectionError
@@ -10,11 +9,13 @@ from discord.ext import commands, tasks
 from requests.exceptions import SSLError
 
 import records
+from api.core import start_session
 from commands.checks import ban_check
 from config import prefix, bot_token, staging, welcome_message, bot_owner, typeracer_stats_channel_id
 from database.bot.users import get_user_ids, get_total_commands, update_commands
-from tasks import import_competitions, update_important_users, update_top_tens
-from utils import errors, colors
+from database.main.users import delete_expired_users
+from tasks import import_competitions, update_important_users, update_top_tens, update_texts
+from utils import errors, colors, dates
 from utils.logging import get_log_message, log, log_error
 
 bot = commands.Bot(command_prefix=prefix, case_insensitive=True, intents=discord.Intents.all())
@@ -27,6 +28,7 @@ users = get_user_ids()
 
 @bot.event
 async def on_ready():
+    await start_session()
     log("Bot ready.")
     if not staging:
         loops.start()
@@ -42,7 +44,7 @@ async def on_command_error(ctx, error):
         return await ctx.send(embed=errors.unexpected_quote())
 
     elif isinstance(error, commands.CommandOnCooldown):
-        return await ctx.send(embed=errors.command_cooldown(datetime.now().timestamp() + error.retry_after))
+        return await ctx.send(embed=errors.command_cooldown(dates.now().timestamp() + error.retry_after))
 
     elif isinstance(error, commands.CommandInvokeError):
         if isinstance(error.original, (ConnectionError, ClientConnectionError, SSLError)):
@@ -84,10 +86,10 @@ async def on_command_completion(ctx):
         update_commands(ctx.author.id, ctx.command.name)
     total_commands += 1
     if total_commands % 50_000 == 0:
-        await celeberate_milestone(ctx, total_commands)
+        await celebrate_milestone(ctx, total_commands)
 
 
-async def celeberate_milestone(ctx, milestone):
+async def celebrate_milestone(ctx, milestone):
     channel = bot.get_channel(typeracer_stats_channel_id)
     await channel.send(embed=Embed(
         title="Command Milestone! :tada:",
@@ -103,12 +105,15 @@ async def on_guild_join(guild):
 
 @tasks.loop(minutes=1)
 async def loops():
-    if datetime.now(tz=timezone.utc).hour == 4 and datetime.now(tz=timezone.utc).minute == 0:
+    now = dates.now()
+    if now.hour == 4 and now.minute == 0:
         try:
             await import_competitions()
             await update_important_users()
             await records.update_all(bot)
-            if datetime.now(tz=timezone.utc).day == 1:
+            await delete_expired_users()
+            await update_texts()
+            if now.day == 1:
                 await update_top_tens()
         except Exception as error:
             log_error("Task Failed", error)

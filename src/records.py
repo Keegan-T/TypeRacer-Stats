@@ -136,7 +136,7 @@ def format_club_string(score):
 
     return (
         f"{rank} {get_flag(username)}{strings.escape_formatting(username)} - "
-        f"[{adjusted:.3f} WPM]({urls.replay(username, race_number)}) - "
+        f"[{adjusted:.2f} WPM]({urls.replay(username, race_number)}) - "
         f"{date}"
     )
 
@@ -221,8 +221,8 @@ def race_records():
     embed.add_field(
         name="Most In-Race Time",
         value=format_leaderboard(
-            users.get_most("seconds", 3),
-            lambda user: strings.format_duration_short(user["seconds"])
+            users.get_most("total_time", 3),
+            lambda user: strings.format_duration(user["total_time"] / 1000)
         ),
         inline=False,
     )
