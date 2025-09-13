@@ -1,4 +1,3 @@
-import os
 import textwrap
 from datetime import datetime, timezone
 
@@ -185,6 +184,8 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
 
     if int(user["id"]) == bot_owner:
         apply_background_image(ax, files.path("../assets/backgrounds/galaxy.png"))
+    if int(user["id"]) == 247492668131770369:
+        apply_graph_background_image(ax, files.path("../assets/backgrounds/gian.png"))
 
 
 def apply_background_image(ax, image_path):
@@ -193,6 +194,14 @@ def apply_background_image(ax, image_path):
     bg_img = mpimg.imread(image_path)
     bg_ax.imshow(bg_img, aspect="auto", extent=[0, 1, 0, 1])
     bg_ax.axis("off")
+    ax.set_zorder(1)
+
+
+def apply_graph_background_image(ax, image_path):
+    bg_img = mpimg.imread(image_path)
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    ax.imshow(bg_img, extent=[*xlim, *ylim], aspect='auto', zorder=0)
     ax.set_zorder(1)
 
 
