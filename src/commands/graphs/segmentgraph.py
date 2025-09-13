@@ -85,7 +85,7 @@ async def run(ctx, user, username, race_number, universe):
         i += len(text)
 
     description = (
-        f"{strings.text_description(race).split("\n")[0]}\n\n"
+        f"{strings.text_description(race, universe).split("\n")[0]}\n\n"
         f"**Speed:** {race['unlagged']:,.2f} WPM "
         f"({race['accuracy']:.1%} Accuracy)\n"
         f"**Raw Speed:** {race['raw_unlagged']:,.2f} WPM"

@@ -60,7 +60,7 @@ async def run(ctx, user, username, race_number, universe):
     if not race or not race.get("keystroke_wpm_adjusted", None):
         return await ctx.send(embed=errors.logs_not_found(username, race_number, universe))
 
-    description = "Completed " + strings.discord_timestamp(race["timestamp"]) + "\n\n" + strings.text_description(race)
+    description = "Completed " + strings.discord_timestamp(race["timestamp"]) + "\n\n" + strings.text_description(race, universe)
     graph_title = f"Race Graph - {username} - Race #{race_number:,}"
     y_label = "Adjusted vs. Raw WPM"
     adjusted_ranking = {

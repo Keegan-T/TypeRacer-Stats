@@ -68,13 +68,13 @@ async def run(ctx, user, username, race_number, universe):
 
     quote = race["quote"]
     race["quote"] = get_marked_quote(quote, markers)
-    typo_description = strings.text_description(race) + "\n\n"
+    typo_description = strings.text_description(race, universe) + "\n\n"
 
     pauses = race["pauses"]
     for pause in pauses:
         markers[pause] += "\\⏸️"
     race["quote"] = get_marked_quote(quote, markers)
-    pause_description = strings.text_description(race) + "\n\n"
+    pause_description = strings.text_description(race, universe) + "\n\n"
 
     speed_string = strings.real_speed_description(race)
     typo_count = len(typos)

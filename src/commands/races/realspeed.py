@@ -88,7 +88,7 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
     if raw and not race.get("raw_adjusted", None):
         return await ctx.send(embed=errors.raw_speeds_unavailable(username, race_number, universe))
 
-    description = f"Completed {strings.discord_timestamp(race['timestamp'])}" + "\n\n" + strings.text_description(race)
+    description = f"Completed {strings.discord_timestamp(race['timestamp'])}" + "\n\n" + strings.text_description(race, universe)
     footer = ""
     if race.get("distributed", None):
         footer = "Adjusted speed recalculated to account for lag at the start of the race"
