@@ -1,3 +1,4 @@
+import asyncio
 import zlib
 
 import database.main.users as users
@@ -6,7 +7,9 @@ from utils import logs
 from utils.logging import log
 
 
-def add_races(races, batch_size=1000):
+async def add_races(races):
+    batch_size = 1000
+    sleep_time = 1 if len(races) > 10000 else 0
     for i in range(0, len(races), batch_size):
         batch = races[i:i + batch_size]
         db.run_many("""
@@ -20,6 +23,7 @@ def add_races(races, batch_size=1000):
             race["pauseless_adjusted"], race["start"], race["duration"],
             race["correction_time"], race["pause_time"]
         ) for race in batch])
+        await asyncio.sleep(sleep_time)
 
 
 def add_temporary_races(username, races):

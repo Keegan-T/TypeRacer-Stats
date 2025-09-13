@@ -1,3 +1,4 @@
+import asyncio
 import sqlite3
 import zlib
 
@@ -8,8 +9,9 @@ async def decompress(log):
     return zlib.decompress(log).decode("utf-8")
 
 
-def add_logs(typing_logs):
+async def add_logs(typing_logs):
     batch_size = 1000
+    sleep_time = 1 if len(typing_logs) > 10000 else 0
     for i in range(0, len(typing_logs), batch_size):
         batch = typing_logs[i:i + batch_size]
         db.run_many("""
@@ -18,6 +20,7 @@ def add_logs(typing_logs):
         """, [(
             r["universe"], r["username"], r["number"], r["typing_log"]
         ) for r in batch])
+        await asyncio.sleep(sleep_time)
 
 
 async def compress_logs():

@@ -106,8 +106,8 @@ async def run(username=None, racer={}, ctx=None, bot_user=None, universe="play")
         new_races, log_list, points_retroactive, total_time, characters = await process_races(
             recent_races + historical_races, universe, username, imported_races
         )
-        races.add_races(new_races)
-        typing_logs.add_logs(log_list)
+        await races.add_races(new_races)
+        await typing_logs.add_logs(log_list)
 
     if not user_data:
         users.create_user_data(racer)
@@ -158,6 +158,7 @@ async def process_races(race_list, universe, username, imported_races):
     seen = set(range(1, imported_races + 1))
     new_races = []
     log_list = []
+    sleep_time = 0.5 if len(race_list) > 10000 else 0
 
     for race_data in race_list:
         race = await processor.process_race(universe, username, race_data)
@@ -165,7 +166,7 @@ async def process_races(race_list, universe, username, imported_races):
             continue
         number = race["number"]
         if number % 1000 == 0:
-            await asyncio.sleep(0)
+            await asyncio.sleep(sleep_time)
 
         if race and number not in seen:
             new_races.append(race)
