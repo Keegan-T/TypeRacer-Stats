@@ -1,34 +1,27 @@
-import aiohttp
 import requests
 from bs4 import BeautifulSoup
 
-from api.bulk import get_random_user_agent
-from utils import urls
+from api.core import get
+from utils import urls, strings
+from utils.logging import log
 
 
-def get_quote(text_id):
-    url = urls.text_info(text_id)
-    html = requests.get(url).text
-    if "Text not found." in html:
+async def get_text(text_id):
+    result = await get(f"/texts/{text_id}")
+    data = result["data"]
+    if not data:
         return None
 
-    soup = BeautifulSoup(html, "html.parser")
-    quote = (soup.find("div", class_="fullTextStr").get_text().strip()
-             .replace("\n", " ")
-             .replace("\r", ""))
-
-    return quote
+    data["text"] = strings.strip_quote(data["text"])
+    return data
 
 
-async def get_top_10(text_id, universe="play"):
-    url = urls.top_10(text_id, universe)
-    headers = {"User-Agent": get_random_user_agent()}
-    async with aiohttp.ClientSession(headers=headers) as session:
-        async with session.get(url) as response:
-            data = await response.json(content_type="text/html")
-
-    await session.close()
-    return data[1]
+async def get_top_results(text_id):
+    result = await get(f"/texts/{text_id}/top")
+    data = result["data"]
+    if not data:
+        return None
+    return data
 
 
 async def get_top_10_user_stats(session, text_id):
@@ -52,23 +45,12 @@ def get_text_list(universe):
 
     table = soup.find("table", class_="stats")
     rows = table.find_all("tr")[1:]
+    log(f"Fetching {len(rows):,} new texts")
     for i, row in enumerate(rows):
-        print(f"Getting text {i:,} of {len(rows):,}")
         columns = row.find_all("td")
-        text_id = int(columns[0].get_text()[1:])
-        quote = columns[1].get_text().strip()
-        if columns[6].get_text() == "0.00":
-            username, race_number = get_ghost(text_id, universe)
-        else:
-            link = columns[5].find("a")["href"].split("=")
-            username = link[1].split("&")[0]
-            race_number = link[2].split("&")[0]
-
         text_list.append({
-            "text_id": text_id,
-            "quote": quote,
-            "ghost_username": username,
-            "ghost_number": race_number,
+            "text_id": int(columns[0].get_text()[1:]),
+            "quote": columns[1].get_text().strip(),
         })
 
     return text_list

@@ -1,13 +1,53 @@
 import json
 import urllib.parse
 
-import aiohttp
 import requests
-from bs4 import BeautifulSoup
-from dateutil import parser
+from aiohttp import ClientResponseError
 
-from api.bulk import get_random_user_agent
-from utils import dates, urls
+from api.core import get, date_to_timestamp
+from utils import urls
+
+
+async def get_racer_data(username):
+    result = await get(f"/racers/{username}")
+
+    data = result["data"]
+    if not data:
+        return None
+
+    data["joined_at"] = date_to_timestamp(data["joined_at"])
+
+    return data
+
+
+async def get_racer_stats(username, universe="play"):
+    result = await get(f"/racers/{username}/stats", {
+        "universe": universe,
+    })
+
+    data = result["data"]
+    if not data:
+        return None
+
+    return data[0]
+
+
+async def get_racer(username, universe):
+    try:
+        racer_data = await get_racer_data(username)
+        racer_stats = await get_racer_stats(username, universe)
+        if racer_stats is None:
+            racer_stats = {
+                "total_races": 0, "total_wins": 0, "points": 0,
+                "avg_wpm": 0, "best_wpm": 0, "cert_wpm": 0, "dqd": False,
+            }
+    except ClientResponseError as e:
+        if e.status == 404:
+            return None
+        else:
+            raise e
+
+    return racer_data | racer_stats
 
 
 def get_stats(username=None, stats=None, universe="play"):
@@ -33,6 +73,7 @@ def get_stats(username=None, stats=None, universe="play"):
     try:
         stats = {
             "username": api_data["id"][3:],
+            "universe": universe,
             "display_name": display_name,
             "country": api_data["country"],
             "premium": api_data["premium"],
@@ -54,21 +95,9 @@ def get_stats(username=None, stats=None, universe="play"):
 
 
 async def get_joined(username):
-    url = urls.profile(username)
-    headers = {"User-Agent": get_random_user_agent()}
-
-    async with aiohttp.ClientSession(headers=headers) as session:
-        async with session.get(url) as response:
-            html = await response.text()
-
-    soup = BeautifulSoup(html, "html.parser")
-
-    join_date_span = soup.find("span", string="Racing Since:")
-    if not join_date_span:
-        return None
-    join_date_text = join_date_span.find_next_sibling("span").get_text(strip=True)
-    join_date = dates.floor_day(parser.parse(join_date_text))
-    join_timestamp = join_date.timestamp()
+    result = await get_racer_data(username)
+    join_date = result["data"]["joined_at"]
+    join_timestamp = date_to_timestamp(join_date)
 
     return join_timestamp
 
