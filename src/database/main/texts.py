@@ -1,45 +1,58 @@
-import re
-
 from database.main import db
 from database.main.alts import get_alts
 from utils import urls
 from utils.text_difficulty import set_difficulties
 
 
-def text_dict(text):
-    return {
-        "text_id": text["text_id"],
-        "quote": text["quote"],
-        "ghost": urls.ghost(text["ghost_username"], text["ghost_number"], text["universe"]),
-        "difficulty": text["difficulty"],
-        "disabled": text["disabled"],
-    }
-
-
 def add_texts(text_list, universe):
-    difficulty = 0
-    db.run_many(f"""
+    text_list = set_difficulties(text_list)
+    db.run_many("""
         INSERT OR IGNORE INTO texts
+        (text_id, quote, difficulty)
         VALUES (?, ?, ?)
-    """, [(text["text_id"], text["quote"], difficulty) for text in text_list])
+    """, [(text["text_id"], text["quote"], text["difficulty"]) for text in text_list])
 
     db.run_many("""
         INSERT OR IGNORE INTO text_universes
-        VALUES (?, ?, ?, ?, ?)
-    """, [(universe, text["text_id"], text["ghost_username"], text["ghost_number"], 0) for text in text_list])
+        VALUES (?, ?, ?)
+    """, [(universe, text["text_id"], 0) for text in text_list])
 
 
 def add_text(text, universe):
-    difficulty = 0
     db.run(f"""
         INSERT OR IGNORE INTO texts
-        VALUES (?, ?, ?)
-    """, [text["text_id"], text["quote"], difficulty])
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, [
+        text["tid"], text["text"], text["type"], text["title"], text["author"],
+        text["language"], text["min_skill"], text["max_skill"], text["contributor"], 0
+    ])
 
     db.run("""
         INSERT OR IGNORE INTO text_universes
-        VALUES (?, ?, ?, ?, ?)
-    """, [universe, text["text_id"], text["ghost_username"], text["ghost_number"], 0])
+        VALUES (?, ?, ?)
+    """, [universe, text["tid"], 0])
+
+    update_text_difficulties(universe)
+
+
+def update_text(text):
+    db.run("""
+        UPDATE texts
+        SET text_id = ?, quote = ?, media = ?, title = ?, author = ?,
+        language = ?, min_skill = ?, max_skill = ?, contributor = ?
+        WHERE text_id = ?
+    """, [
+        text["tid"], text["text"], text["type"], text["title"], text["author"], text["language"],
+        text["min_skill"], text["max_skill"], text["contributor"], text["tid"],
+    ])
+
+    universes = db.fetch("""
+        SELECT DISTINCT(universe) FROM text_universes
+        WHERE text_id = ?
+    """, [text["tid"]])
+
+    for universe in universes:
+        update_text_difficulties(universe[0])
 
 
 def get_texts(as_dictionary=False, get_disabled=True, universe="play"):
@@ -50,7 +63,11 @@ def get_texts(as_dictionary=False, get_disabled=True, universe="play"):
         {'AND disabled = 0' * (not get_disabled)}
     """, [universe])
 
-    text_list = [text_dict(text) for text in texts]
+    text_list = []
+    for text in texts:
+        text = dict(text)
+        text["ghost"] = urls.ghost(text["text_id"], universe)
+        text_list.append(text)
 
     if as_dictionary:
         return {text["text_id"]: text for text in text_list}
@@ -69,7 +86,9 @@ def get_text(text_id, universe="play"):
     if not text:
         return None
 
-    return text_dict(text[0])
+    text = dict(text[0])
+    text["ghost"] = urls.ghost(text["text_id"], universe)
+    return text
 
 
 def get_text_count(universe="play"):
@@ -100,7 +119,7 @@ def get_top_10(text_id):
         AND text_id = ?
     """, [text_id])
 
-    results.sort(key=lambda x: x["wpm"], reverse=True)
+    results.sort(key=lambda x: x["wpm_adjusted"], reverse=True)
 
     top_10 = []
     alts = get_alts()
@@ -121,30 +140,6 @@ def get_top_10(text_id):
             break
 
     return top_10
-
-
-def update_quotes_and_ghosts():
-    with open("./data/slow_ghosts.txt", "r") as f:
-        lines = f.readlines()
-
-    for line in lines:
-        text_id, link, quote, _ = line.strip().split("|")
-        username, race_number = re.findall(r"ghost=%7Ctr%3A(\w+)%7C(\d+)", line)[0]
-
-        db.run("""
-            UPDATE texts
-            SET quote = ?
-            WHERE text_id = ?
-        """, [quote, text_id])
-
-        db.run("""
-            UPDATE text_universes
-            SET ghost_username = ?, ghost_number = ?
-            WHERE universe = "play"
-            AND text_id = ?
-        """, [username, race_number, text_id])
-
-    update_text_difficulties("play")
 
 
 async def _toggle_text(text_id, state):
@@ -206,9 +201,9 @@ def update_text_difficulties(universe="play"):
     text_list = db.fetch("""
         SELECT * FROM texts
         JOIN text_universes USING(text_id)
-        WHERE universe = 'play'
+        WHERE universe = ?
         AND disabled = 0
-    """)
+    """, [universe])
     text_list = [dict(text) for text in text_list]
     text_list = set_difficulties(text_list)
 

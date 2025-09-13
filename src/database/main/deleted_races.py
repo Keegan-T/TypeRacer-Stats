@@ -27,8 +27,8 @@ def get_race(universe, username, number):
     return race[0]
 
 
-def add_race(universe, username, race_number, wpm_registered):
+def add_race(universe, username, race_number, typing_log):
     db.run("""
         INSERT OR IGNORE INTO deleted_races
         VALUES (?, ?, ?, ?)
-    """, [universe, username, race_number, wpm_registered])
+    """, [universe, username, race_number, typing_log])

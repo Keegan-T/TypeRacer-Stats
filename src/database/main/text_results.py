@@ -1,8 +1,10 @@
+import asyncio
 from collections import defaultdict
 
 import api.texts as texts_api
-import database.main.modified_races as modified_races
 import database.main.texts as texts
+from api.core import date_to_timestamp
+from api.users import get_stats
 from database.main import deleted_races, db
 from database.main.alts import get_alts
 
@@ -96,6 +98,22 @@ def get_top_n_counts(n=10):
     return sorted_users, len(top_10s)
 
 
+async def import_users():
+    from commands.account.download import run as download
+    usernames = db.fetch("""
+        SELECT DISTINCT username FROM text_results
+        WHERE wpm_raw IS NULL
+    """)
+
+    for row in usernames:
+        username = row["username"]
+        stats = get_stats(username, universe="play")
+        if not stats:
+            continue
+        await download(racer=stats, universe="play")
+        await asyncio.sleep(5)
+
+
 async def update_results(text_id):
     text_id = int(text_id)
     disabled_text_ids = texts.get_disabled_text_ids()
@@ -103,26 +121,28 @@ async def update_results(text_id):
         return
 
     scores = []
-
     top_10_database = texts.get_top_10(text_id)
     for score in top_10_database:
         scores.append((
-            text_id, score["username"], score["number"], score["wpm"],
-            None, score["accuracy"], score["timestamp"],
+            text_id, score["username"], score["number"], score["wpm_adjusted"],
+            score["wpm_raw"], score["accuracy"], score["timestamp"],
         ))
 
-    top_10_api = await texts_api.get_top_10(text_id)
-    exclusions = modified_races.get_ids() | deleted_races.get_ids()
+    database_ids = set([
+        f"{race['universe']}|{race['username']}|{race['number']}"
+        for race in top_10_database
+    ])
+    exclusions = deleted_races.get_ids() | database_ids
+    top_10_api = await texts_api.get_top_results(text_id)
     for score in top_10_api:
-        race, user = score
-        username = user["id"][3:]
-        number = race["gn"]
+        username = score["user"]
+        number = score["rn"]
         if f"play|{username}|{number}" in exclusions:
             continue
 
         scores.append((
-            text_id, username, number, race["wpm"],
-            None, race.get("ac", None), race["t"],
+            text_id, username, number, score["wpm"],
+            None, score.get("ac", None), date_to_timestamp(score["t"]),
         ))
 
     add_results(scores)

@@ -2,25 +2,64 @@ import time
 
 from database.main import texts, db
 from database.main.texts import filter_disabled, get_disabled_text_ids
-from utils import stats
-from utils.stats import get_text_stats, calculate_text_bests
+from utils import dates
+from utils.logging import log
+from utils.stats import get_text_stats, calculate_text_bests, calculate_total_performance
 from utils.strings import get_date_query_string
 
 
-def create_user(username, joined, universe):
+def create_user_data(racer):
     db.run("""
-        INSERT OR IGNORE INTO USERS (username, joined) VALUES (?, ?)
-    """, [username, joined])
+        INSERT INTO users (username, joined) VALUES (?, ?)
+    """, [racer["username"], racer["joined_at"]])
 
+
+def create_user_stats(racer):
     db.run("""
-        INSERT INTO user_stats (universe, username) VALUES (?, ?)
-    """, [universe, username])
+        INSERT INTO user_stats
+        (universe, username, points_retroactive, total_time, characters)
+        VALUES (?, ?, ?, ?, ?)
+    """, [racer["universe"], racer["username"], 0, 0, 0])
 
 
-def get_users():
-    users = db.fetch("SELECT * FROM users")
+def update_user_data(racer):
+    db.run("""
+        UPDATE users
+        SET display_name = ?, premium = ?, country = ?,
+        avatar = ?, last_updated = ?
+        WHERE username = ?
+    """, [
+        racer["name"], bool(racer["premium"]), racer["country"],
+        racer["avatar"], dates.now().timestamp(), racer["username"],
+    ])
 
-    return users
+
+def update_user_stats(racer):
+    db.run("""
+        UPDATE user_stats
+        SET wpm_average = ?, wpm_best = ?, wpm_verified = ?,
+        races = ?, wins = ?, points = ?, disqualified = ?
+        WHERE universe = ?
+        AND username = ?
+    """, [
+        racer["avg_wpm"], racer["best_wpm"], racer["cert_wpm"], racer["total_races"],
+        racer["total_wins"], racer["points"], racer["dqd"], racer["universe"], racer["username"],
+    ])
+
+
+def update_user_aggregate_stats(username, universe, points_retroactive, total_time, characters):
+    db.run("""
+        UPDATE user_stats
+        SET
+            points_retroactive = points_retroactive + ?,
+            total_time = total_time + ?,
+            characters = characters + ?
+        WHERE universe = ?
+        AND username = ?
+    """, [
+        points_retroactive, total_time, characters,
+        universe, username
+    ])
 
 
 def get_user(username, universe="play"):
@@ -35,6 +74,73 @@ def get_user(username, universe="play"):
     elif user[0]["races"] == 0 or not user[0]["last_updated"]:
         return None
     return user[0]
+
+
+async def get_important_users():
+    users = (
+            get_most("races", 20)
+            + get_most_daily_races(20)
+            + get_most("characters", 20)
+            + get_most("total_time", 20)
+            + get_most_total_points(20)
+            + get_most_daily_points(20)
+            + get_top_text_best(20)
+            + get_most("text_wpm_total", 20)
+            + get_most("texts_typed", 20)
+            + get_most("text_repeat_times", 20)
+            + get_most_awards(20)
+    )
+
+    return list(set([user["username"] for user in users]))
+
+
+def get_user_data(username):
+    user = db.fetch("""
+        SELECT * FROM users
+        WHERE username = ?
+    """, [username])
+
+    if not user:
+        return {}
+
+    return dict(user[0])
+
+
+def get_user_stats(username, universe):
+    user = db.fetch("""
+        SELECT * FROM user_stats
+        WHERE universe = ?
+        AND username = ?
+    """, [universe, username])
+
+    if not user:
+        return {}
+
+    return dict(user[0])
+
+
+def update_last_accessed(universe, username):
+    db.run("""
+        UPDATE user_stats
+        SET last_accessed = datetime('now')
+        WHERE universe = ?
+        AND username = ?
+    """, [universe, username])
+
+
+async def delete_expired_users():
+    important_users = get_important_users()
+
+    users = db.fetch("""
+        SELECT universe, username FROM user_stats
+        WHERE last_accessed < datetime('now', '-30 days')
+    """)
+
+    for user in users:
+        username = user["username"]
+        if username not in important_users:
+            log(f"Deleting expired user {username}")
+            await delete_user(user["username"], user["universe"])
 
 
 async def time_travel_stats(stats, user):
@@ -60,8 +166,8 @@ async def time_travel_stats(stats, user):
     for race in race_list:
         points += race["points"]
         wins += 1 if (race["rank"] == 1 and race["racers"] > 1) else 0
-        total_wpm += race["wpm"]
-        best_wpm = max(race["wpm"], best_wpm)
+        total_wpm += race["wpm_adjusted"]
+        best_wpm = max(race["wpm_adjusted"], best_wpm)
     average_wpm = total_wpm / len(race_list) if race_list else 0
 
     stats["races"] = races
@@ -203,7 +309,7 @@ async def get_most_texts_over(wpm, limit=10):
         FROM races r
         JOIN users u USING (username)
         WHERE universe = "play"
-        AND wpm >= ?
+        AND wpm_adjusted >= ?
         GROUP BY username
     """, [wpm])
 
@@ -228,7 +334,7 @@ async def get_most_races_over(wpm, limit=10):
         FROM races r
         JOIN users u USING (username)
         WHERE universe = "play"
-        AND wpm >= ?
+        AND wpm_adjusted >= ?
         GROUP BY username
     """, [wpm])
 
@@ -259,7 +365,7 @@ async def get_most_performance():
     top = []
     for i, user in enumerate(user_list):
         text_bests = get_text_bests(user["username"])
-        performance = stats.calculate_total_performance(text_bests, text_list)
+        performance = calculate_total_performance(text_bests, text_list)
         top.append({**user, "performance": performance})
     top.sort(key=lambda x: -x["performance"])
 
@@ -275,16 +381,16 @@ def update_user(username, display_name, premium, country, avatar):
 
 
 def update_stats(universe, username, wpm_average, wpm_best, wpm_verified, races,
-                 wins, points, points_retroactive, seconds, characters, disqualified):
+                 wins, points, points_retroactive, total_time, characters, disqualified):
     db.run(f"""
         UPDATE user_stats
         SET wpm_average = ?, wpm_best = ?, wpm_verified = ?, races = ?, wins = ?, points = ?,
-        points_retroactive = ?, seconds = ?, characters = ?, disqualified = ?
+        points_retroactive = ?, total_time = ?, characters = ?, disqualified = ?
         WHERE universe = ?
         AND username = ?
     """, [
         wpm_average, wpm_best, wpm_verified, races, wins, points,
-        points_retroactive, seconds, characters, disqualified,
+        points_retroactive, total_time, characters, disqualified,
         universe, username
     ])
 
@@ -332,14 +438,15 @@ async def delete_user(username, universe):
         db.run("DELETE FROM text_results WHERE username = ?", [username])
 
 
-def get_text_bests(username, race_stats=False, universe="play", until=None):
+def get_text_bests(username, race_stats=False, universe="play", until=None, raw=False):
+    wpm_column = "wpm_raw" if raw else "wpm_adjusted"
     columns = "text_id"
     if race_stats:
-        columns = "text_id, wpm, number, timestamp, accuracy, points"
+        columns = f"text_id, {wpm_column} AS wpm, number, timestamp, accuracy, points"
     timestamp_string = f"AND timestamp < {until}" if until else ""
 
     text_bests = db.fetch(f"""
-        SELECT {columns}, MAX(wpm) AS wpm
+        SELECT {columns}, MAX({wpm_column}) AS wpm
         FROM races
         WHERE universe = ?
         AND username = ?
@@ -351,13 +458,14 @@ def get_text_bests(username, race_stats=False, universe="play", until=None):
     return filter_disabled(text_bests)
 
 
-async def get_text_bests_time_travel(username, universe, user, race_stats=False):
+async def get_text_bests_time_travel(username, universe, user, race_stats=False, raw=False):
     from database.main.races import get_races
 
     start_date = user["start_date"]
     end_date = user["end_date"]
 
-    columns = ["text_id", "wpm", "number", "timestamp", "accuracy", "points"]
+    wpm_column = "wpm_raw" if raw else "wpm_adjusted"
+    columns = ["text_id", wpm_column, "number", "timestamp", "accuracy", "points"]
     if not race_stats:
         columns = columns[:2]
 
@@ -397,6 +505,8 @@ def get_unraced_texts(username, universe="play"):
 
 
 def count_races_over(username, threshold, category, over, universe, start_date=None, end_date=None):
+    if category == "wpm":
+        category = "wpm_adjusted"
     times = db.fetch(f"""
         SELECT COUNT(*)
         FROM races
@@ -411,6 +521,8 @@ def count_races_over(username, threshold, category, over, universe, start_date=N
 
 
 def get_texts_over(username, threshold, category, universe, start_date=None, end_date=None):
+    if category == "wpm":
+        category = "wpm_adjusted"
     threshold_string = f"HAVING TIMES >= {threshold}" * (category == "times")
     category_string = f"AND {category} >= {threshold}" * (category != "times")
     index = f"INDEXED BY idx_races_universe_username" * (category == "points")
@@ -432,6 +544,8 @@ def get_texts_over(username, threshold, category, universe, start_date=None, end
 
 
 def get_texts_under(username, threshold, category, universe, start_date=None, end_date=None):
+    if category == "wpm":
+        category = "wpm_adjusted"
     if category == "times":
         texts = db.fetch(f"""
             SELECT text_id, COUNT(text_id) AS times
@@ -490,7 +604,7 @@ def get_milestone_number(username, milestone, category, universe, start_date=Non
             INDEXED BY idx_races_universe_username
             WHERE universe = ?
             AND username = ?
-            AND wpm >= ?
+            AND wpm_adjusted >= ?
             {get_date_query_string(start_date, end_date)}
             ORDER BY timestamp ASC
             LIMIT 1
@@ -537,33 +651,6 @@ def get_milestone_number(username, milestone, category, universe, start_date=Non
         return None
 
 
-def correct_best_wpm(username, universe):
-    best_wpm = db.fetch("""
-        SELECT wpm_best
-        FROM user_stats
-        WHERE universe = ?
-        AND username = ?
-    """, [universe, username])[0][0]
-    best_wpm = round(best_wpm, 2)
-
-    actual_best_wpm = db.fetch("""
-        SELECT wpm
-        FROM races
-        WHERE universe = ?
-        AND username = ?
-        ORDER BY wpm DESC
-        LIMIT 1
-    """, [universe, username])[0][0]
-
-    if best_wpm > actual_best_wpm:
-        db.run("""
-            UPDATE user_stats
-            SET wpm_best = ?
-            WHERE universe = ?
-            AND username = ?    
-        """, [actual_best_wpm, universe, username])
-
-
 def get_disqualified_users(universe="play"):
     dq_users = db.fetch("""
         SELECT username
@@ -576,9 +663,9 @@ def get_disqualified_users(universe="play"):
 
 
 def get_database_stats():
-    race_count = db.fetch("SELECT COUNT(*) FROM races")[0][0]
-    text_count = db.fetch("SELECT COUNT(*) FROM texts")[0][0]
-    user_count = db.fetch("SELECT COUNT(*) FROM users")[0][0]
+    race_count = db.fetch("SELECT COUNT(rowid) FROM races")[0][0]
+    text_count = db.fetch("SELECT COUNT(rowid) FROM texts")[0][0]
+    user_count = db.fetch("SELECT COUNT(rowid) FROM users")[0][0]
     universe_count = db.fetch("SELECT COUNT(DISTINCT universe) FROM user_stats")[0][0]
 
     return race_count, text_count, user_count, universe_count
@@ -591,23 +678,6 @@ def get_countries():
         user["username"]: user["country"]
         for user in users
     }
-
-
-def get_universe_list_og():
-    from database.main import dbog
-    table_list = dbog.fetch("""
-        SELECT name FROM sqlite_master
-        WHERE type = 'table'
-        AND name LIKE 'users_%'
-    """)
-
-    universe_list = ["_".join(table["name"].split("_")[1:]) for table in table_list]
-    for i, universe in enumerate(universe_list):
-        if universe in ["lang_zh_tw", "lang_sr_latn", "clickit_academy", "new_lang_zh_tw"]:
-            underscore = universe.rfind("_")
-            universe_list[i] = universe[:underscore] + "-" + universe[underscore + 1:]
-
-    return universe_list
 
 
 def get_universe_list():
