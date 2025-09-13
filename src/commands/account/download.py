@@ -1,3 +1,4 @@
+import asyncio
 import zlib
 
 from aiohttp import ClientResponseError
@@ -163,6 +164,8 @@ async def process_races(race_list, universe, username, imported_races):
         if not race:
             continue
         number = race["number"]
+        if number % 1000 == 0:
+            await asyncio.sleep(0)
 
         if race and number not in seen:
             new_races.append(race)

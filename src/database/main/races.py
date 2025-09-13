@@ -6,18 +6,20 @@ from utils import logs
 from utils.logging import log
 
 
-def add_races(races):
-    db.run_many(f"""
-        INSERT OR IGNORE INTO races
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, [(
-        race["universe"], race["username"], race["number"], race["text_id"],
-        race["wpm"], race["accuracy"], race["points"], race["characters"],
-        race["rank"], race["racers"], race["race_id"], race["timestamp"],
-        race["unlagged"], race["adjusted"], race["raw_adjusted"],
-        race["pauseless_adjusted"], race["start"], race["duration"],
-        race["correction_time"], race["pause_time"]
-    ) for race in races])
+def add_races(races, batch_size=1000):
+    for i in range(0, len(races), batch_size):
+        batch = races[i:i + batch_size]
+        db.run_many("""
+            INSERT OR IGNORE INTO races
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, [(
+            race["universe"], race["username"], race["number"], race["text_id"],
+            race["wpm"], race["accuracy"], race["points"], race["characters"],
+            race["rank"], race["racers"], race["race_id"], race["timestamp"],
+            race["unlagged"], race["adjusted"], race["raw_adjusted"],
+            race["pauseless_adjusted"], race["start"], race["duration"],
+            race["correction_time"], race["pause_time"]
+        ) for race in batch])
 
 
 def add_temporary_races(username, races):

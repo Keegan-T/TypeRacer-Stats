@@ -9,12 +9,15 @@ async def decompress(log):
 
 
 def add_logs(typing_logs):
-    db.run_many(f"""
-        INSERT OR IGNORE INTO typing_logs
-        VALUES (?, ?, ?, ?, 0)
-    """, [(
-        race["universe"], race["username"], race["number"], race["typing_log"],
-    ) for race in typing_logs])
+    batch_size = 1000
+    for i in range(0, len(typing_logs), batch_size):
+        batch = typing_logs[i:i + batch_size]
+        db.run_many("""
+            INSERT OR IGNORE INTO typing_logs
+            VALUES (?, ?, ?, ?, 0)
+        """, [(
+            r["universe"], r["username"], r["number"], r["typing_log"]
+        ) for r in batch])
 
 
 async def compress_logs():
