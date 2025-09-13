@@ -1,4 +1,3 @@
-import asyncio
 import zlib
 
 import database.main.users as users
@@ -7,23 +6,18 @@ from utils import logs
 from utils.logging import log
 
 
-async def add_races(races):
-    batch_size = 1000
-    sleep_time = 1 if len(races) > 10000 else 0
-    for i in range(0, len(races), batch_size):
-        batch = races[i:i + batch_size]
-        db.run_many("""
-            INSERT OR IGNORE INTO races
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, [(
-            race["universe"], race["username"], race["number"], race["text_id"],
-            race["wpm"], race["accuracy"], race["points"], race["characters"],
-            race["rank"], race["racers"], race["race_id"], race["timestamp"],
-            race["unlagged"], race["adjusted"], race["raw_adjusted"],
-            race["pauseless_adjusted"], race["start"], race["duration"],
-            race["correction_time"], race["pause_time"]
-        ) for race in batch])
-        await asyncio.sleep(sleep_time)
+def add_races(races):
+    db.run_many(f"""
+        INSERT OR IGNORE INTO races
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, [(
+        race["universe"], race["username"], race["number"], race["text_id"],
+        race["wpm"], race["accuracy"], race["points"], race["characters"],
+        race["rank"], race["racers"], race["race_id"], race["timestamp"],
+        race["unlagged"], race["adjusted"], race["raw_adjusted"],
+        race["pauseless_adjusted"], race["start"], race["duration"],
+        race["correction_time"], race["pause_time"]
+    ) for race in races])
 
 
 def add_temporary_races(username, races):

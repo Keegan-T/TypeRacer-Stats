@@ -19,6 +19,7 @@ from commands.stats.stats import get_args
 from commands.locks import import_lock
 from database.bot.users import get_user
 from database.main import deleted_races, typing_logs
+from database.main.db import writer
 from utils import errors, colors, strings, logs, dates
 from utils.embeds import Page, Message, is_embed
 from utils.logging import log
@@ -88,6 +89,7 @@ async def run(username=None, racer={}, ctx=None, bot_user=None, universe="play")
     races_left = total_races - imported_races
     if races_left > 0:
         log(f"**Importing data for {username} (Universe: {universe})**")
+        writer.execute("BEGIN")
         await send_start(ctx, bot_user, username, races_left, universe)
 
         recent_races = await get_recent_races(username, universe, start_time)
@@ -103,11 +105,9 @@ async def run(username=None, racer={}, ctx=None, bot_user=None, universe="play")
             else:
                 raise e
 
-        new_races, log_list, points_retroactive, total_time, characters = await process_races(
+        points_retroactive, total_time, characters = await process_races(
             recent_races + historical_races, universe, username, imported_races
         )
-        await races.add_races(new_races)
-        await typing_logs.add_logs(log_list)
 
     if not user_data:
         users.create_user_data(racer)
@@ -151,25 +151,22 @@ def extract_racer_data(stats):
     )
 
 
-async def process_races(race_list, universe, username, imported_races):
+async def process_races(race_list, universe, username, imported_races, batch_size=1000):
     processor = RaceProcesser(universe)
     points_retroactive = total_time = characters = 0
     race_list = sorted(race_list, key=lambda r: r["t"])
     seen = set(range(1, imported_races + 1))
-    new_races = []
-    log_list = []
-    sleep_time = 0.5 if len(race_list) > 10000 else 0
 
-    for race_data in race_list:
+    races_batch = []
+    logs_batch = []
+
+    for i, race_data in enumerate(race_list, 1):
         race = await processor.process_race(universe, username, race_data)
         if not race:
             continue
-        number = race["number"]
-        if number % 1000 == 0:
-            await asyncio.sleep(sleep_time)
 
-        if race and number not in seen:
-            new_races.append(race)
+        number = race["number"]
+        if number not in seen:
             seen.add(number)
 
             characters += race["characters"]
@@ -177,10 +174,28 @@ async def process_races(race_list, universe, username, imported_races):
             if race["retroactive"]:
                 points_retroactive += race["points"]
 
+            races_batch.append(race)
             if race["typing_log"]:
-                log_list.append(race)
+                logs_batch.append(race)
 
-    return new_races, log_list, points_retroactive, total_time, characters
+            if len(races_batch) >= batch_size:
+                races.add_races(races_batch)
+                races_batch.clear()
+
+            if len(logs_batch) >= batch_size:
+                typing_logs.add_logs(logs_batch)
+                logs_batch.clear()
+
+        if i % 1000 == 0:
+            await asyncio.sleep(0)
+
+    if races_batch:
+        races.add_races(races_batch)
+    if logs_batch:
+        typing_logs.add_logs(logs_batch)
+
+    return points_retroactive, total_time, characters
+
 
 
 async def get_recent_races(username, universe, start_time):

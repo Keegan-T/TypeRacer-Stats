@@ -14,6 +14,7 @@ writer = sqlite3.connect(file)
 writer.row_factory = sqlite3.Row
 writer.execute("PRAGMA foreign_keys = ON")
 writer.execute("PRAGMA journal_mode = WAL")
+writer.execute("PRAGMA wal_checkpoint(TRUNCATE)")
 writer.execute("PRAGMA cache_size = -100000")
 
 
