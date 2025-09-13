@@ -683,7 +683,7 @@ def get_countries():
 def get_universe_list():
     universe_list = db.fetch("""
         SELECT DISTINCT universe
-        FROM user_stats
+        FROM text_universes
     """)
 
     return [universe["universe"] for universe in universe_list]
