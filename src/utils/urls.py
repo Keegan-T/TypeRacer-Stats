@@ -28,11 +28,11 @@ def replay(username, race_number, universe="play", dq=False):
     return url
 
 
-def ghost(username, race_number, universe="play"):
+def ghost(text_id, universe="play"):
     if universe != "play":
-        return f"https://play.typeracer.com/?ghost={universe}%7Ctr:{username}%7C{race_number}&universe={universe}"
+        return f"https://play.typeracer.com/?ghost={universe}%7Cbot%3A1%7C{text_id}&universe={universe}"
 
-    return f"https://play.typeracer.com/?ghost=%7Ctr%3A{username}%7C{race_number}"
+    return f"https://play.typeracer.com/?ghost=%7Cbot%3A1%7C{text_id}"
 
 
 def profile(username, universe="play"):
