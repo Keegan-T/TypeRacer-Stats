@@ -1,3 +1,6 @@
+import re
+from datetime import datetime
+
 import requests
 from bs4 import BeautifulSoup
 
@@ -35,6 +38,27 @@ async def get_top_10_user_stats(session, text_id):
             return user_stats
         except:
             return []
+
+
+def get_trdata_top_10(text_id, universe):
+    url = f"https://typeracerdata.com/text?id={text_id}&universe={universe}"
+    html = requests.get(url).text
+    soup = BeautifulSoup(html, "html.parser")
+    table = soup.find("table", class_="profile")
+    rows = table.find_all("tr")[1:]
+    top_10 = []
+
+    for row in rows[:10]:
+        columns = row.find_all("td")
+        top_10.append({
+            "username": re.search(r"username=([^&\"]+)", str(columns[1])).group(1),
+            "number": int(re.search(r"game=(\d+)", str(columns[2])).group(1)),
+            "wpm": float(columns[2].text.replace(",", "")),
+            "accuracy": float(columns[3].text.strip("%")) / 100,
+            "timestamp": datetime.strptime(columns[4].text, "%Y-%m-%d").timestamp(),
+        })
+
+    return top_10
 
 
 def get_text_list(universe):
