@@ -8,7 +8,7 @@ from config import prefix, bot_admins, bot_owner
 from database.bot.users import get_user
 from utils import errors
 
-groups = ["account", "advanced", "basic", "general", "info", "admin", "owner"]
+groups = ["info", "account", "stats", "races", "texts", "graphs", "general", "admin", "owner"]
 command = {
     "name": "help",
     "aliases": ["h"],
@@ -57,23 +57,27 @@ async def help_main(ctx, user):
     for key in command_list.keys():
         command_list[key].sort(key=lambda x: x[0])
 
-    account_commands = ", ".join(f"`{cmd}`" for cmd in command_list["account"])
     info_commands = ", ".join(f"`{cmd}`" for cmd in command_list["info"])
+    account_commands = ", ".join(f"`{cmd}`" for cmd in command_list["account"])
+    stat_commands = ", ".join(f"`{cmd}`" for cmd in command_list["stats"])
+    race_commands = ", ".join(f"`{cmd}`" for cmd in command_list["races"])
+    graph_commands = ", ".join(f"`{cmd}`" for cmd in command_list["graphs"])
+    text_commands = ", ".join(f"`{cmd}`" for cmd in command_list["texts"])
     general_commands = ", ".join(f"`{cmd}`" for cmd in command_list["general"])
-    basic_commands = ", ".join(f"`{cmd}`" for cmd in command_list["basic"])
-    advanced_commands = ", ".join(f"`{cmd}`" for cmd in command_list["advanced"])
     admin_commands = ", ".join(f"`{cmd}`" for cmd in command_list["admin"])
     owner_commands = ", ".join(f"`{cmd}`" for cmd in command_list["owner"])
 
-    embed.add_field(name="Account Commands", value=account_commands, inline=False)
-    embed.add_field(name="Info Commands", value=info_commands, inline=False)
-    embed.add_field(name="General Commands", value=general_commands, inline=False)
-    embed.add_field(name="Basic User Commands", value=basic_commands, inline=False)
-    embed.add_field(name=f"Advanced User Commands (`{prefix}import` required)", value=advanced_commands, inline=False)
+    embed.add_field(name="Info", value=info_commands, inline=False)
+    embed.add_field(name="Account", value=account_commands, inline=False)
+    embed.add_field(name="Stats", value=stat_commands, inline=False)
+    embed.add_field(name="Races", value=race_commands, inline=False)
+    embed.add_field(name="Texts", value=text_commands, inline=False)
+    embed.add_field(name="Graphs", value=graph_commands, inline=False)
+    embed.add_field(name="General", value=general_commands, inline=False)
     if ctx.author.id in bot_admins:
-        embed.add_field(name="Admin Commands", value=admin_commands, inline=False)
+        embed.add_field(name="Admin", value=admin_commands, inline=False)
     if ctx.author.id == bot_owner:
-        embed.add_field(name="Owner Commands", value=owner_commands, inline=False)
+        embed.add_field(name="Owner", value=owner_commands, inline=False)
 
     embed.set_footer(text="Developed by keegant", icon_url="https://cdn.discordapp.com/avatars/155481579005804544/33ede24295683bbb2253481d5029266e.webp?size=1024")
 

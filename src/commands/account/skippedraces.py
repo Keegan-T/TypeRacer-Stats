@@ -4,7 +4,7 @@ from api.core import date_to_timestamp
 from api.races import get_races
 from api.users import get_stats
 from commands.account.download import process_races
-from commands.basic.stats import get_args
+from commands.stats.stats import get_args
 from commands.locks import skip_lock
 from database.bot.users import get_user
 from database.main import races, deleted_races, users, typing_logs

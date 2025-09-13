@@ -3,7 +3,7 @@ from discord.ext import commands
 
 from api.users import get_stats
 from commands.account.download import run as download
-from commands.basic.stats import get_args
+from commands.stats.stats import get_args
 from commands.locks import import_lock
 from database.bot.users import get_user, update_username
 from utils import errors, embeds, urls

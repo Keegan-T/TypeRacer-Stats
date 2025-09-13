@@ -14,7 +14,7 @@ from api.core import date_to_timestamp
 from api.races import get_races, get_universe_multiplier, get_races_historical
 from api.texts import get_text
 from api.users import get_stats, get_racer, get_joined
-from commands.basic.stats import get_args
+from commands.stats.stats import get_args
 from commands.locks import import_lock
 from database.bot.users import get_user
 from database.main import deleted_races, typing_logs

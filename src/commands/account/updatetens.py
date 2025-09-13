@@ -5,7 +5,7 @@ import database.main.text_results as text_results
 import database.main.users as users
 from api.users import get_stats
 from commands.account.download import run as download
-from commands.basic.stats import get_args
+from commands.stats.stats import get_args
 from commands.locks import tens_lock
 from config import bot_owner
 from database.main.alts import get_alts
