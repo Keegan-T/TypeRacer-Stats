@@ -81,7 +81,7 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
         return await run_realspeed(ctx, user, username, start_number, False, universe, raw=raw)
 
     race_list = await races.get_races(
-        username, columns=["*"], start_number=start_number, end_number=end_number
+        username, columns=["*"], start_number=start_number, end_number=end_number, universe=universe,
     )
 
     stats = dict(
