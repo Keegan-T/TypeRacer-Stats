@@ -59,7 +59,7 @@ async def run(ctx, user, username, race_number, universe):
     if not race_info:
         return await ctx.send(embed=errors.race_not_found(username, race_number, universe))
     race_info = dict(race_info)
-    quote = texts.get_text(race_info["text_id"])["quote"]
+    quote = texts.get_text(race_info["text_id"], universe)["quote"]
     race_info["quote"] = quote
     race_info["lagged"] = race_info["wpm"]
 

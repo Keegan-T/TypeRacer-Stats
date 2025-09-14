@@ -68,7 +68,7 @@ async def run(ctx, user, username, race_number, universe):
     race_id = race["race_id"]
     match = await get_race_by_id(race_id)
 
-    text_description = strings.text_description(texts.get_text(race["text_id"]), universe)
+    text_description = strings.text_description(texts.get_text(race["text_id"], universe), universe)
     description = text_description + "\n\n**Rankings**\n"
     raw_description = text_description + "\n\n**Raw Rankings**\n"
     pauseless_description = text_description + "\n\n**Pauseless Rankings**\n"
