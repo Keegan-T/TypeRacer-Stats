@@ -84,7 +84,7 @@ async def import_competitions():
 async def update_important_users():
     log(f"Updating important users")
 
-    important_users = users.get_important_users()
+    important_users = await users.get_important_users()
     async with import_lock:
         for user in important_users:
             await download(user["username"])
