@@ -51,7 +51,7 @@ class CommandLeaderboard(commands.Cog):
 async def command_leaderboard(ctx, user, name):
     alias_dict = {}
 
-    groups = ["account", "admin", "advanced", "basic", "general", "info", "owner", "unlisted"]
+    groups = ["info", "account", "stats", "races", "texts", "graphs", "general", "admin", "owner"]
     for group in groups:
         for file in os.listdir(f"./commands/{group}"):
             if file.endswith(".py") and not file.startswith("_"):
