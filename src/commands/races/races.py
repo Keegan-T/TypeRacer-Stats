@@ -212,7 +212,7 @@ def get_stats_fields(username, race_list, start_time, end_time, universe="play",
     total_time = 0
     text_improvements = 0
     total_wpm_gain = 0
-    text_best_list = users.get_text_bests(username, until=race_list[0][7])
+    text_best_list = users.get_text_bests(username, until=race_list[0][8])
     text_bests = {text_id: wpm for text_id, wpm in text_best_list}
     disabled_text_ids = texts.get_disabled_text_ids()
     unique_texts = set()
