@@ -95,11 +95,8 @@ def get_stats(username=None, stats=None, universe="play"):
 
 
 async def get_joined(username):
-    result = await get_racer_data(username)
-    join_date = result["data"]["joined_at"]
-    join_timestamp = date_to_timestamp(join_date)
-
-    return join_timestamp
+    data = await get_racer_data(username)
+    return data["joined_at"]
 
 
 def get_latest_race(username, universe="play"):

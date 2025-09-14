@@ -2,9 +2,9 @@ from discord import Embed
 from discord.ext import commands
 
 from api.users import get_stats
-from commands.account.download import run as download
-from commands.stats.stats import get_args
+from commands.account.download import run as download, extract_racer_data
 from commands.locks import import_lock
+from commands.stats.stats import get_args
 from database.bot.users import get_user, update_username
 from utils import errors, embeds, urls
 
@@ -40,6 +40,7 @@ async def run(ctx, user, username):
     stats = get_stats(username)
     if not stats:
         return await ctx.send(embed=errors.invalid_username())
+    stats = extract_racer_data(stats)
 
     update_username(ctx.author.id, username)
     new_user = user["username"] is None
@@ -60,7 +61,7 @@ async def run(ctx, user, username):
 
     await ctx.send(embed=embed)
 
-    if new_user and stats["races"] > 0:
+    if new_user and stats["total_races"] > 0:
         async with import_lock:
             await download(ctx=ctx, bot_user=user, racer=stats)
 
