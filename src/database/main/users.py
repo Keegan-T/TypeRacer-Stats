@@ -422,6 +422,7 @@ def update_awards(username, first, second, third):
 
 
 async def delete_user(username, universe):
+    log(f"Deleting user: {username} (Universe: {universe})")
     db.run("""
         DELETE FROM user_stats
         WHERE universe = ?
@@ -430,6 +431,12 @@ async def delete_user(username, universe):
 
     db.run("""
         DELETE FROM races
+        WHERE universe = ?
+        AND username = ?
+    """, [universe, username])
+
+    db.run("""
+        DELETE FROM typing_logs
         WHERE universe = ?
         AND username = ?
     """, [universe, username])
