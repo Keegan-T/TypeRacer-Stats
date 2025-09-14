@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 import matplotlib
 import matplotlib.pyplot as plt
+from PIL import Image
 import numpy as np
 from matplotlib import rcParams, image as mpimg
 from matplotlib.collections import LineCollection
@@ -185,7 +186,11 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
     if int(user["id"]) == bot_owner:
         apply_background_image(ax, files.path("../assets/backgrounds/galaxy.png"))
     if int(user["id"]) == 247492668131770369:
-        apply_graph_background_image(ax, files.path("../assets/backgrounds/gian.png"))
+        if any(title in ax.get_title() for title in [
+            "Improvement", "Over Time", "Over Races", "Over Text",
+            "Match", "Race Graph", "Personal Best", "Sample"
+        ]):
+            apply_graph_background_image(ax, files.path("../assets/backgrounds/gian.png"))
 
 
 def apply_background_image(ax, image_path):
@@ -196,13 +201,26 @@ def apply_background_image(ax, image_path):
     bg_ax.axis("off")
     ax.set_zorder(1)
 
-
 def apply_graph_background_image(ax, image_path):
-    bg_img = mpimg.imread(image_path)
-    xlim = ax.get_xlim()
-    ylim = ax.get_ylim()
-    ax.imshow(bg_img, extent=[*xlim, *ylim], aspect='auto', zorder=0)
-    ax.set_zorder(1)
+    fig = ax.figure
+    fig_w, fig_h = fig.get_size_inches() * fig.get_dpi()
+    bbox = ax.get_position()
+    ax_w = int(bbox.width * fig_w)
+    img_array = crop_to_ax_width(image_path, ax_w)
+    ax.imshow(img_array, aspect="auto", extent=ax.get_xlim() + ax.get_ylim())
+
+def crop_to_ax_width(img_path, target_w):
+    img = Image.open(img_path)
+    h = img.height
+    w = img.width
+    if target_w > w:
+        raise ValueError("Target width is larger than image width")
+
+    left = (w - target_w) // 2
+    right = left + target_w
+    cropped = img.crop((left, 0, right, h))
+
+    return np.array(cropped)
 
 
 def universe_title(title, universe):
