@@ -108,6 +108,7 @@ async def run(ctx, user, username, category):
 
     if era_string:
         text_bests = await users.get_text_bests_time_travel(username, universe, user)
+        text_bests = [(text["text_id"], text["wpm"]) for text in text_bests]
     else:
         text_bests = users.get_text_bests(username, universe=universe)
     text_best_values = [race[1] for race in text_bests]

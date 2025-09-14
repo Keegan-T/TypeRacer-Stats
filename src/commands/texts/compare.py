@@ -58,7 +58,9 @@ async def run(ctx, user, username1, username2):
     era_string = strings.get_era_string(user)
     if era_string:
         text_bests1 = await users.get_text_bests_time_travel(username1, universe, user, race_stats=True)
+        text_bests1 = [(text["text_id"], text["wpm"], text["timestamp"], text["accuracy"], text["points"]) for text in text_bests1]
         text_bests2 = await users.get_text_bests_time_travel(username2, universe, user, race_stats=True)
+        text_bests2 = [(text["text_id"], text["wpm"], text["timestamp"], text["accuracy"], text["points"]) for text in text_bests2]
 
     else:
         text_bests1 = get_text_bests(username1, race_stats=True, universe=universe)
