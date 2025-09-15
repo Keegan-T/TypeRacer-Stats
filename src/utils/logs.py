@@ -72,7 +72,7 @@ def get_log_details(race, get_keystrokes=False, get_typos=False):
     race["lag"] = lag
 
     # Adding new 300 WPM races
-    if universe == "play" and 300 <= race["adjusted"] <= 450 and False:
+    if universe == "play" and 300 <= race["adjusted"] <= 450:
         username = race["username"]
         stats = get_stats(username)
         if not stats["disqualified"]:
