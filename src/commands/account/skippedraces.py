@@ -93,6 +93,8 @@ async def run(ctx, user, username):
 
         start_time = prev_race["timestamp"] - 10
         end_time = next_race["timestamp"] + 10
+        if start_time > end_time:
+            start_time, end_time = end_time, start_time
 
         recent_races = await get_races(username, start_time, end_time, last - first + 10, universe)
         for race in recent_races:
