@@ -43,10 +43,12 @@ def get_args(user, args, info):
 
 
 def analyze_encounters(encounters, username1, username2):
+    encounters = sorted(encounters, key=lambda e: e[0]["number"])
+
     user_stats = {
         "wpms": [], "wpms_raw": [], "wpm_diffs": [],
         "accuracy": [], "correction": [], "ranks": [],
-        "wins": 0, "biggest_win": None,
+        "wins": 0, "biggest_win": None, "win_streak": 0,
     }
     stats = {
         username1: copy.deepcopy(user_stats),
@@ -55,10 +57,40 @@ def analyze_encounters(encounters, username1, username2):
         "closest": None,
         "first_encounter": None,
         "latest_encounter": None,
+        "longest_streak": 0,
     }
+
+    current_winner = None
+    current_streak = 0
+
+    current_encounter_streak = 1
+    last_number = None
 
     for e in encounters:
         user1, user2 = e
+
+        if last_number is not None and user1["number"] == last_number + 1:
+            current_encounter_streak += 1
+        else:
+            current_encounter_streak = 1
+        stats["longest_streak"] = max(stats["longest_streak"], current_encounter_streak)
+        last_number = user1["number"]
+
+        if user1["wpm_unlagged"] > user2["wpm_unlagged"]:
+            winner, loser, diff = (username1, username2, user1["wpm_unlagged"] - user2["wpm_unlagged"])
+        elif user2["wpm_unlagged"] > user1["wpm_unlagged"]:
+            winner, loser, diff = (username2, username1, user2["wpm_unlagged"] - user1["wpm_unlagged"])
+        else:
+            winner, loser, diff = (None, None, 0)
+
+        if winner == current_winner:
+            current_streak += 1
+        else:
+            current_winner = winner
+            current_streak = 1 if winner else 0
+        if winner:
+            stats[winner]["win_streak"] = max(stats[winner]["win_streak"], current_streak)
+
         for username, u1, u2 in [(username1, user1, user2), (username2, user2, user1)]:
             diff = u1["wpm_unlagged"] - u2["wpm_unlagged"]
 
@@ -150,6 +182,7 @@ async def run(ctx, user, username1, username2):
                 f"**Wins:** {s['wins']:,} ({s['win_rate']:.2%} Win Rate)\n"
                 f"{'**Biggest Win:**' if s['biggest_win'][0] >= 0 else '**Closest Loss:**'} "
                 f"{s['biggest_win'][0]:,.2f} WPM\n"
+                f"**Best Win Streak:** {s['win_streak']:,}\n"
                 f"**Average Gain:** {s['avg_wpm_diff']:,.2f} WPM\n"
                 f"**Average Rank:** {s['avg_rank']:.2f}\n"
             ),
@@ -161,7 +194,8 @@ async def run(ctx, user, username1, username2):
             description=(
                 f"**Total Encounters:** {len(encounters):,}\n"
                 f"**First Encounter:** {strings.discord_timestamp(stats['first_encounter'])}\n"
-                f"**Latest Encounter:** {strings.discord_timestamp(stats['latest_encounter'])}"
+                f"**Latest Encounter:** {strings.discord_timestamp(stats['latest_encounter'])}\n"
+                f"**Longest Streak:** {stats['longest_streak']}"
             ),
             fields=fields,
             button_name="Stats",
