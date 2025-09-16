@@ -3,8 +3,8 @@ from datetime import datetime, timezone
 
 import matplotlib
 import matplotlib.pyplot as plt
-from PIL import Image
 import numpy as np
+from PIL import Image
 from matplotlib import rcParams, image as mpimg
 from matplotlib.collections import LineCollection
 from matplotlib.colors import LinearSegmentedColormap, to_rgb
@@ -104,7 +104,7 @@ def get_line_cmap(ax, line_index, user):
     return lc
 
 
-def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
+def color_graph(ax, user, recolored_line=0, force_legend=False, match=False, ignore_line_colors=False):
     colors = user["colors"]
     ax.set_facecolor(colors["graphbackground"])
 
@@ -129,6 +129,8 @@ def color_graph(ax, user, recolored_line=0, force_legend=False, match=False):
     line_color = colors["line"]
 
     for i, line in enumerate(ax.get_lines()):
+        if ignore_line_colors:
+            continue
         label = line.get_label()
 
         if label in ["Corrections", "Pauses"]:
@@ -201,6 +203,7 @@ def apply_background_image(ax, image_path):
     bg_ax.axis("off")
     ax.set_zorder(1)
 
+
 def apply_graph_background_image(ax, image_path):
     fig = ax.figure
     fig_w, fig_h = fig.get_size_inches() * fig.get_dpi()
@@ -208,6 +211,7 @@ def apply_graph_background_image(ax, image_path):
     ax_w = int(bbox.width * fig_w)
     img_array = crop_to_ax_width(image_path, ax_w)
     ax.imshow(img_array, aspect="auto", extent=ax.get_xlim() + ax.get_ylim())
+
 
 def crop_to_ax_width(img_path, target_w):
     img = Image.open(img_path)
