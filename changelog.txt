@@ -1,3 +1,6 @@
+9/16/2025
+- Added -encounters
+
 9/13/2025 - THE TYPING LOG UPDATE
 - All races now go by real speed
 - Reorganized -races and similar commands

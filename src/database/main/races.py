@@ -1,4 +1,5 @@
 import zlib
+from collections import defaultdict
 
 import database.main.users as users
 from database.main import db
@@ -50,8 +51,8 @@ def delete_temporary_races(universe, username):
 
 
 async def get_races(
-        username, columns="*", start_date=None, end_date=None, start_number=None, end_number=None,
-        order_by=None, reverse=False, limit=None, universe="play"
+    username, columns="*", start_date=None, end_date=None, start_number=None, end_number=None,
+    order_by=None, reverse=False, limit=None, universe="play"
 ):
     users.update_last_accessed(universe, username)
 
@@ -164,6 +165,32 @@ def get_text_races(username, text_id, universe, start_date=None, end_date=None):
 
     return races
 
+
+def get_encounters(username1, username2, universe):
+    races = db.fetch("""
+        SELECT *
+        FROM races
+        WHERE race_id IN (
+            SELECT race_id
+            FROM races
+            WHERE universe = ?
+            AND username IN (?, ?)
+            GROUP BY race_id
+            HAVING COUNT(DISTINCT username) = 2
+        )
+        AND username IN (?, ?)
+    """, [universe, username1, username2, username1, username2])
+
+
+
+    encounters = defaultdict(list)
+    for race in races:
+        encounters[race["race_id"]].append(race)
+
+    return [
+        sorted(r, key=lambda row: row["username"] == username2)
+        for r in encounters.values()
+    ]
 
 async def delete_race(username, race_number, universe="play"):
     log(f"Deleting race {universe}|{username}|{race_number}")
