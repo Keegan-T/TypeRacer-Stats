@@ -15,8 +15,8 @@ from api.core import date_to_timestamp
 from api.races import get_races, get_universe_multiplier, get_races_historical
 from api.texts import get_text
 from api.users import get_stats, get_racer, get_joined
-from commands.stats.stats import get_args
 from commands.locks import import_lock
+from commands.stats.stats import get_args
 from database.bot.users import get_user
 from database.main import deleted_races, typing_logs
 from utils import errors, colors, strings, logs, dates
@@ -91,21 +91,29 @@ async def run(username=None, racer={}, ctx=None, bot_user=None, universe="play")
         await send_start(ctx, bot_user, username, races_left, universe)
 
         recent_races = await get_recent_races(username, universe, start_time)
-        if not recent_races:
-            cutoff = total_races
-        else:
+        if recent_races:
             cutoff = min(recent_races, key=lambda r: r["rn"])["rn"] - 1
+            points_retroactive, total_time, characters = await process_races(
+                recent_races, universe, username, imported_races, batch_size=1000
+            )
+        else:
+            points_retroactive = total_time = characters = 0
+            cutoff = total_races
+
         try:
-            historical_races = await get_historical_races(username, universe, cutoff, imported_races)
+            historical_generator = get_historical_races(username, universe, cutoff, imported_races)
+            async for historical_chunk in historical_generator:
+                chunk_points, chunk_time, chunk_chars = await process_races(
+                    historical_chunk, universe, username, imported_races, batch_size=1000
+                )
+                points_retroactive += chunk_points
+                total_time += chunk_time
+                characters += chunk_chars
         except ClientResponseError as e:
             if e.status == 429:
                 return await ctx.send(embed=rate_limit_exceeded())
             else:
                 raise e
-
-        points_retroactive, total_time, characters = await process_races(
-            recent_races + historical_races, universe, username, imported_races
-        )
 
     if not user_data:
         users.create_user_data(racer)
@@ -155,45 +163,37 @@ async def process_races(race_list, universe, username, imported_races, batch_siz
     race_list = sorted(race_list, key=lambda r: r["t"])
     seen = set(range(1, imported_races + 1))
 
-    races_batch = []
-    logs_batch = []
+    for i in range(0, len(race_list), batch_size):
+        batch = race_list[i:i + batch_size]
+        races_batch = []
+        logs_batch = []
 
-    for i, race_data in enumerate(race_list, 1):
-        race = await processor.process_race(universe, username, race_data)
-        if not race:
-            continue
+        for race_data in batch:
+            race = await processor.process_race(universe, username, race_data)
+            if not race:
+                continue
 
-        number = race["number"]
-        if number not in seen:
-            seen.add(number)
+            number = race["number"]
+            if number not in seen:
+                seen.add(number)
+                characters += race["characters"]
+                total_time += race["duration"]
+                if race["retroactive"]:
+                    points_retroactive += race["points"]
 
-            characters += race["characters"]
-            total_time += race["duration"]
-            if race["retroactive"]:
-                points_retroactive += race["points"]
+                races_batch.append(race)
+                if race["typing_log"]:
+                    logs_batch.append(race)
 
-            races_batch.append(race)
-            if race["typing_log"]:
-                logs_batch.append(race)
+        if races_batch:
+            races.add_races(races_batch)
+        if logs_batch:
+            typing_logs.add_logs(logs_batch)
 
-            if len(races_batch) >= batch_size:
-                races.add_races(races_batch)
-                races_batch.clear()
-
-            if len(logs_batch) >= batch_size:
-                typing_logs.add_logs(logs_batch)
-                logs_batch.clear()
-
-        if i % 1000 == 0:
-            await asyncio.sleep(0)
-
-    if races_batch:
-        races.add_races(races_batch)
-    if logs_batch:
-        typing_logs.add_logs(logs_batch)
+        del races_batch, logs_batch, batch
+        await asyncio.sleep(0.1)
 
     return points_retroactive, total_time, characters
-
 
 
 async def get_recent_races(username, universe, start_time):
@@ -216,24 +216,27 @@ async def get_recent_races(username, universe, start_time):
 
 
 async def get_historical_races(username, universe, cutoff, imported_races):
-    historical_races = races.get_temporary_races(universe, username)
-    if historical_races:
-        log(f"Loaded {len(historical_races):,} races from cache")
-        cutoff = min(historical_races, key=lambda r: r["rn"])["rn"] - 1
     races_left = cutoff - imported_races
+    all_historical_races = []
 
     if races_left > 0:
-        log(f"Downloading {races_left:,} historical races")
+        log(f"Downloading {races_left:,} historical races in chunks")
         bucket = cutoff // 1000
         final_bucket = imported_races // 1000
+
         while bucket >= final_bucket:
             race_list = await get_races_historical(username, universe, bucket)
-            races.add_temporary_races(username, race_list)
+            all_historical_races.extend(race_list)
             log(f"Fetched races {max(bucket * 1000, 1):,} - {min(bucket * 1000 + 999, cutoff):,}")
-            historical_races += race_list
+
+            if len(all_historical_races) >= 5000:
+                yield all_historical_races
+                all_historical_races = []
+
             bucket -= 1
 
-    return historical_races
+    if all_historical_races:
+        yield all_historical_races
 
 
 async def send_start(ctx, bot_user, username, races_left, universe):
@@ -379,6 +382,7 @@ class RaceProcesser:
             typing_log=typing_log,
             retroactive=retroactive,
         )
+
 
 def rate_limit_exceeded():
     return Embed(
