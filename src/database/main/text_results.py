@@ -7,6 +7,7 @@ from api.core import date_to_timestamp
 from api.users import get_stats
 from database.main import deleted_races, db
 from database.main.alts import get_alts
+from database.main.users import get_disqualified_users
 
 
 def add_results(results):
@@ -133,11 +134,12 @@ async def update_results(text_id):
         for race in top_10_database
     ])
     exclusions = deleted_races.get_ids() | database_ids
+    banned_users = get_disqualified_users()
     top_10_api = await texts_api.get_top_results(text_id)
     for score in top_10_api:
         username = score["user"]
         number = score["rn"]
-        if f"play|{username}|{number}" in exclusions:
+        if f"play|{username}|{number}" in exclusions or username in banned_users:
             continue
 
         scores.append((
