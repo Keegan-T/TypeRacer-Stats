@@ -8,14 +8,14 @@ def add_texts(text_list, universe):
     text_list = set_difficulties(text_list)
     db.run_many("""
         INSERT OR IGNORE INTO texts
-        (text_id, quote, difficulty)
-        VALUES (?, ?, ?)
-    """, [(text["text_id"], text["quote"], text["difficulty"]) for text in text_list])
+        (text_id, quote)
+        VALUES (?, ?)
+    """, [(text["text_id"], text["quote"]) for text in text_list])
 
     db.run_many("""
         INSERT OR IGNORE INTO text_universes
-        VALUES (?, ?, ?)
-    """, [(universe, text["text_id"], 0) for text in text_list])
+        VALUES (?, ?, ?, ?)
+    """, [(universe, text["text_id"], 0, text["difficulty"]) for text in text_list])
 
 
 def add_text(text, universe):
@@ -38,11 +38,11 @@ def add_text(text, universe):
 def update_text(text):
     db.run("""
         UPDATE texts
-        SET text_id = ?, quote = ?, media = ?, title = ?, author = ?,
+        SET quote = ?, media = ?, title = ?, author = ?,
         language = ?, min_skill = ?, max_skill = ?, contributor = ?
         WHERE text_id = ?
     """, [
-        text["tid"], text["text"], text["type"], text["title"], text["author"], text["language"],
+        text["text"], text["type"], text["title"], text["author"], text["language"],
         text["min_skill"], text["max_skill"], text["contributor"], text["tid"],
     ])
 
@@ -197,7 +197,7 @@ def filter_disabled(text_list):
     return [text for text in text_list if text["text_id"] not in disabled_text_ids]
 
 
-def update_text_difficulties(universe="play"):
+def update_text_difficulties(universe):
     text_list = db.fetch("""
         SELECT * FROM texts
         JOIN text_universes USING(text_id)
@@ -206,6 +206,10 @@ def update_text_difficulties(universe="play"):
     """, [universe])
     text_list = [dict(text) for text in text_list]
     text_list = set_difficulties(text_list)
-
-    results = [(text["difficulty"], text["text_id"]) for text in text_list]
-    db.run_many(f"UPDATE texts SET difficulty = ? WHERE text_id = ?", results)
+    results = [(text["difficulty"], universe, text["text_id"]) for text in text_list]
+    db.run_many(f"""
+        UPDATE text_universes
+        SET difficulty = ?
+        WHERE universe = ?
+        AND text_id = ?
+    """, results)
