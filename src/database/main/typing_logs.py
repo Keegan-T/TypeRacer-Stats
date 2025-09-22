@@ -1,7 +1,9 @@
+import asyncio
 import sqlite3
 import zlib
 
 from database.main import db
+from utils import logging
 
 
 async def decompress(log):
@@ -17,24 +19,47 @@ def add_logs(typing_logs):
     ) for race in typing_logs])
 
 
-async def compress_logs():
-    rows = db.fetch("""
-        SELECT universe, username, number, log FROM typing_logs
-        WHERE compressed = 0
-    """)
+async def compress_logs(batch_size=1000):
+    offset = 0
+    total_compressed = 0
 
-    updates = [
-        (sqlite3.Binary(zlib.compress(log.encode("utf-8"), level=6)), universe, username, number)
-        for universe, username, number, log in rows
-    ]
+    while True:
+        rows = db.fetch("""
+            SELECT universe, username, number, log 
+            FROM typing_logs 
+            WHERE compressed = 0 
+            LIMIT ? OFFSET ?
+        """, (batch_size, offset))
 
-    db.run_many("""
-        UPDATE typing_logs
-        SET log = ?, compressed = 1
-        WHERE universe = ? AND username = ? AND number = ?
-    """, updates)
+        if not rows:
+            break
 
-    db.run("VACUUM")
+        updates = []
+        for universe, username, number, log in rows:
+            compressed_log = zlib.compress(log.encode("utf-8"), level=6)
+            updates.append((
+                sqlite3.Binary(compressed_log),
+                universe,
+                username,
+                number
+            ))
+
+        if updates:
+            db.run_many("""
+                UPDATE typing_logs 
+                SET log = ?, compressed = 1 
+                WHERE universe = ? AND username = ? AND number = ?
+            """, updates)
+
+            total_compressed += len(updates)
+            logging.log(f"Compressed {len(updates)} logs (total: {total_compressed})")
+
+        del rows, updates
+        offset += batch_size
+
+        await asyncio.sleep(0.1)
+
+    logging.log("Finished compressing logs")
 
 
 async def get_logs(username, universe):

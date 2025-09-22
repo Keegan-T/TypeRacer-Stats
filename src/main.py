@@ -13,6 +13,7 @@ from api.core import start_session
 from commands.checks import ban_check
 from config import prefix, bot_token, staging, welcome_message, bot_owner, typeracer_stats_channel_id
 from database.bot.users import get_user_ids, get_total_commands, update_commands
+from database.main.typing_logs import compress_logs
 from database.main.users import delete_expired_users
 from tasks import import_competitions, update_important_users, update_top_tens, update_texts
 from utils import errors, colors, dates
@@ -113,6 +114,7 @@ async def loops():
             await records.update_all(bot)
             await delete_expired_users()
             await update_texts()
+            await compress_logs()
             if now.day == 1:
                 await update_top_tens()
         except Exception as error:
