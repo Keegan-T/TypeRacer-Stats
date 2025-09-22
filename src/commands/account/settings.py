@@ -24,6 +24,15 @@ class Settings(commands.Cog):
     async def settings(self, ctx, *args):
         user = get_user(ctx)
 
+        if not args:
+            update_settings(ctx.author.id, {"text_pool": "all", "wpm": "adjusted"})
+            message = Message(
+                ctx=ctx,
+                user=user,
+                pages=[Page(title="Settings Updated", description=f"Settings have been reset to defaults")],
+            )
+            return await message.send()
+
         if len(args) < 2:
             return await ctx.send(embed=errors.missing_argument(command))
 

@@ -107,7 +107,7 @@ def add_user(id):
         "start_date": None,
         "end_date": None,
         "joined": round(dates.now().timestamp()),
-        "settings": {"text_pool": "any", "wpm": "adjusted"},
+        "settings": {"text_pool": "all", "wpm": "adjusted"},
     }
 
     db.run("""
