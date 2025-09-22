@@ -59,7 +59,9 @@ async def run(ctx, user, username):
     if era_string:
         if not db_stats:
             return await ctx.send(embed=errors.import_required(username, universe, time_travel=True))
-        stats = await users.time_travel_stats(stats, user)
+        stats = await users.filter_stats(stats, user)
+    if user["settings"]["text_pool"] != "all":
+        stats = await users.filter_stats(stats, user)
 
     join_date = datetime.fromtimestamp(stats["joined_at"], tz=timezone.utc)
     now = dates.now()
@@ -83,12 +85,12 @@ async def run(ctx, user, username):
         general_string += "\n**Status:** Banned"
 
     stats_string = (
-            f"**Races:** {stats['total_races']:,}\n"
-            f"**Wins:** {stats['total_wins']:,}\n"
-            f"**Points:** {stats['points']:,.0f}\n"
-            f"**Average:** {stats['avg_wpm']:,.2f} WPM\n"
-            f"**Best:** {stats['best_wpm']:,.2f} WPM\n" +
-            f"**Captcha Speed:** {stats['cert_wpm']:,.2f} WPM" * (not era_string)
+        f"**Races:** {stats['total_races']:,}\n"
+        f"**Wins:** {stats['total_wins']:,}\n"
+        f"**Points:** {stats['points']:,.0f}\n"
+        f"**Average:** {stats['avg_wpm']:,.2f} WPM\n"
+        f"**Best:** {stats['best_wpm']:,.2f} WPM\n" +
+        f"**Captcha Speed:** {stats['cert_wpm']:,.2f} WPM" * (not era_string)
     )
 
     embed.add_field(name="General", value=general_string, inline=False)
@@ -96,5 +98,8 @@ async def run(ctx, user, username):
 
     embeds.add_profile(embed, stats)
     embeds.add_universe(embed, universe)
+    if user["settings"]["text_pool"] != "all":
+        footer_text = f"{embed.footer.text}\n" if embed.footer.text else ""
+        embed.set_footer(text=footer_text + "Text Pool: " + user["settings"]["text_pool"].title())
 
     await ctx.send(embed=embed, content=era_string)

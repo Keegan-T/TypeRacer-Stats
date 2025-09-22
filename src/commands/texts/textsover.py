@@ -57,16 +57,16 @@ async def run(ctx, user, username, threshold, category, sort, over=True):
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
     era_string = strings.get_era_string(user)
-    if era_string:
-        stats = await users.time_travel_stats(stats, user)
+    if era_string or user["settings"]["text_pool"] != "all":
+        stats = await users.filter_stats(stats, user)
 
     texts_typed = stats["texts_typed"]
     text_list = texts.get_texts(as_dictionary=True, universe=universe)
 
     if era_string:
-        text_bests = await users.get_text_bests_time_travel(username, universe, user, race_stats=True)
+        text_bests = await users.get_text_bests_time_travel(username, universe, user, race_stats=True, text_pool=user["settings"]["text_pool"])
     else:
-        text_bests = users.get_text_bests(username, race_stats=True, universe=universe)
+        text_bests = users.get_text_bests(username, race_stats=True, universe=universe, text_pool=user["settings"]["text_pool"])
 
     if len(text_bests) == 0:
         return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
@@ -76,11 +76,13 @@ async def run(ctx, user, username, threshold, category, sort, over=True):
 
     if over:
         race_list = users.get_texts_over(
-            username, threshold, category, universe, start_date=user["start_date"], end_date=user["end_date"]
+            username, threshold, category, universe, start_date=user["start_date"], end_date=user["end_date"],
+            text_pool=user["settings"]["text_pool"],
         )
     else:
         race_list = users.get_texts_under(
-            username, threshold, category, universe, start_date=user["start_date"], end_date=user["end_date"]
+            username, threshold, category, universe, start_date=user["start_date"], end_date=user["end_date"],
+            text_pool=user["settings"]["text_pool"],
         )
 
     for text in race_list:
@@ -145,6 +147,7 @@ async def run(ctx, user, username, threshold, category, sort, over=True):
         header=header,
         profile=stats,
         universe=universe,
+        text_pool=user["settings"]["text_pool"],
     )
 
     await message.send()

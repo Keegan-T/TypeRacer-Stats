@@ -74,9 +74,13 @@ def get_top_n(text_id, n=10):
     return top_10
 
 
-def get_top_10_counts(username):
+def get_top_10_counts(username, text_pool="all"):
     top_10s = get_top_10s()
     top_10_counts = [0] * 10
+
+    if text_pool == "maintrack":
+        from database.main.races import maintrack_text_pool
+        top_10s = {key: top_10s[key] for key in top_10s if key in maintrack_text_pool}
 
     for top_10 in top_10s.values():
         usernames = [race["username"] for race in top_10]

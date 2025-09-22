@@ -2,6 +2,7 @@ from discord.ext import commands
 
 import database.main.users as users
 from database.bot.users import get_user
+from database.main import races
 from utils import errors, strings
 from utils.embeds import Page, Message, is_embed
 
@@ -53,14 +54,23 @@ async def run(ctx, user, username, threshold, category, over=True):
         return await ctx.send(embed=errors.import_required(username, universe))
     era_string = strings.get_era_string(user)
     if era_string:
-        stats = await users.time_travel_stats(stats, user)
+        stats = await users.filter_stats(stats, user)
+
+    stats = dict(stats)
+    if user["settings"]["text_pool"] == "maintrack":
+        race_list = await races.get_races(
+            username, columns=["wpm"], start_date=user["start_date"], end_date=user["end_date"],
+            universe=universe, text_pool=user["settings"]["text_pool"],
+        )
+        stats["races"] = len(race_list)
 
     if stats["races"] == 0:
         return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
 
     category_title = {"wpm": "WPM"}.get(category, category.title())
     times = users.count_races_over(
-        username, threshold, category, over, universe, user["start_date"], user["end_date"]
+        username, threshold, category, over, universe, user["start_date"], user["end_date"],
+        text_pool=user["settings"]["text_pool"],
     )
     description = (
         f"**{times:,}** of **{stats['races']:,}** races are "
@@ -77,6 +87,7 @@ async def run(ctx, user, username, threshold, category, over=True):
         ctx, user, page,
         profile=stats,
         universe=universe,
+        text_pool=user["settings"]["text_pool"],
     )
 
     await message.send()

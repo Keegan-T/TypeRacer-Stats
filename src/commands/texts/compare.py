@@ -57,17 +57,17 @@ async def run(ctx, user, username1, username2):
 
     era_string = strings.get_era_string(user)
     if era_string:
-        text_bests1 = await users.get_text_bests_time_travel(username1, universe, user, race_stats=True)
+        text_bests1 = await users.get_text_bests_time_travel(username1, universe, user, race_stats=True, text_pool=user["settings"]["text_pool"])
         text_bests1 = [(text["text_id"], text["wpm"], text["timestamp"], text["accuracy"], text["points"]) for text in text_bests1]
-        text_bests2 = await users.get_text_bests_time_travel(username2, universe, user, race_stats=True)
+        text_bests2 = await users.get_text_bests_time_travel(username2, universe, user, race_stats=True, text_pool=user["settings"]["text_pool"])
         text_bests2 = [(text["text_id"], text["wpm"], text["timestamp"], text["accuracy"], text["points"]) for text in text_bests2]
 
     else:
-        text_bests1 = get_text_bests(username1, race_stats=True, universe=universe)
+        text_bests1 = get_text_bests(username1, race_stats=True, universe=universe, text_pool=user["settings"]["text_pool"])
         if not text_bests1:
             return await ctx.send(embed=errors.import_required(username1, universe))
 
-        text_bests2 = get_text_bests(username2, race_stats=True, universe=universe)
+        text_bests2 = get_text_bests(username2, race_stats=True, universe=universe, text_pool=user["settings"]["text_pool"])
         if not text_bests2:
             return await ctx.send(embed=errors.import_required(username2, universe))
 
@@ -164,6 +164,7 @@ async def run(ctx, user, username1, username2):
         pages=pages,
         user=user,
         universe=universe,
+        text_pool=user["settings"]["text_pool"],
     )
 
     await message.send()

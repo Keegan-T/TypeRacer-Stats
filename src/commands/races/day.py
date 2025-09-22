@@ -134,13 +134,19 @@ async def run(ctx, user, username, date):
         "text_id", "number", "wpm", "accuracy", "points", "characters", "rank", "racers",
         "timestamp", "wpm_raw", "start_time", "total_time", "correction_time", "pause_time",
     ]
-    race_list = await races.get_races(username, columns, start_time, end_time, universe=universe)
+    race_list = await races.get_races(
+        username, columns, start_time, end_time, universe=universe,
+        text_pool=user["settings"]["text_pool"],
+    )
     race_list.sort(key=lambda x: x["timestamp"])
 
     if not race_list:
         page = Page(description="No races completed")
     else:
-        fields, footer = get_stats_fields(username, race_list, start_time, end_time, universe, detailed)
+        fields, footer = get_stats_fields(
+            username, race_list, start_time, end_time, universe, detailed,
+            text_pool=user["settings"]["text_pool"],
+        )
         page = Page(fields=fields, footer=footer)
 
     if competition and competition["competitors"][0]["username"] == username:
@@ -155,6 +161,7 @@ async def run(ctx, user, username, date):
         profile=stats,
         universe=universe,
         time_travel=False,
+        text_pool=user["settings"]["text_pool"],
     )
 
     await message.send()

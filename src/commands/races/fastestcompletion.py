@@ -61,7 +61,7 @@ async def run(ctx, user, username, number, category):
 
     era_string = strings.get_era_string(user)
     if era_string:
-        stats = await users.time_travel_stats(stats, user)
+        stats = await users.filter_stats(stats, user)
 
     if (category == "races" and number > stats["races"]) or number > stats["points"] + stats["points_retroactive"]:
         return await ctx.send(embed=no_milestone(category, universe), content=era_string)
@@ -76,7 +76,8 @@ async def run(ctx, user, username, number, category):
         ]
         race_list = await races.get_races(
             username, columns=columns, universe=universe,
-            start_date=user["start_date"], end_date=user["end_date"]
+            start_date=user["start_date"], end_date=user["end_date"],
+            text_pool=user["settings"]["text_pool"],
         )
         race_list.sort(key=lambda x: x["timestamp"])
 
@@ -117,7 +118,8 @@ async def run(ctx, user, username, number, category):
         start_time = race_range[0]["timestamp"]
         end_time = race_range[-1]["timestamp"]
         fields, footer = get_stats_fields(
-            username, race_range, start_time, end_time, universe
+            username, race_range, start_time, end_time, universe,
+            text_pool=user["settings"]["text_pool"],
         )
 
     description = ""
@@ -149,6 +151,7 @@ async def run(ctx, user, username, number, category):
         ctx, user, pages,
         profile=stats,
         universe=universe,
+        text_pool=user["settings"]["text_pool"],
     )
 
     await message.send()

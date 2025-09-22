@@ -7,6 +7,7 @@ import database.main.texts as texts
 import database.main.users as users
 from config import prefix
 from database.bot.users import get_user
+from database.main.races import maintrack_text_pool
 from utils import errors, colors, urls, strings, files
 from utils.embeds import Page, Message, get_pages, is_embed
 
@@ -71,8 +72,10 @@ async def run(ctx, user, username, category):
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
 
-    unraced = users.get_unraced_texts(username, universe)
+    unraced = users.get_unraced_texts(username, universe, text_pool=user["settings"]["text_pool"])
     text_count = texts.get_text_count(universe)
+    if user["settings"]["text_pool"] == "maintrack":
+        text_count = len(maintrack_text_pool)
     unraced_count = len(unraced)
     completed = text_count - unraced_count
 

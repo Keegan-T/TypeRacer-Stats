@@ -70,7 +70,7 @@ def get_args(user, args, info):
     return unique_usernames
 
 
-async def get_lines(usernames, start_date, end_date, column="number", universe="play"):
+async def get_lines(usernames, start_date, end_date, column="number", universe="play", text_pool="all"):
     lines = []
     min_timestamp = float("inf")
     columns = [column, "timestamp"]
@@ -81,13 +81,16 @@ async def get_lines(usernames, start_date, end_date, column="number", universe="
     for username in usernames:
         race_list = await races.get_races(
             username, columns=columns, start_date=start_date.timestamp(),
-            end_date=end_date.timestamp(), universe=universe
+            end_date=end_date.timestamp(), universe=universe,
+            text_pool=text_pool,
         )
         race_list.sort(key=lambda r: r["timestamp"])
         if len(race_list) < 2:
             continue
         x, y = [], []
         race_count = race_list[-1][0]
+        if text_pool != "all":
+            race_count = 1
         point_count = 0
         unique_texts = set()
         max_average = 0
@@ -105,7 +108,10 @@ async def get_lines(usernames, start_date, end_date, column="number", universe="
                 x.append(timestamp)
 
             if column == "number":
-                y.append(race[0] - race_list[0][0] + 1)
+                if text_pool == "all":
+                    y.append(race[0] - race_list[0][0] + 1)
+                else:
+                    y.append(i + 2)
             elif column == "points":
                 point_count += race[0]
                 y.append(point_count)
@@ -178,7 +184,7 @@ async def run(ctx, user, usernames, column="number"):
     else:
         end_date = datetime.now(timezone.utc)
 
-    lines = await get_lines(usernames, start_date, end_date, column, universe=universe)
+    lines = await get_lines(usernames, start_date, end_date, column, universe=universe, text_pool=user["settings"]["text_pool"])
 
     if not lines:
         return await ctx.send(embed=no_data(universe), content=era_string)

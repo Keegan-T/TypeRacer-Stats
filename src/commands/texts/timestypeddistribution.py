@@ -7,6 +7,7 @@ import database.main.users as users
 from commands.stats.stats import get_args
 from database.bot.users import get_user
 from database.main import races
+from database.main.races import maintrack_text_pool
 from utils import errors, strings, urls
 from utils.embeds import Page, Message, is_embed
 
@@ -42,11 +43,12 @@ async def run(ctx, user, username):
         return await ctx.send(embed=errors.import_required(username, universe))
     era_string = strings.get_era_string(user)
     if era_string:
-        stats = await users.time_travel_stats(stats, user)
+        stats = await users.filter_stats(stats, user)
 
     race_list = await races.get_races(
         username, columns=["text_id"], universe=universe,
         start_date=user["start_date"], end_date=user["end_date"],
+        text_pool=user["settings"]["text_pool"],
     )
     text_list = texts.get_texts(get_disabled=False, universe=universe)
     disabled_ids = texts.get_disabled_text_ids()
@@ -65,6 +67,8 @@ async def run(ctx, user, username):
     min_typed = min(counts)
     max_typed = max(counts)
     total_texts = len(text_list)
+    if user["settings"]["text_pool"] == "maintrack":
+        total_texts = len(maintrack_text_pool)
 
     while max_typed < brackets[-1]:
         brackets.pop()
@@ -151,6 +155,7 @@ async def run(ctx, user, username):
         ctx, user, page,
         profile=stats,
         universe=universe,
+        text_pool=user["settings"]["text_pool"],
     )
 
     await message.send()

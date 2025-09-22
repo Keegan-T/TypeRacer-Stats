@@ -78,6 +78,7 @@ async def run(ctx, user, username, time_period, sort, reverse):
             username, columns=columns, order_by="timestamp",
             limit=200, reverse=reverse, universe=universe,
             start_date=user["start_date"], end_date=user["end_date"],
+            text_pool=user["settings"]["text_pool"],
         )
 
         def formatter(race):
@@ -102,7 +103,10 @@ async def run(ctx, user, username, time_period, sort, reverse):
         sort_title = {"wpm": "WPM"}.get(sort, sort.title())
         reverse_title = "" if reverse else ("Oldest " if sort == "date" else "Least ")
         title = f"Race History - {time_period.title()}s (By {reverse_title}{sort_title})"
-        history = await get_history(username, time_period, sort, universe, user["start_date"], user["end_date"], reverse)
+        history = await get_history(
+            username, time_period, sort, universe, user["start_date"], user["end_date"], reverse,
+            text_pool=user["settings"]["text_pool"],
+        )
         pages = get_pages(history, formatter, page_count=20, per_page=5)
 
     message = Message(
@@ -110,16 +114,18 @@ async def run(ctx, user, username, time_period, sort, reverse):
         title=title,
         profile=api_stats,
         universe=universe,
+        text_pool=user["settings"]["text_pool"],
     )
 
     await message.send()
 
 
-async def get_history(username, category, sort, universe, start_date, end_date, reverse):
+async def get_history(username, category, sort, universe, start_date, end_date, reverse, text_pool):
     sort_key = {"points": 3, "races": 2, "time": 5, "wpm": 4, "accuracy": 6}.get(sort, 0)
     columns = ["text_id", "wpm", "points", "timestamp", "accuracy"]
     race_list = await races.get_races(
-        username, columns=columns, universe=universe, start_date=start_date, end_date=end_date
+        username, columns=columns, universe=universe, start_date=start_date, end_date=end_date,
+        text_pool=text_pool
     )
     race_list.sort(key=lambda x: x[3])
     text_list = texts.get_texts(as_dictionary=True, get_disabled=True, universe=universe)

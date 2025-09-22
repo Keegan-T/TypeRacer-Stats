@@ -68,7 +68,8 @@ async def run(ctx, user, username, category, seconds):
         ]
         race_list = await races.get_races(
             username, columns=columns, universe=universe,
-            start_date=user["start_date"], end_date=user["end_date"]
+            start_date=user["start_date"], end_date=user["end_date"],
+            text_pool=user["settings"]["text_pool"],
         )
         if not race_list:
             return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
@@ -113,7 +114,8 @@ async def run(ctx, user, username, category, seconds):
         start_time = get_start_time(race_range[0], text_lengths)
         end_time = race_range[-1]["timestamp"]
         fields, footer = get_stats_fields(
-            username, race_range, start_time, end_time, universe
+            username, race_range, start_time, end_time, universe,
+            text_pool=user["settings"]["text_pool"],
         )
 
     interval = f" ({strings.format_duration(seconds, False)} interval)"
@@ -153,6 +155,7 @@ async def run(ctx, user, username, category, seconds):
         title=title,
         profile=stats,
         universe=universe,
+        text_pool=user["settings"]["text_pool"],
     )
 
     await message.send()

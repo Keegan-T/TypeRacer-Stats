@@ -67,7 +67,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
     api_stats = get_stats(username, universe=universe)
     await download(racer=api_stats, universe=universe)
     if era_string:
-        api_stats = await users.time_travel_stats(api_stats, user)
+        api_stats = await users.filter_stats(api_stats, user)
 
     graph = ctx.invoked_with in ["textgraph", "tg", "racetextgraph", "rtg"]
 

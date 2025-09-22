@@ -60,7 +60,8 @@ async def run(ctx, user, username, category):
 
     race_list = await races.get_races(
         username, columns=["wpm", "accuracy"], universe=universe,
-        start_date=user["start_date"], end_date=user["end_date"]
+        start_date=user["start_date"], end_date=user["end_date"],
+        text_pool=user["settings"]["text_pool"]
     )
 
     if len(race_list) == 0:
@@ -81,7 +82,6 @@ async def run(ctx, user, username, category):
 
     accuracy_values = [int(race[1] * 100) for race in race_list if race[1] > 0]
     accuracy_values_precise = [round(race[1] * 100, 1) for race in race_list if race[1] > 0]
-
 
     if not accuracy_values:
         accuracy_page = Page(
@@ -107,10 +107,10 @@ async def run(ctx, user, username, category):
         )
 
     if era_string:
-        text_bests = await users.get_text_bests_time_travel(username, universe, user)
+        text_bests = await users.get_text_bests_time_travel(username, universe, user, text_pool=user["settings"]["text_pool"])
         text_bests = [(text["text_id"], text["wpm"]) for text in text_bests]
     else:
-        text_bests = users.get_text_bests(username, universe=universe)
+        text_bests = users.get_text_bests(username, universe=universe, text_pool=user["settings"]["text_pool"])
     text_best_values = [race[1] for race in text_bests]
     distribution_stats = get_distribution_stats(text_best_values, " WPM")
 
@@ -129,6 +129,7 @@ async def run(ctx, user, username, category):
         ctx, user, pages,
         profile=stats,
         universe=universe,
+        text_pool=user["settings"]["text_pool"],
     )
 
     await message.send()

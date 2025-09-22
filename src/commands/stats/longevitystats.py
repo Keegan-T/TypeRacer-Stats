@@ -58,7 +58,10 @@ async def run(ctx, user, username, n, time_period):
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
 
-    all_history = await get_history(username, time_period, universe, user["start_date"], user["end_date"])
+    all_history = await get_history(
+        username, time_period, universe, user["start_date"], user["end_date"],
+        text_pool=user["settings"]["text_pool"],
+    )
     history = [period for period in all_history if period[2] >= n]
     over = len(history)
 
@@ -116,14 +119,16 @@ async def run(ctx, user, username, n, time_period):
         ),
         profile=stats,
         universe=universe,
+        text_pool=user["settings"]["text_pool"],
     )
 
     await message.send()
 
 
-async def get_history(username, kind, universe, start_date, end_date):
+async def get_history(username, kind, universe, start_date, end_date, text_pool):
     race_list = await races.get_races(
-        username, columns=["timestamp"], universe=universe, start_date=start_date, end_date=end_date
+        username, columns=["timestamp"], universe=universe, start_date=start_date, end_date=end_date,
+        text_pool=text_pool,
     )
     race_list.sort(key=lambda x: x[0])
 

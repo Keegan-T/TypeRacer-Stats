@@ -8,6 +8,7 @@ import database.main.users as users
 from commands.stats.stats import get_args
 from config import prefix
 from database.bot.users import get_user
+from database.main.races import maintrack_text_pool
 from utils import errors, strings
 from utils.embeds import Page, Message, is_embed
 
@@ -44,15 +45,15 @@ async def run(ctx, user, username, binned):
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
     era_string = strings.get_era_string(user)
-    if era_string:
-        stats = await users.time_travel_stats(stats, user)
+    if era_string or user["settings"]["text_pool"] != "all":
+        stats = await users.filter_stats(stats, user)
 
     text_list = texts.get_texts(get_disabled=False, universe=universe)
 
     if era_string:
-        text_bests = await users.get_text_bests_time_travel(username, universe, user)
+        text_bests = await users.get_text_bests_time_travel(username, universe, user, text_pool=user["settings"]["text_pool"])
     else:
-        text_bests = users.get_text_bests(username, universe=universe)
+        text_bests = users.get_text_bests(username, universe=universe, text_pool=user["settings"]["text_pool"])
 
     if len(text_bests) == 0:
         return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
@@ -98,6 +99,8 @@ async def run(ctx, user, username, binned):
     average = stats["text_best_average"]
     texts_typed = stats["texts_typed"]
     text_count = len(text_list)
+    if user["settings"]["text_pool"] == "maintrack":
+        text_count = len(maintrack_text_pool)
     texts_typed_percentage = texts_typed / text_count
     bold = "**" if texts_typed_percentage == 100 else ""
     total_text_wpm = stats["text_wpm_total"]
@@ -138,6 +141,7 @@ async def run(ctx, user, username, binned):
         ctx, user, page,
         profile=stats,
         universe=universe,
+        text_pool=user["settings"]["text_pool"],
     )
 
     await message.send()

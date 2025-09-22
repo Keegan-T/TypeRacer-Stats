@@ -151,7 +151,7 @@ async def run(ctx, user, username1, username2):
     if not db_stats2:
         return await ctx.send(embed=errors.import_required(username2, universe))
 
-    encounters = races.get_encounters(username1, username2, universe)
+    encounters = races.get_encounters(username1, username2, universe, user["settings"]["text_pool"])
     if not encounters:
         return await ctx.send(embed=no_encounters())
 
@@ -274,6 +274,7 @@ async def run(ctx, user, username1, username2):
         user=user,
         pages=pages,
         universe=universe,
+        text_pool=user["settings"]["text_pool"],
     )
 
     await message.send()

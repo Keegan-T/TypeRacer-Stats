@@ -5,8 +5,8 @@ import database.main.users as users
 import utils.stats
 from api.users import get_stats
 from commands.account.download import run as download
-from commands.races.races import get_args
 from commands.locks import LargeQueryLock
+from commands.races.races import get_args
 from config import prefix
 from database.bot.users import get_user
 from graphs import improvement_graph
@@ -63,7 +63,7 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         api_stats = get_stats(username, universe=universe)
         await download(racer=api_stats, universe=universe)
         if era_string:
-            api_stats = await users.time_travel_stats(api_stats, user)
+            api_stats = await users.filter_stats(api_stats, user)
 
         if start_number and not end_number:
             end_number = api_stats["races"]
@@ -78,7 +78,10 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         if start_date is None and start_number is None:
             timeframe = f" (All-Time)"
             title += " - All-Time"
-            race_list = await races.get_races(username, columns=columns, universe=universe)
+            race_list = await races.get_races(
+                username, columns=columns, universe=universe,
+                text_pool=user["settings"]["text_pool"]
+            )
 
         elif start_date is None:
             end_number = min(end_number, api_stats["races"])
@@ -86,7 +89,8 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
             title += f" - Races{timeframe}"
             race_list = await races.get_races(
                 username, columns=columns, start_number=start_number,
-                end_number=end_number, universe=universe
+                end_number=end_number, universe=universe,
+                text_pool=user["settings"]["text_pool"]
             )
 
         else:
@@ -94,7 +98,8 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
             title += f" - {strings.get_display_date_range(start_date, end_date)}"
             race_list = await races.get_races(
                 username, columns=columns, start_date=start_date.timestamp(),
-                end_date=end_date.timestamp(), universe=universe
+                end_date=end_date.timestamp(), universe=universe,
+                text_pool=user["settings"]["text_pool"]
             )
 
         if era_string:
@@ -158,6 +163,7 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         header=description,
         profile=stats,
         universe=universe,
+        text_pool=user["settings"]["text_pool"],
     )
 
     await message.send()

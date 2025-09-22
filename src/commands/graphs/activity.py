@@ -50,7 +50,8 @@ async def run(ctx, user, username, offset):
 
     race_list = await races.get_races(
         username, columns=["timestamp"], universe=universe,
-        start_date=user["start_date"], end_date=user["end_date"]
+        start_date=user["start_date"], end_date=user["end_date"],
+        text_pool=user["settings"]["text_pool"],
     )
     if not race_list:
         return await ctx.send(embed=errors.no_races_in_range(universe))
@@ -134,6 +135,7 @@ async def run(ctx, user, username, offset):
         user=user,
         profile=stats,
         universe=universe,
+        text_pool=user["settings"]["text_pool"],
     )
 
     await message.send()

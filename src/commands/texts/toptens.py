@@ -9,6 +9,7 @@ from api.users import get_stats
 from commands.stats.stats import get_args
 from config import prefix
 from database.bot.users import get_user
+from database.main.races import maintrack_text_pool
 from utils import errors, urls, strings, embeds, dates, files
 
 command = {
@@ -83,6 +84,7 @@ async def export(ctx, username):
 
 
 async def run(ctx, user, username, best):
+    text_pool = user["settings"]["text_pool"]
     stats = get_stats(username)
     if not stats:
         return await ctx.send(embed=errors.invalid_username())
@@ -90,15 +92,22 @@ async def run(ctx, user, username, best):
     embed = Embed(title="Top 10 Rankings", color=user["colors"]["embed"])
     embeds.add_profile(embed, stats)
 
-    top_10_counts = top_tens.get_top_10_counts(username)
+    top_10_counts = top_tens.get_top_10_counts(username, text_pool=text_pool)
     top_10_count = sum(top_10_counts)
     total_texts = top_tens.get_count()
+    if text_pool == "maintrack":
+        total_texts = len(maintrack_text_pool)
 
     if top_10_count == 0:
         embed.description = "User does not rank in any top 10s"
+        if text_pool != "all":
+            embed.set_footer(text=f"Text Pool: {text_pool.title()}")
         return await ctx.send(embed=embed)
 
-    texts_typed = users.get_user(username)["texts_typed"]
+    stats = users.get_user(username)
+    if text_pool != "all":
+        stats = await users.filter_stats(stats, user)
+    texts_typed = stats["texts_typed"]
     embed.description = (
         f"**Appearances:** {top_10_count:,}\n"
         f"**Texts Typed:**  {texts_typed:,} ({(top_10_count / texts_typed):.2%})\n"
@@ -150,6 +159,9 @@ async def run(ctx, user, username, best):
 
         embed.add_field(name="Position Counts", value=top_10_counts_string)
         embed.add_field(name="Cumulative Counts", value=top_10_cumulative_string)
+
+    if text_pool != "all":
+        embed.set_footer(text=f"Text Pool: {text_pool.title()}")
 
     await ctx.send(embed=embed)
 

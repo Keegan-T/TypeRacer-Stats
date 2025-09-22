@@ -48,7 +48,7 @@ async def run(ctx, user, username=None):
         await download(racer=stats, universe=universe)
         last_online = (await races.get_races(
             username, columns=["timestamp"], order_by="timestamp", universe=universe,
-            reverse=True, limit=1
+            reverse=True, limit=1, text_pool=user["settings"]["text_pool"],
         ))[0][0]
         if not last_online:
             return await ctx.send(embed=errors.import_required(username, universe))
@@ -70,6 +70,7 @@ async def run(ctx, user, username=None):
         ctx, user, page,
         profile=stats,
         universe=universe,
+        text_pool=user["settings"]["text_pool"],
     )
 
     await message.send()

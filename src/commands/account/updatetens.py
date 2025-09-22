@@ -83,7 +83,7 @@ async def run(ctx, user, username):
     if not stats:
         return await ctx.send(embed=errors.import_required(username))
 
-    text_bests = users.get_text_bests(username)
+    text_bests = users.get_text_bests(username, text_pool=user["settings"]["text_pool"])
     top_10s = text_results.get_top_10s()
     alts = get_alts()
     outdated_texts = []

@@ -122,7 +122,7 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
     async with LargeQueryLock(stats["races"] > 100_000):
         era_string = strings.get_era_string(user)
         if era_string:
-            stats = await users.time_travel_stats(stats, user)
+            stats = await users.filter_stats(stats, user)
 
         if start_number and not end_number:
             end_number = stats["races"]
@@ -146,7 +146,8 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
             if user_end: end = min(end, user_end)
             race_list = await races.get_races(
                 username, columns, None if start == stats["joined"] else start,
-                None if end == dates.now().timestamp() else end, universe=universe
+                None if end == dates.now().timestamp() else end, universe=universe,
+                text_pool=user["settings"]["text_pool"],
             )
 
         elif start_date is None:
@@ -155,7 +156,8 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
             race_list = await races.get_races(
                 username, columns, start_number=start_number,
                 end_number=end_number, universe=universe,
-                start_date=user_start, end_date=user_end
+                start_date=user_start, end_date=user_end,
+                text_pool=user["settings"]["text_pool"],
             )
             if race_list:
                 start = race_list[0]["timestamp"]
@@ -170,14 +172,18 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
             title += strings.get_display_date_range(start_date, end_date)
             race_list = await races.get_races(
                 username, columns, start_date.timestamp(),
-                end_date.timestamp(), universe=universe
+                end_date.timestamp(), universe=universe,
+                text_pool=user["settings"]["text_pool"],
             )
 
         if not race_list:
             return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
         race_list.sort(key=lambda x: x["timestamp"])
 
-        fields, footer = get_stats_fields(username, race_list, start, end, universe)
+        fields, footer = get_stats_fields(
+            username, race_list, start, end, universe,
+            text_pool=user["settings"]["text_pool"],
+        )
 
     page = Page(title, fields=fields, footer=footer)
 
@@ -185,12 +191,13 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         ctx, user, page,
         profile=stats,
         universe=universe,
+        text_pool=user["settings"]["text_pool"],
     )
 
     await message.send()
 
 
-def get_stats_fields(username, race_list, start_time, end_time, universe="play", detailed=True):
+def get_stats_fields(username, race_list, start_time, end_time, universe="play", detailed=True, text_pool="all"):
     fields = []
     footer = None
 
@@ -212,7 +219,7 @@ def get_stats_fields(username, race_list, start_time, end_time, universe="play",
     total_time = 0
     text_improvements = 0
     total_wpm_gain = 0
-    text_best_list = users.get_text_bests(username, until=race_list[0][8])
+    text_best_list = users.get_text_bests(username, until=race_list[0][8], text_pool=text_pool)
     text_bests = {text_id: wpm for text_id, wpm in text_best_list}
     disabled_text_ids = texts.get_disabled_text_ids()
     unique_texts = set()
@@ -383,10 +390,7 @@ def get_stats_fields(username, race_list, start_time, end_time, universe="play",
         )
         fields.append(Field(name=f"**Daily Average (Over {days:,} Days)**\n", value=daily_string, inline=False))
 
-    # if not detailed:
-    #     return summary_string, None
-
-    if race_difference > len(race_list):
+    if race_difference > len(race_list) and text_pool == "all":
         footer = f"Missing races found in this range, actual races completed: {race_difference:,}"
 
     return fields, footer

@@ -1,3 +1,4 @@
+import json
 import zlib
 from collections import defaultdict
 
@@ -5,6 +6,9 @@ import database.main.users as users
 from database.main import db
 from utils import logs
 from utils.logging import log
+
+with open("./data/maintrack.json", "r") as f:
+    maintrack_text_pool = json.load(f)
 
 
 def add_races(races):
@@ -52,7 +56,7 @@ def delete_temporary_races(universe, username):
 
 async def get_races(
     username, columns="*", start_date=None, end_date=None, start_number=None, end_number=None,
-    order_by=None, reverse=False, limit=None, universe="play"
+    order_by=None, reverse=False, limit=None, universe="play", text_pool="all",
 ):
     users.update_last_accessed(universe, username)
 
@@ -69,6 +73,11 @@ async def get_races(
     else:
         limit_string = f"LIMIT {batch_size} OFFSET {offset}"
 
+    text_pool_string = (
+        f"AND text_id IN ({",".join([str(tid) for tid in maintrack_text_pool])})"
+        if text_pool != "all" and universe == "play" else ""
+    )
+
     race_list = []
     while True:
         batch_races = await db.fetch_async(f"""
@@ -76,6 +85,7 @@ async def get_races(
             INDEXED BY idx_races_universe_username
             WHERE universe = ?
             AND username = ?
+            {text_pool_string} 
             {f'AND number >= {start_number}' if start_number else ''}
             {f'AND number <= {end_number}' if end_number else ''}
             {f'AND timestamp >= {start_date}' if start_date else ''}
@@ -166,8 +176,13 @@ def get_text_races(username, text_id, universe, start_date=None, end_date=None):
     return races
 
 
-def get_encounters(username1, username2, universe):
-    races = db.fetch("""
+def get_encounters(username1, username2, universe, text_pool):
+    text_pool_string = (
+        f"AND text_id IN ({",".join([str(tid) for tid in maintrack_text_pool])})"
+        if text_pool != "all" and universe == "play" else ""
+    )
+
+    races = db.fetch(f"""
         SELECT *
         FROM races
         WHERE race_id IN (
@@ -175,13 +190,12 @@ def get_encounters(username1, username2, universe):
             FROM races
             WHERE universe = ?
             AND username IN (?, ?)
+            {text_pool_string} 
             GROUP BY race_id
             HAVING COUNT(DISTINCT username) = 2
         )
         AND username IN (?, ?)
     """, [universe, username1, username2, username1, username2])
-
-
 
     encounters = defaultdict(list)
     for race in races:
@@ -191,6 +205,7 @@ def get_encounters(username1, username2, universe):
         sorted(r, key=lambda row: row["username"] == username2)
         for r in encounters.values()
     ]
+
 
 async def delete_race(username, race_number, universe="play"):
     log(f"Deleting race {universe}|{username}|{race_number}")

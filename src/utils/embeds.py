@@ -28,7 +28,7 @@ class Field:
 
 class Message(View):
     def __init__(self, ctx, user, pages, title=None, url=None, header="", footer="", content="",
-                 color=None, profile=None, universe=None, show_pfp=True, time_travel=True):
+                 color=None, profile=None, universe=None, show_pfp=True, time_travel=True, text_pool="all"):
         self.pages = pages if isinstance(pages, list) else [pages]
         self.page_count = len(self.pages)
         super().__init__(timeout=60 if self.page_count > 1 else 0.01)
@@ -51,6 +51,7 @@ class Message(View):
         self.profile = profile
         self.universe = universe
         self.show_pfp = show_pfp
+        self.text_pool = text_pool
         self.embeds = []
         self.cache = {}
         self.paginated = any(not page.button_name for page in self.pages)
@@ -78,6 +79,8 @@ class Message(View):
                 self.add_universe(embed)
             if self.paginated and self.page_count > 1:
                 self.update_footer(embed, f"Page {i + 1} of {self.page_count}")
+            if self.universe == "play" and self.text_pool != "all":
+                self.update_footer(embed, f"Text Pool: {self.text_pool.title()}")
             self.embeds.append(embed)
 
         if self.pages[self.index].render:

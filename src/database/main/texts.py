@@ -55,12 +55,19 @@ def update_text(text):
         update_text_difficulties(universe[0])
 
 
-def get_texts(as_dictionary=False, get_disabled=True, universe="play"):
+def get_texts(as_dictionary=False, get_disabled=True, universe="play", text_pool="all"):
+    from database.main.races import maintrack_text_pool
+    text_pool_string = (
+        f"AND text_id IN ({",".join([str(tid) for tid in maintrack_text_pool])})"
+        if text_pool != "all" and universe == "play" else ""
+    )
+
     texts = db.fetch(f"""
         SELECT texts.*, text_universes.* FROM texts
         JOIN text_universes USING (text_id)
         WHERE universe = ?
         {'AND disabled = 0' * (not get_disabled)}
+        {text_pool_string}
     """, [universe])
 
     text_list = []

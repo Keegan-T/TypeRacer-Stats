@@ -84,13 +84,13 @@ async def run(ctx, user, username, sort, n, raw):
         return await ctx.send(embed=errors.import_required(username, universe))
     era_string = strings.get_era_string(user)
     if era_string:
-        stats = await users.time_travel_stats(stats, user)
+        stats = await users.filter_stats(stats, user)
 
     text_list = texts.get_texts(as_dictionary=True, universe=universe)
     if era_string:
-        text_bests = await users.get_text_bests_time_travel(username, universe, user, race_stats=True, raw=raw)
+        text_bests = await users.get_text_bests_time_travel(username, universe, user, race_stats=True, raw=raw, text_pool=user["settings"]["text_pool"])
     else:
-        text_bests = users.get_text_bests(username, universe=universe, race_stats=True, raw=raw)
+        text_bests = users.get_text_bests(username, universe=universe, race_stats=True, raw=raw, text_pool=user["settings"]["text_pool"])
 
     if len(text_bests) == 0:
         return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
@@ -145,6 +145,7 @@ async def run(ctx, user, username, sort, n, raw):
         header=header,
         profile=stats,
         universe=universe,
+        text_pool=user["settings"]["text_pool"],
     )
 
     await message.send()

@@ -120,7 +120,8 @@ async def run(ctx, user, username, category, text_id, reverse=True):
         columns = ["text_id", "number", "wpm", "points", "timestamp"]
         race_list = await races.get_races(
             username, columns=columns, order_by=category, reverse=reverse, limit=100,
-            universe=universe, start_date=user["start_date"], end_date=user["end_date"]
+            universe=universe, start_date=user["start_date"], end_date=user["end_date"],
+            text_pool=user["settings"]["text_pool"],
         )
         text_list = texts.get_texts(as_dictionary=True, universe=universe)
         if not race_list:
@@ -156,6 +157,7 @@ async def run(ctx, user, username, category, text_id, reverse=True):
         header=header,
         profile=stats,
         universe=universe,
+        text_pool=user["settings"]["text_pool"],
     )
 
     await message.send()

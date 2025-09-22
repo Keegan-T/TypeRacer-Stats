@@ -38,6 +38,7 @@ def get_user(ctx, auto_add=True):
     user = dict(user[0])
     user["colors"] = json.loads(user["colors"])
     user["commands"] = json.loads(user["commands"])
+    user["settings"] = json.loads(user["settings"])
 
     return user
 
@@ -106,14 +107,15 @@ def add_user(id):
         "start_date": None,
         "end_date": None,
         "joined": round(dates.now().timestamp()),
+        "settings": {"text_pool": "any", "wpm": "adjusted"},
     }
 
     db.run("""
         INSERT INTO users
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, [
         user["id"], user["username"], user["universe"], json.dumps(user["colors"]),
-        "{}", user["start_date"], user["end_date"], user["joined"]
+        "{}", user["start_date"], user["end_date"], user["joined"], json.dumps(user["settings"])
     ])
 
     return user
@@ -154,7 +156,7 @@ def update_commands(user_id, command, value=None):
     user_commands = json.loads(user_commands)
 
     if value is not None:
-      user_commands[command] = value
+        user_commands[command] = value
     elif command in user_commands:
         user_commands[command] += 1
     else:
@@ -176,7 +178,15 @@ def update_date_range(user_id, start_date, end_date):
         end_time = end_date.timestamp()
 
     db.run("""
-        UPDATE USERS
+        UPDATE users
         SET start_date = ?, end_date = ?
         WHERE id = ?
     """, [start_time, end_time, user_id])
+
+
+def update_settings(user_id, settings):
+    db.run("""
+        UPDATE users
+        SET settings = ?
+        WHERE id = ?
+    """, [json.dumps(settings), str(user_id)])

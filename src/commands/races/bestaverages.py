@@ -53,7 +53,7 @@ async def run(ctx, user, username, n):
 
     era_string = strings.get_era_string(user)
     if era_string:
-        stats = await users.time_travel_stats(stats, user)
+        stats = await users.filter_stats(stats, user)
 
     if n < 1:
         return await ctx.send(embed=errors.greater_than(0))
@@ -63,7 +63,8 @@ async def run(ctx, user, username, n):
 
     race_list = await races.get_races(
         username, columns=["wpm", "number", "timestamp"], universe=universe,
-        start_date=user["start_date"], end_date=user["end_date"]
+        start_date=user["start_date"], end_date=user["end_date"],
+        text_pool=user["settings"]["text_pool"],
     )
     race_list.sort(key=lambda x: x[2])
 
@@ -119,6 +120,7 @@ async def run(ctx, user, username, n):
         title=title,
         profile=stats,
         universe=universe,
+        text_pool=user["settings"]["text_pool"],
     )
 
     await message.send()
