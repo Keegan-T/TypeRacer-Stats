@@ -75,9 +75,12 @@ def get_top_n(text_id, n=10, wpm="wpm_adjusted"):
 
     top_10 = []
     alts = get_alts()
+    banned = get_disqualified_users()
 
     for result in results:
         username = result["username"]
+        if username in banned:
+            continue
         if username in alts:
             existing_score = next((score for score in top_10 if score["username"] in alts[username]), None)
         else:
