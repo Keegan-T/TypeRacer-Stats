@@ -25,7 +25,6 @@ def separate_delays(log, old=False):
 def split_log(typing_log):
     separator = re.search(r"\|(\d+),(\d+),(\d+),0\+", typing_log)
     if separator:
-        typing_log = codecs.decode(typing_log, "unicode_escape")
         split = separator.span()[0]
         first_half = typing_log[:split]
         action_data = typing_log[split + 1:]
