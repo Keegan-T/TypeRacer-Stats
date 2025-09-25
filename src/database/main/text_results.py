@@ -49,12 +49,29 @@ def get_top_10s():
     return filtered_top_10s
 
 
-def get_top_n(text_id, n=10):
-    results = db.fetch("""
-        SELECT * FROM text_results
-        WHERE text_id = ?
-        ORDER BY wpm DESC
-    """, [text_id])
+def get_top_n(text_id, n=10, wpm="wpm_adjusted"):
+    if wpm != "wpm_adjusted":
+        results = db.fetch(f"""
+            SELECT text_id, username, number, {wpm} AS wpm, accuracy, timestamp
+            FROM (
+                SELECT r.*,
+                   ROW_NUMBER() OVER (
+                       PARTITION BY username
+                       ORDER BY {wpm} DESC
+                   ) AS rn
+                FROM races r
+                WHERE text_id = ?
+            ) sub
+            WHERE rn = 1
+            ORDER BY {wpm} DESC
+            LIMIT {n * 2};
+        """, [text_id])
+    else:
+        results = db.fetch("""
+            SELECT * FROM text_results
+            WHERE text_id = ?
+            ORDER BY wpm DESC
+        """, [text_id])
 
     top_10 = []
     alts = get_alts()
