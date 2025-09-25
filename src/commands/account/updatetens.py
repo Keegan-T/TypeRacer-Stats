@@ -33,7 +33,6 @@ class UpdateTens(commands.Cog):
 
     @commands.command(aliases=command["aliases"])
     async def updatetens(self, ctx, *args):
-        return # temporary disabled
         if tens_lock.locked():
             return await ctx.send(embed=Embed(
                 title=f"Update In Progress",
