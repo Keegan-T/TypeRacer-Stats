@@ -88,6 +88,7 @@ async def update_important_users():
     async with import_lock:
         for username in important_users:
             await download(username)
+            await asyncio.sleep(3)
 
     log("Finished updating important users")
 
