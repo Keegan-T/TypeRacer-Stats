@@ -20,29 +20,48 @@ def add_logs(typing_logs):
 
 
 async def compress_logs(batch_size=1000):
-    offset = 0
     total_compressed = 0
+    last_universe = None
+    last_username = None
+    last_number = None
 
     while True:
-        rows = db.fetch("""
-            SELECT universe, username, number, log 
-            FROM typing_logs 
-            WHERE compressed = 0 
-            LIMIT ? OFFSET ?
-        """, (batch_size, offset))
+        if last_universe is None:
+            rows = db.fetch("""
+                SELECT universe, username, number, log 
+                FROM typing_logs
+                WHERE compressed = 0 
+                ORDER BY universe, username, number
+                LIMIT ?
+            """, (batch_size,))
+        else:
+            rows = db.fetch("""
+                SELECT universe, username, number, log 
+                FROM typing_logs
+                WHERE compressed = 0 
+                AND (universe > ? 
+                     OR (universe = ? AND username > ?)
+                     OR (universe = ? AND username = ? AND number > ?))
+                ORDER BY universe, username, number
+                LIMIT ?
+            """, (last_universe, last_universe, last_username,
+                  last_universe, last_username, last_number, batch_size))
 
         if not rows:
             break
 
         updates = []
         for universe, username, number, log in rows:
-            compressed_log = zlib.compress(log.encode("utf-8"), level=6)
+            compressed_log = zlib.compress(log.encode("utf-8"), level=1)
             updates.append((
                 sqlite3.Binary(compressed_log),
                 universe,
                 username,
                 number
             ))
+            last_universe = universe
+            last_username = username
+            last_number = number
 
         if updates:
             db.run_many("""
@@ -52,12 +71,13 @@ async def compress_logs(batch_size=1000):
             """, updates)
 
             total_compressed += len(updates)
-            logging.log(f"Compressed {len(updates)} logs (total: {total_compressed})")
+            logging.log(f"Compressed {len(updates):,} logs (total: {total_compressed:,})")
+
+            await asyncio.sleep(0.01)
 
         del rows, updates
-        offset += batch_size
-
-        await asyncio.sleep(0.1)
+        import gc
+        gc.collect()
 
     logging.log("Finished compressing logs")
 
