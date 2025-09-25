@@ -284,3 +284,14 @@ def no_valid_windows(universe):
     add_universe(embed, universe)
 
     return embed
+
+
+def rate_limit_exceeded(retry_after=None):
+    description = "Please try again later."
+    if retry_after:
+        description = f"Please try again {strings.discord_timestamp(retry_after)}"
+
+    return Embed(
+        title="Rate Limit Exceeded",
+        description=description,
+    )

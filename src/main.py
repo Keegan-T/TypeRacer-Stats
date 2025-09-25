@@ -3,7 +3,7 @@ import glob
 import os
 
 import discord
-from aiohttp import ClientConnectionError
+from aiohttp import ClientConnectionError, ClientResponseError
 from discord import Embed, DiscordServerError
 from discord.ext import commands, tasks
 from requests.exceptions import SSLError
@@ -49,16 +49,24 @@ async def on_command_error(ctx, error):
         return await ctx.send(embed=errors.command_cooldown(dates.now().timestamp() + error.retry_after))
 
     elif isinstance(error, commands.CommandInvokeError):
-        if isinstance(error.original, (ConnectionError, ClientConnectionError, SSLError)):
+        original = error.original
+
+        if isinstance(original, (ConnectionError, ClientConnectionError, SSLError)):
             return await ctx.send(embed=errors.typeracer_connection_error())
-        elif isinstance(error.original, DiscordServerError):
+        elif isinstance(original, DiscordServerError):
             return await ctx.send(embed=errors.discord_connection_error())
+        elif isinstance(original, ClientResponseError):
+            if original.status == 429:
+                retry_after = original.headers.get("Retry-After")
+                if retry_after:
+                    return await ctx.send(embed=errors.rate_limit_exceeded(int(retry_after)))
+                return await ctx.send(embed=errors.rate_limit_exceeded())
         elif "or fewer in length" in str(error):
             return await ctx.send(embed=errors.embed_limit_exceeded())
         elif "Large query" in str(error):
             return await ctx.send(embed=errors.large_query_in_progress())
 
-        if isinstance(error.original, discord.Forbidden):
+        if isinstance(original, discord.Forbidden):
             return log(f"Failed to send a message in <#{ctx.channel.id}>. Missing permissions.")
 
     log_message = get_log_message(ctx.message)
@@ -115,7 +123,7 @@ async def loops():
             await records.update_all(bot)
             await delete_expired_users()
             await update_texts()
-            # await compress_logs()
+            await compress_logs()
             await import_users()
             if now.day == 1:
                 await update_top_tens()
