@@ -10,33 +10,6 @@ from database.main.alts import get_alts
 from database.main.users import get_disqualified_users
 
 
-def filter_top_n(results, n, alts, banned):
-    top_n = []
-    seen = set()
-
-    for result in results:
-        username = result["username"]
-
-        if username in banned:
-            continue
-
-        if username in alts:
-            related = set(alts[username])
-        else:
-            related = {username}
-
-        if seen & related:
-            continue
-
-        top_n.append(result)
-        seen.update(related)
-
-        if len(top_n) == n:
-            break
-
-    return top_n
-
-
 def add_results(results):
     db.run_many("""
         INSERT OR IGNORE INTO text_results
@@ -51,50 +24,54 @@ def get_count():
 def get_top_10s():
     results = db.fetch("SELECT * FROM text_results")
     alts = get_alts()
-    banned = get_disqualified_users()
 
     top_10s = defaultdict(list)
     for result in results:
         top_10s[result["text_id"]].append(result)
 
     filtered_top_10s = {}
-    for text_id, results in top_10s.items():
-        top_10 = filter_top_n(results, 10, alts, banned)
-        top_10.sort(key=lambda x: x["wpm"], reverse=True)
-        filtered_top_10s[text_id] = top_10
+    for text_id, scores in top_10s.items():
+        scores.sort(key=lambda x: x["wpm"], reverse=True)
+
+        unique_scores = []
+        for score in scores:
+            username = score["username"]
+            if username in alts:
+                existing_score = next((score for score in unique_scores if score["username"] in alts[username]), None)
+            else:
+                existing_score = next((score for score in unique_scores if score["username"] == username), None)
+
+            if not existing_score:
+                unique_scores.append(score)
+
+        filtered_top_10s[text_id] = unique_scores[:10]
 
     return filtered_top_10s
 
 
-def get_top_n(text_id, n=10, wpm="wpm_adjusted"):
-    if wpm != "wpm_adjusted":
-        results = db.fetch(f"""
-            SELECT text_id, username, number, {wpm} AS wpm, accuracy, timestamp
-            FROM (
-                SELECT r.*,
-                   ROW_NUMBER() OVER (
-                       PARTITION BY username
-                       ORDER BY {wpm} DESC
-                   ) AS rn
-                FROM races r
-                WHERE text_id = ?
-            ) sub
-            WHERE rn = 1
-            ORDER BY {wpm} DESC
-            LIMIT {n * 2};
-        """, [text_id])
-    else:
-        results = db.fetch("""
-            SELECT * FROM text_results
-            WHERE text_id = ?
-            ORDER BY wpm DESC
-        """, [text_id])
+def get_top_n(text_id, n=10):
+    results = db.fetch("""
+        SELECT * FROM text_results
+        WHERE text_id = ?
+        ORDER BY wpm DESC
+    """, [text_id])
 
+    top_10 = []
     alts = get_alts()
-    banned = get_disqualified_users()
-    top_n = filter_top_n(results, n, alts, banned)
 
-    return top_n
+    for result in results:
+        username = result["username"]
+        if username in alts:
+            existing_score = next((score for score in top_10 if score["username"] in alts[username]), None)
+        else:
+            existing_score = next((score for score in top_10 if score["username"] == username), None)
+        if existing_score:
+            continue
+        top_10.append(result)
+        if len(top_10) == n:
+            break
+
+    return top_10
 
 
 def get_top_10_counts(username, text_pool="all"):
