@@ -1,3 +1,6 @@
+9/24/2025
+- Added -settings (text pool, global wpm metric)
+
 9/16/2025
 - Added -encounters
 

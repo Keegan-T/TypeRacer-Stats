@@ -58,6 +58,8 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
     era_string = strings.get_era_string(user)
+    text_pool = user["settings"]["text_pool"]
+    wpm_metric = user["settings"]["wpm"]
 
     async with LargeQueryLock(stats["races"] > 100_000):
         api_stats = get_stats(username, universe=universe)
@@ -74,13 +76,13 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         start_date, end_date = dates.time_travel_dates(user, start_date, end_date)
 
         title = "WPM Improvement"
-        columns = ["wpm", "timestamp"]
+        columns = [wpm_metric, "timestamp"]
         if start_date is None and start_number is None:
             timeframe = f" (All-Time)"
             title += " - All-Time"
             race_list = await races.get_races(
                 username, columns=columns, universe=universe,
-                text_pool=user["settings"]["text_pool"]
+                text_pool=text_pool
             )
 
         elif start_date is None:
@@ -90,7 +92,7 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
             race_list = await races.get_races(
                 username, columns=columns, start_number=start_number,
                 end_number=end_number, universe=universe,
-                text_pool=user["settings"]["text_pool"]
+                text_pool=text_pool
             )
 
         else:
@@ -99,7 +101,7 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
             race_list = await races.get_races(
                 username, columns=columns, start_date=start_date.timestamp(),
                 end_date=end_date.timestamp(), universe=universe,
-                text_pool=user["settings"]["text_pool"]
+                text_pool=text_pool
             )
 
         if era_string:
@@ -163,7 +165,8 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         header=description,
         profile=stats,
         universe=universe,
-        text_pool=user["settings"]["text_pool"],
+        text_pool=text_pool,
+        wpm_metric=wpm_metric,
     )
 
     await message.send()

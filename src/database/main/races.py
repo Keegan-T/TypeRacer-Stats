@@ -60,8 +60,13 @@ async def get_races(
 ):
     users.update_last_accessed(universe, username)
 
+    wpm_filter = ""
     if columns != "*":
-        columns = ["wpm_adjusted AS wpm" if column == "wpm" else column for column in columns]
+        for column in columns:
+            if column in ["wpm_unlagged", "wpm_adjusted", "wpm_raw", "wpm_pauseless"]:
+                columns[columns.index(column)] = f"{column} AS wpm"
+                if column in ["wpm_raw", "wpm_pauseless"]:
+                    wpm_filter = f"AND {column} IS NOT NULL"
         columns = ",".join([c for c in columns])
     order = "DESC" if reverse else "ASC"
 
@@ -85,7 +90,8 @@ async def get_races(
             INDEXED BY idx_races_universe_username
             WHERE universe = ?
             AND username = ?
-            {text_pool_string} 
+            {text_pool_string}
+            {wpm_filter}
             {f'AND number >= {start_number}' if start_number else ''}
             {f'AND number <= {end_number}' if end_number else ''}
             {f'AND timestamp >= {start_date}' if start_date else ''}
@@ -161,13 +167,18 @@ def get_latest_text_id(username, universe):
     return text_id[0][0]
 
 
-def get_text_races(username, text_id, universe, start_date=None, end_date=None):
+def get_text_races(username, text_id, universe, start_date=None, end_date=None, wpm="wpm"):
+    wpm_filter = ""
+    if wpm in ["wpm_raw", "wpm_pauseless"]:
+        wpm_filter = f"AND {wpm} IS NOT NULL"
+
     races = db.fetch(f"""
-        SELECT * FROM races
+        SELECT username, number, text_id, {wpm} AS wpm, timestamp FROM races
         INDEXED BY idx_races_universe_username_text_id
         WHERE universe = ?
         AND username = ?
         AND text_id = ?
+        {wpm_filter}
         {f'AND timestamp >= {start_date}' if start_date else ''}
         {f'AND timestamp < {end_date}' if end_date else ''}
         ORDER BY timestamp ASC
@@ -176,14 +187,24 @@ def get_text_races(username, text_id, universe, start_date=None, end_date=None):
     return races
 
 
-def get_encounters(username1, username2, universe, text_pool):
+async def get_encounters(username1, username2, universe, wpm="wpm", text_pool="all"):
     text_pool_string = (
         f"AND text_id IN ({",".join([str(tid) for tid in maintrack_text_pool])})"
         if text_pool != "all" and universe == "play" else ""
     )
 
+    columns = (
+        f"username, number, {wpm} AS wpm, wpm_raw, accuracy,"
+        f"correction_time, total_time, rank, racers, race_id, timestamp"
+    )
+
+    wpm_filter = ""
+    for wpm in ["wpm_raw", "wpm_pauseless"]:
+        if wpm in columns:
+            wpm_filter = f"AND {wpm} IS NOT NULL"
+
     races = db.fetch(f"""
-        SELECT *
+        SELECT {columns}
         FROM races
         WHERE race_id IN (
             SELECT race_id
@@ -191,6 +212,7 @@ def get_encounters(username1, username2, universe, text_pool):
             WHERE universe = ?
             AND username IN (?, ?)
             {text_pool_string} 
+            {wpm_filter}
             GROUP BY race_id
             HAVING COUNT(DISTINCT username) = 2
         )

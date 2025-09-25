@@ -71,6 +71,8 @@ async def run(ctx, user, username, date):
     stats = users.get_user(username, universe)
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
+    text_pool = user["settings"]["text_pool"]
+    wpm_metric = user["settings"]["wpm"]
 
     if not date:
         date = datetime.now(timezone.utc)
@@ -131,12 +133,12 @@ async def run(ctx, user, username, date):
     end_time = end_date.timestamp()
 
     columns = [
-        "text_id", "number", "wpm", "accuracy", "points", "characters", "rank", "racers",
-        "timestamp", "wpm_raw", "start_time", "total_time", "correction_time", "pause_time",
+        "text_id", "number", wpm_metric, "accuracy", "points", "characters", "rank", "racers",
+        "timestamp", "wpm_raw AS wpm_raw", "start_time", "total_time", "correction_time", "pause_time",
     ]
     race_list = await races.get_races(
         username, columns, start_time, end_time, universe=universe,
-        text_pool=user["settings"]["text_pool"],
+        text_pool=text_pool,
     )
     race_list.sort(key=lambda x: x["timestamp"])
 
@@ -145,12 +147,12 @@ async def run(ctx, user, username, date):
     else:
         fields, footer = get_stats_fields(
             username, race_list, start_time, end_time, universe, detailed,
-            text_pool=user["settings"]["text_pool"],
+            wpm_metric=wpm_metric, text_pool=text_pool,
         )
         page = Page(fields=fields, footer=footer)
 
     if competition and competition["competitors"][0]["username"] == username:
-        if competition["end_timestamp"] > datetime.now(timezone.utc).timestamp():
+        if competition["end_timestamp"] > dates.now().timestamp():
             page.description = f":crown: **Competition Leader** :crown:"
         else:
             page.description = f":first_place: **Competition Winner** :first_place:"
@@ -161,7 +163,8 @@ async def run(ctx, user, username, date):
         profile=stats,
         universe=universe,
         time_travel=False,
-        text_pool=user["settings"]["text_pool"],
+        text_pool=text_pool,
+        wpm_metric=wpm_metric,
     )
 
     await message.send()

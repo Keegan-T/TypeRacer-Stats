@@ -57,11 +57,13 @@ async def run(ctx, user, username, category):
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
     era_string = strings.get_era_string(user)
+    text_pool = user["settings"]["text_pool"]
+    wpm_metric = user["settings"]["wpm"]
 
     race_list = await races.get_races(
-        username, columns=["wpm", "accuracy"], universe=universe,
+        username, columns=[wpm_metric, "accuracy"], universe=universe,
         start_date=user["start_date"], end_date=user["end_date"],
-        text_pool=user["settings"]["text_pool"]
+        text_pool=text_pool
     )
 
     if len(race_list) == 0:
@@ -107,10 +109,10 @@ async def run(ctx, user, username, category):
         )
 
     if era_string:
-        text_bests = await users.get_text_bests_time_travel(username, universe, user, text_pool=user["settings"]["text_pool"])
+        text_bests = await users.get_text_bests_time_travel(username, universe, user, wpm=wpm_metric, text_pool=text_pool)
         text_bests = [(text["text_id"], text["wpm"]) for text in text_bests]
     else:
-        text_bests = users.get_text_bests(username, universe=universe, text_pool=user["settings"]["text_pool"])
+        text_bests = users.get_text_bests(username, universe=universe, wpm=wpm_metric, text_pool=text_pool)
     text_best_values = [race[1] for race in text_bests]
     distribution_stats = get_distribution_stats(text_best_values, " WPM")
 
@@ -129,7 +131,8 @@ async def run(ctx, user, username, category):
         ctx, user, pages,
         profile=stats,
         universe=universe,
-        text_pool=user["settings"]["text_pool"],
+        text_pool=text_pool,
+        wpm_metric=wpm_metric,
     )
 
     await message.send()

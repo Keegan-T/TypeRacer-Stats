@@ -55,12 +55,14 @@ async def run(ctx, user, username, category):
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
     era_string = strings.get_era_string(user)
+    text_pool = user["settings"]["text_pool"]
+    wpm_metric = user["settings"]["wpm"]
 
-    columns = ["number", "wpm", "text_id", "timestamp"]
+    columns = ["number", wpm_metric, "text_id", "timestamp"]
     race_list = await races.get_races(
         username, columns=columns, universe=universe,
         start_date=user["start_date"], end_date=user["end_date"],
-        text_pool=user["settings"]["text_pool"],
+        text_pool=text_pool,
     )
     if not race_list:
         return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
@@ -153,7 +155,8 @@ async def run(ctx, user, username, category):
         ctx, user, pages,
         profile=stats,
         universe=universe,
-        text_pool=user["settings"]["text_pool"],
+        text_pool=text_pool,
+        wpm_metric=wpm_metric,
     )
 
     await message.send()

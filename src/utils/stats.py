@@ -40,7 +40,6 @@ def calculate_text_bests(race_list):
     tb_dict = {}
     for race in race_list:
         race = dict(race)
-        race["wpm"] = race["wpm_adjusted"]
         text_id = race["text_id"]
         if text_id not in tb_dict or race["wpm"] > tb_dict[text_id]["wpm"]:
             tb_dict[text_id] = race

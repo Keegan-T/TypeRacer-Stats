@@ -443,39 +443,41 @@ async def delete_user(username, universe):
         db.run("DELETE FROM text_results WHERE username = ?", [username])
 
 
-def get_text_bests(username, race_stats=False, universe="play", until=None, raw=False, text_pool="all"):
-    wpm_column = "wpm_raw" if raw else "wpm_adjusted"
+def get_text_bests(username, race_stats=False, universe="play", until=None, wpm="wpm", text_pool="all"):
     columns = "text_id"
     if race_stats:
-        columns = f"text_id, {wpm_column} AS wpm, number, timestamp, accuracy, points"
+        columns = f"text_id, {wpm} AS wpm, number, timestamp, accuracy, points"
     timestamp_string = f"AND timestamp < {until}" if until else ""
     text_pool_string = (
         f"AND text_id IN ({",".join([str(tid) for tid in maintrack_text_pool])})"
         if text_pool != "all" and universe == "play" else ""
     )
+    column_filter = ""
+    if wpm in ["wpm_raw", "wpm_pauseless"]:
+        column_filter = f"AND {wpm} IS NOT NULL"
 
     text_bests = db.fetch(f"""
-        SELECT {columns}, MAX({wpm_column}) AS wpm
+        SELECT {columns}, MAX({wpm}) AS wpm
         FROM races
         WHERE universe = ?
         AND username = ?
+        {column_filter}
         {timestamp_string}
         {text_pool_string}
         GROUP BY text_id
-        ORDER BY wpm DESC
+        ORDER BY {wpm} DESC
     """, [universe, username])
 
     return filter_disabled(text_bests)
 
 
-async def get_text_bests_time_travel(username, universe, user, race_stats=False, raw=False, text_pool="all"):
+async def get_text_bests_time_travel(username, universe, user, race_stats=False, wpm="wpm", text_pool="all"):
     from database.main.races import get_races
 
     start_date = user["start_date"]
     end_date = user["end_date"]
 
-    wpm_column = "wpm_raw" if raw else "wpm_adjusted"
-    columns = ["text_id", wpm_column, "number", "timestamp", "accuracy", "points"]
+    columns = ["text_id", wpm, "number", "timestamp", "accuracy", "points"]
     if not race_stats:
         columns = columns[:2]
 
@@ -525,8 +527,7 @@ def count_races_over(username, threshold, category, over, universe, start_date=N
         f"AND text_id IN ({",".join([str(tid) for tid in maintrack_text_pool])})"
         if text_pool != "all" and universe == "play" else ""
     )
-    if category == "wpm":
-        category = "wpm_adjusted"
+
     times = db.fetch(f"""
         SELECT COUNT(*)
         FROM races
@@ -542,8 +543,6 @@ def count_races_over(username, threshold, category, over, universe, start_date=N
 
 
 def get_texts_over(username, threshold, category, universe, start_date=None, end_date=None, text_pool="all"):
-    if category == "wpm":
-        category = "wpm_adjusted"
     threshold_string = f"HAVING TIMES >= {threshold}" * (category == "times")
     category_string = f"AND {category} >= {threshold}" * (category != "times")
     index = f"INDEXED BY idx_races_universe_username" * (category == "points")

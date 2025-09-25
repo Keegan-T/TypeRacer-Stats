@@ -67,6 +67,7 @@ async def run(ctx, user, username, category, n, less_than):
     stats = users.get_user(username, universe)
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
+    wpm_metric = user["settings"]["wpm"]
 
     columns = ["number", "timestamp"]
     if category in ["wins", "losses"]:
@@ -74,7 +75,10 @@ async def run(ctx, user, username, category, n, less_than):
     elif category == "text":
         columns += ["text_id"]
     else:
+        if category == "wpm":
+            category = wpm_metric
         columns += [category]
+        category = "wpm"
     race_list = await races.get_races(
         username, columns,
         start_date=user["start_date"], end_date=user["end_date"],
@@ -157,6 +161,7 @@ async def run(ctx, user, username, category, n, less_than):
         title=title,
         profile=stats,
         universe=universe,
+        wpm_metric=wpm_metric,
     )
 
     await message.send()

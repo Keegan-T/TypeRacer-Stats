@@ -1,4 +1,3 @@
-from discord import Embed
 from discord.ext import commands
 
 import api.texts as texts_api
@@ -8,6 +7,7 @@ import database.main.texts as texts
 from api.core import date_to_timestamp
 from database.bot.users import get_user
 from utils import errors, urls, strings, embeds
+from utils.embeds import Page, Message
 
 command = {
     "name": "textleaderboard",
@@ -53,21 +53,21 @@ async def run(ctx, user, text_id):
     text = texts.get_text(text_id, universe)
     if not text:
         return await ctx.send(embed=errors.unknown_text(universe))
-
-    embed = Embed(
-        title=f"Text #{text_id}",
-        url=urls.trdata_text(text_id, universe),
-        color=user["colors"]["embed"],
-    )
+    wpm_metric = user["settings"]["wpm"]
 
     full_quote = text["quote"]
     characters = len(full_quote)
     words = len(full_quote.split(" "))
     quote = strings.truncate_clean(full_quote, 1000)
-    embed.description = (
-        f'{words:,} words - {characters:,} characters - '
-        f'[Ghost]({text["ghost"]})\n"{quote}"\n\n**Top 10**\n'
+    page = Page(
+        title=f"Text #{text_id}",
+        description=(
+            f'{words:,} words - {characters:,} characters - '
+            f'[Ghost]({text["ghost"]})\n"{quote}"\n\n**Top 10**\n'
+        ),
+        color=user["colors"]["embed"],
     )
+    url = urls.trdata_text(text_id, universe)
 
     text_id = int(text_id)
     disabled_text_ids = texts.get_disabled_text_ids()
@@ -80,34 +80,39 @@ async def run(ctx, user, text_id):
             top_10 = await texts_api.get_top_results(text_id)
             for i, race in enumerate(top_10):
                 username = race["user"]
-                embed.description += (
+                page.description += (
                     f"{strings.rank(i + 1)} {strings.escape_formatting(username)} - [{race['wpm']:,.2f} WPM]"
                     f"({urls.replay(username, race['rn'], universe)}) - "
                     f"{strings.discord_timestamp(date_to_timestamp(race['t']))}\n"
                 )
-            embed.set_footer(text="This text has been disabled")
-            embeds.add_universe(embed, universe)
-
-            return await ctx.send(embed=embed)
+            page.footer = "This text has been disabled"
+            message = Message(ctx, user, page, url=url)
+            return await message.send()
 
         await top_tens.update_results(text_id)
-        top_10 = top_tens.get_top_n(text_id)
+        top_10 = top_tens.get_top_n(text_id, wpm=wpm_metric)
 
     for i, race in enumerate(top_10):
         username = race["username"]
         accuracy_string = ""
         if race["accuracy"]:
             accuracy_string = f" ({race['accuracy']:.0%})"
-        embed.description += (
+        page.description += (
             f"{strings.rank(i + 1)} {strings.escape_formatting(username)} - [{race['wpm']:,.2f} WPM]"
             f"({urls.replay(race['username'], race['number'])}){accuracy_string} - "
             f"{strings.discord_timestamp(race['timestamp'])}\n"
         )
 
     if not top_10:
-        embed.description += "No scores found."
+        page.description += "No scores found."
 
-    await ctx.send(embed=embed)
+    message = Message(
+        ctx, user, page,
+        url=url,
+        wpm_metric=wpm_metric,
+    )
+
+    await message.send()
 
     recent.update_recent(ctx.channel.id, text_id)
 

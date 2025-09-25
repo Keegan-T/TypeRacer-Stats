@@ -118,6 +118,8 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
     stats = users.get_user(username, universe)
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
+    text_pool = user["settings"]["text_pool"]
+    wpm_metric = user["settings"]["wpm"]
 
     async with LargeQueryLock(stats["races"] > 100_000):
         era_string = strings.get_era_string(user)
@@ -135,8 +137,8 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
 
         title = "Race Stats - "
         columns = [
-            "text_id", "number", "wpm", "accuracy", "points", "characters", "rank", "racers",
-            "timestamp", "wpm_raw", "start_time", "total_time", "correction_time", "pause_time",
+            "text_id", "number", wpm_metric, "accuracy", "points", "characters", "rank", "racers",
+            "timestamp", "wpm_raw AS wpm_raw", "start_time", "total_time", "correction_time", "pause_time",
         ]
         if start_date is None and start_number is None:
             title += "All-Time"
@@ -147,7 +149,7 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
             race_list = await races.get_races(
                 username, columns, None if start == stats["joined"] else start,
                 None if end == dates.now().timestamp() else end, universe=universe,
-                text_pool=user["settings"]["text_pool"],
+                text_pool=text_pool,
             )
 
         elif start_date is None:
@@ -157,7 +159,7 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
                 username, columns, start_number=start_number,
                 end_number=end_number, universe=universe,
                 start_date=user_start, end_date=user_end,
-                text_pool=user["settings"]["text_pool"],
+                text_pool=text_pool,
             )
             if race_list:
                 start = race_list[0]["timestamp"]
@@ -173,7 +175,7 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
             race_list = await races.get_races(
                 username, columns, start_date.timestamp(),
                 end_date.timestamp(), universe=universe,
-                text_pool=user["settings"]["text_pool"],
+                text_pool=text_pool,
             )
 
         if not race_list:
@@ -182,7 +184,7 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
 
         fields, footer = get_stats_fields(
             username, race_list, start, end, universe,
-            text_pool=user["settings"]["text_pool"],
+            wpm_metric=wpm_metric, text_pool=text_pool,
         )
 
     page = Page(title, fields=fields, footer=footer)
@@ -191,13 +193,14 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         ctx, user, page,
         profile=stats,
         universe=universe,
-        text_pool=user["settings"]["text_pool"],
+        text_pool=text_pool,
+        wpm_metric=wpm_metric,
     )
 
     await message.send()
 
 
-def get_stats_fields(username, race_list, start_time, end_time, universe="play", detailed=True, text_pool="all"):
+def get_stats_fields(username, race_list, start_time, end_time, universe="play", detailed=True, wpm_metric="wpm", text_pool="all"):
     fields = []
     footer = None
 
@@ -219,7 +222,7 @@ def get_stats_fields(username, race_list, start_time, end_time, universe="play",
     total_time = 0
     text_improvements = 0
     total_wpm_gain = 0
-    text_best_list = users.get_text_bests(username, until=race_list[0][8], text_pool=text_pool)
+    text_best_list = users.get_text_bests(username, universe=universe, until=race_list[0][8], wpm=wpm_metric, text_pool=text_pool)
     text_bests = {text_id: wpm for text_id, wpm in text_best_list}
     disabled_text_ids = texts.get_disabled_text_ids()
     unique_texts = set()

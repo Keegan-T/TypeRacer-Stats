@@ -6,7 +6,7 @@ from database.main import db
 from utils import logging
 
 
-async def decompress(log):
+def decompress(log):
     return zlib.decompress(log).decode("utf-8")
 
 

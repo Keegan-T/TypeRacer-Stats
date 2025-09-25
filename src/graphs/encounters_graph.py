@@ -21,7 +21,6 @@ def render(user, title, data, universe="play"):
 
     if len(x) > 1:
         window = max(5, len(x) // 20)
-        print(window)
 
         r1_avg = moving_average(r1_wpm, window)
         r2_avg = moving_average(r2_wpm, window)

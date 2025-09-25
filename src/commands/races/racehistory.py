@@ -68,17 +68,19 @@ async def run(ctx, user, username, time_period, sort, reverse):
     db_stats = users.get_user(username, universe)
     if not db_stats:
         return await ctx.send(embed=errors.import_required(username, universe))
+    text_pool = user["settings"]["text_pool"]
+    wpm_metric = user["settings"]["wpm"]
 
     api_stats = get_stats(username, universe=universe)
     await download(racer=api_stats, universe=universe)
 
     if time_period == "races":
-        columns = ["number", "wpm", "accuracy", "points", "rank", "racers", "timestamp"]
+        columns = ["number", wpm_metric, "accuracy", "points", "rank", "racers", "timestamp"]
         race_list = await races.get_races(
             username, columns=columns, order_by="timestamp",
             limit=200, reverse=reverse, universe=universe,
             start_date=user["start_date"], end_date=user["end_date"],
-            text_pool=user["settings"]["text_pool"],
+            text_pool=text_pool,
         )
 
         def formatter(race):
@@ -104,8 +106,7 @@ async def run(ctx, user, username, time_period, sort, reverse):
         reverse_title = "" if reverse else ("Oldest " if sort == "date" else "Least ")
         title = f"Race History - {time_period.title()}s (By {reverse_title}{sort_title})"
         history = await get_history(
-            username, time_period, sort, universe, user["start_date"], user["end_date"], reverse,
-            text_pool=user["settings"]["text_pool"],
+            username, time_period, sort, universe, user["start_date"], user["end_date"], reverse, wpm_metric, text_pool,
         )
         pages = get_pages(history, formatter, page_count=20, per_page=5)
 
@@ -114,15 +115,16 @@ async def run(ctx, user, username, time_period, sort, reverse):
         title=title,
         profile=api_stats,
         universe=universe,
-        text_pool=user["settings"]["text_pool"],
+        text_pool=text_pool,
+        wpm_metric=wpm_metric,
     )
 
     await message.send()
 
 
-async def get_history(username, category, sort, universe, start_date, end_date, reverse, text_pool):
+async def get_history(username, category, sort, universe, start_date, end_date, reverse, wpm_metric, text_pool):
     sort_key = {"points": 3, "races": 2, "time": 5, "wpm": 4, "accuracy": 6}.get(sort, 0)
-    columns = ["text_id", "wpm", "points", "timestamp", "accuracy"]
+    columns = ["text_id", wpm_metric, "points", "timestamp", "accuracy"]
     race_list = await races.get_races(
         username, columns=columns, universe=universe, start_date=start_date, end_date=end_date,
         text_pool=text_pool

@@ -54,6 +54,8 @@ async def run(ctx, user, username, n):
     era_string = strings.get_era_string(user)
     if era_string:
         stats = await users.filter_stats(stats, user)
+    text_pool = user["settings"]["text_pool"]
+    wpm_metric = user["settings"]["wpm"]
 
     if n < 1:
         return await ctx.send(embed=errors.greater_than(0))
@@ -62,9 +64,9 @@ async def run(ctx, user, username, n):
         return await ctx.send(embed=not_enough_races(), content=era_string)
 
     race_list = await races.get_races(
-        username, columns=["wpm", "number", "timestamp"], universe=universe,
+        username, columns=[wpm_metric, "number", "timestamp"], universe=universe,
         start_date=user["start_date"], end_date=user["end_date"],
-        text_pool=user["settings"]["text_pool"],
+        text_pool=text_pool,
     )
     race_list.sort(key=lambda x: x[2])
 
@@ -120,7 +122,8 @@ async def run(ctx, user, username, n):
         title=title,
         profile=stats,
         universe=universe,
-        text_pool=user["settings"]["text_pool"],
+        text_pool=text_pool,
+        wpm_metric=wpm_metric,
     )
 
     await message.send()

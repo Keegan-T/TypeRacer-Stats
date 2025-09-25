@@ -70,13 +70,13 @@ def get_args(user, args, info):
     return unique_usernames
 
 
-async def get_lines(usernames, start_date, end_date, column="number", universe="play", text_pool="all"):
+async def get_lines(usernames, start_date, end_date, column="number", universe="play", wpm="wpm", text_pool="all"):
     lines = []
     min_timestamp = float("inf")
     columns = [column, "timestamp"]
     text_bests = column == "text_best_average"
     if text_bests:
-        columns = ["text_id", "timestamp", "wpm"]
+        columns = ["text_id", "timestamp", wpm]
     disabled_text_ids = get_disabled_text_ids()
     for username in usernames:
         race_list = await races.get_races(
@@ -175,6 +175,9 @@ async def run(ctx, user, usernames, column="number"):
 
     universe = user["universe"]
     era_string = strings.get_era_string(user)
+    text_pool = user["settings"]["text_pool"]
+    wpm_metric = user["settings"]["wpm"]
+
     if user["start_date"]:
         start_date = datetime.fromtimestamp(user["start_date"])
     else:
@@ -184,7 +187,7 @@ async def run(ctx, user, usernames, column="number"):
     else:
         end_date = datetime.now(timezone.utc)
 
-    lines = await get_lines(usernames, start_date, end_date, column, universe=universe, text_pool=user["settings"]["text_pool"])
+    lines = await get_lines(usernames, start_date, end_date, column, universe=universe, wpm=wpm_metric, text_pool=text_pool)
 
     if not lines:
         return await ctx.send(embed=no_data(universe), content=era_string)

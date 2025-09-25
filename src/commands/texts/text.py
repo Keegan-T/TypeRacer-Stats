@@ -63,6 +63,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
     if not db_stats:
         return await ctx.send(embed=errors.import_required(username, universe))
     era_string = strings.get_era_string(user)
+    wpm_metric = user["settings"]["wpm"]
 
     api_stats = get_stats(username, universe=universe)
     await download(racer=api_stats, universe=universe)
@@ -98,7 +99,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
     color = user["colors"]["embed"]
     text_description = strings.text_description(dict(text), universe)
     race_list = races.get_text_races(
-        username, text_id, universe, start_date=user["start_date"], end_date=user["end_date"]
+        username, text_id, universe, start_date=user["start_date"], end_date=user["end_date"], wpm=wpm_metric,
     )
     if not race_list:
         description = (
@@ -119,7 +120,6 @@ async def run(ctx, user, username, text_id=None, race_number=None):
 
     times_typed = len(race_list)
     recent_race = dict(race_list[-1])
-    recent_race["wpm"] = recent_race["wpm_adjusted"]
     stats_string = f"**Times Typed:** {times_typed:,}\n"
     score_display = ""
     average = 0
@@ -128,7 +128,6 @@ async def run(ctx, user, username, text_id=None, race_number=None):
     worst = {}
     for race in race_list:
         race = dict(race)
-        race["wpm"] = race["wpm_adjusted"]
         wpm = race["wpm"]
         average += wpm
         if wpm > best.get("wpm", 0):
@@ -181,7 +180,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
     page = Page(description=description)
     if graph:
         title = f"WPM Improvement - {username} - Text #{text_id}"
-        wpm = [race["wpm_adjusted"] for race in race_list]
+        wpm = [race["wpm"] for race in race_list]
         page.render = lambda: improvement_graph.render(user, wpm, title, universe=universe)
 
     message = Message(
@@ -189,14 +188,15 @@ async def run(ctx, user, username, text_id=None, race_number=None):
         url=urls.trdata_text_races(username, text_id, universe),
         color=color,
         profile=db_stats,
-        universe=universe
+        universe=universe,
+        wpm_metric=wpm_metric,
     )
 
     await message.send()
 
     recent.update_recent(ctx.channel.id, text_id)
 
-    if universe == "play" and not user["end_date"]:
+    if universe == "play" and not user["end_date"] and wpm_metric == "wpm_adjusted":
         await top_10_display(ctx, username, text_id, recent_race)
 
 

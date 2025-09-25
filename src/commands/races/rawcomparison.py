@@ -57,7 +57,7 @@ async def run(ctx, user, username, race_number, universe):
         race_number = stats["races"] + race_number
 
     race = races.get_race(username, race_number, universe, get_log=True, get_keystrokes=True, get_typos=True)
-    if not race or not race.get("keystroke_wpm_adjusted", None):
+    if not race or not race.get("keystroke_wpm_raw_adjusted", None):
         return await ctx.send(embed=errors.logs_not_found(username, race_number, universe))
 
     description = "Completed " + strings.discord_timestamp(race["timestamp"]) + "\n\n" + strings.text_description(race, universe)

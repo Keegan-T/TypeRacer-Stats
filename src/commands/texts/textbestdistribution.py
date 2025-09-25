@@ -47,13 +47,15 @@ async def run(ctx, user, username, binned):
     era_string = strings.get_era_string(user)
     if era_string or user["settings"]["text_pool"] != "all":
         stats = await users.filter_stats(stats, user)
+    text_pool = user["settings"]["text_pool"]
+    wpm_metric = user["settings"]["wpm"]
 
     text_list = texts.get_texts(get_disabled=False, universe=universe)
 
     if era_string:
-        text_bests = await users.get_text_bests_time_travel(username, universe, user, text_pool=user["settings"]["text_pool"])
+        text_bests = await users.get_text_bests_time_travel(username, universe, user, wpm=wpm_metric, text_pool=text_pool)
     else:
-        text_bests = users.get_text_bests(username, universe=universe, text_pool=user["settings"]["text_pool"])
+        text_bests = users.get_text_bests(username, universe=universe, wpm=wpm_metric, text_pool=text_pool)
 
     if len(text_bests) == 0:
         return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
@@ -141,7 +143,8 @@ async def run(ctx, user, username, binned):
         ctx, user, page,
         profile=stats,
         universe=universe,
-        text_pool=user["settings"]["text_pool"],
+        text_pool=text_pool,
+        wpm_metric=wpm_metric,
     )
 
     await message.send()

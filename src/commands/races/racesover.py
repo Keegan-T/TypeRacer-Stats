@@ -55,12 +55,14 @@ async def run(ctx, user, username, threshold, category, over=True):
     era_string = strings.get_era_string(user)
     if era_string:
         stats = await users.filter_stats(stats, user)
+    text_pool = user["settings"]["text_pool"]
+    wpm_metric = user["settings"]["wpm"]
 
     stats = dict(stats)
-    if user["settings"]["text_pool"] == "maintrack":
+    if text_pool == "maintrack":
         race_list = await races.get_races(
-            username, columns=["wpm"], start_date=user["start_date"], end_date=user["end_date"],
-            universe=universe, text_pool=user["settings"]["text_pool"],
+            username, columns=["timestamp"], start_date=user["start_date"], end_date=user["end_date"],
+            universe=universe, text_pool=text_pool,
         )
         stats["races"] = len(race_list)
 
@@ -68,9 +70,11 @@ async def run(ctx, user, username, threshold, category, over=True):
         return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
 
     category_title = {"wpm": "WPM"}.get(category, category.title())
+    if category == "wpm":
+        category = wpm_metric
     times = users.count_races_over(
         username, threshold, category, over, universe, user["start_date"], user["end_date"],
-        text_pool=user["settings"]["text_pool"],
+        text_pool=text_pool,
     )
     description = (
         f"**{times:,}** of **{stats['races']:,}** races are "
@@ -87,7 +91,8 @@ async def run(ctx, user, username, threshold, category, over=True):
         ctx, user, page,
         profile=stats,
         universe=universe,
-        text_pool=user["settings"]["text_pool"],
+        text_pool=text_pool,
+        wpm_metric=wpm_metric,
     )
 
     await message.send()

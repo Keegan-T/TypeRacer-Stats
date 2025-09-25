@@ -25,7 +25,7 @@ class Settings(commands.Cog):
         user = get_user(ctx)
 
         if not args:
-            update_settings(ctx.author.id, {"text_pool": "all", "wpm": "adjusted"})
+            update_settings(ctx.author.id, {"text_pool": "all", "wpm": "wpm_adjusted"})
             message = Message(
                 ctx=ctx,
                 user=user,
@@ -57,6 +57,14 @@ class Settings(commands.Cog):
 
 
 async def run(ctx, user, setting, value):
+    display_value = value
+    value = {
+        "lagged": "wpm",
+        "unlagged": "wpm_unlagged",
+        "adjusted": "wpm_adjusted",
+        "raw": "wpm_raw",
+        "pauseless": "wpm_pauseless",
+    }.get(value, value)
     settings = user["settings"]
     settings[setting] = value
     update_settings(ctx.author.id, settings)
@@ -64,7 +72,7 @@ async def run(ctx, user, setting, value):
     pages = [
         Page(
             title="Settings Updated",
-            description=f"`{setting}` has been set to `{value}`"
+            description=f"`{setting}` has been set to `{display_value}`"
         )
     ]
 

@@ -2,7 +2,7 @@ from discord import Embed
 from discord.ext import commands
 
 import database.bot.recent_text_ids as recent
-from api.users import get_stats, get_latest_race
+from api.users import get_stats
 from commands.account.download import run as download
 from config import prefix
 from database.bot.users import get_user
@@ -92,6 +92,8 @@ async def get_args(user, args, info, universe, channel_id):
 
 
 async def run(ctx, user, username1, username2, race_number1, race_number2, universe, stats=None):
+    wpm_metric = user["settings"]["wpm"]
+
     race_info1 = races.get_race(username1, race_number1, universe, get_log=True, get_keystrokes=True)
     if not race_info1["log"]:
         return await ctx.send(embed=errors.logs_not_found(username1, race_number1, universe))
@@ -111,14 +113,18 @@ async def run(ctx, user, username1, username2, race_number1, race_number2, unive
     if not text:
         return await ctx.send(embed=errors.unknown_text(universe))
 
-    adjusted1 = race_info1["adjusted"]
-    adjusted2 = race_info2["adjusted"]
+    column = {
+        "wpm_raw": "raw_adjusted",
+        "wpm_pauseless": "pauseless_adjusted",
+    }.get(wpm_metric, wpm_metric)
+    wpm1 = race_info1[column]
+    wpm2 = race_info2[column]
 
-    if not stats and adjusted1 < adjusted2:
+    if not stats and wpm1 < wpm2:
         username1, username2 = username2, username1
         race_number1, race_number2 = race_number2, race_number1
         race_info1, race_info2 = race_info2, race_info1
-        adjusted1, adjusted2 = adjusted2, adjusted1
+        wpm1, wpm2 = wpm2, wpm1
 
     accuracy1 = race_info1["accuracy"]
     accuracy2 = race_info2["accuracy"]
@@ -127,10 +133,10 @@ async def run(ctx, user, username1, username2, race_number1, race_number2, unive
 
     description = (
         f"{strings.escape_formatting(username1)} - "
-        f"[{adjusted1:,.2f} WPM]({urls.replay(username1, race_number1, universe)}) "
+        f"[{wpm1:,.2f} WPM]({urls.replay(username1, race_number1, universe)}) "
         f"({accuracy1:,.2%}) {strings.discord_timestamp(timestamp1)}\nvs.\n"
         f"{strings.escape_formatting(username2)} - "
-        f"[{adjusted2:,.2f} WPM]({urls.replay(username2, race_number2, universe)}) "
+        f"[{wpm2:,.2f} WPM]({urls.replay(username2, race_number2, universe)}) "
         f"({accuracy2:,.2%}) {strings.discord_timestamp(timestamp2)}\n"
     )
 
@@ -145,11 +151,11 @@ async def run(ctx, user, username1, username2, race_number1, race_number2, unive
     rankings = [
         {
             "username": username1,
-            "keystroke_wpm": race_info1["keystroke_wpm_adjusted"],
+            "keystroke_wpm": race_info1[("keystroke_" + wpm_metric).replace("_unlagged", "")],
         },
         {
             "username": username2,
-            "keystroke_wpm": race_info2["keystroke_wpm_adjusted"],
+            "keystroke_wpm": race_info2[("keystroke_" + wpm_metric).replace("_unlagged", "")],
         }
     ]
 
@@ -168,7 +174,14 @@ async def run(ctx, user, username1, username2, race_number1, race_number2, unive
         if not stats:
             stats = get_stats(username1, universe=universe)
         profile = stats
-    message = Message(ctx, user, page, profile=profile, universe=universe, time_travel=False)
+
+    message = Message(
+        ctx, user, page,
+        profile=profile,
+        universe=universe,
+        time_travel=False,
+        wpm_metric=wpm_metric,
+    )
 
     await message.send()
 
@@ -178,8 +191,9 @@ async def run(ctx, user, username1, username2, race_number1, race_number2, unive
 async def run_text(ctx, user, username, username2, text_id, universe):
     stats = get_stats(username, universe=universe)
     await download(racer=stats, universe=universe)
+    wpm_metric = user["settings"]["wpm"]
 
-    race_list = races.get_text_races(username, text_id, universe)
+    race_list = races.get_text_races(username, text_id, universe, wpm=wpm_metric)
 
     if username2:
         if not race_list:
@@ -187,7 +201,7 @@ async def run_text(ctx, user, username, username2, text_id, universe):
 
         # stats2 = get_stats(username2, universe=universe)
         # await download(racer=stats2, universe=universe)
-        race_list2 = races.get_text_races(username2, text_id, universe)
+        race_list2 = races.get_text_races(username2, text_id, universe, wpm=wpm_metric)
         if not race_list2:
             return await ctx.send(embed=no_text_races(username2))
 

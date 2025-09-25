@@ -76,10 +76,10 @@ def analyze_encounters(encounters, username1, username2):
         stats["longest_streak"] = max(stats["longest_streak"], current_encounter_streak)
         last_number = user1["number"]
 
-        if user1["wpm_unlagged"] > user2["wpm_unlagged"]:
-            winner, loser, diff = (username1, username2, user1["wpm_unlagged"] - user2["wpm_unlagged"])
-        elif user2["wpm_unlagged"] > user1["wpm_unlagged"]:
-            winner, loser, diff = (username2, username1, user2["wpm_unlagged"] - user1["wpm_unlagged"])
+        if user1["wpm"] > user2["wpm"]:
+            winner, loser, diff = (username1, username2, user1["wpm"] - user2["wpm"])
+        elif user2["wpm"] > user1["wpm"]:
+            winner, loser, diff = (username2, username1, user2["wpm"] - user1["wpm"])
         else:
             winner, loser, diff = (None, None, 0)
 
@@ -92,9 +92,9 @@ def analyze_encounters(encounters, username1, username2):
             stats[winner]["win_streak"] = max(stats[winner]["win_streak"], current_streak)
 
         for username, u1, u2 in [(username1, user1, user2), (username2, user2, user1)]:
-            diff = u1["wpm_unlagged"] - u2["wpm_unlagged"]
+            diff = u1["wpm"] - u2["wpm"]
 
-            stats[username]["wpms"].append(u1["wpm_unlagged"])
+            stats[username]["wpms"].append(u1["wpm"])
             if u1["wpm_raw"]:
                 stats[username]["wpms_raw"].append(u1["wpm_raw"])
             stats[username]["wpm_diffs"].append(diff)
@@ -103,7 +103,7 @@ def analyze_encounters(encounters, username1, username2):
                 stats[username]["correction"].append(u1["correction_time"] / u1["total_time"])
             stats[username]["ranks"].append(u1["rank"])
 
-            if u1["wpm_unlagged"] > u2["wpm_unlagged"]:
+            if u1["wpm"] > u2["wpm"]:
                 stats[username]["wins"] += 1
 
             if stats[username]["biggest_win"] is None or diff > stats[username]["biggest_win"][0]:
@@ -142,6 +142,8 @@ async def run(ctx, user, username1, username2):
 
     universe = user["universe"]
     era_string = strings.get_era_string(user)
+    text_pool = user["settings"]["text_pool"]
+    wpm_metric = user["settings"]["wpm"]
 
     db_stats1 = users.get_user_stats(username1, universe)
     if not db_stats1:
@@ -151,7 +153,7 @@ async def run(ctx, user, username1, username2):
     if not db_stats2:
         return await ctx.send(embed=errors.import_required(username2, universe))
 
-    encounters = races.get_encounters(username1, username2, universe, user["settings"]["text_pool"])
+    encounters = await races.get_encounters(username1, username2, universe, wpm=wpm_metric, text_pool=text_pool)
     if not encounters:
         return await ctx.send(embed=no_encounters())
 
@@ -207,22 +209,24 @@ async def run(ctx, user, username1, username2):
         ("Biggest Win 2", stats[username2]["biggest_win"]),
         ("Closest Race", stats["closest"]),
     ]:
-        difference, race1, race2 = race_data
+        difference, u1, u2 = race_data
         if "Biggest" in title and difference < 0:
             continue
-        race1 = races.get_race(race1["username"], race1["number"], universe, get_log=True, get_keystrokes=True)
-        race2 = races.get_race(race2["username"], race2["number"], universe, get_log=True, get_keystrokes=True)
+        race1 = races.get_race(u1["username"], u1["number"], universe, get_log=True, get_keystrokes=True)
+        race2 = races.get_race(u2["username"], u2["number"], universe, get_log=True, get_keystrokes=True)
         match = [race1, race2]
-        for race in match:
+        original_races = [u1, u2]
+        for i, race in enumerate(match):
             if not race["wpm_raw"]:
                 pages.append(Page(
                     title="Logs Not Found",
                     description=f"Log details for race `{race['username']}|{race['number']}|{universe}` are unavailable",
                     color=colors.error,
                 ))
-                continue
+            match[i]["wpm"] = original_races[i]["wpm"]
+            match[i]["keystroke_wpm"] = match[i][("keystroke_" + wpm_metric).replace("_unlagged", "")]
 
-        match.sort(key=lambda x: -x["wpm_unlagged"])
+        match.sort(key=lambda x: -x["wpm"])
         page_title = title
         if "Biggest" in title:
             page_title = "Race Encounters - " + title[:-2] + f" ({strings.escape_formatting(match[0]['username'])})"
@@ -233,7 +237,7 @@ async def run(ctx, user, username1, username2):
             racer_username = strings.escape_formatting(race["username"])
             description += (
                 f"{i + 1}. {racer_username} - "
-                f"[{race['wpm_unlagged']:,.2f} WPM]"
+                f"[{race['wpm']:,.2f} WPM]"
                 f"({urls.replay(race['username'], race['number'], universe)}) "
                 f"({race['accuracy']:.2%} Acc, "
                 f"{race['start']:,.0f}ms start)\n"
@@ -274,7 +278,8 @@ async def run(ctx, user, username1, username2):
         user=user,
         pages=pages,
         universe=universe,
-        text_pool=user["settings"]["text_pool"],
+        text_pool=text_pool,
+        wpm_metric=wpm_metric,
     )
 
     await message.send()

@@ -58,6 +58,8 @@ async def run(ctx, user, username, number, category):
     stats = users.get_user(username, universe)
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
+    text_pool = user["settings"]["text_pool"]
+    wpm_metric = user["settings"]["wpm"]
 
     era_string = strings.get_era_string(user)
     if era_string:
@@ -71,13 +73,13 @@ async def run(ctx, user, username, number, category):
         text_lengths = {text["text_id"]: len(text["quote"]) for text in text_list}
 
         columns = [
-            "text_id", "number", "wpm", "accuracy", "points", "characters", "rank", "racers",
-            "timestamp", "wpm_raw", "start_time", "total_time", "correction_time", "pause_time",
+            "text_id", "number", wpm_metric, "accuracy", "points", "characters", "rank", "racers",
+            "timestamp", "wpm_raw AS wpm_raw", "start_time", "total_time", "correction_time", "pause_time",
         ]
         race_list = await races.get_races(
             username, columns=columns, universe=universe,
             start_date=user["start_date"], end_date=user["end_date"],
-            text_pool=user["settings"]["text_pool"],
+            text_pool=text_pool,
         )
         race_list.sort(key=lambda x: x["timestamp"])
 
@@ -119,7 +121,7 @@ async def run(ctx, user, username, number, category):
         end_time = race_range[-1]["timestamp"]
         fields, footer = get_stats_fields(
             username, race_range, start_time, end_time, universe,
-            text_pool=user["settings"]["text_pool"],
+            wpm_metric=wpm_metric, text_pool=text_pool,
         )
 
     description = ""
@@ -151,7 +153,8 @@ async def run(ctx, user, username, number, category):
         ctx, user, pages,
         profile=stats,
         universe=universe,
-        text_pool=user["settings"]["text_pool"],
+        text_pool=text_pool,
+        wpm_metric=wpm_metric,
     )
 
     await message.send()

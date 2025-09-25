@@ -59,14 +59,16 @@ async def run(ctx, user, username, threshold, category, sort, over=True):
     era_string = strings.get_era_string(user)
     if era_string or user["settings"]["text_pool"] != "all":
         stats = await users.filter_stats(stats, user)
+    text_pool = user["settings"]["text_pool"]
+    wpm_metric = user["settings"]["wpm"]
 
     texts_typed = stats["texts_typed"]
     text_list = texts.get_texts(as_dictionary=True, universe=universe)
 
     if era_string:
-        text_bests = await users.get_text_bests_time_travel(username, universe, user, race_stats=True, text_pool=user["settings"]["text_pool"])
+        text_bests = await users.get_text_bests_time_travel(username, universe, user, race_stats=True, wpm=wpm_metric, text_pool=text_pool)
     else:
-        text_bests = users.get_text_bests(username, race_stats=True, universe=universe, text_pool=user["settings"]["text_pool"])
+        text_bests = users.get_text_bests(username, race_stats=True, universe=universe, wpm=wpm_metric, text_pool=text_pool)
 
     if len(text_bests) == 0:
         return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
@@ -74,16 +76,20 @@ async def run(ctx, user, username, threshold, category, sort, over=True):
     text_bests_dict = {text["text_id"]: text for text in text_bests}
     final = []
 
+    if category == "wpm":
+        category = wpm_metric
     if over:
         race_list = users.get_texts_over(
             username, threshold, category, universe, start_date=user["start_date"], end_date=user["end_date"],
-            text_pool=user["settings"]["text_pool"],
+            text_pool=text_pool,
         )
     else:
         race_list = users.get_texts_under(
             username, threshold, category, universe, start_date=user["start_date"], end_date=user["end_date"],
-            text_pool=user["settings"]["text_pool"],
+            text_pool=text_pool,
         )
+    if category == wpm_metric:
+        category = "wpm"
 
     for text in race_list:
         text_id = text["text_id"]
@@ -147,7 +153,8 @@ async def run(ctx, user, username, threshold, category, sort, over=True):
         header=header,
         profile=stats,
         universe=universe,
-        text_pool=user["settings"]["text_pool"],
+        text_pool=text_pool,
+        wpm_metric=wpm_metric,
     )
 
     await message.send()

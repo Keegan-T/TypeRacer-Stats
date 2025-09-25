@@ -27,8 +27,10 @@ class Field:
 
 
 class Message(View):
-    def __init__(self, ctx, user, pages, title=None, url=None, header="", footer="", content="",
-                 color=None, profile=None, universe=None, show_pfp=True, time_travel=True, text_pool="all"):
+    def __init__(
+        self, ctx, user, pages, title=None, url=None, header="", footer="", content="", color=None,
+        profile=None, universe=None, show_pfp=True, time_travel=True, text_pool="all", wpm_metric="wpm_adjusted",
+    ):
         self.pages = pages if isinstance(pages, list) else [pages]
         self.page_count = len(self.pages)
         super().__init__(timeout=60 if self.page_count > 1 else 0.01)
@@ -52,12 +54,21 @@ class Message(View):
         self.universe = universe
         self.show_pfp = show_pfp
         self.text_pool = text_pool
+        self.wpm_metric = wpm_metric
         self.embeds = []
         self.cache = {}
         self.paginated = any(not page.button_name for page in self.pages)
 
         for i, page in enumerate(self.pages):
             title = page.title if page.title else self.title
+            if self.wpm_metric != "wpm_adjusted":
+                wpm_title = {
+                    "wpm": "Lagged",
+                    "wpm_unlagged": "Unlagged",
+                    "wpm_raw": "Raw",
+                    "wpm_pauseless": "Pauseless",
+                }.get(wpm_metric)
+                title += f" ({wpm_title} WPM)"
             description = self.header + page.description
             footer = page.footer if page.footer else self.footer
             if page.default:

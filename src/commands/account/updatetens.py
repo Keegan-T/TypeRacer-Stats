@@ -1,3 +1,5 @@
+import asyncio
+
 from discord import Embed
 from discord.ext import commands
 
@@ -120,6 +122,7 @@ async def run(ctx, user, username):
 
     for text_id in outdated_texts:
         await text_results.update_results(text_id)
+        await asyncio.sleep(0.5)
 
     await ctx.send(embed=Embed(
         title="Update Complete",
