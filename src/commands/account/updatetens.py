@@ -1,4 +1,5 @@
 import asyncio
+import math
 
 from discord import Embed
 from discord.ext import commands
@@ -32,6 +33,7 @@ class UpdateTens(commands.Cog):
 
     @commands.command(aliases=command["aliases"])
     async def updatetens(self, ctx, *args):
+        return # temporary disabled
         if tens_lock.locked():
             return await ctx.send(embed=Embed(
                 title=f"Update In Progress",
@@ -116,13 +118,14 @@ async def run(ctx, user, username):
 
     await ctx.send(embed=Embed(
         title="Top Tens Update Request",
-        description=f"Updating {len(outdated_texts):,} top tens for {username}",
+        description=f"Updating {len(outdated_texts):,} top tens for {username}\n"
+                    f"This should take {math.ceil(len(outdated_texts) / 60)} minutes",
         color=user["colors"]["embed"],
     ))
 
     for text_id in outdated_texts:
         await text_results.update_results(text_id)
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(1)
 
     await ctx.send(embed=Embed(
         title="Update Complete",
