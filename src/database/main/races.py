@@ -25,35 +25,6 @@ def add_races(races):
     ) for race in races])
 
 
-def add_temporary_races(username, races):
-    db.run_many("""
-        INSERT OR IGNORE INTO temporary_races
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, [(
-        race["univ"], username, race["rid"], race["tid"],
-        race["sl"], race["t"], race["acc"], race["wpm"],
-        race["pts"], race["rn"], race["nr"], race["r"], race["kl"],
-    ) for race in races])
-
-
-def get_temporary_races(universe, username):
-    races = db.fetch(f"""
-        SELECT * FROM temporary_races
-        WHERE univ = ?
-        AND user = ?
-    """, [universe, username])
-
-    return [dict(race) for race in races]
-
-
-def delete_temporary_races(universe, username):
-    db.run("""
-        DELETE FROM temporary_races
-        WHERE univ = ?
-        AND user = ?
-    """, [universe, username])
-
-
 async def get_races(
     username, columns="*", start_date=None, end_date=None, start_number=None, end_number=None,
     order_by=None, reverse=False, limit=None, universe="play", text_pool="all",

@@ -133,8 +133,6 @@ async def run(username=None, racer={}, ctx=None, bot_user=None, universe="play")
     if not user_stats and universe == "play":
         await update_award_count(username)
 
-    races.delete_temporary_races(universe, username)
-
     if races_left > 0:
         log(f"Finished importing {username}")
 
