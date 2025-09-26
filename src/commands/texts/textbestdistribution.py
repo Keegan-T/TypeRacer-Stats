@@ -45,10 +45,10 @@ async def run(ctx, user, username, binned):
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
     era_string = strings.get_era_string(user)
-    if era_string or user["settings"]["text_pool"] != "all":
-        stats = await users.filter_stats(stats, user)
     text_pool = user["settings"]["text_pool"]
     wpm_metric = user["settings"]["wpm"]
+    if era_string or user["settings"]["text_pool"] != "all" or wpm_metric != "wpm":
+        stats = await users.filter_stats(stats, user, wpm_metric=wpm_metric)
 
     text_list = texts.get_texts(get_disabled=False, universe=universe)
 

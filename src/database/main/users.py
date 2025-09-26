@@ -144,7 +144,7 @@ async def delete_expired_users():
             await delete_user(user["username"], user["universe"])
 
 
-async def filter_stats(stats, user):
+async def filter_stats(stats, user, wpm_metric="wpm"):
     from database.main.races import get_races
     stats = dict(stats)
     username = stats["username"]
@@ -152,7 +152,12 @@ async def filter_stats(stats, user):
     start_date = user["start_date"]
     end_date = user["end_date"]
     text_pool = user["settings"]["text_pool"]
-    columns = ["*"]
+    columns = [
+        'universe', 'username', 'number', 'text_id', wpm_metric, 'accuracy', 'points',
+        'characters', 'rank', 'racers', 'race_id', 'timestamp', 'wpm_unlagged AS wpm_unlagged', 'wpm_adjusted AS wpm_adjusted',
+        'wpm_raw AS wpm_raw', 'wpm_pauseless AS wpm_pauseless', 'start_time', 'total_time', 'correction_time', 'pause_time'
+    ]
+
     race_list = await get_races(username, columns, start_date, end_date, universe=universe, text_pool=text_pool)
     text_bests = calculate_text_bests(race_list)
 
