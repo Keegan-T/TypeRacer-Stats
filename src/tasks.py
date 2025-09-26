@@ -2,6 +2,7 @@ import asyncio
 from collections import defaultdict
 from datetime import datetime, timezone
 
+from aiohttp import ClientResponseError
 from dateutil.relativedelta import relativedelta
 
 import database.main.competition_results as competition_results
@@ -181,7 +182,11 @@ async def update_texts():
     for text in missing_texts:
         text_id = text["text_id"]
         log(f"Updating text #{text_id}")
-        text_info = await get_text(text_id)
+        try:
+            text_info = await get_text(text_id)
+        except ClientResponseError as e:
+            log(f"Exception: {e.message}")
+            continue
         texts.update_text(text_info)
         await asyncio.sleep(1)
 
