@@ -135,7 +135,7 @@ async def get_history(username, category, sort, universe, start_date, end_date, 
 
     for race in race_list:
         text_id, wpm, points, timestamp, accuracy = race
-        seconds = calculate_ms(text_list[text_id]["quote"], wpm)
+        seconds = calculate_ms(text_list[text_id]["quote"], wpm) / 1000
 
         if len(history) == 0 or timestamp > history[-1][1]:
             if category == "day":
