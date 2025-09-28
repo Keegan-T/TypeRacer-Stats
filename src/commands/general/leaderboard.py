@@ -11,6 +11,7 @@ from commands.locks import leaderboard_lock
 from config import prefix
 from database.bot.users import get_user
 from database.main.alts import get_alts
+from database.main.users import get_disqualified_users
 from utils import errors, urls, strings, dates, files
 from utils.embeds import Page, Message
 from utils.errors import command_in_use
@@ -174,11 +175,14 @@ def filter_users(user_list):
     alts = get_alts()
     filtered = []
     added_users = set()
+    banned_users = get_disqualified_users()
 
     i = 0
     for user in user_list:
         user = dict(user)
         username = user["username"]
+        if username in banned_users:
+            continue
         alt_accounts = {username} | set(alts.get(username, []))
 
         if not alt_accounts & added_users:
@@ -301,10 +305,10 @@ def leaderboard_total_text_wpm():
 
 
 def leaderboard_wpm():
-    leaders = filter_users(users.get_most("wpm_best", 30))
+    leaders = filter_users(users.get_best_wpm(30))
     description = ""
     for i, leader in enumerate(leaders):
-        description += f"{user_rank(leader, i)} - {leader['wpm_best']:,.2f} WPM\n"
+        description += f"{user_rank(leader, i)} - {leader['wpm']:,.2f} WPM\n"
 
     return description
 

@@ -198,6 +198,18 @@ def get_most(column, limit):
     return top
 
 
+def get_best_wpm(limit):
+    top = db.fetch("""
+        SELECT username, MAX(wpm_adjusted) as wpm FROM races
+        WHERE universe = 'play'
+        GROUP BY username
+        ORDER BY wpm_adjusted DESC
+        LIMIT ?
+    """, [limit])
+
+    return top
+
+
 def get_most_texts_typed(limit):
     leaders = get_most("texts_typed", limit)
     text_count = texts.get_text_count()
