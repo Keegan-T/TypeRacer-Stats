@@ -89,8 +89,8 @@ async def run(username=None, racer={}, ctx=None, bot_user=None, universe="play")
 
     total_races = racer["total_races"]
     races_left = total_races - imported_races
+    log(f"**Importing data for {username} (Universe: {universe})**")
     if races_left > 0:
-        log(f"**Importing data for {username} (Universe: {universe})**")
         await send_start(ctx, bot_user, username, races_left, universe)
 
         recent_races = await get_recent_races(username, universe, start_time)
