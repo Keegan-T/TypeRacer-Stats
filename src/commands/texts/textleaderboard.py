@@ -110,6 +110,7 @@ async def run(ctx, user, text_id):
         ctx, user, page,
         url=url,
         wpm_metric=wpm_metric,
+        universe=user["universe"],
     )
 
     await message.send()
