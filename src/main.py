@@ -61,6 +61,8 @@ async def on_command_error(ctx, error):
                 if retry_after:
                     return await ctx.send(embed=errors.rate_limit_exceeded(int(retry_after)))
                 return await ctx.send(embed=errors.rate_limit_exceeded())
+            else:
+                return await ctx.send(embed=errors.api_error(original.status))
         elif "or fewer in length" in str(error):
             return await ctx.send(embed=errors.embed_limit_exceeded())
         elif "Large query" in str(error):

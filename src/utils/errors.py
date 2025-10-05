@@ -295,3 +295,10 @@ def rate_limit_exceeded(retry_after=None):
         title="Rate Limit Exceeded",
         description=description,
     )
+
+def api_error(status):
+    return Embed(
+        title="API Error",
+        description=f"TypeRacer API returned status: {status}",
+        color=error,
+    )
