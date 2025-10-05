@@ -50,11 +50,15 @@ def get_trdata_top_10(text_id, universe):
 
     for row in rows[:10]:
         columns = row.find_all("td")
+        try:
+            accuracy = float(columns[3].text.strip("%")) / 100
+        except (ValueError, IndexError):
+            accuracy = 0.0
         top_10.append({
             "username": re.search(r"username=([^&\"]+)", str(columns[1])).group(1),
             "number": int(re.search(r"game=(\d+)", str(columns[2])).group(1)),
             "wpm": float(columns[2].text.replace(",", "")),
-            "accuracy": float(columns[3].text.strip("%")) / 100,
+            "accuracy": accuracy,
             "timestamp": datetime.strptime(columns[4].text, "%Y-%m-%d").timestamp(),
         })
 
