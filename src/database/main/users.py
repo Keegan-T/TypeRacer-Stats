@@ -130,7 +130,7 @@ def update_last_accessed(universe, username):
 
 
 async def delete_expired_users():
-    important_users = get_important_users()
+    important_users = await get_important_users()
 
     users = db.fetch("""
         SELECT universe, username FROM user_stats

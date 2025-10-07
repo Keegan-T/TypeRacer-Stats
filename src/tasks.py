@@ -105,6 +105,7 @@ async def import_top_tens():
             None, score["acc"], date_to_timestamp(score["t"]),
         ) for score in top_10]
         text_results.add_results(results)
+        await asyncio.sleep(3)
 
 
 async def update_top_tens():
