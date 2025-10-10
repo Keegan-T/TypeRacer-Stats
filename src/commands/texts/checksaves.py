@@ -60,7 +60,7 @@ async def run(ctx, user, username, text_id):
     if not stats:
         return await ctx.send(embed=errors.import_required(username, universe))
 
-    api_stats = get_stats(username, universe=universe)
+    api_stats = await get_stats(username, universe=universe)
     await download(racer=api_stats, universe=universe)
 
     if text_id is None:
@@ -68,7 +68,7 @@ async def run(ctx, user, username, text_id):
             text_id = 3621293
         else:
             race_number = api_stats["races"]
-            race = races.get_race(username, race_number, universe)
+            race = await races.get_race(username, race_number, universe)
             text_id = race["text_id"] if race else 3621293
 
     text = texts.get_text(text_id, universe)

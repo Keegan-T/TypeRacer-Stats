@@ -54,7 +54,7 @@ async def run(ctx, user, username, sort):
         return await ctx.send(embed=errors.import_required(username, universe))
     era_string = strings.get_era_string(user)
 
-    api_stats = get_stats(username, universe=universe)
+    api_stats = await get_stats(username, universe=universe)
     await download(racer=api_stats, universe=universe)
 
     race_list = await races.get_races(

@@ -46,14 +46,6 @@ def profile_picture(username):
     return f"https://data.typeracer.com/misc/pic?uid=tr:{username}"
 
 
-def stats(username, universe):
-    return f"https://data.typeracer.com/users?id=tr:{username}&universe={universe}"
-
-
-def top_10(text_id, universe="play"):
-    return f"https://data.typeracer.com/textstats?textId={text_id}&distinct=1&universe={universe}&playerId=a"
-
-
 def competition(date, period, sort, results_per_page, universe):
     sort = {
         "races": "gamesFinished",

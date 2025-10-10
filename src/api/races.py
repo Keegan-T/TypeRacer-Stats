@@ -32,7 +32,7 @@ async def get_race(username, race_number, universe="play", get_typos=False, get_
     if not data:
         return None
 
-    return get_race_details(data, get_typos, get_keystrokes)
+    return await get_race_details(data, get_typos, get_keystrokes)
 
 
 async def get_races_historical(username, universe, bucket):
@@ -44,7 +44,7 @@ async def get_races_historical(username, universe, bucket):
     return data
 
 
-def get_race_details(data, get_typos=False, get_keystrokes=False):
+async def get_race_details(data, get_typos=False, get_keystrokes=False):
     universe = data["univ"]
     global text_cache
     if not text_cache or universe != text_cache["universe"]:
@@ -89,7 +89,7 @@ def get_race_details(data, get_typos=False, get_keystrokes=False):
     if not typing_log:
         return details
 
-    return logs.get_log_details(details, get_keystrokes, get_typos)
+    return await logs.get_log_details(details, get_keystrokes, get_typos)
 
 
 async def get_race_by_id(race_id):
@@ -100,7 +100,7 @@ async def get_race_by_id(race_id):
 
     rankings = []
     for race in data:
-        race_details = get_race_details(race, get_keystrokes=True)
+        race_details = await get_race_details(race, get_keystrokes=True)
         if "keystroke_wpm" not in race_details:
             return None
         race_details["wpm"] = race_details["unlagged"]

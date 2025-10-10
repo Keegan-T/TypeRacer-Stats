@@ -73,10 +73,10 @@ async def run(ctx, user, username, milestone, category):
     page.title += f" - Race #{milestone_number:,}"
     url = urls.replay(username, milestone_number, universe)
 
-    race_info = races.get_race(username, milestone_number, universe, get_log=True)
+    race_info = await races.get_race(username, milestone_number, universe, get_log=True)
     if not race_info:
         text_list = texts.get_texts(as_dictionary=True, universe=universe)
-        race_info = dict(races.get_race(username, milestone_number, universe))
+        race_info = dict(await races.get_race(username, milestone_number, universe))
         text = text_list[race_info["text_id"]]
         race_info["quote"] = text["quote"]
 

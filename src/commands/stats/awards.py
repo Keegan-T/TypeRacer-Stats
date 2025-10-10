@@ -38,7 +38,7 @@ class Awards(commands.Cog):
 
 
 async def run(ctx, user, username, show_graph):
-    stats = get_stats(username)
+    stats = await get_stats(username)
     if not stats:
         return await ctx.send(embed=errors.invalid_username())
 

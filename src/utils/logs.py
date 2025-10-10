@@ -49,7 +49,7 @@ def distribute_start_lag(delays):
     return delays, lagged_chars > 1
 
 
-def get_log_details(race, get_keystrokes=False, get_typos=False):
+async def get_log_details(race, get_keystrokes=False, get_typos=False):
     from api.races import get_universe_multiplier
     universe = race["universe"]
     typing_log = race["log"]
@@ -73,7 +73,7 @@ def get_log_details(race, get_keystrokes=False, get_typos=False):
     # Adding new 300 WPM races
     if universe == "play" and 300 <= race["adjusted"] <= 450:
         username = race["username"]
-        stats = get_stats(username)
+        stats = await get_stats(username)
         if not stats["disqualified"]:
             club_races.add_race(username, race["number"], race)
 

@@ -94,11 +94,11 @@ async def get_args(user, args, info, universe, channel_id):
 async def run(ctx, user, username1, username2, race_number1, race_number2, universe, stats=None):
     wpm_metric = user["settings"]["wpm"]
 
-    race_info1 = races.get_race(username1, race_number1, universe, get_log=True, get_keystrokes=True)
+    race_info1 = await races.get_race(username1, race_number1, universe, get_log=True, get_keystrokes=True)
     if not race_info1["log"]:
         return await ctx.send(embed=errors.logs_not_found(username1, race_number1, universe))
 
-    race_info2 = races.get_race(username2, race_number2, universe, get_log=True, get_keystrokes=True)
+    race_info2 = await races.get_race(username2, race_number2, universe, get_log=True, get_keystrokes=True)
     if not race_info2["log"]:
         return await ctx.send(embed=errors.logs_not_found(username2, race_number2, universe))
 
@@ -172,7 +172,7 @@ async def run(ctx, user, username1, username2, race_number1, race_number2, unive
     profile = None
     if username1 == username2:
         if not stats:
-            stats = get_stats(username1, universe=universe)
+            stats = await get_stats(username1, universe=universe)
         profile = stats
 
     message = Message(
@@ -189,7 +189,7 @@ async def run(ctx, user, username1, username2, race_number1, race_number2, unive
 
 
 async def run_text(ctx, user, username, username2, text_id, universe):
-    stats = get_stats(username, universe=universe)
+    stats = await get_stats(username, universe=universe)
     await download(racer=stats, universe=universe)
     wpm_metric = user["settings"]["wpm"]
 
@@ -199,7 +199,7 @@ async def run_text(ctx, user, username, username2, text_id, universe):
         if not race_list:
             return await ctx.send(embed=no_text_races(username))
 
-        # stats2 = get_stats(username2, universe=universe)
+        # stats2 = await get_stats(username2, universe=universe)
         # await download(racer=stats2, universe=universe)
         race_list2 = races.get_text_races(username2, text_id, universe, wpm=wpm_metric)
         if not race_list2:

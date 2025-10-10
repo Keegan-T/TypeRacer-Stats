@@ -63,7 +63,7 @@ async def display(ctx, user, username):
 
 
 async def add(ctx, user, new_username, existing_username):
-    stats = get_stats(new_username)
+    stats = await get_stats(new_username)
     if not stats:
         return await ctx.send(embed=errors.invalid_username())
     success = alts.add_alt(new_username, existing_username)

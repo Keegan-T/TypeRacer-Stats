@@ -72,7 +72,7 @@ class UpdateTens(commands.Cog):
 
 
 async def run(ctx, user, username):
-    api_stats = get_stats(username)
+    api_stats = await get_stats(username)
     if api_stats["disqualified"]:
         await download(racer=api_stats)
         text_results.delete_user_results(username)

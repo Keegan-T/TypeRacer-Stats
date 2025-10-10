@@ -65,7 +65,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
     era_string = strings.get_era_string(user)
     wpm_metric = user["settings"]["wpm"]
 
-    api_stats = get_stats(username, universe=universe)
+    api_stats = await get_stats(username, universe=universe)
     await download(racer=api_stats, universe=universe)
     if era_string:
         api_stats = await users.filter_stats(api_stats, user)
@@ -79,7 +79,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
         if race_number < 1:
             race_number = api_stats["races"] + race_number
 
-        race = races.get_race(username, race_number, universe)
+        race = await races.get_race(username, race_number, universe)
 
         if not race:
             return await ctx.send(embed=errors.race_not_found(username, race_number, universe))

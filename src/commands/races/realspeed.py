@@ -76,13 +76,13 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
     if not db_stats:
         return await ctx.send(embed=errors.import_required(username, universe))
 
-    stats = get_stats(username, universe=universe)
+    stats = await get_stats(username, universe=universe)
     await download(racer=stats, universe=universe)
 
     if race_number < 1:
         race_number = stats["races"] + race_number
 
-    race = races.get_race(username, race_number, universe, get_log=True, get_keystrokes=True, get_typos=True)
+    race = await races.get_race(username, race_number, universe, get_log=True, get_keystrokes=True, get_typos=True)
     if not race:
         return await ctx.send(embed=errors.race_not_found(username, race_number, universe))
     if raw and not race.get("raw_adjusted", None):

@@ -49,13 +49,13 @@ async def run(ctx, user, username, race_number, universe):
     if not db_stats:
         return await ctx.send(embed=errors.import_required(username, universe))
 
-    stats = get_stats(username, universe=universe)
+    stats = await get_stats(username, universe=universe)
     await download(racer=stats, universe=universe)
 
     if race_number < 1:
         race_number = stats["races"] + race_number
 
-    race_info = races.get_race(username, race_number, universe)
+    race_info = await races.get_race(username, race_number, universe)
     if not race_info:
         return await ctx.send(embed=errors.race_not_found(username, race_number, universe))
     race_info = dict(race_info)

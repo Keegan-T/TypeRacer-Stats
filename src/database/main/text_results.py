@@ -132,7 +132,7 @@ async def import_users(limit=500_000):
 
     for row in usernames:
         username = row["username"]
-        stats = get_stats(username, universe="play")
+        stats = await get_stats(username, universe="play")
         if not stats:
             continue
         limit -= stats["races"]

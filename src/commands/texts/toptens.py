@@ -85,7 +85,7 @@ async def export(ctx, username):
 
 async def run(ctx, user, username, best):
     text_pool = user["settings"]["text_pool"]
-    stats = get_stats(username)
+    stats = await get_stats(username)
     if not stats:
         return await ctx.send(embed=errors.invalid_username())
 

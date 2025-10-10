@@ -1,11 +1,9 @@
 import json
-import urllib.parse
 
 import requests
 from aiohttp import ClientResponseError
 
 from api.core import get, date_to_timestamp
-from utils import urls
 
 
 async def get_racer_data(username):
@@ -50,46 +48,32 @@ async def get_racer(username, universe):
     return racer_data | racer_stats
 
 
-def get_stats(username=None, stats=None, universe="play"):
+async def get_stats(username=None, stats=None, universe="play"):
     if stats:
         api_data = stats
     else:
-        username = urllib.parse.quote(username).lower()
-        url = urls.stats(username, universe)
-        response = requests.get(url)
-
-        if response.status_code == 404:
+        api_data = await get_racer_data(username)
+        if not api_data:
             return None
-        elif response.status_code != 200:
-            raise ConnectionError
-
-        api_data = json.loads(response.text)
-
-    tstats = api_data["tstats"]
-
-    display_name = api_data["name"] if api_data["name"] else ""
-    disqualified = False if "disqualified" not in tstats else tstats["disqualified"]
 
     try:
-        stats = {
-            "username": api_data["id"][3:],
-            "universe": universe,
-            "display_name": display_name,
-            "country": api_data["country"],
-            "premium": api_data["premium"],
-            "races": tstats["cg"],
-            "wins": tstats["gamesWon"],
-            "points": tstats["points"],
-            "wpm_average": tstats["wpm"],
-            "wpm_last_10": tstats["recentAvgWpm"],
-            "wpm_best": tstats["bestGameWpm"],
-            "wpm_verified": tstats["certWpm"],
-            "has_pic": api_data["hasPic"],
-            "avatar": api_data["avatar"],
-            "disqualified": disqualified,
-        }
+        tstats = api_data["stats"]
+        stats = dict(
+            username=api_data["username"],
+            universe=universe,
+            display_name=api_data["name"] if api_data["name"] else "",
+            country=api_data["country"],
+            premium=api_data["premium"],
+            races=tstats["total_races"],
+            wins=tstats["total_wins"],
+            points=tstats["points"],
+            wpm_average=tstats["avg_wpm"],
+            wpm_best=tstats["best_wpm"],
+            wpm_verified=tstats["cert_wpm"],
+            avatar=api_data["avatar"],
+            disqualified=tstats.get("dqd", False),
+        )
         return stats
-
     except KeyError:
         return None
 

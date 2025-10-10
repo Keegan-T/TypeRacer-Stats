@@ -37,7 +37,7 @@ class LastOnline(commands.Cog):
 
 async def run(ctx, user, username=None):
     universe = user["universe"]
-    stats = get_stats(username, universe=universe)
+    stats = await get_stats(username, universe=universe)
     if not stats:
         return await ctx.send(embed=errors.invalid_username())
 

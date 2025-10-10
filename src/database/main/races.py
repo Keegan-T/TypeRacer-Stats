@@ -82,7 +82,7 @@ async def get_races(
     return race_list
 
 
-def get_race(username, number, universe, get_log=False, get_keystrokes=False, get_typos=False):
+async def get_race(username, number, universe, get_log=False, get_keystrokes=False, get_typos=False):
     params = [universe, username, number]
 
     if get_log:
@@ -107,7 +107,7 @@ def get_race(username, number, universe, get_log=False, get_keystrokes=False, ge
         if race["compressed"]:
             race["log"] = zlib.decompress(race["log"]).decode("utf-8")
 
-        return logs.get_log_details(race, get_keystrokes, get_typos)
+        return await logs.get_log_details(race, get_keystrokes, get_typos)
 
     else:
         race = db.fetch(f"""

@@ -77,7 +77,7 @@ async def run(ctx, user, username, date):
     if not date:
         date = datetime.now(timezone.utc)
 
-    api_stats = get_stats(username, universe=universe)
+    api_stats = await get_stats(username, universe=universe)
     await download(racer=api_stats, universe=universe)
 
     command_name = strings.get_category([

@@ -212,8 +212,8 @@ async def run(ctx, user, username1, username2):
         difference, u1, u2 = race_data
         if "Biggest" in title and difference < 0:
             continue
-        race1 = races.get_race(u1["username"], u1["number"], universe, get_log=True, get_keystrokes=True)
-        race2 = races.get_race(u2["username"], u2["number"], universe, get_log=True, get_keystrokes=True)
+        race1 = await races.get_race(u1["username"], u1["number"], universe, get_log=True, get_keystrokes=True)
+        race2 = await races.get_race(u2["username"], u2["number"], universe, get_log=True, get_keystrokes=True)
         match = [race1, race2]
         original_races = [u1, u2]
         for i, race in enumerate(match):

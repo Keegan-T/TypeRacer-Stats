@@ -73,7 +73,7 @@ async def run(username=None, racer={}, ctx=None, bot_user=None, universe="play")
                 racer["joined_at"] = join_date
     else:
         if user_data:
-            racer = extract_racer_data(get_stats(username, universe=universe))
+            racer = extract_racer_data(await get_stats(username, universe=universe))
         else:
             racer = await get_racer(username, universe)
             if not racer:

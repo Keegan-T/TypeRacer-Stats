@@ -32,12 +32,9 @@ class ProfilePicture(commands.Cog):
 
 
 async def run(ctx, username):
-    stats = get_stats(username)
+    stats = await get_stats(username)
     if not stats:
         return await ctx.send(embed=errors.invalid_username())
-
-    if not stats["has_pic"]:
-        return await ctx.send(embed=no_profile_picture())
 
     await ctx.send(content=f"{urls.profile_picture(username)}&refresh=1")
 

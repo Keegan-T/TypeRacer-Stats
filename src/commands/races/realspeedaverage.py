@@ -66,7 +66,7 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
     if not db_stats:
         return await ctx.send(embed=errors.import_required(username, universe))
 
-    profile = get_stats(username, universe=universe)
+    profile = await get_stats(username, universe=universe)
     await download(racer=profile, universe=universe)
 
     total_races = profile["races"]

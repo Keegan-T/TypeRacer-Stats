@@ -37,7 +37,7 @@ class Link(commands.Cog):
 
 
 async def run(ctx, user, username):
-    stats = get_stats(username)
+    stats = await get_stats(username)
     if not stats:
         return await ctx.send(embed=errors.invalid_username())
 

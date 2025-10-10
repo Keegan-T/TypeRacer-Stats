@@ -71,7 +71,7 @@ async def run(ctx, user, username, time_period, sort, reverse):
     text_pool = user["settings"]["text_pool"]
     wpm_metric = user["settings"]["wpm"]
 
-    api_stats = get_stats(username, universe=universe)
+    api_stats = await get_stats(username, universe=universe)
     await download(racer=api_stats, universe=universe)
 
     if time_period == "races":
