@@ -35,6 +35,7 @@ class Streak(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def streak(self, ctx, *args):
         user = get_user(ctx)
+        args, user = strings.set_wpm_metric(args, user)
 
         args = list(args)
         less_than = False

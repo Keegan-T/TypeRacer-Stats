@@ -36,6 +36,7 @@ class Text(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def text(self, ctx, *args):
         user = get_user(ctx)
+        args, user = strings.set_wpm_metric(args, user)
 
         result = get_args(user, args, command, ctx.channel.id)
         if embeds.is_embed(result):

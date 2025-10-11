@@ -445,7 +445,7 @@ def real_speed_fields(race, raw=True):
 
 def get_discord_id(string):
     if ((string.startswith("<@") and string.endswith(">") and "&" not in string)
-            or (string.isnumeric() and 17 <= len(string) <= 19)):
+        or (string.isnumeric() and 17 <= len(string) <= 19)):
         id = string.translate(string.maketrans("", "", "<@>"))
         return id
 
@@ -584,3 +584,20 @@ def strip_quote(quote):
         .replace("\n\r", " ")
         .replace("\t", " ")
     )
+
+
+def set_wpm_metric(args, user):
+    for arg in args[::-1]:
+        if arg in ["lagged", "unlagged", "adjusted", "raw", "pauseless"]:
+            metric = {
+                "lagged": "wpm",
+                "unlagged": "wpm_unlagged",
+                "adjusted": "wpm_adjusted",
+                "raw": "wpm_raw",
+                "pauseless": "wpm_pauseless",
+            }[arg]
+            user["settings"]["wpm"] = metric
+            args = args[:-1]
+            return args, user
+
+    return args, user

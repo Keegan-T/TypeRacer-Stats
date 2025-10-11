@@ -2,7 +2,7 @@ from discord.ext import commands
 
 from commands.races.racesover import get_args, run
 from database.bot.users import get_user
-from utils import embeds
+from utils import embeds, strings
 
 command = {
     "name": "racesunder",
@@ -26,6 +26,7 @@ class RacesUnder(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def racesunder(self, ctx, *args):
         user = get_user(ctx)
+        args, user = strings.set_wpm_metric(args, user)
 
         result = get_args(user, args, command)
         if embeds.is_embed(result):

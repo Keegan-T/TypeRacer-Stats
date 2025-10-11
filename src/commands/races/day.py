@@ -37,6 +37,7 @@ class Day(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def day(self, ctx, *args):
         user = get_user(ctx)
+        args, user = strings.set_wpm_metric(args, user)
 
         result = get_args(user, args, command)
         if embeds.is_embed(result):

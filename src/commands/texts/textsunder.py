@@ -3,7 +3,7 @@ from discord.ext import commands
 from commands.texts.textsover import run, get_args
 from config import prefix
 from database.bot.users import get_user
-from utils import embeds
+from utils import embeds, strings
 
 command = {
     "name": "textsunder",
@@ -29,6 +29,7 @@ class TextsUnder(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def textsunder(self, ctx, *args):
         user = get_user(ctx)
+        args, user = strings.set_wpm_metric(args, user)
 
         result = get_args(user, args, command)
         if embeds.is_embed(result):

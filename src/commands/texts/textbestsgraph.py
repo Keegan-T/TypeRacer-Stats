@@ -34,6 +34,7 @@ class TextBestsGraph(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def textbestsgraph(self, ctx, *args):
         user = get_user(ctx)
+        args, user = strings.set_wpm_metric(args, user)
 
         result = get_args(user, args, command)
         if is_embed(result):

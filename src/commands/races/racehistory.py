@@ -44,6 +44,8 @@ class RaceHistory(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def racehistory(self, ctx, *args):
         user = get_user(ctx)
+        args, user = strings.set_wpm_metric(args, user)
+
         reverse = True
         if args and args[-1] in ["worst", "least", "oldest", "old", "reverse"]:
             reverse = False

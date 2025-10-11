@@ -8,7 +8,7 @@ import database.main.races as races
 import database.main.users as users
 from database.bot.users import get_user
 from graphs import histogram
-from utils import errors, colors, embeds, strings
+from utils import errors, colors, embeds, strings, dates
 from utils.embeds import Page, Message
 
 categories = ["wpm", "accuracy", "textbests"]
@@ -35,6 +35,8 @@ class Histogram(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def histogram(self, ctx, *args):
         user = get_user(ctx)
+        args, user = dates.set_command_date_range(args, user)
+        args, user = strings.set_wpm_metric(args, user)
 
         result = get_args(user, args, command)
         if embeds.is_embed(result):

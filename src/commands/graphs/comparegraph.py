@@ -25,6 +25,7 @@ class CompareGraph(commands.Cog):
     async def comparegraph(self, ctx, *args):
         user = get_user(ctx)
         args, user = dates.set_command_date_range(args, user)
+        args, user = strings.set_wpm_metric(args, user)
 
         result = get_args(user, args, command)
         if is_embed(result):

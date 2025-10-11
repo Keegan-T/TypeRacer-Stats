@@ -3,7 +3,7 @@ from discord.ext import commands
 import commands.locks as locks
 from commands.graphs.raceline import get_args, run
 from database.bot.users import get_user
-from utils import embeds, dates
+from utils import embeds, dates, strings
 from utils.errors import command_in_use
 
 command = {
@@ -32,6 +32,7 @@ class TextBestsLine(commands.Cog):
         async with locks.line_lock:
             user = get_user(ctx)
             args, user = dates.set_command_date_range(args, user)
+            args, user = strings.set_wpm_metric(args, user)
 
             result = get_args(user, args, command)
             if embeds.is_embed(result):
