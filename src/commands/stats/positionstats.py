@@ -4,7 +4,7 @@ import database.main.races as races
 import database.main.users as users
 from commands.stats.stats import get_args
 from database.bot.users import get_user
-from utils import errors, urls, strings
+from utils import errors, urls, strings, dates
 from utils.embeds import Page, Message, Field, is_embed
 
 command = {
@@ -23,6 +23,7 @@ class PositionStats(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def positionstats(self, ctx, *args):
         user = get_user(ctx)
+        args, user = dates.set_command_date_range(args, user)
 
         result = get_args(user, args, command)
         if is_embed(result):

@@ -2,7 +2,7 @@ from discord.ext import commands
 
 from commands.races.best import get_args, run, categories
 from database.bot.users import get_user
-from utils import embeds, strings
+from utils import embeds, strings, dates
 
 command = {
     "name": "worst",
@@ -24,6 +24,7 @@ class Worst(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def worst(self, ctx, *args):
         user = get_user(ctx)
+        args, user = dates.set_command_date_range(args, user)
         args, user = strings.set_wpm_metric(args, user)
 
         result = get_args(user, args, command, ctx.channel.id)

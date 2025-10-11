@@ -5,7 +5,7 @@ from api.users import get_stats
 from commands.account.download import run as download
 from database.main import races
 from database.bot.users import get_user
-from utils import errors, urls, strings
+from utils import errors, urls, strings, dates
 from utils.embeds import Message, get_pages, is_embed
 
 categories = ["recent", "best", "worst"]
@@ -32,6 +32,7 @@ class TextImprovements(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def textimprovements(self, ctx, *args):
         user = get_user(ctx)
+        args, user = dates.set_command_date_range(args, user)
         args, user = strings.set_wpm_metric(args, user)
 
         result = get_args(user, args, command)

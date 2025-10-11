@@ -8,7 +8,7 @@ from commands.stats.stats import get_args
 from database.bot.users import get_user
 from database.main import races
 from database.main.races import maintrack_text_pool
-from utils import errors, strings, urls
+from utils import errors, strings, urls, dates
 from utils.embeds import Page, Message, is_embed
 
 command = {
@@ -27,6 +27,7 @@ class TimesTypedDistribution(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def timestypeddistribution(self, ctx, *args):
         user = get_user(ctx)
+        args, user = dates.set_command_date_range(args, user)
 
         result = get_args(user, args, command)
         if is_embed(result):

@@ -5,7 +5,7 @@ from discord.ext import commands
 import database.main.texts as texts
 import database.main.users as users
 from database.bot.users import get_user
-from utils import errors, urls, strings
+from utils import errors, urls, strings, dates
 from utils.embeds import Page, Message, get_pages, is_embed
 
 categories = ["wpm", "points", "times"]
@@ -36,6 +36,7 @@ class TextsOver(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def textsover(self, ctx, *args):
         user = get_user(ctx)
+        args, user = dates.set_command_date_range(args, user)
         args, user = strings.set_wpm_metric(args, user)
 
         result = get_args(user, args, command)

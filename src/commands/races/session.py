@@ -7,7 +7,7 @@ from commands.races.races import get_stats_fields
 from commands.locks import LargeQueryLock
 from database.bot.users import get_user
 from database.main import texts
-from utils import errors, strings
+from utils import errors, strings, dates
 from utils.embeds import Page, Message, is_embed
 from utils.stats import get_top_disjoint_windows
 
@@ -36,6 +36,7 @@ class Session(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def session(self, ctx, *args):
         user = get_user(ctx)
+        args, user = dates.set_command_date_range(args, user)
         args, user = strings.set_wpm_metric(args, user)
 
         result = get_args(user, args, command)

@@ -9,7 +9,7 @@ from commands.stats.stats import get_args
 from config import prefix
 from database.bot.users import get_user
 from database.main.races import maintrack_text_pool
-from utils import errors, strings
+from utils import errors, strings, dates
 from utils.embeds import Page, Message, is_embed
 
 command = {
@@ -29,6 +29,7 @@ class TextBestDistribution(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def textbestdistribution(self, ctx, *args):
         user = get_user(ctx)
+        args, user = dates.set_command_date_range(args, user)
         args, user = strings.set_wpm_metric(args, user)
 
         result = get_args(user, args, command)

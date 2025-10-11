@@ -7,7 +7,7 @@ import database.main.texts as texts
 import database.main.users as users
 from database.bot.users import get_user
 from graphs import text_bests_graph
-from utils import errors, strings
+from utils import errors, strings, dates
 from utils.embeds import Page, Message, is_embed
 
 categories = ["races", "time", "texts"]
@@ -34,6 +34,7 @@ class TextBestsGraph(commands.Cog):
     @commands.command(aliases=command["aliases"])
     async def textbestsgraph(self, ctx, *args):
         user = get_user(ctx)
+        args, user = dates.set_command_date_range(args, user)
         args, user = strings.set_wpm_metric(args, user)
 
         result = get_args(user, args, command)
