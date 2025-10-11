@@ -139,11 +139,11 @@ def set_command_date_range(args, user):
         if end_date:
             if start_date.timestamp() > end_date.timestamp():
                 start_date, end_date = end_date, start_date
-            if floor_day(end_date) >= floor_day(_now):
+            if floor_day(end_date) > floor_day(_now):
                 end_date = None
             else:
                 end_date = end_date.timestamp()
-        if floor_day(start_date) >= floor_day(_now):
+        if floor_day(start_date) > floor_day(_now):
             start_date = None
         else:
             start_date = start_date.timestamp()
