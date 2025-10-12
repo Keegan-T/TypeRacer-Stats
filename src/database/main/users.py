@@ -460,7 +460,7 @@ async def delete_user(username, universe):
         db.run("DELETE FROM text_results WHERE username = ?", [username])
 
 
-def get_text_bests(username, race_stats=False, universe="play", until=None, wpm="wpm", text_pool="all"):
+def get_text_bests(username, race_stats=False, universe="play", until=None, wpm="wpm_adjusted", text_pool="all"):
     columns = "text_id"
     if race_stats:
         columns = f"text_id, {wpm} AS wpm, number, timestamp, accuracy, points"
