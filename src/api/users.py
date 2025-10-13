@@ -6,8 +6,10 @@ from aiohttp import ClientResponseError
 from api.core import get, date_to_timestamp
 
 
-async def get_racer_data(username):
-    result = await get(f"/racers/{username}")
+async def get_racer_data(username, universe="play"):
+    result = await get(f"/racers/{username}", {
+        "universe": universe,
+    })
 
     data = result["data"]
     if not data:
@@ -32,27 +34,22 @@ async def get_racer_stats(username, universe="play"):
 
 async def get_racer(username, universe):
     try:
-        racer_data = await get_racer_data(username)
-        racer_stats = await get_racer_stats(username, universe)
-        if racer_stats is None:
-            racer_stats = {
-                "total_races": 0, "total_wins": 0, "points": 0,
-                "avg_wpm": 0, "best_wpm": 0, "cert_wpm": 0, "dqd": False,
-            }
+        racer = await get_racer_data(username, universe)
+        racer |= racer["stats"]
     except ClientResponseError as e:
         if e.status == 404:
             return None
         else:
             raise e
 
-    return racer_data | racer_stats
+    return racer
 
 
 async def get_stats(username=None, stats=None, universe="play"):
     if stats:
         api_data = stats
     else:
-        api_data = await get_racer_data(username)
+        api_data = await get_racer_data(username, universe)
         if not api_data:
             return None
 
