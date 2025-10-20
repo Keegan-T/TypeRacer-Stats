@@ -1,6 +1,7 @@
 import json
 
 import requests
+from aiohttp import ClientSession
 from discord import Embed
 from discord.ext import commands
 
@@ -31,8 +32,15 @@ class Define(commands.Cog):
 
 
 async def run(ctx, user, word):
-    response = requests.get("https://api.dictionaryapi.dev/api/v2/entries/en/" + word)
-    data = json.loads(response.text)
+    try:
+        response = requests.get("https://api.dictionaryapi.dev/api/v2/entries/en/" + word)
+        data = json.loads(response.text)
+    except:
+        return await ctx.send(embed=Embed(
+            title="API Error",
+            description="Dictionary API request failed",
+            color=colors.error,
+        ))
     if "title" in data:
         return await ctx.send(embed=unknown_word())
 
