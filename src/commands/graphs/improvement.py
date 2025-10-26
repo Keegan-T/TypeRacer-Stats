@@ -9,13 +9,15 @@ from commands.locks import LargeQueryLock
 from commands.races.races import get_args
 from config import prefix
 from database.bot.users import get_user
+from database.main.texts import get_texts
 from graphs import improvement_graph
 from utils import errors, strings, dates
 from utils.embeds import Page, Message, is_embed
+from utils.stats import calculate_performance
 
 command = {
     "name": "improvement",
-    "aliases": ["imp", "timeimprovement", "timp"],
+    "aliases": ["imp", "timeimprovement", "timp", "pimp"],
     "description": "Displays a graph of a user's WPM over races\n"
                    f"`{prefix}timeimprovement` will graph WPM over time",
     "parameters": "[username] <start_date/start_number> <end_date/end_number>",
@@ -50,10 +52,11 @@ class Improvement(commands.Cog):
 
         username, start_date, end_date, start_number, end_number = result
         time = ctx.invoked_with in ["timeimprovement", "timp"]
-        await run(ctx, user, username, start_date, end_date, start_number, end_number, time)
+        performance = ctx.invoked_with == "pimp"
+        await run(ctx, user, username, start_date, end_date, start_number, end_number, time, performance)
 
 
-async def run(ctx, user, username, start_date, end_date, start_number, end_number, time):
+async def run(ctx, user, username, start_date, end_date, start_number, end_number, time, performance):
     universe = user["universe"]
     stats = users.get_user(username, universe)
     if not stats:
@@ -77,7 +80,8 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         start_date, end_date = dates.time_travel_dates(user, start_date, end_date)
 
         title = "WPM Improvement"
-        columns = [wpm_metric, "timestamp"]
+        suffix = "WPM"
+        columns = [wpm_metric, "timestamp", "text_id"]
         if start_date is None and start_number is None:
             timeframe = f" (All-Time)"
             title += " - All-Time"
@@ -111,6 +115,20 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         if len(race_list) == 0:
             return await ctx.send(embed=errors.no_races_in_range(universe), content=era_string)
 
+        if performance:
+            title = "Performance Improvement"
+            suffix = "pf"
+            text_list = get_texts(as_dictionary=True)
+            for i in range(len(race_list)):
+                race = list(race_list[i])
+                difficulty = text_list[race[2]]["difficulty"]
+                if difficulty:
+                    race[0] = calculate_performance(race[0], difficulty)
+                else:
+                    race[0] = 0
+                race_list[i] = race
+            race_list = [race for race in race_list if race[0] > 0]
+
         race_list.sort(key=lambda x: x[1])
         wpm = []
         timestamps = []
@@ -139,10 +157,10 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
 
     description = (
         f"**Races:** {race_count:,}\n"
-        f"**Average:** {average:,.2f} WPM\n"
-        f"**Best:** {best:,.2f} WPM\n"
-        f"**Worst:** {worst:,.2f} WPM\n"
-        f"**Average of Last {moving}:** {recent_average:,.2f} WPM"
+        f"**Average:** {average:,.2f} {suffix}\n"
+        f"**Best:** {best:,.2f} {suffix}\n"
+        f"**Worst:** {worst:,.2f} {suffix}\n"
+        f"**Average of Last {moving}:** {recent_average:,.2f} {suffix}"
     )
 
     pages = [

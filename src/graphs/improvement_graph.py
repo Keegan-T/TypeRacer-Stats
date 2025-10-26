@@ -55,7 +55,7 @@ def render(user, wpm, title, timeframe="", timestamps=None, universe="play"):
         ax.plot(x_points, moving_wpm)
 
     ax.set_xlabel(f"Races{timeframe}")
-    ax.set_ylabel("WPM")
+    ax.set_ylabel(["Performance", "WPM"]["WPM" in title])
     if window_size > 1:
         title += f"\nMoving Average of {window_size} Races"
     if universe != "play":
