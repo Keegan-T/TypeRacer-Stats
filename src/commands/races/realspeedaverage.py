@@ -104,14 +104,18 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
     multiplier = get_universe_multiplier(universe)
 
     for i, race in enumerate(race_list):
+        race = dict(race)
         number = race["number"]
         chars = race["characters"]
         stats["unlagged"] += race["wpm_unlagged"]
         stats["adjusted"] += race["wpm_adjusted"]
         stats["ping"] += (multiplier * chars) / race["wpm"] - race["total_time"]
-        stats["start"] += race["start_time"]
-        stats["duration"] += race["total_time"]
-        stats["accuracy"] += race["accuracy"]
+        stats["start"] += race.get("start_time") or 0
+        stats["duration"] += race.get("total_time") or 0
+        stats["accuracy"] += race.get("accuracy") or 0
+
+        if not race.get("start_time") or 0:
+            continue
 
         raw_unlagged = (multiplier * chars) / (race["start_time"] + (multiplier * (chars - 1) / race["wpm_raw"]))
         stats["raw_unlagged"] += raw_unlagged
