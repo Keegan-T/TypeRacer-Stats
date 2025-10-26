@@ -51,8 +51,8 @@ class Improvement(commands.Cog):
             return await ctx.send(embed=result)
 
         username, start_date, end_date, start_number, end_number = result
-        time = ctx.invoked_with in ["timeimprovement", "timp"]
-        performance = ctx.invoked_with == "pimp"
+        time = ctx.invoked_with.lower() in ["timeimprovement", "timp"]
+        performance = ctx.invoked_with.lower() == "pimp"
         await run(ctx, user, username, start_date, end_date, start_number, end_number, time, performance)
 
 
