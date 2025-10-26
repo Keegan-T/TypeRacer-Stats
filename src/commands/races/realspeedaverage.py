@@ -80,6 +80,12 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
     if end_number - start_number + 1 == 1:
         return await run_realspeed(ctx, user, username, start_number, False, universe, raw=raw)
 
+    if end_number < 1:
+        end_number = profile["races"] + end_number
+
+    if start_number < 1:
+        start_number = profile["races"] + start_number
+
     race_list = await races.get_races(
         username, columns=["*"], start_number=start_number, end_number=end_number, universe=universe,
     )
