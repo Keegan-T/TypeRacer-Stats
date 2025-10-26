@@ -26,7 +26,6 @@ class RawSpeedAverage(commands.Cog):
         self.bot = bot
 
     @commands.command(aliases=command["aliases"])
-    @commands.cooldown(1, 20, commands.BucketType.user)
     async def rawspeedaverage(self, ctx, *args):
         if locks.average_lock.locked():
             self.rawspeedaverage.reset_cooldown(ctx)
