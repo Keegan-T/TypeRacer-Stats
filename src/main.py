@@ -16,7 +16,7 @@ from database.bot.users import get_user_ids, get_total_commands, update_commands
 from database.main.text_results import import_users
 from database.main.typing_logs import compress_logs
 from database.main.users import delete_expired_users
-from tasks import import_competitions, update_important_users, update_top_tens, update_texts
+from tasks import import_competitions, update_important_users, update_top_tens, update_texts, demolish_cheaters
 from utils import errors, colors, dates
 from utils.logging import get_log_message, log, log_error
 
@@ -127,6 +127,7 @@ async def loops():
             await update_texts()
             await compress_logs()
             await import_users()
+            await demolish_cheaters()
             if now.day == 1:
                 await update_top_tens()
         except Exception as error:

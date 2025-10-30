@@ -24,6 +24,7 @@ def get_count():
 def get_top_10s():
     results = db.fetch("SELECT * FROM text_results")
     alts = get_alts()
+    banned = get_disqualified_users()
 
     top_10s = defaultdict(list)
     for result in results:
@@ -36,6 +37,8 @@ def get_top_10s():
         unique_scores = []
         for score in scores:
             username = score["username"]
+            if username in banned:
+                continue
             if username in alts:
                 existing_score = next((score for score in unique_scores if score["username"] in alts[username]), None)
             else:

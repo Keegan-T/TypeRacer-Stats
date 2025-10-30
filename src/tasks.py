@@ -15,6 +15,7 @@ from commands.account.download import run as download
 from commands.locks import import_lock
 from database.main import db, text_results
 from utils.logging import log
+from utils.stats import calculate_text_performances
 
 
 async def import_competitions():
@@ -192,3 +193,18 @@ async def update_texts():
         await asyncio.sleep(1)
 
     log(f"Finished updating new texts")
+
+
+async def demolish_cheaters():
+    text_bests = []
+    top_10s = text_results.get_top_10s()
+    for text_id, results in top_10s.items():
+        text_bests.append(dict(results[0]))
+
+    calculate_text_performances(text_bests)
+    text_bests.sort(key=lambda x: x["performance"], reverse=True)
+    usernames = set([score["username"] for score in text_bests])
+
+    for username in usernames:
+        await download(username=username)
+        await asyncio.sleep(3)
