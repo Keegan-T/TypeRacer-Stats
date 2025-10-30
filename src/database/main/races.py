@@ -202,7 +202,7 @@ async def get_encounters(username1, username2, universe, wpm="wpm", text_pool="a
 
 async def delete_race(username, race_number, universe="play"):
     log(f"Deleting race {universe}|{username}|{race_number}")
-    race = get_race(username, race_number, universe, get_log=True)
+    race = await get_race(username, race_number, universe, get_log=True)
 
     db.run("""
         INSERT OR IGNORE INTO deleted_races (universe, username, number, typing_log)
