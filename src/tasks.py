@@ -206,5 +206,8 @@ async def demolish_cheaters():
     usernames = set([score["username"] for score in text_bests])
 
     for username in usernames:
-        await download(username=username)
+        try:
+            await download(username=username)
+        except AttributeError:
+            pass
         await asyncio.sleep(3)
