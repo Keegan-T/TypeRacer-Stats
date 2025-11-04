@@ -305,7 +305,7 @@ def leaderboard_total_text_wpm():
 
 
 def leaderboard_wpm():
-    leaders = filter_users(users.get_best_wpm(30))
+    leaders = filter_users(users.get_best_wpm(50))
     description = ""
     for i, leader in enumerate(leaders):
         description += f"{user_rank(leader, i)} - {leader['wpm']:,.2f} WPM\n"
