@@ -1,3 +1,6 @@
+11/5/2025
+- Added -typinglog
+
 9/24/2025
 - Added -settings (text pool, global wpm metric)
 
