@@ -79,6 +79,9 @@ async def on_command_error(ctx, error):
 
 @bot.event
 async def on_message(message):
+    if message.guild.id == 703605179433484289 and message.channel.id != 1397687954117361745: # Ignore TypeGG channels
+        return
+
     if message.content.startswith(prefix) and not message.author.bot and not staging:
         log_message = get_log_message(message)
         log(log_message)
