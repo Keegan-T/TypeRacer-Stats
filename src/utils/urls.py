@@ -19,6 +19,14 @@ def get_url_info(url):
 
 
 def replay(username, race_number, universe="play", dq=False):
+    # new custom url
+    url = f"http://typeracer.keegant.dev/race/{username}/{race_number}"
+    if universe != "play":
+        url += f"?universe={universe}"
+
+    return url
+
+    # old url
     if universe == "play":
         universe = ""
     url = f"https://data.typeracer.com/pit/result?id={universe}%7Ctr:{username}%7C{race_number}"

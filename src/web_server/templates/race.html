@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block head %}
+<link rel="stylesheet" href="/static/css/race.css">
+{% endblock %}
+
+{% block title %}
+<div>
+    <div>Race Details</div>
+    <div>
+        {{ username }} - Race #{{ race_number_formatted }}
+        {% if universe != "play" %} (Universe: {{ universe }}){% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="replay-body">
+    <div class="container">
+        <div class="info">
+            <table>
+                <tr>
+                    <td colspan="2" class="table-header">Race Info</td>
+                </tr>
+                <tr>
+                    <td>Username</td>
+                    <td>{{ username }}</td>
+                </tr>
+                <tr>
+                    <td>Number</td>
+                    <td>{{ race_number_formatted }}</td>
+                </tr>
+                <tr>
+                    <td>Date</td>
+                    <td>{{ date }}</td>
+                </tr>
+                <tr>
+                    <td>Points</td>
+                    <td>{{ points }}</td>
+                </tr>
+                <tr>
+                    <td>Rank</td>
+                    <td>{{ rank }}/{{ racers }}</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <td colspan="2" class="table-header">Speeds</td>
+                </tr>
+                <tr>
+                    <td>Speed</td>
+                    <td>{{ wpm_unlagged }} WPM</td>
+                </tr>
+                <tr>
+                    <td>Adjusted</td>
+                    <td>{{ wpm_adjusted }} WPM</td>
+                </tr>
+                <tr>
+                    <td>Accuracy</td>
+                    <td>{{ accuracy }}</td>
+                </tr>
+                <tr>
+                    <td>Start</td>
+                    <td>{{ start_time }}s</td>
+                </tr>
+                <tr>
+                    <td>Race Time</td>
+                    <td>{{ total_time }}s</td>
+                </tr>
+            </table>
+            <table>
+                <tr>
+                    <td colspan="2" class="table-header">Raw Speeds</td>
+                </tr>
+                <tr>
+                    <td>Speed</td>
+                    <td>{{ raw_unlagged }} WPM</td>
+                </tr>
+                <tr>
+                    <td>Adjusted</td>
+                    <td>{{ raw_adjusted }} WPM</td>
+                </tr>
+                <tr>
+                    <td>Correction</td>
+                    <td>{{ correction_time }}s ({{ correction_percent }})</td>
+                </tr>
+                <tr>
+                    <td>Pauseless</td>
+                    <td>{{ pauseless_adjusted }} WPM</td>
+                </tr>
+                <tr>
+                    <td>Pause Time</td>
+                    <td>{{ pause_time }}s ({{ pause_percent }})</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="container">
+        <table class="quote-table">
+            <tr>
+                <td class="table-header" style="text-align: left;">
+                    <a href="https://www.typeracerdata.com/text?id={{ text_id }}">Text - #{{ text_id }}</a>
+                    - <a href="">Race This Text</a>
+                </td>
+            </tr>
+            <tr>
+                <td class="quote-display" colspan="2">
+                    <span style="user-select: none;">"</span><span>{{ quote }}</span><span style="user-select: none;">"</span>
+                </td>
+            </tr>
+            <tr>
+                <td class="quote-info">50 words - 250 characters</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="container">
+
+        <!-- Text Typed -->
+        <div class="card">
+            <div class="text-box" id="replayText"></div>
+            <div>
+                <div id="stats" style="margin-top: 0.5rem; font-size: 0.9rem; color: #aaa;">
+                    Time: 0.000s | WPM: 0.00
+                </div>
+            </div>
+        </div>
+
+        <!-- Replay -->
+        <div class="card">
+            <div class="replay-controls">
+                <button id="playPauseBtn">▶</button>
+                <select id="speedSelect">
+                    <option value="0.25">0.25x</option>
+                    <option value="0.5">0.5x</option>
+                    <option value="1" selected>1x</option>
+                    <option value="2">2x</option>
+                </select>
+                <button id="skip-start">|◀◀</button>
+                <button id="rewind">◀◀</button>
+                <button id="forward">▶▶</button>
+                <button id="skip-end">▶▶|</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="card typing-log-card">
+            <div class="typing-log-header">
+                <div style="font-size: 14.4px; font-weight: bold; color: white;">Typing Log</div>
+                <span class="typing-log-toggle" id="toggleLog">show</span>
+            </div>
+            <div class="typing-log-content" id="typingLogContent">
+                <pre id="typingLog" class="typing-log-data">{{ typing_log }}</pre>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% if raw_unlagged is defined %}
+    <script>
+        const characters = {{ characters | tojson }}
+        const delays = {{ delays | tojson }}
+    </script>
+    <script src="/static/js/replay.js"></script>
+{% endif %}
+
+{% endblock %}
+
+

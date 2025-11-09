@@ -1,3 +1,6 @@
+11/8/2025
+- Added custom replay pages
+
 11/5/2025
 - Added -typinglog
 

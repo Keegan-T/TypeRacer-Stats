@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -13,8 +14,12 @@ else:
     bot_token = os.getenv("staging_token")
     staging = True
     records_channel = 1199677882730029086
+
 message_webhook = os.getenv("message_webook")
 error_webhook = os.getenv("error_webhook")
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
+SOURCE_DIR = ROOT_DIR / "src"
 
 prefix = "-"
 welcome_message = (

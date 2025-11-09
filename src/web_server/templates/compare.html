@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/compare.css">
+{% endblock %}
+
+{% block title %}
+<div>
+    <div>Quote Best Comparison</div>
+    <div>{{ username1 }} vs. {{ username2 }}</div>
+</div>
+{% endblock %}
+
+{% block content %}
+<table>
+    <thead>
+        <tr>
+            <th>Text</th>
+            <th>Difference</th>
+            <th>{{ username1 }}</th>
+            <th>{{ username2 }}</th>
+            <th>Difficulty</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in comparison %}
+        <tr>
+            <td><a href="{{ row.link }}" target="_blank">{{ row.text }}</a></td>
+            <td>{{ "%.2f"|format(row.difference) }}</td>
+            <td>{{ "%.2f"|format(row.score1) }} pp</td>
+            <td>{{ "%.2f"|format(row.score2) }} pp</td>
+            <td>{{ "%.2f"|format(row.difficulty) }} ★</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -31,9 +31,12 @@ users = get_user_ids()
 @bot.event
 async def on_ready():
     await start_session()
-    log("Bot ready.")
+    await bot.load_extension("web_server.server")
+
     if not staging:
         loops.start()
+
+    log("Bot ready.")
 
 
 @bot.event

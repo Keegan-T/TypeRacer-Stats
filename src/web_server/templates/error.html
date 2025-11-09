@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/error.css">
+{% endblock %}
+
+{% block content %}
+<div class="error">
+    <h2>{{ status }} - {{ error }}</h2>
+    <p>{{ message }}</p>
+</div>
+{% endblock %}

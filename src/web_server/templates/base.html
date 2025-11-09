@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeRacer Stats</title>
+    <link rel="icon" type="image/x-icon" href="/assets/images/logo.png">
+    <link href="/static/css/base.css" rel="stylesheet">
+    {% block head %}{% endblock %}
+</head>
+<body>
+<header>
+    <div class="title-container">
+        <img src="/assets/images/logo.png" alt="TypeRacer Stats Logo" class="logo">
+        <div class="header-title">TypeRacer Stats</div>
+    </div>
+    <div class="page-title">{% block title %}{% endblock %}</div>
+</header>
+
+<main>
+    {% block content %}{% endblock %}
+</main>
+
+<footer>
+    <p>© TypeRacer Stats • Built with ♥ by <a href="https://data.typeracer.com/pit/profile?user=keegant">keegant</a></p>
+</footer>
+</body>
+</html>
