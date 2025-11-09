@@ -37,10 +37,10 @@ class WebServer(commands.Cog):
         """Start the web server."""
         self.runner = web.AppRunner(self.app)
         await self.runner.setup()
-        self.site = web.TCPSite(self.runner, host="0.0.0.0", port=80)
+        self.site = web.TCPSite(self.runner, host="0.0.0.0", port=8888)
         await self.site.start()
 
-        log("Web server started on port 80")
+        log("Web server started on port 8888")
 
     async def stop_web_server(self):
         """Stop the web server."""
