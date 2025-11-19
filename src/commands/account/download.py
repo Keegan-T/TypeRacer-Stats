@@ -319,13 +319,7 @@ class RaceProcesser:
         if text_id not in self.text_list.keys():
             log(f"New {universe} text found! #{text_id}")
             text = await get_text(text_id)
-            quote = text["text"]
-            text = {
-                "text_id": text_id,
-                "quote": quote,
-                "ghost_username": username,
-                "ghost_number": number,
-            }
+            text["quote"] = text["text"]
             texts.add_text(text, universe)
             self.text_list[text_id] = text
             if universe == "play":

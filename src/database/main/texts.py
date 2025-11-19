@@ -21,16 +21,16 @@ def add_texts(text_list, universe):
 def add_text(text, universe):
     db.run(f"""
         INSERT OR IGNORE INTO texts
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, [
         text["tid"], text["text"], text["type"], text["title"], text["author"],
-        text["language"], text["min_skill"], text["max_skill"], text["contributor"], 0
+        text["language"], text["min_skill"], text["max_skill"], text["contributor"]
     ])
 
     db.run("""
         INSERT OR IGNORE INTO text_universes
-        VALUES (?, ?, ?)
-    """, [universe, text["tid"], 0])
+        VALUES (?, ?, ?, ?)
+    """, [universe, text["tid"], 0, 0])
 
     update_text_difficulties(universe)
 
