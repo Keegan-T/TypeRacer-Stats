@@ -9,7 +9,7 @@ command = {
     "name": "textsunder",
     "aliases": ["tu", "tur"],
     "description": "Displays the number of texts a user has less than a category threshold\n"
-                   f"Use `{prefix}-tur` to randomize the results",
+                   f"Use `{prefix}tur` to randomize the results",
     "parameters": "[username] [threshold] <category> <sort>",
     "defaults": {
         "category": "wpm",
