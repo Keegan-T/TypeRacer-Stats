@@ -93,6 +93,9 @@ async def run(ctx, user, username, start_number, end_number, universe, raw=False
         username, columns=["*"], start_number=start_number, end_number=end_number, universe=universe,
     )
 
+    if not race_list:
+        return await ctx.send(embed=errors.no_races_in_range(universe))
+
     stats = dict(
         unlagged=0,
         adjusted=0,
