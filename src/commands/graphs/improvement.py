@@ -118,7 +118,7 @@ async def run(ctx, user, username, start_date, end_date, start_number, end_numbe
         if performance:
             title = "Performance Improvement"
             suffix = "pf"
-            text_list = get_texts(as_dictionary=True)
+            text_list = get_texts(as_dictionary=True, universe=universe)
             for i in range(len(race_list)):
                 race = list(race_list[i])
                 difficulty = text_list[race[2]]["difficulty"]
