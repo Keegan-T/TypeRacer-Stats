@@ -1,5 +1,6 @@
 import copy
 import statistics
+from statistics import StatisticsError
 
 from discord import Embed
 from discord.ext import commands
@@ -9,6 +10,7 @@ from database.main import users, races, texts
 from graphs import match_graph, encounters_graph
 from utils import errors, strings, dates, colors, urls
 from utils.embeds import Page, is_embed, Message, Field
+from utils.logging import log
 
 command = {
     "name": "encounters",
@@ -119,7 +121,11 @@ def analyze_encounters(encounters, username1, username2):
                 stats["latest_encounter"] = u1["timestamp"]
 
     for user in [username1, username2]:
-        stats[user]["avg_wpm"] = statistics.mean(stats[user]["wpms"])
+        try:
+            stats[user]["avg_wpm"] = statistics.mean(stats[user]["wpms"])
+        except StatisticsError:
+            log("What the?")
+            log(stats[user])
         stats[user]["avg_wpm_raw"] = statistics.mean(stats[user]["wpms_raw"])
         stats[user]["avg_wpm_diff"] = statistics.mean(stats[user]["wpm_diffs"])
         stats[user]["avg_accuracy"] = statistics.mean(stats[user]["accuracy"])
