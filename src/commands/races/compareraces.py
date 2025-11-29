@@ -25,6 +25,7 @@ command = {
     "usages": [
         "compareraces me 3810446",
         "compareraces zak389 3550141 arenasnow",
+        "compareraces zak389|18533 joshua728|29687",
     ],
     "temporal": False,
 }
@@ -55,21 +56,62 @@ async def get_args(user, args, info, universe, channel_id):
     username = user["username"]
     text_id = None
     username2 = None
+    universe = user["universe"]
 
-    if len(args) >= 0:
-        if args and args[0] != "me":
+    if len(args) == 1:
+        if args[0] != "me":
             username = args[0]
-        username = strings.username_aliases.get(username, username)
-        db_stats = users.get_user(username, universe)
-        if not db_stats:
-            return errors.import_required(username, universe)
-        await download(username)
-        text_id = races.get_latest_text_id(username, universe)
-    if len(args) >= 2:
-        text_id = args[1]
+
+    if len(args) == 2:
+        arg1, arg2 = args
+
+        if "|" in arg1 and "|" in arg2:
+            url_info = urls.get_url_info(arg1)
+            if url_info:
+                username, number, universe = url_info
+            else:
+                info = arg1.rsplit("|")
+                username = info[-2]
+                number = info[-1]
+
+            url_info = urls.get_url_info(arg2)
+            if url_info:
+                username2, number2, _ = url_info
+            else:
+                info = arg2.rsplit("|")
+                username2 = info[-2]
+                number2 = info[-1]
+
+            db_stats = users.get_user(username, universe)
+            if not db_stats:
+                return errors.import_required(username, universe)
+            await download(username)
+
+            db_stats = users.get_user(username2, universe)
+            if not db_stats:
+                return errors.import_required(username2, universe)
+            await download(username2)
+
+            return username, username2, int(number), int(number2), universe
+
+        else:
+            if arg1 != "me":
+                username = arg1
+            text_id = arg2
+
     if len(args) == 3:
-        username2 = user["username"] if args[2] == "me" else args[2]
-        username2 = strings.username_aliases.get(username2, username2)
+        if args[0] != "me":
+            username = args[0]
+        if args[2] != "me":
+            username2 = args[2]
+        text_id = args[1]
+
+    db_stats = users.get_user(username, universe)
+    if not db_stats:
+        return errors.import_required(username, universe)
+    await download(username)
+
+    if username2:
         db_stats = users.get_user(username2, universe)
         if not db_stats:
             return errors.import_required(username2, universe)
@@ -78,18 +120,14 @@ async def get_args(user, args, info, universe, channel_id):
     if text_id == "^":
         text_id = recent.get_recent(channel_id)
 
+    if text_id is None:
+        text_id = races.get_latest_text_id(username, universe)
+
     text = get_text(text_id, user["universe"])
     if not text:
         return errors.unknown_text(universe)
 
-    if not users.get_user(username, universe):
-        return errors.import_required(username, universe)
-
-    if username2:
-        if not users.get_user(username2, universe):
-            return errors.import_required(username2, universe)
-
-    return username, username2, int(text_id), user["universe"]
+    return username, username2, int(text_id), universe
 
 
 async def run(ctx, user, username1, username2, race_number1, race_number2, universe, stats=None):
