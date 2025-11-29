@@ -302,3 +302,14 @@ def api_error(status):
         description=f"TypeRacer API returned status: {status}",
         color=error,
     )
+
+def match_info_unavailable(username, race_number, universe="play"):
+    race_id = f"{username}|{race_number}"
+    if universe != "play":
+        race_id = f"{universe}|" + race_id
+
+    return Embed(
+        title="Match Info Unavailable",
+        description=f"Match details for race `{race_id}` are unavailable",
+        color=error,
+    )

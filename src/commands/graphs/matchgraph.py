@@ -67,6 +67,8 @@ async def run(ctx, user, username, race_number, universe):
         return await ctx.send(embed=errors.logs_not_found(username, race_number, universe))
     race_id = race["race_id"]
     match = await get_race_by_id(race_id)
+    if not match:
+        return await ctx.send(embed=errors.match_info_unavailable(username, race_number, universe))
 
     text_description = strings.text_description(texts.get_text(race["text_id"], universe), universe)
     description = text_description + "\n\n**Rankings**\n"

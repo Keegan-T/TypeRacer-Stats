@@ -97,6 +97,8 @@ async def get_race_by_id(race_id):
         "keylog": "true"
     })
     data = result["data"]
+    if not data:
+        return None
 
     rankings = []
     for race in data:
