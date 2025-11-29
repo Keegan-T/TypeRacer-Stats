@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import csv
+import sys
 from datetime import datetime, timezone
 from io import StringIO
 
@@ -8,6 +9,8 @@ import aiohttp
 
 from api.bulk import get_random_user_agent
 from config import api_credentials
+
+csv.field_size_limit(131072*2)
 
 base_url = "https://data.typeracer.com/api/v1"
 session = None
