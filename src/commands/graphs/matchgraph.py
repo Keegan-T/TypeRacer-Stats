@@ -75,7 +75,7 @@ async def run(ctx, user, username, race_number, universe):
     raw_description = text_description + "\n\n**Raw Rankings**\n"
     pauseless_description = text_description + "\n\n**Pauseless Rankings**\n"
 
-    for i, race in enumerate(match["rankings"]):
+    for i, race in enumerate(match["rankings"][:10]):
         racer_username = strings.escape_formatting(race["username"])
         description += (
             f"{i + 1}. {racer_username} - "
@@ -85,7 +85,7 @@ async def run(ctx, user, username, race_number, universe):
             f"{race['start']:,.0f}ms start)\n"
         )
 
-    for i, race in enumerate(match["raw_rankings"]):
+    for i, race in enumerate(match["raw_rankings"][:10]):
         racer_username = strings.escape_formatting(race["username"])
         raw_description += (
             f"{i + 1}. {racer_username} - "
@@ -95,7 +95,7 @@ async def run(ctx, user, username, race_number, universe):
             f"{race['pause_percent']:.1%} Pause)\n"
         )
 
-    for i, race in enumerate(match["pauseless_rankings"]):
+    for i, race in enumerate(match["pauseless_rankings"][:10]):
         racer_username = strings.escape_formatting(race["username"])
         pauseless_description += (
             f"{i + 1}. {racer_username} - "
