@@ -11,6 +11,7 @@ import database.main.users as users
 from api.competitions import get_competition
 from api.core import date_to_timestamp
 from api.texts import get_text
+from api.users import get_racer
 from commands.account.download import run as download
 from commands.locks import import_lock
 from database.main import db, text_results
@@ -105,6 +106,21 @@ async def import_top_tens():
             text_id, score["user"], score["wpm"], score["wpm"],
             None, score["acc"], date_to_timestamp(score["t"]),
         ) for score in top_10]
+        top_user = results[0][1]
+        db_stats = users.get_user(top_user, "play")
+        not_found = False
+        if not db_stats:
+            try:
+                profile = await get_racer(top_user, "play")
+                if not profile:
+                    not_found = True
+            except:
+                not_found = True
+
+        if not_found:
+            continue
+
+        print("Adding results")
         text_results.add_results(results)
         await asyncio.sleep(3)
 
@@ -208,6 +224,6 @@ async def demolish_cheaters():
     for username in usernames:
         try:
             await download(username=username)
-        except AttributeError:
+        except:
             pass
         await asyncio.sleep(3)
