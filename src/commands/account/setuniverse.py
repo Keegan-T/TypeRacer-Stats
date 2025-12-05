@@ -41,7 +41,8 @@ class SetUniverse(commands.Cog):
             else:
                 await ctx.send(embed=fetching_texts(user))
                 text_list = get_text_list(universe)
-                texts.add_texts(text_list, universe)
+                if text_list:
+                    texts.add_texts(text_list, universe)
 
         await run(ctx, user, universe)
 
