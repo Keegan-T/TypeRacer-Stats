@@ -75,7 +75,22 @@ async def run(ctx, user, username, text_id=None, race_number=None):
 
     if text_id is None:
         if race_number is None:
-            race_number = api_stats["races"]
+            if era_string:
+                latest_races = await races.get_races(
+                    username,
+                    columns=["number"],
+                    start_date=user["start_date"],
+                    end_date=user["end_date"],
+                    order_by="number",
+                    reverse=True,
+                    limit=1,
+                    universe=universe
+                )
+                if not latest_races:
+                    return await ctx.send(embed=errors.import_required(username, universe))
+                race_number = latest_races[0]["number"]
+            else:
+                race_number = api_stats["races"]
 
         if race_number < 1:
             race_number = api_stats["races"] + race_number
@@ -196,6 +211,8 @@ async def run(ctx, user, username, text_id=None, race_number=None):
     await message.send()
 
     recent.update_recent(ctx.channel.id, text_id)
+
+    return # temporarily disabled
 
     if universe == "play" and not user["end_date"] and wpm_metric == "wpm_adjusted":
         await top_10_display(ctx, username, text_id, recent_race)
