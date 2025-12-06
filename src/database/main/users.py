@@ -412,7 +412,11 @@ def update_stats(universe, username, wpm_average, wpm_best, wpm_verified, races,
 
 def update_text_stats(username, universe):
     text_bests = get_text_bests(username, universe=universe, wpm="wpm_adjusted")
-    repeated_quote = get_repeated_quote(username, universe)
+    try:
+        repeated_quote = get_repeated_quote(username, universe)
+    except:
+        log(f"Text Stats Update Failed <@155481579005804544> ({username}, {universe})")
+        return
     stats = get_text_stats(text_bests)
 
     db.run(f"""
