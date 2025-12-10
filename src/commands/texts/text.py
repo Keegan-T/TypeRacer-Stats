@@ -213,8 +213,6 @@ async def run(ctx, user, username, text_id=None, race_number=None):
 
     recent.update_recent(ctx.channel.id, text_id)
 
-    return # temporarily disabled
-
     if universe == "play" and not user["end_date"] and wpm_metric == "wpm_adjusted":
         await top_10_display(ctx, username, text_id, recent_race)
 
