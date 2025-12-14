@@ -105,6 +105,9 @@ async def run(ctx, user, username, best):
         return await ctx.send(embed=embed)
 
     stats = users.get_user(username)
+    if not stats:
+        return await ctx.send(embed=errors.import_required(username))
+
     if text_pool != "all":
         stats = await users.filter_stats(stats, user)
     texts_typed = stats["texts_typed"]
