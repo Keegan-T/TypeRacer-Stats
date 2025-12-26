@@ -174,7 +174,7 @@ async def update_results(text_id):
 
         scores.append((
             text_id, username, number, score["wpm"],
-            None, score.get("ac", None), date_to_timestamp(score["t"]),
+            None, score.get("acc", None), date_to_timestamp(score["t"]),
         ))
 
     add_results(scores)
