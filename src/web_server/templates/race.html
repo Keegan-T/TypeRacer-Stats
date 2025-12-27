@@ -100,7 +100,7 @@
             <tr>
                 <td class="table-header" style="text-align: left;">
                     <a href="https://www.typeracerdata.com/text?id={{ text_id }}">Text - #{{ text_id }}</a>
-                    - <a href="">Race This Text</a>
+                    - <a href="{% if universe != 'play' %}https://play.typeracer.com/?ghost={{ universe }}%7Cbot%3A1%7C{{ text_id }}&universe={{ universe }}{% else %}https://play.typeracer.com/?ghost=%7Cbot%3A1%7C{{ text_id }}{% endif %}">Race This Text</a>
                 </td>
             </tr>
             <tr>
