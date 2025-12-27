@@ -18,18 +18,38 @@ def get_url_info(url):
         return None
 
 
-def replay(username, race_number, universe="play", dq=False):
-    # new custom url
-    url = f"http://typeracer.keegant.dev/race/{username}/{race_number}"
-    if universe != "play":
-        url += f"?universe={universe}"
+def replay(username, race_number, universe="play", dq=False, timestamp=0):
+    """
+    Generates a replay URL for a race.
 
-    return url
+    Uses custom URL (typeracer.keegant.dev) for races older than 2 years,
+    since the official TypeRacer URL only works for races < 2 years old.
 
-    # old url
-    if universe == "play":
-        universe = ""
-    url = f"https://data.typeracer.com/pit/result?id={universe}%7Ctr:{username}%7C{race_number}"
+    Args:
+        username: TypeRacer username
+        race_number: Race number
+        universe: Universe (default "play")
+        dq: Include allowDisqualified parameter (default False)
+        timestamp: Race timestamp (Unix timestamp). If 0 or not provided,
+                   uses official URL by default.
+
+    Returns:
+        URL string for the race replay
+    """
+    # Check if race is older than 2 years
+    from utils.dates import now
+    two_years = 365 * 86400 * 2
+
+    if now().timestamp() - timestamp > two_years:
+        # Use custom URL for old races (official URL doesn't work)
+        url = f"http://typeracer.keegant.dev/race/{username}/{race_number}"
+        if universe != "play":
+            url += f"?universe={universe}"
+        return url
+
+    # Use official TypeRacer URL for recent races (or when timestamp not provided)
+    universe_param = "" if universe == "play" else universe
+    url = f"https://data.typeracer.com/pit/result?id={universe_param}%7Ctr:{username}%7C{race_number}"
     if dq:
         url += "&allowDisqualified=true"
 

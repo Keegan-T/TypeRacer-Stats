@@ -62,7 +62,7 @@ async def run_all(ctx, user, sort):
         quote = strings.truncate_clean(quote, 150)
         return (
             f"{strings.escape_formatting(username)} - [{text['wpm']:,.2f} WPM]"
-            f"({urls.replay(username, text['number'])}) - "
+            f"({urls.replay(username, text['number'], timestamp=text['timestamp'])}) - "
             f"{text['performance']:,.0f} Score - "
             f"{strings.discord_timestamp(text["timestamp"])}\n"
             f"[Text #{text_id}]({urls.trdata_text(text_id)}) - "
@@ -108,7 +108,7 @@ async def run(ctx, user, username, sort):
         quote = text["quote"]
         quote = strings.truncate_clean(quote, 120)
         return (
-            f"[{text['wpm']:,.2f} WPM]({urls.replay(username, text['number'], universe)}) - "
+            f"[{text['wpm']:,.2f} WPM]({urls.replay(username, text['number'], universe, timestamp=text['timestamp'])}) - "
             f"{text['performance']:,.0f} Score - "
             f"{strings.discord_timestamp(text["timestamp"])}\n"
             f"[Text #{text_id}]({urls.trdata_text(text_id, universe)}) - "

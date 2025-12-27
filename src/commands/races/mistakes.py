@@ -116,7 +116,7 @@ async def run(ctx, user, username, race_number, universe):
     message = Message(
         ctx, user, [typo_page, pause_page],
         title=f"Mistakes - Race #{race_number:,}",
-        url=urls.replay(username, race_number, universe, stats['disqualified']),
+        url=urls.replay(username, race_number, universe, stats['disqualified'], timestamp=race['timestamp']),
         profile=stats,
         universe=universe,
     )

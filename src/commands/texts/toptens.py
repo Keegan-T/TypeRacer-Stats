@@ -139,7 +139,7 @@ async def run(ctx, user, username, best):
         performances.sort(key=lambda x: (x["position"], -x["lead"], -x["wpm"]))
         for race in performances[:20]:
             race_string = (
-                f"[{race['wpm']:,.2f} WPM]({urls.replay(username, race['number'])}) - "
+                f"[{race['wpm']:,.2f} WPM]({urls.replay(username, race['number'], timestamp=race['timestamp'])}) - "
                 f"[Position #{race['position']}]({urls.trdata_text(race['text_id'])}&highlight={username})"
             )
             if race["lead"] > 0:

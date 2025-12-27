@@ -120,8 +120,8 @@ async def run(ctx, user, username1, username2):
         wpm2, race_number2 = score2[:2]
         gap_string = f"({'+' * (gap >= 0)}{gap:,.2f} WPM)"
         return (
-            f"[{wpm1:,.2f}]({urls.replay(username1, race_number1, universe)}) vs. "
-            f"[{wpm2:,.2f}]({urls.replay(username2, race_number2, universe)}) {gap_string}\n"
+            f"[{wpm1:,.2f}]({urls.replay(username1, race_number1, universe, timestamp=score1[3])}) vs. "
+            f"[{wpm2:,.2f}]({urls.replay(username2, race_number2, universe, timestamp=score2[3])}) {gap_string}\n"
         )
 
     def formatter(comparison):
@@ -137,8 +137,8 @@ async def run(ctx, user, username1, username2):
             wpm1, race_number1 = score1[:2]
             wpm2, race_number2 = score2[:2]
             stats1 += (
-                f"\n:handshake: [{wpm1:,.2f}]({urls.replay(username1, race_number1, universe)})"
-                f" vs. [{wpm2:,.2f}]({urls.replay(username2, race_number2, universe)})\n"
+                f"\n:handshake: [{wpm1:,.2f}]({urls.replay(username1, race_number1, universe, timestamp=score1[3])})"
+                f" vs. [{wpm2:,.2f}]({urls.replay(username2, race_number2, universe, timestamp=score2[3])})\n"
             )
 
         for i, (text_id, data) in enumerate(comparison[::-1][:10]):

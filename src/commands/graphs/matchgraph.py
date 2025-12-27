@@ -80,7 +80,7 @@ async def run(ctx, user, username, race_number, universe):
         description += (
             f"{i + 1}. {racer_username} - "
             f"[{race['wpm']:,.2f} WPM]"
-            f"({urls.replay(race['username'], race['number'], universe)}) "
+            f"({urls.replay(race['username'], race['number'], universe, timestamp=race['timestamp'])}) "
             f"({race['accuracy']:.2%} Acc, "
             f"{race['start']:,.0f}ms start)\n"
         )
@@ -90,7 +90,7 @@ async def run(ctx, user, username, race_number, universe):
         raw_description += (
             f"{i + 1}. {racer_username} - "
             f"[{race['wpm']:,.2f} WPM]"
-            f"({urls.replay(race['username'], race['number'], universe)}) "
+            f"({urls.replay(race['username'], race['number'], universe, timestamp=race['timestamp'])}) "
             f"({race['correction_percent']:.1%} Corr, "
             f"{race['pause_percent']:.1%} Pause)\n"
         )
@@ -100,7 +100,7 @@ async def run(ctx, user, username, race_number, universe):
         pauseless_description += (
             f"{i + 1}. {racer_username} - "
             f"[{race['wpm']:,.2f} WPM]"
-            f"({urls.replay(race['username'], race['number'], universe)}) "
+            f"({urls.replay(race['username'], race['number'], universe, timestamp=race['timestamp'])}) "
             f"({race['correction_percent']:.1%} Corr, "
             f"{race['pause_percent']:.1%} Pause)\n"
         )
@@ -111,7 +111,7 @@ async def run(ctx, user, username, race_number, universe):
     pauseless_description += completed
     title = f"Match Graph - Race #{race_number:,}"
     graph_title = f"Match Graph - {username} - Race #{race_number:,}"
-    url = urls.replay(username, race_number, universe)
+    url = urls.replay(username, race_number, universe, timestamp=race['timestamp'])
 
     def render(key):
         return lambda: match_graph.render(

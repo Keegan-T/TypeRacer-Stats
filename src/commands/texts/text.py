@@ -189,7 +189,7 @@ async def run(ctx, user, username, text_id=None, race_number=None):
 
         stats_string += (
             f"**Recent:** [{recent_race['wpm']:,.2f} WPM]"
-            f"({urls.replay(username, recent_race['number'], universe)}) - "
+            f"({urls.replay(username, recent_race['number'], universe, timestamp=recent_race['timestamp'])}) - "
             f"{strings.discord_timestamp(recent_race['timestamp'])}"
         )
 
@@ -247,13 +247,13 @@ def get_stats_string(username, universe, average, best, worst, recent_race, prev
     return (
         f"**Average:** {average:,.2f} WPM\n"
         f"**{'Previous ' * previous}Best:** [{best['wpm']:,.2f} WPM]"
-        f"({urls.replay(username, best['number'], universe)}) - "
+        f"({urls.replay(username, best['number'], universe, timestamp=best['timestamp'])}) - "
         f"{strings.discord_timestamp(best['timestamp'])}\n"
         f"**Worst:** [{worst['wpm']:,.2f} WPM]"
-        f"({urls.replay(username, worst['number'], universe)}) - "
+        f"({urls.replay(username, worst['number'], universe, timestamp=worst['timestamp'])}) - "
         f"{strings.discord_timestamp(worst['timestamp'])}\n"
         f"**Recent:** [{recent_race['wpm']:,.2f} WPM]"
-        f"({urls.replay(username, recent_race['number'], universe)}) - "
+        f"({urls.replay(username, recent_race['number'], universe, timestamp=recent_race['timestamp'])}) - "
         f"{strings.discord_timestamp(recent_race['timestamp'])}"
     )
 
@@ -299,7 +299,7 @@ async def top_10_display(ctx, username, text_id, recent_race):
             accuracy_string = f" ({race['accuracy']:.0%})"
         description += (
             f"{strings.rank(i + 1)} {style}{strings.escape_formatting(user)} - [{race['wpm']:,.2f} WPM]"
-            f"({urls.replay(user, race['number'])}){accuracy_string}{style} - "
+            f"({urls.replay(user, race['number'], timestamp=race['timestamp'])}){accuracy_string}{style} - "
             f"{strings.discord_timestamp(race['timestamp'])} {increase}\n"
         )
 

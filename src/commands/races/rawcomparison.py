@@ -116,7 +116,7 @@ async def run(ctx, user, username, race_number, universe):
 
     message = Message(
         ctx, user, pages,
-        url=urls.replay(username, race_number, universe, stats["disqualified"]),
+        url=urls.replay(username, race_number, universe, stats["disqualified"], timestamp=race['timestamp']),
         footer="Adjusted speed recalculated to account for lag at the start of the race" * race["distributed"],
         profile=stats,
         universe=universe,

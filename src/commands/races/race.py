@@ -72,7 +72,7 @@ async def run(ctx, user, username, race_number, universe):
 
     message = Message(
         ctx, user, page,
-        url=urls.replay(username, race_number, universe),
+        url=urls.replay(username, race_number, universe, timestamp=race_info['timestamp']),
         profile=stats,
         universe=universe,
     )

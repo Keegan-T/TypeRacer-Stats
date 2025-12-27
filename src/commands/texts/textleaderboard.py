@@ -100,7 +100,7 @@ async def run(ctx, user, text_id):
             accuracy_string = f" ({race['accuracy']:.0%})"
         page.description += (
             f"{strings.rank(i + 1)} {strings.escape_formatting(username)} - [{race['wpm']:,.2f} WPM]"
-            f"({urls.replay(race['username'], race['number'])}){accuracy_string} - "
+            f"({urls.replay(race['username'], race['number'], timestamp=race['timestamp'])}){accuracy_string} - "
             f"{strings.discord_timestamp(race['timestamp'])}\n"
         )
 

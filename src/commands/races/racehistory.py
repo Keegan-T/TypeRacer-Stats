@@ -87,7 +87,7 @@ async def run(ctx, user, username, time_period, sort, reverse):
 
         def formatter(race):
             return (
-                f"[#{race['number']:,}]({urls.replay(username, race['number'], universe)}) - "
+                f"[#{race['number']:,}]({urls.replay(username, race['number'], universe, timestamp=race['timestamp'])}) - "
                 f"{race['wpm']:,.2f} WPM - {math.floor(race['accuracy'] * 100):.0f}% - {race['points']:,.0f} pts - "
                 f"{race['rank']}/{race['racers']} - {strings.discord_timestamp(race['timestamp'])}\n"
             )

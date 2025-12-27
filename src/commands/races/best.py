@@ -112,7 +112,7 @@ async def run(ctx, user, username, category, text_id, reverse=True):
         def formatter(race):
             return (
                 f"[{race['wpm']:,.2f} WPM]"
-                f"({urls.replay(username, race['number'], universe)})"
+                f"({urls.replay(username, race['number'], universe, timestamp=race['timestamp'])})"
                 f" - Race #{race['number']:,} - "
                 f"{strings.discord_timestamp(race['timestamp'])}\n"
             )
@@ -136,7 +136,7 @@ async def run(ctx, user, username, category, text_id, reverse=True):
             quote = strings.truncate_clean(text["quote"], 60)
             return (
                 f"[{race[category]:,.2f} {category_title}]"
-                f"({urls.replay(username, race['number'], universe)})"
+                f"({urls.replay(username, race['number'], universe, timestamp=race['timestamp'])})"
                 f" - Race #{race['number']:,} - "
                 f"[Text #{text_id}]({urls.trdata_text(text_id, universe)}) - "
                 f"{strings.discord_timestamp(race['timestamp'])}\n\"{quote}\"\n\n"

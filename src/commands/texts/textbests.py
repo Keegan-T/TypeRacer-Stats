@@ -119,7 +119,7 @@ async def run(ctx, user, username, sort, n):
         text_id = text["text_id"]
         quote = strings.truncate_clean(text_list[text_id]["quote"], 60)
         return (
-            f"[{text['wpm']:,.2f} WPM]({urls.replay(username, text['number'], universe)})"
+            f"[{text['wpm']:,.2f} WPM]({urls.replay(username, text['number'], universe, timestamp=text['timestamp'])})"
             f" ({text['accuracy']:.2%}) - "
             f"[Text #{text_id}]({urls.trdata_text(text_id, universe)}) - "
             f'{strings.discord_timestamp(text["timestamp"])}\n"{quote}"\n\n'

@@ -94,8 +94,8 @@ async def run(ctx, user, username, sort):
     def formatter(data):
         race1, race2, improvement = data
         text_id = race1["text_id"]
-        replay1 = urls.replay(username, race1["number"], universe)
-        replay2 = urls.replay(username, race2["number"], universe)
+        replay1 = urls.replay(username, race1["number"], universe, timestamp=race1['timestamp'])
+        replay2 = urls.replay(username, race2["number"], universe, timestamp=race2['timestamp'])
         return (
             f"[{race1['wpm']:,.2f}]({replay1}) ➜ [{race2['wpm']:,.2f}]({replay2}) (+{improvement:,.2f} WPM) - "
             f"[#{text_id}]({urls.trdata_text(text_id, universe)}) - "

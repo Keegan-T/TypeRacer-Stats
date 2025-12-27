@@ -330,8 +330,8 @@ def get_stats_fields(username, race_list, start_time, end_time, universe="play",
     )
     races_string = (
         f"**Races:** {race_count:,} "
-        f"([#{first_race[1]:,}]({urls.replay(username, first_race[1], universe)}) - "
-        f"[#{last_race[1]:,}]({urls.replay(username, last_race[1], universe)}))\n"
+        f"([#{first_race[1]:,}]({urls.replay(username, first_race[1], universe, timestamp=first_race["timestamp"])}) - "
+        f"[#{last_race[1]:,}]({urls.replay(username, last_race[1], universe, timestamp=last_race["timestamp"])}))\n"
     )
     wins_string = f"**Wins:** {wins:,} ({wins / race_count:.2%} win rate)\n"
     points_string = f"**Points:** {points:,.0f} ({points / race_count:,.2f} points/race)\n"
@@ -340,8 +340,8 @@ def get_stats_fields(username, race_list, start_time, end_time, universe="play",
         f"{average_string}"
         f"{raw_string}"
         f"**Range:** {best_race['wpm'] - worst_race['wpm']:,.2f} WPM "
-        f"([{worst_race['wpm']:,.2f}]({urls.replay(username, worst_race['number'], universe)}) - "
-        f"[{best_race['wpm']:,.2f}]({urls.replay(username, best_race['number'], universe)}))\n"
+        f"([{worst_race['wpm']:,.2f}]({urls.replay(username, worst_race['number'], universe, timestamp=worst_race["timestamp"])}) - "
+        f"[{best_race['wpm']:,.2f}]({urls.replay(username, best_race['number'], universe, timestamp=best_race["timestamp"])}))\n"
         f"**Starts:** {average_start["total"] / max(average_start["count"], 1):,.0f}ms / "
         f"**Pauses:** {average_pause["total"] / max(average_pause["count"], 1):,.0f}ms / "
         f"**Std. Dev:** ± {standard_deviation:,.2f} WPM\n"

@@ -121,7 +121,7 @@ async def run(ctx, user, username, race_number, graph, universe, raw=False):
 
     message = Message(
         ctx, user, page,
-        url=urls.replay(username, race_number, universe, stats["disqualified"]),
+        url=urls.replay(username, race_number, universe, stats["disqualified"], race["timestamp"]),
         footer=footer,
         profile=stats,
         universe=universe,

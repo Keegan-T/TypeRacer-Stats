@@ -136,7 +136,7 @@ def format_club_string(score):
 
     return (
         f"{rank} {get_flag(username)}{strings.escape_formatting(username)} - "
-        f"[{adjusted:.2f} WPM]({urls.replay(username, race_number)}) - "
+        f"[{adjusted:.2f} WPM]({urls.replay(username, race_number, timestamp=score['timestamp'])}) - "
         f"{date}"
     )
 

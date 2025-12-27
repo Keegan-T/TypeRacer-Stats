@@ -135,8 +135,8 @@ async def run(ctx, user, username, category, n, less_than):
         end_number = end_race["number"]
         return (
             f"{data['streak']:,} - Races "
-            f"[{start_number:,}]({urls.replay(username, start_number, universe)}) - "
-            f"[{end_number:,}]({urls.replay(username, end_number, universe)})\n"
+            f"[{start_number:,}]({urls.replay(username, start_number, universe, timestamp=race["timestamp"])}) - "
+            f"[{end_number:,}]({urls.replay(username, end_number, universe, timestamp=race["timestamp"])})\n"
         )
 
     if not windows:

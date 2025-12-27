@@ -245,7 +245,7 @@ async def run(ctx, user, username1, username2):
             description += (
                 f"{i + 1}. {racer_username} - "
                 f"[{race['wpm']:,.2f} WPM]"
-                f"({urls.replay(race['username'], race['number'], universe)}) "
+                f"({urls.replay(race['username'], race['number'], universe, timestamp=race['timestamp'])}) "
                 f"({race['accuracy']:.2%} Acc, "
                 f"{race['start']:,.0f}ms start)\n"
             )

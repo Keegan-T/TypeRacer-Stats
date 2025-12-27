@@ -105,7 +105,7 @@ async def run(ctx, user, username, text_id):
         for score in recent_scores[:20][::-1]:
             description += (
                 f"{strings.format_duration(now - score['timestamp'])} ago - "
-                f"[{score['wpm']:,.2f} WPM]({urls.replay(username, score['number'], universe)})\n"
+                f"[{score['wpm']:,.2f} WPM]({urls.replay(username, score['number'], universe, timestamp=score["timestamp"])})\n"
             )
 
     message = Message(

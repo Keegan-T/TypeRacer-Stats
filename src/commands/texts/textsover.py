@@ -132,7 +132,7 @@ async def run(ctx, user, username, threshold, category, sort, over=True):
         text_id = race["text_id"]
         return (
             f"[#{text_id}]({urls.trdata_text(text_id, universe)}) - "
-            f"[{race['wpm']:,.2f} WPM]({urls.replay(username, race['number'], universe)}) - "
+            f"[{race['wpm']:,.2f} WPM]({urls.replay(username, race['number'], universe, timestamp=race['timestamp'])}) - "
             f"**{race['times']:,} time{'s' * (race['times'] != 1)}** - "
             f"{len(text_list[text_id]["quote"]):,} chars - "
             f"[Ghost]({text_list[text_id]['ghost']})\n"

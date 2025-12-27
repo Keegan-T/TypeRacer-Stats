@@ -172,10 +172,10 @@ async def run(ctx, user, username1, username2, race_number1, race_number2, unive
 
     description = (
         f"{strings.escape_formatting(username1)} - "
-        f"[{wpm1:,.2f} WPM]({urls.replay(username1, race_number1, universe)}) "
+        f"[{wpm1:,.2f} WPM]({urls.replay(username1, race_number1, universe, timestamp=timestamp1)}) "
         f"({accuracy1:,.2%}) {strings.discord_timestamp(timestamp1)}\nvs.\n"
         f"{strings.escape_formatting(username2)} - "
-        f"[{wpm2:,.2f} WPM]({urls.replay(username2, race_number2, universe)}) "
+        f"[{wpm2:,.2f} WPM]({urls.replay(username2, race_number2, universe, timestamp=timestamp2)}) "
         f"({accuracy2:,.2%}) {strings.discord_timestamp(timestamp2)}\n"
     )
 

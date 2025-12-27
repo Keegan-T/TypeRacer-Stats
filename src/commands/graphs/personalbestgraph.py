@@ -80,7 +80,7 @@ async def run(ctx, user, username, category):
         indicator = strings.discord_timestamp(race["timestamp"]) if time else f"#{race['number']:,}"
         return (
             f"**{label}:** [{race['wpm']:,.2f} WPM]"
-            f"({urls.replay(username, race['number'], universe)}) - {indicator}\n"
+            f"({urls.replay(username, race['number'], universe, timestamp=race['timestamp'])}) - {indicator}\n"
         )
 
     race_description = formatter(first_race, label="First Race")
