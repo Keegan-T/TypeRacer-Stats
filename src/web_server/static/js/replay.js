@@ -1,9 +1,6 @@
 //const characters = "I know it's a mistake. But there are certain things in life where you know it's a mistake, but you don't really know it's a mistake, because the only way to really know it's a mistake is to make the mistake.".split("");
 //const delays = [1.0, 81, 71, 18, 17, 47, 30, 59, 53, 82, 118, 41, 94, 83, 70, 42, 17, 53, 83, 0, 88, 53, 71, 65, 47, 59, 65, 64, 44, 32, 88, 48, 88, 64, 48, 48, 72, 75, 65, 76, 106, 59, 29, 47, 48, 47, 64, 24, 53, 796, 29, 35, 23, 36, 94, 41, 30, 35, 47, 41, 53, 41, 83, 65, 70, 12, 59, 23, 30, 76, 24, 12, 12, 70, 30, 53, 64, 36, 88, 53, 77, 88, 24, 46, 36, 47, 65, 23, 94, 48, 58, 77, 24, 58, 42, 53, 64, 18, 65, 47, 24, 29, 24, 64, 36, 100, 12, 35, 35, 88, 42, 47, 41, 24, 53, 35, 24, 76, 35, 77, 76, 36, 100, 71, 65, 52, 12, 100, 83, 47, 70, 71, 35, 77, 53, 53, 23, 59, 77, 18, 41, 29, 83, 29, 59, 47, 30, 41, 35, 47, 47, 47, 42, 41, 47, 76, 65, 65, 47, 41, 18, 94, 41, 53, 42, 17, 47, 42, 41, 53, 41, 47, 94, 25, 105, 59, 70, 24, 41, 41, 60, 35, 76, 65, 35, 65, 77, 41, 59, 82, 41, 59, 77, 65, 58, 36, 35, 65, 65, 11, 83, 23, 59, 83, 35, 83, 76]
 
-console.log(characters);
-console.log(delays);
-
 const replayText = document.getElementById("replayText");
 const stats = document.getElementById("stats");
 
