@@ -1,3 +1,4 @@
+{% set show_replay = raw_unlagged is defined %}
 {% extends "base.html" %}
 {% block head %}
 <link rel="stylesheet" href="/static/css/race.css">
@@ -15,8 +16,10 @@
 
 {% block content %}
 <div class="replay-body">
+    <!-- RACE STATS CONTAINER -->
     <div class="container">
         <div class="info">
+            <!-- Race Info table -->
             <table>
                 <tr>
                     <td colspan="2" class="table-header">Race Info</td>
@@ -42,6 +45,8 @@
                     <td>{{ rank }}/{{ racers }}</td>
                 </tr>
             </table>
+
+            <!-- Speeds table -->
             <table>
                 <tr>
                     <td colspan="2" class="table-header">Speeds</td>
@@ -67,105 +72,200 @@
                     <td>{{ total_time }}s</td>
                 </tr>
             </table>
+
+            <!-- Raw Speeds table -->
             <table>
                 <tr>
                     <td colspan="2" class="table-header">Raw Speeds</td>
                 </tr>
                 <tr>
                     <td>Speed</td>
-                    <td>{{ raw_unlagged }} WPM</td>
+                    <td>
+                        {% if show_replay %}
+                        {{ raw_unlagged }} WPM
+                        {% else %}
+                        n/a
+                        {% endif %}
+                    </td>
                 </tr>
                 <tr>
                     <td>Adjusted</td>
-                    <td>{{ raw_adjusted }} WPM</td>
+                    <td>
+                        {% if show_replay %}
+                        {{ raw_adjusted }} WPM
+                        {% else %}
+                        n/a
+                        {% endif %}
+                    </td>
                 </tr>
                 <tr>
                     <td>Correction</td>
-                    <td>{{ correction_time }}s ({{ correction_percent }})</td>
+                    <td>
+                        {% if show_replay %}
+                        {{ correction_time }}s ({{ correction_percent }})
+                        {% else %}
+                        n/a
+                        {% endif %}
+                    </td>
                 </tr>
                 <tr>
                     <td>Pauseless</td>
-                    <td>{{ pauseless_adjusted }} WPM</td>
+                    <td>
+                        {% if show_replay %}
+                        {{ pauseless_adjusted }} WPM
+                        {% else %}
+                        n/a
+                        {% endif %}
+                    </td>
                 </tr>
                 <tr>
                     <td>Pause Time</td>
-                    <td>{{ pause_time }}s ({{ pause_percent }})</td>
+                    <td>
+                        {% if show_replay %}
+                        {{ pause_time }}s ({{ pause_percent }})
+                        {% else %}
+                        n/a
+                        {% endif %}
+                    </td>
                 </tr>
             </table>
         </div>
     </div>
 
+    <!-- QUOTE INFO CONTAINER -->
     <div class="container">
         <table class="quote-table">
             <tr>
                 <td class="table-header" style="text-align: left;">
-                    <a href="https://www.typeracerdata.com/text?id={{ text_id }}">Text - #{{ text_id }}</a>
-                    - <a href="{% if universe != 'play' %}https://play.typeracer.com/?ghost={{ universe }}%7Cbot%3A1%7C{{ text_id }}&universe={{ universe }}{% else %}https://play.typeracer.com/?ghost=%7Cbot%3A1%7C{{ text_id }}{% endif %}">Race This Text</a>
+                    <a href="https://www.typeracerdata.com/text?id={{ text_id }}" target="_blank">
+                        Text - #{{ text_id }}
+                    </a>
+                    -
+                    <a href="
+                        {% if universe != 'play' %}
+                            https://play.typeracer.com/?ghost={{ universe }}%7Cbot%3A1%7C{{ text_id }}&universe={{ universe }}
+                        {% else %}
+                            https://play.typeracer.com/?ghost=%7Cbot%3A1%7C{{ text_id }}
+                        {% endif %}
+                    " target="_blank">
+                        Race This Text
+                    </a>
                 </td>
             </tr>
             <tr>
                 <td class="quote-display" colspan="2">
-                    <span style="user-select: none;">"</span><span>{{ quote }}</span><span style="user-select: none;">"</span>
+                    <span style="user-select: none;">"</span><span>{{ quote }}</span><span
+                        style="user-select: none;">"</span>
                 </td>
             </tr>
             <tr>
-                <td class="quote-info">{{ quote.split()|length }} words - {{ quote|length }} characters</td>
+                <td class="quote-info">
+                    {{ quote.split()|length }} words - {{ quote|length }} characters
+                </td>
             </tr>
         </table>
     </div>
 
+    {% if show_replay %}
+    <!-- REPLAY CONTAINER -->
     <div class="container">
+        <div class="card" id="replayCard">
+            <div style="font-weight: bold;">Replay</div>
 
-        <!-- Text Typed -->
-        <div class="card">
+            <!-- Clean replay text (with caret) -->
             <div class="text-box" id="replayText"></div>
-            <div>
-                <div id="stats" style="margin-top: 0.5rem; font-size: 0.9rem; color: #aaa;">
-                    Time: 0.000s | WPM: 0.00
+
+            <!-- Stats row + Adjusted toggle -->
+            <div class="stats-container">
+                <div id="stats">
+                    Time: 0.000s | WPM: 0.00 | Raw: 0.00 |
+                </div>
+                <div class="replay-settings">
+                    <label>
+                        <input type="checkbox" id="adjustedToggle" style="margin: 0;">
+                        <span style="user-select: none;">Adjusted</span>
+                    </label>
                 </div>
             </div>
-        </div>
 
-        <!-- Replay -->
-        <div class="card">
+            <!-- Replay controls row -->
             <div class="replay-controls">
-                <button id="playPauseBtn">▶</button>
+                <button id="playPauseButton">▶</button>
                 <select id="speedSelect">
                     <option value="0.25">0.25x</option>
                     <option value="0.5">0.5x</option>
                     <option value="1" selected>1x</option>
                     <option value="2">2x</option>
                 </select>
-                <button id="skip-start">|◀◀</button>
+                <button id="skipStart">|◀◀</button>
                 <button id="rewind">◀◀</button>
                 <button id="forward">▶▶</button>
-                <button id="skip-end">▶▶|</button>
+                <button id="skipEnd">▶▶|</button>
+            </div>
+
+            <!-- Raw replay text (edits view) -->
+            <div class="text-box" id="rawReplayText" style="user-select: none;"></div>
+
+            <!-- Raw replay step controls -->
+            <div class="replay-controls">
+                <button id="rawRewind">|◀</button>
+                <button id="rawForward">▶|</button>
             </div>
         </div>
     </div>
 
+    <!-- MISTAKES + SPEED GRAPH CONTAINER -->
+    <div class="container">
+        <div class="card" id="mistakesCard">
+            <div class="mistakes-graph-container">
+                <!-- Left side: Mistakes list -->
+                <div class="mistakes-section">
+                    <div style="font-weight: bold; margin-bottom: 10px;">Mistakes</div>
+                    <ul id="mistakesList"
+                        style="
+                            list-style: none;
+                            padding: 0;
+                            font-family: monospace;
+                            font-size: 0.9rem;
+                            color: #aaa;
+                        ">
+                    </ul>
+                </div>
+
+                <!-- Right side: Speed graph -->
+                <div class="graph-section">
+                    <div class="graph-title">Speed Throughout the Race</div>
+                    <div id="speedGraph"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TYPING LOG CONTAINER -->
     <div class="container">
         <div class="card typing-log-card">
             <div class="typing-log-header">
-                <div style="font-size: 14.4px; font-weight: bold; color: white;">Typing Log</div>
+                <div style="font-weight: bold;">Typing Log</div>
                 <span class="typing-log-toggle" id="toggleLog">show</span>
             </div>
             <div class="typing-log-content" id="typingLogContent">
+                <button id="copyLogButton" class="copy-log-button" title="Copy log"></button>
                 <pre id="typingLog" class="typing-log-data">{{ typing_log }}</pre>
             </div>
         </div>
     </div>
-
+    {% endif %}
 </div>
 
-{% if raw_unlagged is defined %}
-    <script>
-        const characters = {{ characters | tojson }}
-        const delays = {{ delays | tojson }}
-    </script>
-    <script src="/static/js/replay.js"></script>
+{% if show_replay %}
+<script>
+    const quote = {{ quote | tojson }}
+    const delays = {{ delays | tojson }}
+    const rawDelays = {{ raw_delays | tojson }}
+    const actionList = {{ processed_actions | tojson }}
+    const graphData = {{ graph | tojson }}
+</script>
+<script src="/static/js/replay.js"></script>
 {% endif %}
 
 {% endblock %}
-
-

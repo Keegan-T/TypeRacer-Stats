@@ -445,7 +445,7 @@ def real_speed_fields(race, raw=True):
 
 def get_discord_id(string):
     if ((string.startswith("<@") and string.endswith(">") and "&" not in string)
-        or (string.isnumeric() and 17 <= len(string) <= 19)):
+            or (string.isnumeric() and 17 <= len(string) <= 19)):
         id = string.translate(string.maketrans("", "", "<@>"))
         return id
 
@@ -467,7 +467,75 @@ def race_id(username, number):
     return f"{username}|{number}"
 
 
-def get_segments(text, n=None):
+def get_segments(text):
+    # Create initial segments
+    num_segments = 10
+    split_index = len(text) / num_segments
+    segments = []
+    start_index = 0
+    end_index = int(split_index)
+
+    for i in range(num_segments):
+        segments.append([start_index, end_index])
+        start_index = int(split_index * (i + 1))
+        end_index = int(split_index * (i + 2))
+
+    adjusted_segments = []
+    text_segments = []
+
+    for i in range(len(segments)):
+        start, end = segments[i]
+
+        # For all segments except the last
+        if i < len(segments) - 1:
+            # Find the nearest space forward from the current end position
+            forward_space = text.find(' ', end)
+            # Find the nearest space backward from the current end position
+            backward_space = text.rfind(' ', 0, end)
+
+            # If we found both spaces, choose the closest one
+            if forward_space != -1 and backward_space != -1:
+                # Calculate distances
+                forward_dist = forward_space - end
+                backward_dist = end - backward_space
+
+                if forward_dist <= backward_dist:
+                    new_end = forward_space
+                else:
+                    new_end = backward_space
+            elif forward_space != -1:  # Only forward space found
+                new_end = forward_space
+            elif backward_space != -1:  # Only backward space found
+                new_end = backward_space
+            else:  # No spaces found
+                new_end = end
+
+            # Ensure segments don't overlap and maintain order
+            if i > 0 and new_end <= adjusted_segments[i - 1][1]:
+                # If new end overlaps with previous segment, find next space after previous segment
+                new_end = text.find(' ', adjusted_segments[i - 1][1] + 1)
+                if new_end == -1:  # If no space found, use the end of text
+                    new_end = len(text)
+
+            adjusted_segments.append([start, new_end])
+            # Extract the text segment (end index is exclusive in slicing)
+            text_segments.append(text[start:new_end + 1])
+
+            # Set start of next segment to be after this segment's end
+            if i < len(segments) - 1:
+                segments[i + 1][0] = new_end + 1 if new_end + 1 < len(text) else new_end
+        else:
+            # Last segment - extend to end of text
+            adjusted_segments.append([start, len(text)])
+            text_segments.append(text[start:len(text)])
+
+    while text_segments[-1] == "":
+        text_segments.pop()
+
+    return text_segments
+
+
+def get_segments_old(text, n=None):
     if not n:
         n = round(len(text) / 10)
         if n > 10:
@@ -511,7 +579,7 @@ def get_segments(text, n=None):
                         segments[i + 1] = segment[-1] + segments[i + 1]
                         segment = segment[:len(segment) - 1]
                 except:
-                    return get_segments(text, n - 1)
+                    return get_segments_old(text, n - 1)
         else:
             try:
                 while segment[-1] != " ":
@@ -525,7 +593,7 @@ def get_segments(text, n=None):
                         segment += segments[i + 1][0]
                         segments[i + 1] = segments[i + 1][1:]
                 except IndexError:
-                    return get_segments(text, n - 1)
+                    return get_segments_old(text, n - 1)
 
         full_words.append(segment)
 

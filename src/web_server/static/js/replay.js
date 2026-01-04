@@ -1,31 +1,386 @@
-//const characters = "I know it's a mistake. But there are certain things in life where you know it's a mistake, but you don't really know it's a mistake, because the only way to really know it's a mistake is to make the mistake.".split("");
-//const delays = [1.0, 81, 71, 18, 17, 47, 30, 59, 53, 82, 118, 41, 94, 83, 70, 42, 17, 53, 83, 0, 88, 53, 71, 65, 47, 59, 65, 64, 44, 32, 88, 48, 88, 64, 48, 48, 72, 75, 65, 76, 106, 59, 29, 47, 48, 47, 64, 24, 53, 796, 29, 35, 23, 36, 94, 41, 30, 35, 47, 41, 53, 41, 83, 65, 70, 12, 59, 23, 30, 76, 24, 12, 12, 70, 30, 53, 64, 36, 88, 53, 77, 88, 24, 46, 36, 47, 65, 23, 94, 48, 58, 77, 24, 58, 42, 53, 64, 18, 65, 47, 24, 29, 24, 64, 36, 100, 12, 35, 35, 88, 42, 47, 41, 24, 53, 35, 24, 76, 35, 77, 76, 36, 100, 71, 65, 52, 12, 100, 83, 47, 70, 71, 35, 77, 53, 53, 23, 59, 77, 18, 41, 29, 83, 29, 59, 47, 30, 41, 35, 47, 47, 47, 42, 41, 47, 76, 65, 65, 47, 41, 18, 94, 41, 53, 42, 17, 47, 42, 41, 53, 41, 47, 94, 25, 105, 59, 70, 24, 41, 41, 60, 35, 76, 65, 35, 65, 77, 41, 59, 82, 41, 59, 77, 65, 58, 36, 35, 65, 65, 11, 83, 23, 59, 83, 35, 83, 76]
+// ===== DOM ELEMENTS =====
 
+// Core text display
 const replayText = document.getElementById("replayText");
+const rawReplayText = document.getElementById("rawReplayText");
 const stats = document.getElementById("stats");
 
-const playPauseBtn = document.getElementById("playPauseBtn");
+// Playback controls
+const playPauseButton = document.getElementById("playPauseButton");
 const speedSelect = document.getElementById("speedSelect");
-const skipStartButton = document.getElementById("skip-start");
+const skipStartButton = document.getElementById("skipStart");
 const rewindButton = document.getElementById("rewind");
 const forwardButton = document.getElementById("forward");
-const skipEndButton = document.getElementById("skip-end");
+const skipEndButton = document.getElementById("skipEnd");
+const rawRewindButton = document.getElementById("rawRewind");
+const rawForwardButton = document.getElementById("rawForward");
+const adjustedToggle = document.getElementById("adjustedToggle");
 
-let index = 0;
-let lastIndex = 0;
-let isPlaying = false;
-let speedMultiplier = 1;
+// Mistakes / graph
+const mistakesCard = document.getElementById("mistakesCard");
+const mistakesList = document.getElementById("mistakesList");
 
+// Typing log
+const toggleButton = document.getElementById("toggleLog");
+const logContent = document.getElementById("typingLogContent");
+const copyLogButton = document.getElementById("copyLogButton");
+const typingLogPre = document.getElementById("typingLog");
+
+
+// ===== STATE VARIABLES =====
+
+// Quote characters (ground truth)
+const characters = quote.split("");
+
+let actionIndex = 0;      // Index in actionList (current action)
+let cleanIndex = 0;       // Number of correct characters typed so far
+let lastCleanIndex = 0;   // Previous cleanIndex (for diffing spans)
+let caretIndex = -1;      // Index of the caret span within spans[]
+let isPlaying = false;    // Whether the replay is currently playing
+let speedMultiplier = 1;  // Playback speed multiplier
+let spans = [];           // <span> elements for each quote character
+
+// Animation timing
+let lastFrameTime = null; // Last rAF timestamp
+let accumulatedTime = 0;  // Accumulated time toward next action (ms)
+
+
+// ===== PRECOMPUTED STATS =====
+
+// Cumulative times for each character (normal delays)
 const cumulativeTimes = [];
-let sum = 0;
-for (let d of delays) {
-    sum += d;
-    cumulativeTimes.push(sum);
+{
+    let sum = 0;
+    for (let d of delays) {
+        sum += d;
+        cumulativeTimes.push(sum);
+    }
+}
+
+// Cumulative times for each character (raw delays)
+const cumulativeRawTimes = [];
+{
+    let rawSum = 0;
+    for (let d of rawDelays) {
+        rawSum += d;
+        cumulativeRawTimes.push(rawSum);
+    }
+}
+
+// Extend raw times if there are extra characters
+while (cumulativeRawTimes.length < cumulativeTimes.length) {
+    cumulativeRawTimes.push(cumulativeRawTimes.at(-1));
+}
+
+// Pre-calculate cumulative timestamp for every action (for O(1) lookup)
+{
+    let runningTime = 0;
+    actionList.forEach(action => {
+        runningTime += action.timeDelta;
+        action.timestamp = runningTime;
+    });
+}
+
+// Frame stats for live WPM computation
+const startTimeMs = delays[0] || 0;
+const startRawTimeMs = rawDelays[0] || 0;
+
+const frameStats = [];
+const adjustedFrameStats = [];
+
+for (let i = 0; i <= characters.length; i++) {
+    const elapsedSeconds = i > 0 ? cumulativeTimes[i - 1] / 1000 : 0;
+    const elapsedRawSeconds = i > 0 ? cumulativeRawTimes[i - 1] / 1000 : 0;
+
+    // Unadjusted WPM
+    const wpm = elapsedSeconds > 0 ? (12 * i) / elapsedSeconds : 0;
+    const rawWpm = elapsedRawSeconds > 0 ? (12 * i) / elapsedRawSeconds : 0;
+    frameStats.push({ elapsedSeconds, wpm, rawWpm });
+
+    // Adjusted WPM
+    const adjSeconds = i > 0 ? (cumulativeTimes[i - 1] - startTimeMs) / 1000 : 0;
+    const adjRawSeconds = i > 0 ? (cumulativeRawTimes[i - 1] - startRawTimeMs) / 1000 : 0;
+    const adjWpm = adjSeconds > 0 ? (12 * Math.max(0, i - 1)) / adjSeconds : 0;
+    const adjRawWpm = adjRawSeconds > 0 ? (12 * Math.max(0, i - 1)) / adjRawSeconds : 0;
+
+    adjustedFrameStats.push({
+        elapsedSeconds: adjSeconds,
+        wpm: adjWpm,
+        rawWpm: adjRawWpm
+    });
+}
+
+
+// ===== UTILS =====
+
+function getGraphTooltip() {
+    let tooltip = document.querySelector(".graph-tooltip");
+    if (!tooltip) {
+        tooltip = document.createElement("div");
+        tooltip.className = "graph-tooltip";
+        document.body.appendChild(tooltip);
+    }
+    return tooltip;
+}
+
+function showCopied() {
+    const button = copyLogButton;
+    if (!button) return;
+
+    button.classList.add("copied");
+    setTimeout(() => {
+        button.classList.remove("copied");
+    }, 1000);
+}
+
+
+// ===== GRAPH RENDERING =====
+
+let segmentCharOffsets = [];
+
+if (typeof graphData !== "undefined" &&
+    graphData &&
+    Array.isArray(graphData.segments)) {
+    let charOffset = 0;
+    for (const seg of graphData.segments) {
+        segmentCharOffsets.push(charOffset);
+        if (typeof seg.text === "string") {
+            charOffset += seg.text.length;
+        }
+    }
+}
+
+function renderSpeedGraph() {
+    const container = document.getElementById("speedGraph");
+    if (!container || !graphData || !Array.isArray(graphData.segments) || graphData.segments.length === 0) return;
+
+    container.innerHTML = "";
+
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svgWidth = 400;
+    const svgHeight = 260;
+    const margin = { top: 30, right: 20, bottom: 45, left: 50 };
+    const innerWidth = svgWidth - margin.left - margin.right;
+    const innerHeight = svgHeight - margin.top - margin.bottom;
+
+    const svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
+    svg.setAttribute("role", "img");
+    container.appendChild(svg);
+
+    const n = graphData.segments.length;
+    const ymax = graphData.ymax || Math.max(...graphData.segments.map(s => Math.max(s.wpm, s.raw_wpm)));
+    const yticks = (graphData.yticks && graphData.yticks.length)
+        ? graphData.yticks
+        : [0, 25, 50, 75, 100, 125, 150, 175, 200];
+
+    const xBand = innerWidth / n;
+
+    const plotGroup = document.createElementNS(svgNS, "g");
+    plotGroup.setAttribute("transform", `translate(${margin.left},${margin.top})`);
+    svg.appendChild(plotGroup);
+
+    // ----- Y grid lines + labels -----
+    yticks.forEach(tick => {
+        const y = innerHeight - (tick / ymax) * innerHeight;
+
+        const gridLine = document.createElementNS(svgNS, "line");
+        gridLine.setAttribute("x1", 0);
+        gridLine.setAttribute("y1", y);
+        gridLine.setAttribute("x2", innerWidth);
+        gridLine.setAttribute("y2", y);
+        gridLine.setAttribute("class", "graph-grid");
+        plotGroup.appendChild(gridLine);
+
+        const tickLabel = document.createElementNS(svgNS, "text");
+        tickLabel.textContent = tick;
+        tickLabel.setAttribute("x", -6);
+        tickLabel.setAttribute("y", y + 3);
+        tickLabel.setAttribute("text-anchor", "end");
+        tickLabel.setAttribute("class", "graph-tick-label");
+        plotGroup.appendChild(tickLabel);
+    });
+
+    // ----- Axes -----
+    const yAxis = document.createElementNS(svgNS, "line");
+    yAxis.setAttribute("x1", 0);
+    yAxis.setAttribute("y1", 0);
+    yAxis.setAttribute("x2", 0);
+    yAxis.setAttribute("y2", innerHeight);
+    yAxis.setAttribute("class", "graph-axis");
+    plotGroup.appendChild(yAxis);
+
+    const xAxis = document.createElementNS(svgNS, "line");
+    xAxis.setAttribute("x1", 0);
+    xAxis.setAttribute("y1", innerHeight);
+    xAxis.setAttribute("x2", innerWidth);
+    xAxis.setAttribute("y2", innerHeight);
+    xAxis.setAttribute("class", "graph-axis");
+    plotGroup.appendChild(xAxis);
+
+    // ----- Bars + X ticks -----
+    const tooltip = getGraphTooltip();
+
+    graphData.segments.forEach((seg, i) => {
+        const centerX = xBand * (i + 0.5);
+        const barWidth = xBand * 0.7;
+
+        const rawHeight = (seg.raw_wpm / ymax) * innerHeight;
+        const wpmHeight = (seg.wpm / ymax) * innerHeight;
+
+        const rawY = innerHeight - rawHeight;
+        const wpmY = innerHeight - wpmHeight;
+
+        // Raw bar behind
+        const rawBar = document.createElementNS(svgNS, "rect");
+        rawBar.setAttribute("x", centerX - barWidth / 2);
+        rawBar.setAttribute("y", rawY);
+        rawBar.setAttribute("width", barWidth);
+        rawBar.setAttribute("height", rawHeight);
+        rawBar.setAttribute("class", "graph-bar-raw");
+        rawBar.style.cursor = "pointer";
+        plotGroup.appendChild(rawBar);
+
+        // WPM bar in front
+        const wpmBar = document.createElementNS(svgNS, "rect");
+        wpmBar.setAttribute("x", centerX - barWidth / 2);
+        wpmBar.setAttribute("y", wpmY);
+        wpmBar.setAttribute("width", barWidth);
+        wpmBar.setAttribute("height", wpmHeight);
+        wpmBar.setAttribute("class", "graph-bar-wpm");
+        wpmBar.style.cursor = "pointer";
+        plotGroup.appendChild(wpmBar);
+
+        const showTooltip = (evt) => {
+            const text = seg.text || "";
+            tooltip.innerHTML = `
+                <div style="max-width: 260px; white-space: normal;">${text}</div>
+                <div>
+                    <span class="tooltip-legend tooltip-legend-wpm"></span>
+                    WPM: ${seg.wpm.toFixed(2)}
+                </div>
+
+                <div>
+                    <span class="tooltip-legend tooltip-legend-raw"></span>
+                    Raw: ${seg.raw_wpm.toFixed(2)}
+                </div>
+            `;
+            tooltip.style.opacity = "1";
+            tooltip.style.left = `${evt.pageX}px`;
+            tooltip.style.top = `${evt.pageY - 12}px`;
+        };
+
+        const hideTooltip = () => {
+            tooltip.style.opacity = "0";
+        };
+
+        const handleClick = () => {
+            if (segmentCharOffsets[i] != null) {
+                seekToChar(segmentCharOffsets[i]);
+            }
+        };
+
+        // Hover & click bars
+        [rawBar, wpmBar].forEach(bar => {
+            bar.addEventListener("mouseenter", showTooltip);
+            bar.addEventListener("mousemove", showTooltip);
+            bar.addEventListener("mouseleave", hideTooltip);
+            bar.addEventListener("click", handleClick);
+        });
+
+        // X tick line
+        const tickLine = document.createElementNS(svgNS, "line");
+        tickLine.setAttribute("x1", centerX);
+        tickLine.setAttribute("y1", innerHeight);
+        tickLine.setAttribute("x2", centerX);
+        tickLine.setAttribute("y2", innerHeight + 5);
+        tickLine.setAttribute("class", "graph-axis");
+        plotGroup.appendChild(tickLine);
+
+        // X tick label (segment number)
+        const xLabel = document.createElementNS(svgNS, "text");
+        xLabel.textContent = (i + 1).toString();
+        xLabel.setAttribute("x", centerX);
+        xLabel.setAttribute("y", innerHeight + 18);
+        xLabel.setAttribute("text-anchor", "middle");
+        xLabel.setAttribute("class", "graph-tick-label");
+        plotGroup.appendChild(xLabel);
+    });
+
+    // Axis labels
+    const yLabel = document.createElementNS(svgNS, "text");
+    yLabel.textContent = "WPM";
+    yLabel.setAttribute("x", -(innerHeight / 2));
+    yLabel.setAttribute("y", -margin.left + 12);
+    yLabel.setAttribute("transform", `rotate(-90)`);
+    yLabel.setAttribute("text-anchor", "middle");
+    yLabel.setAttribute("class", "graph-axis-label");
+    plotGroup.appendChild(yLabel);
+
+    const xLabel = document.createElementNS(svgNS, "text");
+    xLabel.textContent = "Segment";
+    xLabel.setAttribute("x", innerWidth / 2);
+    xLabel.setAttribute("y", innerHeight + 35);
+    xLabel.setAttribute("text-anchor", "middle");
+    xLabel.setAttribute("class", "graph-axis-label");
+    plotGroup.appendChild(xLabel);
+}
+
+
+// ===== MISTAKES LIST =====
+
+function generateMistakesList() {
+    mistakesList.innerHTML = "";
+
+    const uniqueMistakes = [];
+    let currentlyInTypo = false;
+
+    actionList.forEach((action, index) => {
+        if (action.typoFlag && !currentlyInTypo) {
+            currentlyInTypo = true;
+            const displayWord = action.targetWord;
+
+            // Avoid duplicates for the same word
+            if (!uniqueMistakes.some(m => m.word === displayWord)) {
+                uniqueMistakes.push({
+                    word: displayWord,
+                    index: index
+                });
+            }
+        } else if (!action.typoFlag) {
+            currentlyInTypo = false;
+        }
+    });
+
+    if (uniqueMistakes.length > 0) {
+        mistakesCard.style.display = "block";
+
+        uniqueMistakes.forEach(m => {
+            const li = document.createElement("li");
+            li.style.cssText = "cursor: pointer; margin-bottom: 5px; transition: color 0.1s;";
+            li.innerHTML = `• <span class="typo-link">${m.word}</span>`;
+            li.onmouseover = () => li.style.color = "white";
+            li.onmouseout = () => li.style.color = "#aaa";
+            li.onclick = () => seekToAction(m.index + 1);
+            mistakesList.appendChild(li);
+        });
+    }
+}
+
+
+// ===== REPLAY STATE =====
+
+function resetState() {
+    actionIndex = 0;
+    cleanIndex = 0;
+    lastCleanIndex = 0;
+    caretIndex = -1;
+    accumulatedTime = 0;
 }
 
 function initReplay() {
+    // Build spans for each quote character
     replayText.innerHTML = "";
-
     characters.forEach(ch => {
         const span = document.createElement("span");
         span.textContent = ch;
@@ -33,43 +388,141 @@ function initReplay() {
         replayText.appendChild(span);
     });
 
+    // Trailing empty span acts as caret
     const endSpan = document.createElement("span");
     endSpan.classList.add("char", "caret-end");
     endSpan.textContent = "";
     replayText.appendChild(endSpan);
 
-    index = 0;
-    lastIndex = 0;
-    isPlaying = false;
-}
+    spans = Array.from(replayText.querySelectorAll(".char"));
 
-// On load
-initReplay();
+    // Raw replay height matches clean replay box
+    const replayRect = replayText.getBoundingClientRect();
+    const padding = parseInt(window.getComputedStyle(replayText).padding) || 0;
+    rawReplayText.setAttribute("style", `height: ${Math.round(replayRect.height - padding * 2)}px`);
 
-// Update caret, typed classes, stats
-function updateDisplay() {
-    const spans = replayText.querySelectorAll(".char");
-    // Update typed classes
-    if (index > lastIndex) {
-        for (let i = lastIndex; i < index; i++) spans[i].classList.add("typed");
-    } else if (index < lastIndex) {
-        for (let i = index; i < lastIndex; i++) spans[i].classList.remove("typed");
+    // Restore Adjusted toggle from localStorage
+    const savedAdjusted = localStorage.getItem("useAdjustedWPM");
+    if (savedAdjusted !== null) {
+        adjustedToggle.checked = (savedAdjusted === "true");
     }
-    // Update caret
-    spans.forEach(span => span.classList.remove("caret"));
-    if (index < spans.length) spans[index].classList.add("caret");
-    lastIndex = index;
 
-    // Stats
-    const elapsedMs = index > 0 ? cumulativeTimes[index - 1] / speedMultiplier : 0;
-    const elapsedSeconds = (elapsedMs / 1000) * speedMultiplier;
-    const wpm = elapsedSeconds > 0 ? 12 * index / elapsedSeconds : 0;
-    stats.textContent = `Time: ${elapsedSeconds.toFixed(3)}s | WPM: ${wpm.toFixed(2)}`;
+    resetState();
+    updateDisplay();
+    generateMistakesList();
+    renderSpeedGraph();
 }
 
-// Animation loop
-let lastFrameTime = null;
-let accumulatedTime = 0;
+
+// ===== DISPLAY STATE =====
+
+function updateDisplay() {
+    let currentInput = "";
+    let currentActionTimestamp = 0;
+    const isAtEnd = actionIndex >= actionList.length;
+
+    // Use last executed action's input and cumulative timestamp
+    if (actionIndex > 0) {
+        const currentAction = actionList[Math.min(actionIndex - 1, actionList.length - 1)];
+        currentInput = currentAction.input;
+        currentActionTimestamp = currentAction.timestamp;
+    }
+
+    // ----- Raw replay view with typo highlighting -----
+    let firstMismatch = 0;
+    while (
+        firstMismatch < currentInput.length &&
+        firstMismatch < quote.length &&
+        currentInput[firstMismatch] === quote[firstMismatch]
+    ) {
+        firstMismatch++;
+    }
+
+    if (firstMismatch < currentInput.length) {
+        const correctPart = currentInput.slice(0, firstMismatch);
+        const typoPart = currentInput.slice(firstMismatch);
+
+        rawReplayText.innerHTML = "";
+        rawReplayText.appendChild(document.createTextNode(correctPart));
+
+        const typoSpan = document.createElement("span");
+        typoSpan.className = "typo-highlight";
+        typoSpan.textContent = typoPart;
+        rawReplayText.appendChild(typoSpan);
+    } else {
+        rawReplayText.textContent = currentInput;
+    }
+
+    // ----- Clean index = length of correct prefix -----
+    cleanIndex = firstMismatch;
+
+    // ----- Update green "typed" spans -----
+    if (cleanIndex > lastCleanIndex) {
+        for (let i = lastCleanIndex; i < cleanIndex; i++) {
+            spans[i].classList.add("typed");
+        }
+    } else if (cleanIndex < lastCleanIndex) {
+        for (let i = cleanIndex; i < lastCleanIndex; i++) {
+            spans[i].classList.remove("typed");
+        }
+    }
+
+    // ----- Move caret -----
+    if (caretIndex !== cleanIndex) {
+        if (caretIndex >= 0 && caretIndex < spans.length) {
+            spans[caretIndex].classList.remove("caret");
+        }
+        if (cleanIndex < spans.length) {
+            spans[cleanIndex].classList.add("caret");
+        }
+        caretIndex = cleanIndex;
+    }
+
+    lastCleanIndex = cleanIndex;
+
+    // ----- WPM / Time Stats -----
+    const useAdjusted = adjustedToggle.checked;
+
+    // If we're at the end, don't add partial delay to lock final WPM
+    const partialDelay = isAtEnd ? 0 : (accumulatedTime * speedMultiplier);
+    const totalLogTimeMs = currentActionTimestamp + partialDelay;
+
+    let displayTime = 0;
+    let liveWpm = 0;
+    let liveRawWpm = 0;
+
+    if (useAdjusted) {
+        displayTime = Math.max(0, (totalLogTimeMs - startTimeMs) / 1000);
+
+        if (displayTime > 0) {
+            liveWpm = (12 * Math.max(0, cleanIndex - 1)) / displayTime;
+        }
+
+        if (cleanIndex < adjustedFrameStats.length) {
+            liveRawWpm = adjustedFrameStats[cleanIndex].rawWpm;
+        }
+
+        if (displayTime === 0 && caretIndex === 1) {
+            liveWpm = Infinity;
+            liveRawWpm = Infinity;
+        }
+    } else {
+        displayTime = totalLogTimeMs / 1000;
+
+        if (displayTime > 0) {
+            liveWpm = (12 * cleanIndex) / displayTime;
+        }
+
+        if (cleanIndex < frameStats.length) {
+            liveRawWpm = frameStats[cleanIndex].rawWpm;
+        }
+    }
+
+    stats.textContent = `Time: ${displayTime.toFixed(3)}s | WPM: ${liveWpm.toFixed(2)} | Raw: ${liveRawWpm.toFixed(2)} | `;
+}
+
+
+// ===== ANIMATION LOOP (requestAnimationFrame) =====
 
 function tick(timestamp) {
     if (!isPlaying) return;
@@ -77,91 +530,183 @@ function tick(timestamp) {
     if (!lastFrameTime) lastFrameTime = timestamp;
     const delta = timestamp - lastFrameTime;
     lastFrameTime = timestamp;
+
     accumulatedTime += delta;
 
-    while (index < characters.length && accumulatedTime >= delays[index] / speedMultiplier) {
-        accumulatedTime -= delays[index] / speedMultiplier;
-        index++;
-        updateDisplay();
+    // Consume as many actions as fit in accumulatedTime at current speed
+    while (actionIndex < actionList.length) {
+        const nextDelay = actionList[actionIndex].timeDelta;
+        const adjustedDelay = nextDelay / speedMultiplier;
+
+        if (accumulatedTime >= adjustedDelay) {
+            accumulatedTime -= adjustedDelay;
+            actionIndex++;
+
+            // End-of-log: stop playback, finalize display
+            if (actionIndex >= actionList.length) {
+                isPlaying = false;
+                playPauseButton.textContent = "▶";
+                updateDisplay();
+                return;
+            }
+        } else {
+            break;
+        }
     }
 
-    if (index >= characters.length) {
-        isPlaying = false;
-        playPauseBtn.textContent = "▶";
-        return;
-    }
-
+    updateDisplay();
     requestAnimationFrame(tick);
 }
 
-// Click-to-seek
-replayText.addEventListener("click", (e) => {
-    if (!e.target.classList.contains("char")) return;
-    const spans = Array.from(replayText.querySelectorAll(".char"));
-    const clickedIndex = spans.indexOf(e.target);
-    const rect = e.target.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    index = clickX < rect.width / 2 ? clickedIndex : clickedIndex + 1;
-    accumulatedTime = 0; // reset accumulator for new index
-    updateDisplay();
-});
 
-// Play/pause
-playPauseBtn.addEventListener("click", () => {
+// ===== SEEKING HELPERS =====
+
+// Seek to a specific index in the action list
+function seekToAction(newIndex) {
+    isPlaying = false;
+    playPauseButton.textContent = "▶";
+
+    actionIndex = Math.max(0, Math.min(newIndex, actionList.length));
+    accumulatedTime = 0;
+
+    updateDisplay();
+}
+
+// Seek to the action where the clean prefix reaches target charIndex
+function seekToChar(charIndex) {
+    if (charIndex == 0) {
+        seekToAction(0);
+        return;
+    }
+
+    let targetActionIndex = 0;
+
+    for (let i = 0; i < actionList.length; i++) {
+        const input = actionList[i].input;
+        let validLen = 0;
+
+        while (
+            validLen < input.length &&
+            validLen < quote.length &&
+            input[validLen] === quote[validLen]
+        ) {
+            validLen++;
+        }
+
+        if (validLen >= charIndex) {
+            targetActionIndex = i + 1;
+            break;
+        }
+    }
+
+    seekToAction(targetActionIndex);
+}
+
+
+// ===== EVENT HANDLERS =====
+
+// Play / Pause button
+playPauseButton.addEventListener("click", () => {
     if (!isPlaying) {
+        if (actionIndex >= actionList.length) return;
+
         isPlaying = true;
-        playPauseBtn.textContent = "⏸";
+        playPauseButton.textContent = "⏸";
         lastFrameTime = null;
         requestAnimationFrame(tick);
     } else {
         isPlaying = false;
-        playPauseBtn.textContent = "▶";
+        playPauseButton.textContent = "▶";
     }
 });
 
-// Speed change
+// Playback speed change
 speedSelect.addEventListener("change", () => {
     speedMultiplier = parseFloat(speedSelect.value);
 });
 
-// Other controls
-skipStartButton.addEventListener("click", () => {
-    isPlaying = false;
-    playPauseBtn.textContent = "▶";
-    index = 0;
-    accumulatedTime = 0;
-    updateDisplay();
-});
+// Skip to start / end
+skipStartButton.addEventListener("click", () => seekToAction(0));
+skipEndButton.addEventListener("click", () => seekToAction(actionList.length));
 
+// Rewind and forward (by clean segments)
 rewindButton.addEventListener("click", () => {
-    isPlaying = false;
-    playPauseBtn.textContent = "▶";
-    if (index > 0) index--;
-    accumulatedTime = 0;
-    updateDisplay();
+    const currentClean = cleanIndex;
+    let tempAction = actionIndex;
+
+    while (tempAction > 0) {
+        tempAction--;
+        const inp = actionList[tempAction > 0 ? tempAction - 1 : 0].input;
+        let vLen = 0;
+        while (vLen < inp.length && vLen < quote.length && inp[vLen] === quote[vLen]) vLen++;
+        if (vLen < currentClean) break;
+    }
+
+    seekToAction(tempAction);
 });
 
 forwardButton.addEventListener("click", () => {
-    isPlaying = false;
-    playPauseBtn.textContent = "▶";
-    if (index < characters.length) index++;
-    accumulatedTime = 0;
-    updateDisplay();
+    const currentClean = cleanIndex;
+    let tempAction = actionIndex;
+
+    while (tempAction < actionList.length) {
+        const inp = actionList[tempAction].input;
+        let vLen = 0;
+        while (vLen < inp.length && vLen < quote.length && inp[vLen] === quote[vLen]) vLen++;
+        tempAction++;
+        if (vLen > currentClean) break;
+    }
+
+    seekToAction(tempAction);
 });
 
-skipEndButton.addEventListener("click", () => {
-    isPlaying = false;
-    playPauseBtn.textContent = "▶";
-    index = characters.length;
-    accumulatedTime = 0;
-    updateDisplay();
+// Raw replay per-action step buttons
+if (rawRewindButton) {
+    rawRewindButton.addEventListener("click", () => seekToAction(actionIndex - 1));
+}
+if (rawForwardButton) {
+    rawForwardButton.addEventListener("click", () => seekToAction(actionIndex + 1));
+}
+
+// Clicking on replay text to seek caret
+replayText.addEventListener("click", (e) => {
+    if (!e.target.classList.contains("char")) return;
+
+    const clickedSpanIndex = spans.indexOf(e.target);
+    const rect = e.target.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+
+    const targetCharIndex = clickX < rect.width / 2
+        ? clickedSpanIndex
+        : clickedSpanIndex + 1;
+
+    seekToChar(targetCharIndex);
 });
 
-const toggleBtn = document.getElementById("toggleLog");
-const logContent = document.getElementById("typingLogContent");
-
-toggleBtn.addEventListener("click", () => {
+// Typing log show/hide toggle
+toggleButton.addEventListener("click", () => {
     const isVisible = logContent.style.display === "block";
     logContent.style.display = isVisible ? "none" : "block";
-    toggleBtn.textContent = isVisible ? "show" : "hide";
+    toggleButton.textContent = isVisible ? "show" : "hide";
 });
+
+// Typing log copy button
+copyLogButton.addEventListener("click", () => {
+    const text = typingLogPre.textContent || "";
+    if (!text) return;
+
+    navigator.clipboard?.writeText(text).then(() => {
+        showCopied();
+    });
+});
+
+// Adjusted WPM toggle (persist preference)
+adjustedToggle.addEventListener("change", () => {
+    localStorage.setItem("useAdjustedWPM", adjustedToggle.checked);
+    updateDisplay();
+});
+
+
+// ===== ENTRY POINT =====
+
+initReplay();

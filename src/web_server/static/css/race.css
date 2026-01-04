@@ -1,14 +1,25 @@
-.replay-body {
+/* ===== BASE STYLES ===== */
+
+body {
+    background: #121212;
     color: #e0e0e0;
-    align-items: center;
-    padding: 2rem;
-    gap: 1rem;
+    font-family: Arial, sans-serif;
 }
 
 h1 {
     font-size: 1.5rem;
     font-weight: 600;
     margin-bottom: 1.5rem;
+}
+
+a,
+a:visited {
+    color: #e0e0e0;
+    transition: 0.1s;
+}
+
+a:hover {
+    color: white;
 }
 
 .container {
@@ -20,12 +31,13 @@ h1 {
     margin-bottom: 1rem;
 }
 
-.card-header {
-    font-size: 1.25rem;
-    font-weight: bold;
-    margin: 0;
-    padding: 0;
+.info {
+    display: flex;
+    gap: 20px;
+    justify-content: space-between;
 }
+
+/* ===== CARDS ===== */
 
 .card {
     background-color: #1e1e1e;
@@ -34,33 +46,31 @@ h1 {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
+.card-header {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin: 0;
+    padding: 0;
+}
+
 .card-title {
     font-size: 1rem;
     margin-bottom: 0.5rem;
 }
 
-.info-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+/* ===== REPLAY ===== */
+
+.replay-body {
+    color: #e0e0e0;
+    align-items: center;
+    padding: 2rem;
     gap: 1rem;
 }
 
-.info-item {
-    background-color: #2a2a2a;
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
-    text-align: center;
-}
-
-.info-item span {
-    display: block;
-    font-size: 0.9rem;
-    color: #aaa;
-    margin-bottom: 0.25rem;
-}
-
-.info-item strong {
-    font-size: 1.2rem;
+#replayCard {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .text-box {
@@ -75,37 +85,11 @@ h1 {
 }
 
 #replayText {
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
     user-select: none;
     cursor: text;
 }
 
-.replay-controls {
-    display: flex;
-    gap: 1rem;
-}
-
-button {
-    background-color: #2a2a2a;
-    border: none;
-    color: #e0e0e0;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: background 0.2s;
-}
-
-button:hover {
-    background-color: #3a3a3a;
-}
-
-#playPauseBtn {
-    width: 50px;
-}
-
+/* Character States */
 .char {
     color: #e0e0e0;
 }
@@ -126,6 +110,51 @@ button:hover {
     width: 0;
 }
 
+.typo-highlight {
+    background-color: rgba(255, 0, 0, 0.3);
+    color: #ff4444;
+}
+
+#rawReplayText .correct {
+    color: #fff;
+}
+
+#rawReplayText .error {
+    color: #ff4444;
+    background-color: rgba(255, 68, 68, 0.2);
+}
+
+/* ===== REPLAY STATS ===== */
+
+.stats-container {
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+    color: #aaa;
+    margin-bottom: 5px;
+}
+
+/* ===== FORM CONTROLS ===== */
+
+button {
+    background-color: #2a2a2a;
+    border: none;
+    color: #e0e0e0;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.2s;
+    user-select: none;
+}
+
+button:hover {
+    background-color: #3a3a3a;
+}
+
+#playPauseButton {
+    width: 50px;
+}
 
 select {
     background-color: #2a2a2a;
@@ -146,17 +175,20 @@ select:focus {
     outline: none;
 }
 
-body {
-    background: #121212;
-    color: #e0e0e0;
-    font-family: Arial, sans-serif;
+.replay-controls {
+    display: flex;
+    gap: 1rem;
 }
 
-.info {
+.replay-settings label {
     display: flex;
-    gap: 20px;
-    justify-content: space-between;
+    align-items: center;
+    margin-left: 5px;
+    gap: 5px;
+    cursor: pointer;
 }
+
+/* ===== TABLES ===== */
 
 table {
     width: 33%;
@@ -201,17 +233,13 @@ td:first-child {
     font-size: 0.8rem;
 }
 
-a {
-    color: white;
-}
+/* ===== TYPING LOG ===== */
 
 .typing-log-card {
     padding: 1rem;
     background-color: #1e1e1e;
     border-radius: 12px;
     box-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
-    color: #ddd;
-    margin-top: 1rem;
 }
 
 .typing-log-header {
@@ -240,7 +268,7 @@ a {
 }
 
 .typing-log-content {
-    display: none; /* Hidden by default */
+    display: none;
     background-color: #121212;
     border-radius: 8px;
     padding: 0.75rem;
@@ -254,4 +282,155 @@ a {
     margin: 0;
     white-space: pre-wrap;
     word-break: break-all;
+}
+
+.typing-log-content {
+    position: relative;
+}
+
+.copy-log-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+
+    width: 22px;
+    height: 22px;
+
+    border-radius: 6px;
+    border: 1px solid #444;
+    background-color: #1e1e1e;
+
+    cursor: pointer;
+
+    opacity: 0;
+    transition: opacity .15s ease-out, background-color .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+}
+
+.typing-log-content:hover .copy-log-button,
+.copy-log-button:hover {
+    opacity: 1;
+}
+
+.copy-log-button:hover {
+    background-color: #2a2a2a;
+}
+
+.copy-log-button::before {
+    content: "📋";
+    font-size: 14px;
+    line-height: 1;
+}
+
+.copy-log-button.copied::before {
+    content: "✔️";
+}
+
+/* ===== MISTAKES & SPEED GRAPH ===== */
+
+.mistakes-graph-container {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.mistakes-section {
+    flex: 0 0 25%;
+    min-width: 0;
+}
+
+.graph-section {
+    flex: 1 1 75%;
+    min-width: 0;
+}
+
+.graph-title {
+    font-weight: bold;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+    text-align: center;
+}
+
+#speedGraph {
+    position: relative;
+}
+
+#speedGraph svg {
+    width: 100%;
+    height: 260px;
+    display: block;
+}
+
+.graph-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: rgba(20, 20, 20, 0.95);
+    color: #fff;
+    padding: 6px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+    opacity: 0;
+    transform: translate(-50%, -100%);
+    transition: opacity 0.1s ease-out;
+    z-index: 1000;
+}
+
+.graph-bar-wpm {
+    fill: #2196f3;
+}
+
+.graph-bar-raw {
+    fill: #ffb600;
+}
+
+.graph-axis {
+    stroke: #888;
+    stroke-width: 1;
+}
+
+.graph-grid {
+    stroke: #333;
+    stroke-width: 0.5;
+}
+
+.graph-tick-label {
+    fill: #ccc;
+    font-size: 10px;
+}
+
+.graph-axis-label {
+    fill: #ccc;
+    font-size: 11px;
+}
+
+.tooltip-legend {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    margin-right: 2px;
+}
+
+.tooltip-legend-wpm {
+    background-color: #2196f3;
+}
+
+.tooltip-legend-raw {
+    background-color: #ffb600;
+}
+
+@media (max-width: 700px) {
+    .mistakes-graph-container {
+        flex-direction: column;
+    }
+
+    .mistakes-section,
+    .graph-section {
+        flex: 1 1 auto;
+    }
 }

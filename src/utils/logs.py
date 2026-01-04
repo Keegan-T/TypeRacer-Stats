@@ -4,6 +4,7 @@ import re
 from api.users import get_stats
 from database.main import club_races
 from utils.stats import calculate_wpm
+from utils.strings import get_segments
 
 
 def separate_delays(log, old=False):
@@ -135,7 +136,7 @@ def get_log_stats(delay_data, action_data, multiplier=12000, typos=False):
 
     actions = re.findall(r"\d+,(?:\d+[+\-$].?)+,", action_data)
     if typos:
-        details["typos"] = get_mistakes(quote, actions)
+        details["typos"], details["processed_actions"] = get_mistakes(quote, actions)
 
     # Raw Speeds
     raw_delays = []
@@ -233,18 +234,20 @@ def get_keystroke_wpm(delays, multiplier, adjusted=False):
     return average_wpm
 
 
-def get_mistakes(quote, actions):
-    action_list = [action.split(",", 1)[1] for action in actions]
+def get_mistakes(quote, action_list):
     typos = []
     typo_flag = False
     quote_words = [word + " " for word in quote.split(" ")]
     quote_words[-1] = quote_words[-1][:-1]
+    processed_actions = []
 
     current_word_index = 0
     completed_words = []
     text_box = []
 
     for action in action_list:
+        delay, action = action.split(",", 1)
+        delay = int(delay)
         sub_list = re.findall(r"(\d+[+\-$].)", action)
 
         for sub_action in sub_list:
@@ -271,6 +274,13 @@ def get_mistakes(quote, actions):
             elif not is_typo and typo_flag:
                 typo_flag = False
 
+        processed_actions.append({
+            "typoFlag": typo_flag,
+            "timeDelta": delay,
+            "input": "".join(completed_words) + "".join(text_box),
+            "targetWord": quote_words[current_word_index].strip(),
+        })
+
         while "".join(text_box).startswith(quote_words[current_word_index]):
             completed_words.append(quote_words[current_word_index])
             current_word_index += 1
@@ -282,4 +292,4 @@ def get_mistakes(quote, actions):
         if "".join(completed_words) == quote:
             break
 
-    return typos
+    return typos, processed_actions
