@@ -132,7 +132,7 @@ async def loops():
             await import_competitions()
             await update_important_users()
             await records.update_all(bot)
-            await delete_expired_users()
+            # await delete_expired_users()
             await update_texts()
             await compress_logs()
             await import_users()
