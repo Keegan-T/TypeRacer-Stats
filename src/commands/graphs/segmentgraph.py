@@ -67,6 +67,10 @@ async def run(ctx, user, username, race_number, universe):
     quote = race["quote"]
     delays = race["delays"]
     raw_delays = race["raw_delays"]
+
+    if len(raw_delays) < len(delays):
+        raw_delays.extend(delays[len(raw_delays):])
+
     text_segments = strings.get_segments(quote)
     multiplier = get_universe_multiplier(universe)
     segments = []

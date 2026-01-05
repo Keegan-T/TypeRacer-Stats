@@ -67,11 +67,6 @@ const cumulativeRawTimes = [];
     }
 }
 
-// Extend raw times if there are extra characters
-while (cumulativeRawTimes.length < cumulativeTimes.length) {
-    cumulativeRawTimes.push(cumulativeRawTimes.at(-1));
-}
-
 // Pre-calculate cumulative timestamp for every action (for O(1) lookup)
 {
     let runningTime = 0;

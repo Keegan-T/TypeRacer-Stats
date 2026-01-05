@@ -51,6 +51,10 @@ async def race_page(request):
     if "raw_unlagged" in race_info:
         delays = race_info["delays"]
         raw_delays = race_info["raw_delays"]
+
+        if len(raw_delays) < len(delays):
+            raw_delays.extend(delays[len(raw_delays):])
+
         multiplier = get_universe_multiplier(universe)
 
         segments = build_segment_stats(delays, raw_delays, race_info["quote"], multiplier)
