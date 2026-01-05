@@ -6,13 +6,13 @@
 <!-- Open Graph / Discord Embed Meta Tags -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="TypeRacer Race Details">
-<meta property="og:description" content="Watch {{ username }} typing {{ wpm_adjusted|round }} WPM on TypeRacer">
+<meta property="og:description" content="Watch {{ username }} typing {{ wpm_adjusted|round(0) }} WPM on TypeRacer">
 <meta property="og:image" content="http://typeracer.keegant.dev/static/images/logo.png">
 
 <!-- Twitter Card Meta Tags (Discord also reads these) -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="TypeRacer Race Details">
-<meta name="twitter:description" content="Watch {{ username }} typing {{ wpm_adjusted|round }} WPM on TypeRacer&#10;&#10;&quot;{{ quote[:60] }}{% if quote|length > 60 %}...{% endif %}&quot;">
+<meta name="twitter:description" content="Watch {{ username }} typing {{ wpm_adjusted|round(0) }} WPM on TypeRacer&#10;&#10;&quot;{{ quote[:60] }}{% if quote|length > 60 %}...{% endif %}&quot;">
 <meta name="twitter:image" content="http://typeracer.keegant.dev/static/images/logo.png">
 {% endblock %}
 
