@@ -231,11 +231,11 @@ function renderSpeedGraph() {
         const rawY = innerHeight - rawHeight;
         const wpmY = innerHeight - wpmHeight;
 
-        // Raw bar behind
+        const rawBarWidth = barWidth * 0.99;
         const rawBar = document.createElementNS(svgNS, "rect");
-        rawBar.setAttribute("x", centerX - barWidth / 2);
+        rawBar.setAttribute("x", centerX - rawBarWidth / 2);
         rawBar.setAttribute("y", rawY);
-        rawBar.setAttribute("width", barWidth);
+        rawBar.setAttribute("width", rawBarWidth);
         rawBar.setAttribute("height", rawHeight);
         rawBar.setAttribute("class", "graph-bar-raw");
         rawBar.style.cursor = "pointer";
