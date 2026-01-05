@@ -231,7 +231,7 @@ function renderSpeedGraph() {
         const rawY = innerHeight - rawHeight;
         const wpmY = innerHeight - wpmHeight;
 
-        const rawBarWidth = barWidth * 0.99;
+        const rawBarWidth = barWidth * 0.97;
         const rawBar = document.createElementNS(svgNS, "rect");
         rawBar.setAttribute("x", centerX - rawBarWidth / 2);
         rawBar.setAttribute("y", rawY);
