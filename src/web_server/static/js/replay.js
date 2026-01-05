@@ -485,6 +485,7 @@ function updateDisplay() {
     let displayTime = 0;
     let liveWpm = 0;
     let liveRawWpm = 0;
+    let flow = 0;
 
     if (useAdjusted) {
         displayTime = Math.max(0, (totalLogTimeMs - startTimeMs) / 1000);
@@ -513,7 +514,16 @@ function updateDisplay() {
         }
     }
 
-    stats.textContent = `Time: ${displayTime.toFixed(3)}s | WPM: ${liveWpm.toFixed(2)} | Raw: ${liveRawWpm.toFixed(2)} | `;
+    // Calculate flow (raw time for correct chars / cumulative action time)
+    if (cleanIndex > 0 && cleanIndex <= cumulativeRawTimes.length) {
+        const rawTime = cumulativeRawTimes[cleanIndex - 1];
+        const elapsedTime = currentActionTimestamp;
+        if (elapsedTime > 0) {
+            flow = (rawTime / elapsedTime) * 100;
+        }
+    }
+
+    stats.innerHTML = `Time: ${displayTime.toFixed(3)}s | WPM: ${liveWpm.toFixed(2)} | Raw: ${liveRawWpm.toFixed(2)} | Flow: ${flow.toFixed(1)}% <span class="flow-help" title="Typing Efficiency&#10;Percentage of total time spent typing correctly">ⓘ</span> |`;
 }
 
 

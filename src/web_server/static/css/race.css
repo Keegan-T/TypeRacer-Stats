@@ -134,6 +134,19 @@ a:hover {
     margin-bottom: 5px;
 }
 
+.flow-help {
+    font-size: 0.75rem;
+    color: #888;
+    cursor: help;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.flow-help:hover {
+    opacity: 1;
+    color: #aaa;
+}
+
 /* ===== FORM CONTROLS ===== */
 
 button {
