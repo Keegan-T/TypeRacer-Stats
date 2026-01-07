@@ -26,6 +26,11 @@ const logContent = document.getElementById("typingLogContent");
 const copyLogButton = document.getElementById("copyLogButton");
 const typingLogPre = document.getElementById("typingLog");
 
+// Keyboard shortcuts
+const shortcutsButton = document.getElementById("keyboardShortcutsButton");
+const shortcutsModal = document.getElementById("shortcutsModal");
+const shortcutsClose = document.querySelector(".shortcuts-close");
+
 
 // ===== STATE VARIABLES =====
 
@@ -568,9 +573,6 @@ function tick(timestamp) {
 
 // Seek to a specific index in the action list
 function seekToAction(newIndex) {
-    isPlaying = false;
-    playPauseButton.textContent = "▶";
-
     actionIndex = Math.max(0, Math.min(newIndex, actionList.length));
     accumulatedTime = 0;
 
@@ -607,6 +609,42 @@ function seekToChar(charIndex) {
     seekToAction(targetActionIndex);
 }
 
+// Seek one character backward
+function seekBackOneChar() {
+    const currentClean = cleanIndex;
+    let tempAction = actionIndex;
+
+    while (tempAction > 0) {
+        tempAction--;
+        const inp = actionList[tempAction > 0 ? tempAction - 1 : 0].input;
+        let vLen = 0;
+        while (vLen < inp.length && vLen < quote.length && inp[vLen] === quote[vLen]) vLen++;
+        if (vLen < currentClean) break;
+    }
+
+    while (actionList[tempAction - 1].typoFlag) {
+        tempAction -= 1;
+    }
+
+    seekToAction(tempAction);
+}
+
+// Seek one character forward
+function seekForwardOneChar() {
+    const currentClean = cleanIndex;
+    let tempAction = actionIndex;
+
+    while (tempAction < actionList.length) {
+        const inp = actionList[tempAction].input;
+        let vLen = 0;
+        while (vLen < inp.length && vLen < quote.length && inp[vLen] === quote[vLen]) vLen++;
+        tempAction++;
+        if (vLen > currentClean) break;
+    }
+
+    seekToAction(tempAction);
+}
+
 
 // ===== EVENT HANDLERS =====
 
@@ -634,35 +672,36 @@ speedSelect.addEventListener("change", () => {
 skipStartButton.addEventListener("click", () => seekToAction(0));
 skipEndButton.addEventListener("click", () => seekToAction(actionList.length));
 
-// Rewind and forward (by clean segments)
-rewindButton.addEventListener("click", () => {
-    const currentClean = cleanIndex;
-    let tempAction = actionIndex;
+// Jump to peak WPM
+function jumpToPeakWpm() {
+    const useAdjusted = adjustedToggle.checked;
+    const stats = useAdjusted ? adjustedFrameStats : frameStats;
 
-    while (tempAction > 0) {
-        tempAction--;
-        const inp = actionList[tempAction > 0 ? tempAction - 1 : 0].input;
-        let vLen = 0;
-        while (vLen < inp.length && vLen < quote.length && inp[vLen] === quote[vLen]) vLen++;
-        if (vLen < currentClean) break;
+    // Find maximum
+    let peakIndex = 0;
+    let peakWpm = 0;
+
+    for (let i = 0; i < stats.length; i++) {
+        if (stats[i].wpm > peakWpm) {
+            peakWpm = stats[i].wpm;
+            peakIndex = i;
+        }
     }
 
-    seekToAction(tempAction);
+    seekToChar(peakIndex);
+}
+
+// Rewind and forward by 10% of quote length (min 25, max 50 characters)
+rewindButton.addEventListener("click", () => {
+    const jumpSize = Math.max(25, Math.min(Math.floor(quote.length * 0.1), 50));
+    const targetIndex = Math.max(0, cleanIndex - jumpSize);
+    seekToChar(targetIndex);
 });
 
 forwardButton.addEventListener("click", () => {
-    const currentClean = cleanIndex;
-    let tempAction = actionIndex;
-
-    while (tempAction < actionList.length) {
-        const inp = actionList[tempAction].input;
-        let vLen = 0;
-        while (vLen < inp.length && vLen < quote.length && inp[vLen] === quote[vLen]) vLen++;
-        tempAction++;
-        if (vLen > currentClean) break;
-    }
-
-    seekToAction(tempAction);
+    const jumpSize = Math.max(25, Math.min(Math.floor(quote.length * 0.1), 50));
+    const targetIndex = Math.min(quote.length, cleanIndex + jumpSize);
+    seekToChar(targetIndex);
 });
 
 // Raw replay per-action step buttons
@@ -709,6 +748,94 @@ copyLogButton.addEventListener("click", () => {
 adjustedToggle.addEventListener("change", () => {
     localStorage.setItem("useAdjustedWPM", adjustedToggle.checked);
     updateDisplay();
+});
+
+// Keyboard shortcuts modal
+
+shortcutsButton.addEventListener("click", () => {
+    shortcutsModal.classList.add("show");
+});
+
+shortcutsClose.addEventListener("click", () => {
+    shortcutsModal.classList.remove("show");
+});
+
+// Close modal when clicking outside of it
+shortcutsModal.addEventListener("click", (e) => {
+    if (e.target === shortcutsModal) {
+        shortcutsModal.classList.remove("show");
+    }
+});
+
+// Keyboard controls
+document.addEventListener("keydown", (e) => {
+    // Close modal with Escape key
+    if (e.key === "Escape" && shortcutsModal.classList.contains("show")) {
+        shortcutsModal.classList.remove("show");
+        return;
+    }
+
+    // Skip other keyboard shortcuts if modal is open
+    if (shortcutsModal.classList.contains("show")) {
+        return;
+    }
+
+    // Spacebar: play/pause
+    if (e.key === " " || e.key === "Spacebar") {
+        e.preventDefault();
+        playPauseButton.click();
+    }
+    // Shift + Comma/Period (</>): adjust playback speed
+    else if (e.key === "<" || (e.shiftKey && e.key === ",")) {
+        e.preventDefault();
+        const speeds = [0.25, 0.5, 1, 2];
+        const currentIndex = speeds.indexOf(speedMultiplier);
+        if (currentIndex > 0) {
+            speedSelect.value = speeds[currentIndex - 1];
+            speedMultiplier = speeds[currentIndex - 1];
+        }
+    }
+    else if (e.key === ">" || (e.shiftKey && e.key === ".")) {
+        e.preventDefault();
+        const speeds = [0.25, 0.5, 1, 2];
+        const currentIndex = speeds.indexOf(speedMultiplier);
+        if (currentIndex < speeds.length - 1) {
+            speedSelect.value = speeds[currentIndex + 1];
+            speedMultiplier = speeds[currentIndex + 1];
+        }
+    }
+    // Comma/Period: frame step in raw replay
+    else if (e.key === ",") {
+        e.preventDefault();
+        if (rawRewindButton) rawRewindButton.click();
+    }
+    else if (e.key === ".") {
+        e.preventDefault();
+        if (rawForwardButton) rawForwardButton.click();
+    }
+    // Ctrl + Arrow keys: jump by segments
+    else if (e.ctrlKey && e.key === "ArrowLeft") {
+        e.preventDefault();
+        rewindButton.click();
+    }
+    else if (e.ctrlKey && e.key === "ArrowRight") {
+        e.preventDefault();
+        forwardButton.click();
+    }
+    // Arrow keys: step one character
+    else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        seekBackOneChar();
+    }
+    else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        seekForwardOneChar();
+    }
+    // P: jump to peak WPM
+    else if (e.key === "p" || e.key === "P") {
+        e.preventDefault();
+        jumpToPeakWpm();
+    }
 });
 
 
