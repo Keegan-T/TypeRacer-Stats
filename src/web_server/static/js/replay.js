@@ -622,7 +622,7 @@ function seekBackOneChar() {
         if (vLen < currentClean) break;
     }
 
-    while (actionList[tempAction - 1].typoFlag) {
+    while (tempAction > 0 && actionList[tempAction - 1].typoFlag) {
         tempAction -= 1;
     }
 
