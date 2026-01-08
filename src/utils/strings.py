@@ -10,7 +10,7 @@ category_aliases = [
     ["races", "r"],
     ["points", "pts", "p"],
     ["wpm", "speed"],
-    ["day", "d"],
+    ["day", "d", "today"],
     ["miniday", "md"],
     ["yesterday", "yd"],
     ["miniyesterday", "myd"],
