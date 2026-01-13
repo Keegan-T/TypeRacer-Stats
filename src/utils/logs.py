@@ -1,10 +1,8 @@
-import codecs
 import re
 
 from api.users import get_stats
 from database.main import club_races
 from utils.stats import calculate_wpm
-from utils.strings import get_segments
 
 
 def separate_delays(log, old=False):
@@ -164,7 +162,7 @@ def get_log_stats(delay_data, action_data, multiplier=12000, typos=False):
     raw_delays = distribute_start_lag(raw_delays)[0]
 
     # Removing trailing delays
-    while raw_delays[-1] == 0:
+    while raw_delays[-1] == 0 and len(raw_delays) > len(delays):
         raw_delays.pop()
 
     # Taking the fastest time per character
