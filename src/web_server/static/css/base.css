@@ -60,6 +60,12 @@ footer {
     border-top: 1px solid #555555;
 }
 
+a,
 a:visited {
-    color: #FFFFFF;
+    color: #e0e0e0;
+    transition: 0.1s;
+}
+
+a:hover {
+    color: white;
 }
