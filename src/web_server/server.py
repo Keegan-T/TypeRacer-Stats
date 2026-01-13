@@ -5,8 +5,9 @@ from discord.ext import commands
 
 from config import SOURCE_DIR, ROOT_DIR
 from utils.logging import log
-from web_server.middleware import error_middleware
+from web_server.middleware import request_logging_middleware, security_headers_middleware, rate_limit_middleware, error_middleware
 from web_server.routes.race import race_page
+from web_server.routes.import_user import trigger_import, import_status
 
 
 class WebServer(commands.Cog):
@@ -14,12 +15,14 @@ class WebServer(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.app = web.Application(middlewares=[error_middleware])
+        self.app = web.Application(middlewares=[request_logging_middleware, security_headers_middleware, rate_limit_middleware, error_middleware])
         self.runner = None
         self.site = None
 
         # Routes
         self.app.router.add_get("/race/{username}/{number}", race_page)
+        self.app.router.add_post("/import", trigger_import)
+        self.app.router.add_get("/import/status/{username}", import_status)
 
         # Templates
         aiohttp_jinja2.setup(self.app, loader=jinja2.FileSystemLoader(str(SOURCE_DIR / "web_server" / "templates")))

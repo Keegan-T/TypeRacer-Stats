@@ -2,11 +2,167 @@
 
 {% block head %}
 <link rel="stylesheet" href="/static/css/error.css">
+<style>
+    .import-container {
+        margin-top: 2rem;
+    }
+
+    .import-btn {
+        padding: 0.75rem 1.5rem;
+        background-color: #2a2a2a;
+        border: none;
+        border-radius: 8px;
+        color: #e0e0e0;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background 0.2s;
+        user-select: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .import-btn:hover {
+        background-color: #3a3a3a;
+    }
+
+    .import-btn:focus {
+        outline: none;
+    }
+
+    .import-btn:disabled {
+        background-color: #1e1e1e;
+        color: #777;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+
+    .import-status {
+        margin-top: 1rem;
+        padding: 1rem 1.25rem;
+        border-radius: 8px;
+        background-color: #1e1e1e;
+        border-left: 3px solid #3a3a3a;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .import-status.importing {
+        border-left-color: #5a9fd4;
+        background-color: #1e2428;
+    }
+
+    .import-status.error {
+        border-left-color: #d45a5a;
+        background-color: #281e1e;
+    }
+
+    .import-status.success {
+        border-left-color: #5ad45a;
+        background-color: #1e281e;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="error">
     <h2>{{ status }} - {{ error }}</h2>
     <p>{{ message }}</p>
+
+    {% if message == "Import Required" %}
+    <div class="import-container">
+        <button id="importBtn" class="import-btn">Import User Data</button>
+        <div id="importStatus" class="import-status" style="display: none;"></div>
+    </div>
+
+    <script>
+        const username = window.location.pathname.split('/')[2];
+        const universe = new URLSearchParams(window.location.search).get('universe') || 'play';
+        const importBtn = document.getElementById('importBtn');
+        const importStatus = document.getElementById('importStatus');
+        let statusInterval = null;
+
+        // Check status on page load
+        checkImportStatus();
+
+        importBtn.addEventListener('click', async () => {
+            importBtn.disabled = true;
+            importBtn.textContent = 'Importing...';
+
+            try {
+                const response = await fetch('/import', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, universe })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'started' || data.status === 'importing') {
+                    showStatus('importing', data.message);
+                    startStatusPolling();
+                } else if (data.status === 'already_imported') {
+                    showStatus('success', data.message);
+                    setTimeout(() => window.location.reload(), 1500);
+                } else if (data.status === 'locked') {
+                    showStatus('error', data.message);
+                    importBtn.disabled = false;
+                    importBtn.textContent = 'Import User Data';
+                } else {
+                    showStatus('error', data.error || 'Failed to start import');
+                    importBtn.disabled = false;
+                    importBtn.textContent = 'Import User Data';
+                }
+            } catch (error) {
+                showStatus('error', 'Failed to connect to server');
+                importBtn.disabled = false;
+                importBtn.textContent = 'Import User Data';
+            }
+        });
+
+        async function checkImportStatus() {
+            try {
+                const response = await fetch(`/import/status/${username}?universe=${universe}`);
+                const data = await response.json();
+
+                if (data.status === 'imported') {
+                    showStatus('success', 'User imported! Reloading page...');
+                    setTimeout(() => window.location.reload(), 1500);
+                } else if (data.status === 'importing') {
+                    showStatus('importing', `${data.message} (${Math.round(data.elapsed)}s elapsed)`);
+                    importBtn.disabled = true;
+                    importBtn.textContent = 'Importing...';
+                    startStatusPolling();
+                } else if (data.status === 'locked') {
+                    showStatus('error', `${data.message}: ${data.current_user}`);
+                    importBtn.disabled = true;
+                    importBtn.textContent = 'Import in Progress';
+                    startStatusPolling();
+                } else {
+                    // not_imported - ready to import
+                    importBtn.disabled = false;
+                    importBtn.textContent = 'Import User Data';
+                }
+            } catch (error) {
+                console.error('Failed to check import status:', error);
+            }
+        }
+
+        function startStatusPolling() {
+            if (statusInterval) return;
+
+            statusInterval = setInterval(async () => {
+                await checkImportStatus();
+            }, 2000); // Check every 2 seconds
+        }
+
+        function showStatus(type, message) {
+            importStatus.style.display = 'block';
+            importStatus.className = `import-status ${type}`;
+            importStatus.textContent = message;
+        }
+    </script>
+    {% endif %}
 </div>
 {% endblock %}

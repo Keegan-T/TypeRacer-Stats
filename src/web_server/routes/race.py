@@ -14,6 +14,14 @@ from utils.strings import get_segments
 async def race_page(request):
     username = request.match_info.get("username")
     race_number = request.match_info.get("number")
+
+    try:
+        race_number = int(race_number)
+        if race_number < 1 or race_number > 100_000_000:
+            raise ValueError
+    except ValueError:
+        raise ValueError("Invalid Race Number")
+
     universe = request.query.get("universe", "play")
 
     db_stats = users.get_user(username, universe)
@@ -23,7 +31,6 @@ async def race_page(request):
     stats = await get_stats(username, universe=universe)
     await download(racer=stats, universe=universe)
 
-    race_number = int(race_number)
     race_info = await races.get_race(username, race_number, universe, get_log=True, get_typos=True)
     if not race_info:
         raise ValueError("Race Not Found")
